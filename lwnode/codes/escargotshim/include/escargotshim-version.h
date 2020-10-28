@@ -1,0 +1,5 @@
+#define GIT_REV "N/A"
+#define GIT_TAG "N/A"
+#define GIT_BRANCH "N/A"
+#define GIT_USER "N/A"
+#define BUILD_TIME ""

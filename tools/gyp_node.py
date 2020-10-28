@@ -19,6 +19,7 @@ def run_gyp(args):
   # On Mac/make it will crash if it doesn't get an absolute path.
   a_path = node_root if sys.platform == 'win32' else os.path.abspath(node_root)
   args.append(os.path.join(a_path, 'node.gyp'))
+  args.append(os.path.join(a_path, 'lwnode.gyp')) # @lwnode
   common_fn = os.path.join(a_path, 'common.gypi')
   options_fn = os.path.join(a_path, 'config.gypi')
   options_fips_fn = os.path.join(a_path, 'config_fips.gypi')
