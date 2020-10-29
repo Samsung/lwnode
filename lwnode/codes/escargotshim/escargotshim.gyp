@@ -1,12 +1,24 @@
 {
+  'includes': ['common.gypi'],
   'variables': {
-    'library_files': [
-      'lib/escargot_shim.js',
-    ],
+    'library%': 'static_library',
+    'tizen_device_api_dir': 'deps/tizen-device-api',
+    'enable_escargotshim_asan%': 0,
+    'enable_external_builtin_scripts%': 'false',
   },
-  'includes': [ 'escargotshim.gypi' ],
-  'target_defaults': {
-    'defines': [],
+  'targets': [{
+    'target_name': 'escargotshim',
+    'type': '<(library)',
+    'dependencies': [
+      'escargotshim_js2c#host',
+      'escargot.gyp:escargot',
+    ],
+    'include_dirs': [
+      '.',
+      'src',
+      'include',
+      '<(SHARED_INTERMEDIATE_DIR)',
+    ],
     'cflags': [
       # FIXME if possible
       '-Wno-unused-variable',
@@ -16,181 +28,148 @@
       '-Wno-maybe-uninitialized',
       '-Wno-cast-function-type',
       '-Wno-stringop-truncation',
-    ]
-  },
-  'targets': [
-    {
-      'target_name': 'escargotshim',
-      'type': '<(library)',
-      'dependencies': [
-        'escargotshim_js2c#host',
-        'escargot.gyp:escargot',
-      ],
-      'include_dirs': [
-        '<@(escargotshim_include_dir)',
-        '<@(escargot_include_dir)',
-        '<(SHARED_INTERMEDIATE_DIR)',
-      ],
-      'sources': [
-        'include/libplatform/libplatform.h',
-        'include/v8.h',
-        'include/v8config.h',
-        'include/v8-debug.h',
-        'include/v8-platform.h',
-        'include/v8-profiler.h',
-        'include/v8-version.h',
-        '<(escargotshim_src_path)/escargotisolateshim.cc',
-        '<(escargotshim_src_path)/escargotcontextshim.cc',
-        '<(escargotshim_src_path)/escargotutil.cc',
-        '<(escargotshim_src_path)/escargotplatform.cc',
-        '<(escargotshim_src_path)/v8utils.cc',
-        '<(escargotshim_src_path)/v8isolate.cc',
-        '<(escargotshim_src_path)/v8context.cc',
-        '<(escargotshim_src_path)/v8promise.cc',
-        '<(escargotshim_src_path)/v8v8.cc',
-        '<(escargotshim_src_path)/v8default-platform.cc',
-        '<(escargotshim_src_path)/v8debug.cc',
-        '<(escargotshim_src_path)/v8array.cc',
-        '<(escargotshim_src_path)/v8symbol.cc',
-        '<(escargotshim_src_path)/v8symbolobject.cc',
-        '<(escargotshim_src_path)/v8private.cc',
-        '<(escargotshim_src_path)/v8external.cc',
-        '<(escargotshim_src_path)/v8script.cc',
-        '<(escargotshim_src_path)/v8string.cc',
-        '<(escargotshim_src_path)/v8value.cc',
-        '<(escargotshim_src_path)/v8number.cc',
-        '<(escargotshim_src_path)/v8global.cc',
-        '<(escargotshim_src_path)/v8boolean.cc',
-        '<(escargotshim_src_path)/v8booleanobject.cc',
-        '<(escargotshim_src_path)/v8integer.cc',
-        '<(escargotshim_src_path)/v8arraybuffer.cc',
-        '<(escargotshim_src_path)/v8typedarray.cc',
-        '<(escargotshim_src_path)/v8handlescope.cc',
-        '<(escargotshim_src_path)/v8template.cc',
-        '<(escargotshim_src_path)/v8object.cc',
-        '<(escargotshim_src_path)/v8objecttemplate.cc',
-        '<(escargotshim_src_path)/v8function.cc',
-        '<(escargotshim_src_path)/v8functiontemplate.cc',
-        '<(escargotshim_src_path)/v8trycatch.cc',
-        '<(escargotshim_src_path)/v8stacktrace.cc',
-        '<(escargotshim_src_path)/v8propertydescriptor.cc',
-        '<(escargotshim_src_path)/v8exception.cc',
-        '<(escargotshim_src_path)/v8message.cc',
-        '<(escargotshim_src_path)/v8signature.cc',
-        '<(escargotshim_src_path)/v8name.cc',
-        '<(escargotshim_src_path)/v8int32.cc',
-        '<(escargotshim_src_path)/v8uint32.cc',
-        '<(escargotshim_src_path)/v8proxy.cc',
-        '<(escargotshim_src_path)/v8resolver.cc',
-        '<(escargotshim_src_path)/v8sharedarraybuffer.cc',
-        '<(escargotshim_src_path)/v8valuedeserializer.cc',
-        '<(escargotshim_src_path)/v8valueserializer.cc',
-        '<(escargotshim_src_path)/v8persitent.cc',
-        '<(escargotshim_src_path)/v8cpuprofiler.cc',
-        '<(escargotshim_src_path)/v8heap.cc',
-        '<(escargotshim_src_path)/v8snapshotcreator.cc',
-        '<(escargotshim_src_path)/v8resourceconstraints.cc',
-        '<(escargotshim_src_path)/v8map.cc',
-        '<(escargotshim_src_path)/v8primitivearray.cc',
-        '<(escargotshim_src_path)/v8scriptcompiler.cc',
-        '<(escargotshim_src_path)/v8wasmmoduleobject.cc',
-        '<(escargotshim_src_path)/v8microtasksscope.cc',
-        '<(escargotshim_src_path)/v8module.cc',
-        '<(escargotshim_src_path)/v8bigint.cc',
-        '<(escargotshim_src_path)/v8set.cc',
-        '<(escargotshim_src_path)/v8date.cc',
-        '<(escargotshim_src_path)/v8dataview.cc',
-        '<(escargotshim_src_path)/v8json.cc',
-        '<(escargotshim_src_path)/v8tracing.cc',
-        '<(escargotshim_src_path)/v8trace-writer.cc',
-        '<(escargotshim_src_path)/jsutils.cc',
-        '<(escargotshim_src_path)/base/programoptions.cc',
-      ],
-      'conditions': [
-        ['target_os=="tizen"', {
-          'variables': {
-            'pkg-config': 'pkg-config'
-          },
-          'sources': [
-            '<(tizen_device_api_dir)/src/Extension.cpp',
-            '<(tizen_device_api_dir)/src/ExtensionAdapter.cpp',
-            '<(tizen_device_api_dir)/src/ExtensionManager.cpp',
-            '<(tizen_device_api_dir)/src/TizenDeviceAPILoaderForEscargot.cpp',
-          ],
-          'include_dirs': [
-            '<(tizen_dir)/src',
-            '<(tizen_device_api_dir)/src',
-          ],
-          'defines': [
-            'TIZEN_DEVICE_API',
-          ],
-          'cflags': [
-            '<!@(<(pkg-config) --cflags dlog glib-2.0)',
-            # FIXME
-            '-Wno-invalid-offsetof',
-            '-Wno-error=format=',
-          ],
-          'cflags_cc': [],
-          'libraries': [
-            '<!@(<(pkg-config) --libs dlog glib-2.0)',
-          ],
-          }, {
-          },
-        ]
-      ],
-      'direct_dependent_settings': {
-        'libraries': [
-          '<(OBJ_DIR)/deps/escargotshim/libgc-lib.a',
-          '<(OBJ_DIR)/deps/escargotshim/libescargot.a',
-          '<(OBJ_DIR)/deps/escargotshim/libruntime-icu-binder-static.a',
-        ],
-        'defines': [
-          'ESCARGOT_ENABLE_TYPEDARRAY=1',
-          'ESCARGOT_ENABLE_PROMISE=1',
-        ],
-        'cflags': [
+    ],
+    'sources': [
+      'include/libplatform/libplatform.h',
+      'include/v8.h',
+      'include/v8config.h',
+      'include/v8-debug.h',
+      'include/v8-platform.h',
+      'include/v8-profiler.h',
+      'include/v8-version.h',
+      'src/escargotisolateshim.cc',
+      'src/escargotcontextshim.cc',
+      'src/escargotutil.cc',
+      'src/escargotplatform.cc',
+      'src/v8utils.cc',
+      'src/v8isolate.cc',
+      'src/v8context.cc',
+      'src/v8promise.cc',
+      'src/v8v8.cc',
+      'src/v8default-platform.cc',
+      'src/v8debug.cc',
+      'src/v8array.cc',
+      'src/v8symbol.cc',
+      'src/v8symbolobject.cc',
+      'src/v8private.cc',
+      'src/v8external.cc',
+      'src/v8script.cc',
+      'src/v8string.cc',
+      'src/v8value.cc',
+      'src/v8number.cc',
+      'src/v8global.cc',
+      'src/v8boolean.cc',
+      'src/v8booleanobject.cc',
+      'src/v8integer.cc',
+      'src/v8arraybuffer.cc',
+      'src/v8typedarray.cc',
+      'src/v8handlescope.cc',
+      'src/v8template.cc',
+      'src/v8object.cc',
+      'src/v8objecttemplate.cc',
+      'src/v8function.cc',
+      'src/v8functiontemplate.cc',
+      'src/v8trycatch.cc',
+      'src/v8stacktrace.cc',
+      'src/v8propertydescriptor.cc',
+      'src/v8exception.cc',
+      'src/v8message.cc',
+      'src/v8signature.cc',
+      'src/v8name.cc',
+      'src/v8int32.cc',
+      'src/v8uint32.cc',
+      'src/v8proxy.cc',
+      'src/v8resolver.cc',
+      'src/v8sharedarraybuffer.cc',
+      'src/v8valuedeserializer.cc',
+      'src/v8valueserializer.cc',
+      'src/v8persitent.cc',
+      'src/v8cpuprofiler.cc',
+      'src/v8heap.cc',
+      'src/v8snapshotcreator.cc',
+      'src/v8resourceconstraints.cc',
+      'src/v8map.cc',
+      'src/v8primitivearray.cc',
+      'src/v8scriptcompiler.cc',
+      'src/v8wasmmoduleobject.cc',
+      'src/v8microtasksscope.cc',
+      'src/v8module.cc',
+      'src/v8bigint.cc',
+      'src/v8set.cc',
+      'src/v8date.cc',
+      'src/v8dataview.cc',
+      'src/v8json.cc',
+      'src/v8tracing.cc',
+      'src/v8trace-writer.cc',
+      'src/jsutils.cc',
+      'src/base/programoptions.cc',
+    ],
+    'conditions': [
+      ['target_os=="tizen"', {
+        'sources': [
+          '<(tizen_device_api_dir)/src/Extension.cpp',
+          '<(tizen_device_api_dir)/src/ExtensionAdapter.cpp',
+          '<(tizen_device_api_dir)/src/ExtensionManager.cpp',
+          '<(tizen_device_api_dir)/src/TizenDeviceAPILoaderForEscargot.cpp',
         ],
         'include_dirs': [
-          'src', # FIXME remove src from include_dirs
-          'include',
-          'escargot/src/api',
-          'escargot/third_party/GCutil',
-          'escargot/third_party/GCutil/bdwgc/include',
+          # '<(tizen_dir)/src',
+          '<(tizen_device_api_dir)/src',
+        ],
+        'defines': [
+          'TIZEN_DEVICE_API',
+        ],
+        'cflags': [
+          '<!@(pkg-config --cflags dlog glib-2.0)',
+          # FIXME
+          '-Wno-invalid-offsetof',
+          '-Wno-error=format=',
+        ],
+        'cflags_cc': [],
+        'libraries': [
+          '<!@(pkg-config --libs dlog glib-2.0)',
+        ],
+      }],
+      ['enable_escargotshim_asan==1', {
+        'cflags+': [ '-fsanitize=address', '-fno-omit-frame-pointer' ],
+        'cflags!': [ '-fomit-frame-pointer' ],
+        'ldflags': [ '-fsanitize=address' ],
+        'libraries': [
+            '-lasan',
+          ],
+        # 'defines': ['-DESCARGOT_ASAN=1'],
+      }],
+    ],
+  },
+  {
+    'target_name': 'escargotshim_js2c',
+    'type': 'none',
+    'toolsets': ['host'],
+    'msvs_disabled_warnings': [4091],
+    'actions': [
+      {
+        'action_name': 'escargotshim_js2c',
+        'inputs': [ 'lib/escargot_shim.js' ],
+        'options': [],
+        'outputs': [
+          '<(SHARED_INTERMEDIATE_DIR)/escargot_natives.h',
+        ],
+        'conditions': [
+          [ 'enable_external_builtin_scripts=="true"', {
+              'options': [ '--enable-external-builtin-scripts' ]
+            }
+          ]
+        ],
+        'action': [
+          'python',
+          '<(DEPTH)/lwnode/tools/build/escargotshim/js2c_escargotshim.py',
+          '<@(_options)',
+          '--output-path=<(PRODUCT_DIR)',
+          '--namespace=EscargotShim',
+          '<@(_outputs)',
+          '<@(_inputs)',
         ],
       },
-    }, # escargotshim
-    {
-      'target_name': 'escargotshim_js2c',
-      'type': 'none',
-      'toolsets': ['host'],
-      'msvs_disabled_warnings': [4091],
-      'actions': [
-        {
-          'action_name': 'escargotshim_js2c',
-          'inputs': [
-            '<@(library_files)'
-          ],
-          'options': [],
-          'outputs': [
-            '<(SHARED_INTERMEDIATE_DIR)/escargot_natives.h',
-          ],
-          'conditions': [
-            [ 'enable_external_builtin_scripts=="true"', {
-                'options': [ '--enable-external-builtin-scripts' ]
-              }
-            ]
-          ],
-          'action': [
-            '<(python)',
-            './../../tools/js2c_escargot.py',
-            '<@(_options)',
-            '--output-path=<(PRODUCT_DIR)',
-            '--namespace=EscargotShim',
-            '<@(_outputs)',
-            '<@(_inputs)',
-          ],
-        },
-      ],
-    }, # end escargotshim_js2c
-  ],
+    ],
+  }],
 }

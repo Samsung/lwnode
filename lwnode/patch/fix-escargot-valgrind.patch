@@ -1,0 +1,50 @@
+Submodule deps/escargotshim/escargot contains modified content
+Submodule third_party/GCutil contains modified content
+diff --git a/deps/escargotshim/escargot/third_party/GCutil/Allocator.cpp b/deps/escargotshim/escargot/third_party/GCutil/Allocator.cpp
+index 3812d68e..9707cf16 100644
+--- a/deps/escargotshim/escargot/third_party/GCutil/Allocator.cpp
++++ b/deps/escargotshim/escargot/third_party/GCutil/Allocator.cpp
+@@ -72,6 +72,12 @@ struct HeapInfo {
+ // allcoated memory area and a finalization user callback
+ // with its user defined data.
+ static std::map<void*, AllocInfo> addressTable;
++static std::map<void*, int> addressTableRef;
++enum ADDREF {
++    UNUSED = 0,
++    ALLOCATED,
++    FREED
++};
+ 
+ static HeapInfo heapInfo = { 0, 0, 0, 0, 0, 0, 0 };
+ 
+@@ -85,13 +91,21 @@ void createAddressEntry(void* address, size_t size)
+     assert(it == addressTable.end());
+ 
+     addressTable[address] = { nullptr, nullptr, size };
++    addressTableRef[address] = ADDREF::ALLOCATED;
+ }
+ 
+ void unregisterGCAddress(void* address, void* data)
+ {
+     auto it = addressTable.find(address);
+     // The address should exist.
+-    assert(it != addressTable.end());
++    // assert(it != addressTable.end());
++    if (it == addressTable.end()) {
++        if (addressTableRef[address] != ADDREF::FREED) {
++            printf("%p: %d\n", address, addressTableRef[address]);
++            assert(false);
++        }
++        return;
++    }
+ 
+     AllocInfo allocInfo = it->second;
+     // Execute the user defined callback.
+@@ -102,6 +116,7 @@ void unregisterGCAddress(void* address, void* data)
+     heapInfo.free_count++;
+ 
+     addressTable.erase(it);
++    addressTableRef[address] = ADDREF::FREED;
+ 
+ #ifdef ESCARGOT_VALGRIND
+     VALGRIND_FREELIKE_BLOCK(address, 0);
