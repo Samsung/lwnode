@@ -1,20 +1,20 @@
- #
- # Copyright (c) 2020-present Samsung Electronics Co., Ltd
- #
- #  This library is free software; you can redistribute it and/or
- #  modify it under the terms of the GNU Lesser General Public
- #  License as published by the Free Software Foundation; either
- #  version 2 of the License, or (at your option) any later version.
- #
- #  This library is distributed in the hope that it will be useful,
- #  but WITHOUT ANY WARRANTY; without even the implied warranty of
- #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- #  Lesser General Public License for more details.
- #
- #  You should have received a copy of the GNU Lesser General Public
- #  License along with this library; if not, write to the Free Software
- #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- #  USA
+#
+# Copyright (c) 2020-present Samsung Electronics Co., Ltd
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 2 of the License, or (at your option) any later version.
+#
+#  This library is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this library; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+#  USA
 
 import subprocess
 import shutil
@@ -22,11 +22,12 @@ import os
 import path
 import json
 
+
 def exec_cmd(cmd, cwd=path.ROOT_PATH):
   try:
     print(' '.join(cmd))
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, cwd=cwd)
+                               stderr=subprocess.PIPE, cwd=cwd)
 
     output = process.communicate()[0]
     exitcode = process.returncode
@@ -40,6 +41,7 @@ def exec_cmd(cmd, cwd=path.ROOT_PATH):
   except Exception as e:
     print('[Failed - %s] %s' % (cmd, str(e)))
 
+
 def exec_shell(cmd, cwd=path.ROOT_PATH):
   print(' '.join(cmd))
   exitcode = subprocess.call(' '.join(cmd), shell=True, cwd=cwd)
@@ -48,15 +50,18 @@ def exec_shell(cmd, cwd=path.ROOT_PATH):
     print('[Failed - %s] %s' % (exitcode, cmd,))
     exit(1)
 
+
 def rmdir(path):
-    if os.path.exists(path):
-        shutil.rmtree(path)
+  if os.path.exists(path):
+    shutil.rmtree(path)
+
 
 def mkdir(directory):
   if os.path.exists(directory):
     return
 
   os.makedirs(directory)
+
 
 def force_copy(root_src_dir, root_dst_dir):
   for src_dir, dirs, files in os.walk(root_src_dir):
@@ -75,6 +80,7 @@ def force_copy(root_src_dir, root_dst_dir):
 
       shutil.copy(src_file, dst_dir)
 
+
 def copy(src, dst):
   if not os.path.exists(src):
     return
@@ -91,12 +97,15 @@ def copy(src, dst):
 
     shutil.copy(src, dst)
 
+
 def move(src, dst):
   shutil.move(src, dst)
 
+
 def read_json_file(filename):
-    with open(filename, 'r') as json_file:
-        return json.load(json_file)
+  with open(filename, 'r') as json_file:
+    return json.load(json_file)
+
 
 # get file name from path
 def get_filename(path):

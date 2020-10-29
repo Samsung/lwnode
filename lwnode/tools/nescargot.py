@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
- #
- # Copyright (c) 2020-present Samsung Electronics Co., Ltd
- #
- #  This library is free software; you can redistribute it and/or
- #  modify it under the terms of the GNU Lesser General Public
- #  License as published by the Free Software Foundation; either
- #  version 2 of the License, or (at your option) any later version.
- #
- #  This library is distributed in the hope that it will be useful,
- #  but WITHOUT ANY WARRANTY; without even the implied warranty of
- #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- #  Lesser General Public License for more details.
- #
- #  You should have received a copy of the GNU Lesser General Public
- #  License along with this library; if not, write to the Free Software
- #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- #  USA
+#
+# Copyright (c) 2020-present Samsung Electronics Co., Ltd
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 2 of the License, or (at your option) any later version.
+#
+#  This library is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this library; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+#  USA
 
 import argparse
 import os
@@ -24,21 +24,23 @@ from testutil import util, path, log
 from testutil.builder import TPKProject
 from testutil.connection import DTV
 
+
 def parse_options():
   parser = argparse.ArgumentParser()
   parser.add_argument('--all',
-            default=False, action='store_true',
-            help='package, install and start application')
+                      default=False, action='store_true',
+                      help='package, install and start application')
   parser.add_argument('--package',
-            default=False, action='store_true',
-            help='package application')
+                      default=False, action='store_true',
+                      help='package application')
   parser.add_argument('--install',
-            default=False, action='store_true',
-            help='install application on target')
+                      default=False, action='store_true',
+                      help='install application on target')
   parser.add_argument('--start',
-            default=False, action='store_true',
-            help='start application on target')
+                      default=False, action='store_true',
+                      help='start application on target')
   return parser.parse_args()
+
 
 def main():
   options = parse_options()
@@ -56,8 +58,9 @@ def main():
     'app_name': package_json['name'],
     'ip': package_json['nescargot'].setdefault('target-ip', None),
     'native': package_json['nescargot'].setdefault('native', 'no'),
-    'node': package_json['nescargot'].setdefault('node', 
-      os.path.join(path.ROOT_PATH, 'out', 'Release', 'node'))
+    'node': package_json['nescargot'].setdefault('node',
+                                                 os.path.join(path.ROOT_PATH, 'out', 'Release',
+                                                              'node'))
   }
 
   if not config['ip']:

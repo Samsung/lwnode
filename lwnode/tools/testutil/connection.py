@@ -1,20 +1,20 @@
- #
- # Copyright (c) 2020-present Samsung Electronics Co., Ltd
- #
- #  This library is free software; you can redistribute it and/or
- #  modify it under the terms of the GNU Lesser General Public
- #  License as published by the Free Software Foundation; either
- #  version 2 of the License, or (at your option) any later version.
- #
- #  This library is distributed in the hope that it will be useful,
- #  but WITHOUT ANY WARRANTY; without even the implied warranty of
- #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- #  Lesser General Public License for more details.
- #
- #  You should have received a copy of the GNU Lesser General Public
- #  License along with this library; if not, write to the Free Software
- #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- #  USA
+#
+# Copyright (c) 2020-present Samsung Electronics Co., Ltd
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 2 of the License, or (at your option) any later version.
+#
+#  This library is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this library; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+#  USA
 
 import socket
 import paramiko
@@ -24,13 +24,15 @@ import path
 import log
 import os
 
+
 class TimeoutException(Exception):
   pass
+
 
 class SSH():
   def __init__(self, device_info):
     self.username = 'root'
-    self.password = None #TODO
+    self.password = None  # TODO
     self.ip = device_info['ip']
     self.timeout = 60
     self.prompt = '#'
@@ -43,7 +45,7 @@ class SSH():
 
   def open(self):
     self.ssh.connect(hostname=self.ip, username=self.username,
-                    password=self.password, look_for_keys=not bool(self.password))
+                     password=self.password, look_for_keys=not bool(self.password))
 
     log.info('Connect %s' % self.ip)
     self.chan = self.ssh.invoke_shell()
@@ -93,6 +95,7 @@ class SSH():
     except SCPException:
       raise SCPException.message
 
+
 class DTV():
   def __init__(self, options):
     self._ssh = SSH(options)
@@ -126,9 +129,8 @@ class DTV():
     log.info('Install App: %s' % self.app_name)
     self._ssh.exec_command('cd /tmp')
     self._ssh.exec_command('pkgcmd -i -t %s -p %s.%s'
-      % (app_type, self.app_name, app_type)) # install app
+                           % (app_type, self.app_name, app_type))  # install app
 
   def start_app(self):
     self.open()
     self._ssh.exec_command('app_launcher -s %s' % self.app_name)
-
