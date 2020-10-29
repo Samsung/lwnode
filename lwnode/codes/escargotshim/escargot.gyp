@@ -1,7 +1,7 @@
 {
   'includes': ['common.gypi'],
   'variables': {
-    'escargot_dir%': 'escargot',
+    'escargot_dir%': 'deps/escargot',
     'support_valgrind%': 'OFF',
     'conditions': [],
   },
