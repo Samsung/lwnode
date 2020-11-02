@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) 2020-present Samsung Electronics Co., Ltd
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ *  USA
+ */
+
+// Copyright 2013 the V8 project authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#include "escargotshim-base.h"
+#include "libplatform/libplatform.h"
+#include "v8.h"
+
+namespace v8 {
+namespace platform {
+std::unique_ptr<v8::Platform> NewDefaultPlatform(
+    int thread_pool_size,
+    IdleTaskSupport idle_task_support,
+    InProcessStackDumping in_process_stack_dumping,
+    std::unique_ptr<v8::TracingController> tracing_controller) {
+  LWNODE_RETURN_NULLPTR;
+}
+
+}  // namespace platform
+}  // namespace v8

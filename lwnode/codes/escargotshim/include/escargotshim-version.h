@@ -1,5 +1,0 @@
-#define GIT_REV "090b8c2+"
-#define GIT_TAG ""
-#define GIT_BRANCH "refactor-escargotshim"
-#define GIT_USER "Daeyeon Jeong"
-#define BUILD_TIME "2020-10-29 14:26"

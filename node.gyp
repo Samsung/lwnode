@@ -413,7 +413,8 @@
             },
           },
           'conditions': [
-            ['OS != "aix" and OS != "mac"', {
+            # @lwnode : add 'and node_use_bundled_v8=="true"'
+            ['OS != "aix" and OS != "mac" and node_use_bundled_v8=="true"', {
               'ldflags': [
                 '-Wl,--whole-archive',
                 '<(obj_dir)/<(STATIC_LIB_PREFIX)<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
@@ -766,6 +767,22 @@
       'msvs_disabled_warnings!': [4244],
 
       'conditions': [
+        # @lwnode start
+        [ 'node_use_bundled_v8=="false"', {
+          'include_dirs': [
+            'lwnode/codes/escargotshim/include',
+          ],
+          'dependencies': [
+            'lwnode/codes/escargotshim/escargotshim.gyp:escargotshim_next',
+          ],
+          'ldflags': [
+            '-Wl,-z,noexecstack',
+            '-Wl,--whole-archive',
+            '<(obj_dir)/<(STATIC_LIB_PREFIX)<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
+            '-Wl,--no-whole-archive',
+          ],
+        }],
+        # @lwnode end
         [ 'openssl_default_cipher_list!=""', {
           'defines': [
             'NODE_OPENSSL_DEFAULT_CIPHER_LIST="<(openssl_default_cipher_list)"'

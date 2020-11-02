@@ -6,7 +6,33 @@
     'enable_escargotshim_asan%': 0,
     'enable_external_builtin_scripts%': 'false',
   },
-  'targets': [{
+  'targets': [
+    { #escargotshim_next start
+      'target_name': 'escargotshim_next',
+      'type': '<(library)',
+      'include_dirs': [
+        'src_next',
+        'include',
+        '.',
+      ],
+      'sources': [
+        'src_next/api.cc',
+        'src_next/init/v8.cc',
+        'src_next/execution/v8threads.cc',
+        'src_next/libplatform/default-platform.cc',
+        'src_next/libplatform/tracing/tracing-controller.cc',
+        'src_next/libplatform/tracing/trace-buffer.cc',
+        'src_next/libplatform/tracing/trace-config.cc',
+        'src_next/libplatform/tracing/trace-object.cc',
+        'src_next/libplatform/tracing/trace-writer.cc',
+      ],
+      'cflags_cc': [
+        '-std=gnu++11',
+      ],
+      'direct_dependent_settings': {
+      },
+    }, #escargotshim_next end
+    {
     'target_name': 'escargotshim',
     'type': '<(library)',
     'dependencies': [

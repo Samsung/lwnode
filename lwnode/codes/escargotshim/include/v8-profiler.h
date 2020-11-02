@@ -6,9 +6,11 @@
 #define V8_V8_PROFILER_H_
 
 #include <limits.h>
+#include <memory>
 #include <unordered_set>
 #include <vector>
-#include "v8.h"  // NOLINT(build/include)
+
+#include "v8.h"  // NOLINT(build/include_directory)
 
 /**
  * Profiler support for the V8 JavaScript engine.
@@ -18,8 +20,8 @@ namespace v8 {
 class HeapGraphNode;
 struct HeapStatsUpdate;
 
-typedef uint32_t SnapshotObjectId;
-
+using NativeObject = void*;
+using SnapshotObjectId = uint32_t;
 
 struct CpuProfileDeoptFrame {
   int script_id;
@@ -141,11 +143,6 @@ class V8_EXPORT CpuProfileNode {
     * Returns the count of samples where the function was currently executing.
     */
   unsigned GetHitCount() const;
-
-  /** Returns function entry UID. */
-  V8_DEPRECATE_SOON(
-      "Use GetScriptId, GetLineNumber, and GetColumnNumber instead.",
-      unsigned GetCallUid() const);
 
   /** Returns id of the node. The id is unique within the tree */
   unsigned GetNodeId() const;
@@ -272,12 +269,10 @@ class V8_EXPORT CpuProfilingOptions {
    *                             zero, the sampling interval will be equal to
    *                             the profiler's sampling interval.
    */
-  CpuProfilingOptions(CpuProfilingMode mode = kLeafNodeLineNumbers,
-                      unsigned max_samples = kNoSampleLimit,
-                      int sampling_interval_us = 0)
-      : mode_(mode),
-        max_samples_(max_samples),
-        sampling_interval_us_(sampling_interval_us) {}
+  CpuProfilingOptions(
+      CpuProfilingMode mode = kLeafNodeLineNumbers,
+      unsigned max_samples = kNoSampleLimit, int sampling_interval_us = 0,
+      MaybeLocal<Context> filter_context = MaybeLocal<Context>());
 
   CpuProfilingMode mode() const { return mode_; }
   unsigned max_samples() const { return max_samples_; }
@@ -286,22 +281,103 @@ class V8_EXPORT CpuProfilingOptions {
  private:
   friend class internal::CpuProfile;
 
-  bool has_filter_context() const;
+  bool has_filter_context() const { return !filter_context_.IsEmpty(); }
   void* raw_filter_context() const;
 
   CpuProfilingMode mode_;
   unsigned max_samples_;
   int sampling_interval_us_;
+  CopyablePersistentTraits<Context>::CopyablePersistent filter_context_;
 };
 
-// NOT IMPLEMENTED
+/**
+ * Interface for controlling CPU profiling. Instance of the
+ * profiler can be created using v8::CpuProfiler::New method.
+ */
 class V8_EXPORT CpuProfiler {
  public:
-  // void SetSamplingInterval(int us);
-  // void StartProfiling(Handle<String> title, bool record_samples = false);
-  // CpuProfile* StopProfiling(Handle<String> title);
-  void SetIdle(bool is_idle) {}
+  /**
+   * Creates a new CPU profiler for the |isolate|. The isolate must be
+   * initialized. The profiler object must be disposed after use by calling
+   * |Dispose| method.
+   */
+  static CpuProfiler* New(Isolate* isolate,
+                          CpuProfilingNamingMode = kDebugNaming,
+                          CpuProfilingLoggingMode = kLazyLogging);
+
+  /**
+   * Synchronously collect current stack sample in all profilers attached to
+   * the |isolate|. The call does not affect number of ticks recorded for
+   * the current top node.
+   */
+  static void CollectSample(Isolate* isolate);
+
+  /**
+   * Disposes the CPU profiler object.
+   */
+  void Dispose();
+
+  /**
+   * Changes default CPU profiler sampling interval to the specified number
+   * of microseconds. Default interval is 1000us. This method must be called
+   * when there are no profiles being recorded.
+   */
+  void SetSamplingInterval(int us);
+
+  /**
+   * Sets whether or not the profiler should prioritize consistency of sample
+   * periodicity on Windows. Disabling this can greatly reduce CPU usage, but
+   * may result in greater variance in sample timings from the platform's
+   * scheduler. Defaults to enabled. This method must be called when there are
+   * no profiles being recorded.
+   */
+  void SetUsePreciseSampling(bool);
+
+  /**
+   * Starts collecting a CPU profile. Title may be an empty string. Several
+   * profiles may be collected at once. Attempts to start collecting several
+   * profiles with the same title are silently ignored.
+   */
+  void StartProfiling(Local<String> title, CpuProfilingOptions options);
+
+  /**
+   * Starts profiling with the same semantics as above, except with expanded
+   * parameters.
+   *
+   * |record_samples| parameter controls whether individual samples should
+   * be recorded in addition to the aggregated tree.
+   *
+   * |max_samples| controls the maximum number of samples that should be
+   * recorded by the profiler. Samples obtained after this limit will be
+   * discarded.
+   */
+  void StartProfiling(
+      Local<String> title, CpuProfilingMode mode, bool record_samples = false,
+      unsigned max_samples = CpuProfilingOptions::kNoSampleLimit);
+  /**
+   * The same as StartProfiling above, but the CpuProfilingMode defaults to
+   * kLeafNodeLineNumbers mode, which was the previous default behavior of the
+   * profiler.
+   */
+  void StartProfiling(Local<String> title, bool record_samples = false);
+
+  /**
+   * Stops collecting CPU profile with a given title and returns it.
+   * If the title given is empty, finishes the last profile started.
+   */
+  CpuProfile* StopProfiling(Local<String> title);
+
+  /**
+   * Generate more detailed source positions to code objects. This results in
+   * better results when mapping profiling samples to script source.
+   */
   static void UseDetailedSourcePositionsForProfiling(Isolate* isolate);
+
+ private:
+  CpuProfiler();
+  ~CpuProfiler();
+  CpuProfiler(const CpuProfiler&);
+  CpuProfiler& operator=(const CpuProfiler&);
 };
 
 /**
@@ -654,6 +730,12 @@ class V8_EXPORT EmbedderGraph {
      */
     virtual const char* NamePrefix() { return nullptr; }
 
+    /**
+     * Returns the NativeObject that can be used for querying the
+     * |HeapSnapshot|.
+     */
+    virtual NativeObject GetNativeObject() { return nullptr; }
+
     Node(const Node&) = delete;
     Node& operator=(const Node&) = delete;
   };
@@ -683,38 +765,189 @@ class V8_EXPORT EmbedderGraph {
   virtual ~EmbedderGraph() = default;
 };
 
-// NOT IMPLEMENTED
+/**
+ * Interface for controlling heap profiling. Instance of the
+ * profiler can be retrieved using v8::Isolate::GetHeapProfiler.
+ */
 class V8_EXPORT HeapProfiler {
  public:
-  typedef RetainedObjectInfo *(*WrapperInfoCallback)(
-    uint16_t class_id, Handle<Value> wrapper);
+  enum SamplingFlags {
+    kSamplingNoFlags = 0,
+    kSamplingForceGC = 1 << 0,
+  };
 
+  /**
+   * Callback function invoked during heap snapshot generation to retrieve
+   * the embedder object graph. The callback should use graph->AddEdge(..) to
+   * add references between the objects.
+   * The callback must not trigger garbage collection in V8.
+   */
   typedef void (*BuildEmbedderGraphCallback)(v8::Isolate* isolate,
                                              v8::EmbedderGraph* graph,
                                              void* data);
 
+  /** Returns the number of snapshots taken. */
+  int GetSnapshotCount();
+
+  /** Returns a snapshot by index. */
+  const HeapSnapshot* GetHeapSnapshot(int index);
+
+  /**
+   * Returns SnapshotObjectId for a heap object referenced by |value| if
+   * it has been seen by the heap profiler, kUnknownObjectId otherwise.
+   */
+  SnapshotObjectId GetObjectId(Local<Value> value);
+
+  /**
+   * Returns SnapshotObjectId for a native object referenced by |value| if it
+   * has been seen by the heap profiler, kUnknownObjectId otherwise.
+   */
+  SnapshotObjectId GetObjectId(NativeObject value);
+
+  /**
+   * Returns heap object with given SnapshotObjectId if the object is alive,
+   * otherwise empty handle is returned.
+   */
+  Local<Value> FindObjectById(SnapshotObjectId id);
+
+  /**
+   * Clears internal map from SnapshotObjectId to heap object. The new objects
+   * will not be added into it unless a heap snapshot is taken or heap object
+   * tracking is kicked off.
+   */
+  void ClearObjectIds();
+
+  /**
+   * A constant for invalid SnapshotObjectId. GetSnapshotObjectId will return
+   * it in case heap profiler cannot find id  for the object passed as
+   * parameter. HeapSnapshot::GetNodeById will always return NULL for such id.
+   */
+  static const SnapshotObjectId kUnknownObjectId = 0;
+
+  /**
+   * Callback interface for retrieving user friendly names of global objects.
+   */
   class ObjectNameResolver {
    public:
+    /**
+     * Returns name to be used in the heap snapshot for given node. Returned
+     * string must stay alive until snapshot collection is completed.
+     */
     virtual const char* GetName(Local<Object> object) = 0;
 
    protected:
-    virtual ~ObjectNameResolver() {}
+    virtual ~ObjectNameResolver() = default;
   };
 
+  /**
+   * Takes a heap snapshot and returns it.
+   */
   const HeapSnapshot* TakeHeapSnapshot(
-      ActivityControl* control = NULL,
-      ObjectNameResolver* global_object_name_resolver = NULL) {
-    return new HeapSnapshot();
-  }
+      ActivityControl* control = nullptr,
+      ObjectNameResolver* global_object_name_resolver = nullptr,
+      bool treat_global_objects_as_roots = true);
 
-  void SetWrapperClassInfoProvider(
-    uint16_t class_id, WrapperInfoCallback callback) {}
-  void StartTrackingHeapObjects(bool track_allocations = false) {}
+  /**
+   * Starts tracking of heap objects population statistics. After calling
+   * this method, all heap objects relocations done by the garbage collector
+   * are being registered.
+   *
+   * |track_allocations| parameter controls whether stack trace of each
+   * allocation in the heap will be recorded and reported as part of
+   * HeapSnapshot.
+   */
+  void StartTrackingHeapObjects(bool track_allocations = false);
+
+  /**
+   * Adds a new time interval entry to the aggregated statistics array. The
+   * time interval entry contains information on the current heap objects
+   * population size. The method also updates aggregated statistics and
+   * reports updates for all previous time intervals via the OutputStream
+   * object. Updates on each time interval are provided as a stream of the
+   * HeapStatsUpdate structure instances.
+   * If |timestamp_us| is supplied, timestamp of the new entry will be written
+   * into it. The return value of the function is the last seen heap object Id.
+   *
+   * StartTrackingHeapObjects must be called before the first call to this
+   * method.
+   */
+  SnapshotObjectId GetHeapStats(OutputStream* stream,
+                                int64_t* timestamp_us = nullptr);
+
+  /**
+   * Stops tracking of heap objects population statistics, cleans up all
+   * collected data. StartHeapObjectsTracking must be called again prior to
+   * calling GetHeapStats next time.
+   */
+  void StopTrackingHeapObjects();
+
+  /**
+   * Starts gathering a sampling heap profile. A sampling heap profile is
+   * similar to tcmalloc's heap profiler and Go's mprof. It samples object
+   * allocations and builds an online 'sampling' heap profile. At any point in
+   * time, this profile is expected to be a representative sample of objects
+   * currently live in the system. Each sampled allocation includes the stack
+   * trace at the time of allocation, which makes this really useful for memory
+   * leak detection.
+   *
+   * This mechanism is intended to be cheap enough that it can be used in
+   * production with minimal performance overhead.
+   *
+   * Allocations are sampled using a randomized Poisson process. On average, one
+   * allocation will be sampled every |sample_interval| bytes allocated. The
+   * |stack_depth| parameter controls the maximum number of stack frames to be
+   * captured on each allocation.
+   *
+   * NOTE: This is a proof-of-concept at this point. Right now we only sample
+   * newspace allocations. Support for paged space allocation (e.g. pre-tenured
+   * objects, large objects, code objects, etc.) and native allocations
+   * doesn't exist yet, but is anticipated in the future.
+   *
+   * Objects allocated before the sampling is started will not be included in
+   * the profile.
+   *
+   * Returns false if a sampling heap profiler is already running.
+   */
+  bool StartSamplingHeapProfiler(uint64_t sample_interval = 512 * 1024,
+                                 int stack_depth = 16,
+                                 SamplingFlags flags = kSamplingNoFlags);
+
+  /**
+   * Stops the sampling heap profile and discards the current profile.
+   */
+  void StopSamplingHeapProfiler();
+
+  /**
+   * Returns the sampled profile of allocations allocated (and still live) since
+   * StartSamplingHeapProfiler was called. The ownership of the pointer is
+   * transferred to the caller. Returns nullptr if sampling heap profiler is not
+   * active.
+   */
+  AllocationProfile* GetAllocationProfile();
+
+  /**
+   * Deletes all snapshots taken. All previously returned pointers to
+   * snapshots and their contents become invalid after this call.
+   */
+  void DeleteAllHeapSnapshots();
 
   void AddBuildEmbedderGraphCallback(BuildEmbedderGraphCallback callback,
                                      void* data);
   void RemoveBuildEmbedderGraphCallback(BuildEmbedderGraphCallback callback,
                                         void* data);
+
+  /**
+   * Default value of persistent handle class ID. Must not be used to
+   * define a class. Can be used to reset a class of a persistent
+   * handle.
+   */
+  static const uint16_t kPersistentHandleNoClassId = 0;
+
+ private:
+  HeapProfiler();
+  ~HeapProfiler();
+  HeapProfiler(const HeapProfiler&);
+  HeapProfiler& operator=(const HeapProfiler&);
 };
 
 /**
@@ -740,7 +973,8 @@ struct HeapStatsUpdate {
   V(LazyCompile)            \
   V(RegExp)                 \
   V(Script)                 \
-  V(Stub)
+  V(Stub)                   \
+  V(Relocation)
 
 /**
  * Note that this enum may be extended in the future. Please include a default
@@ -773,10 +1007,12 @@ class V8_EXPORT CodeEvent {
   const char* GetComment();
 
   static const char* GetCodeEventTypeName(CodeEventType code_event_type);
+
+  uintptr_t GetPreviousCodeStartAddress();
 };
 
 /**
- * Interface to listen to code creation events.
+ * Interface to listen to code creation and code relocation events.
  */
 class V8_EXPORT CodeEventHandler {
  public:
@@ -788,9 +1024,26 @@ class V8_EXPORT CodeEventHandler {
   explicit CodeEventHandler(Isolate* isolate);
   virtual ~CodeEventHandler();
 
+  /**
+   * Handle is called every time a code object is created or moved. Information
+   * about each code event will be available through the `code_event`
+   * parameter.
+   *
+   * When the CodeEventType is kRelocationType, the code for this CodeEvent has
+   * moved from `GetPreviousCodeStartAddress()` to `GetCodeStartAddress()`.
+   */
   virtual void Handle(CodeEvent* code_event) = 0;
 
+  /**
+   * Call `Enable()` to starts listening to code creation and code relocation
+   * events. These events will be handled by `Handle()`.
+   */
   void Enable();
+
+  /**
+   * Call `Disable()` to stop listening to code creation and code relocation
+   * events.
+   */
   void Disable();
 
  private:
