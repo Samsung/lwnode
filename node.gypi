@@ -256,8 +256,9 @@
         'NODE_PLATFORM="sunos"',
       ],
     }],
+    # @lwnode : add 'and node_use_bundled_v8=="true"'
     [ '(OS=="freebsd" or OS=="linux") and node_shared=="false"'
-        ' and force_load=="true"', {
+        ' and force_load=="true" and node_use_bundled_v8 =="true"', {
       'ldflags': [
         '-Wl,-z,noexecstack',
         '-Wl,--whole-archive <(v8_base)',
