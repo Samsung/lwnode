@@ -142,3 +142,7 @@ _UpgradeReport_Files/
 __pycache__
 .DS_Store
 *~
+
+# === lwnode ===
+kuep_net_signer.sh
+bdwgcUsage.dat
