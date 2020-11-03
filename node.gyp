@@ -773,7 +773,7 @@
             'lwnode/codes/escargotshim/include',
           ],
           'dependencies': [
-            'lwnode/codes/escargotshim/escargotshim.gyp:escargotshim_next',
+            'lwnode/codes/escargotshim/escargotshim.gyp:escargotshim',
           ],
           'ldflags': [
             '-Wl,-z,noexecstack',
