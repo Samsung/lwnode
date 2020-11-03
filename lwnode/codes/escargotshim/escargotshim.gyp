@@ -10,6 +10,9 @@
     { #escargotshim start
       'target_name': 'escargotshim',
       'type': '<(library)',
+      'dependencies': [
+        'escargot.gyp:escargot',
+      ],
       'include_dirs': [
         'src',
         'include',
@@ -30,6 +33,13 @@
         '-std=gnu++11',
       ],
       'direct_dependent_settings': {
+        'defines': [
+        ],
+        'include_dirs': [
+          'src',
+          'include',
+          '.',
+        ],
       },
     }, #escargotshim end
     {

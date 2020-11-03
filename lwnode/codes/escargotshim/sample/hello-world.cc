@@ -66,8 +66,8 @@ int helloV8(int argc, char* argv[]) {
     Local<Value> result = script->Run(context).ToLocalChecked();
 
     // Convert the result to an UTF8 string and print it.
-    String::Utf8Value utf8(result);
-    printf("%s\n", *utf8);
+    // String::Utf8Value utf8(result);
+    // printf("%s\n", *utf8);
   }
 
   // Dispose the isolate and tear down V8.
