@@ -354,7 +354,7 @@
 
       'include_dirs': [
         'src',
-        'deps/v8/include'
+        '<(lwnode_jsengine_path)/include'
       ],
 
       'sources': [
@@ -413,8 +413,7 @@
             },
           },
           'conditions': [
-            # @lwnode : add 'and node_use_bundled_v8=="true"'
-            ['OS != "aix" and OS != "mac" and node_use_bundled_v8=="true"', {
+            ['lwnode=="false" and OS != "aix" and OS != "mac"', {
               'ldflags': [
                 '-Wl,--whole-archive',
                 '<(obj_dir)/<(STATIC_LIB_PREFIX)<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
@@ -741,7 +740,7 @@
         'src/util.h',
         'src/util-inl.h',
         # Dependency headers
-        'deps/v8/include/v8.h',
+        '<(lwnode_jsengine_path)/include/v8.h',
         # javascript files to make for an even more pleasant IDE experience
         '<@(library_files)',
         # node.gyp is added by default, common.gypi is added for change detection
@@ -767,22 +766,11 @@
       'msvs_disabled_warnings!': [4244],
 
       'conditions': [
-        # @lwnode start
-        [ 'node_use_bundled_v8=="false"', {
-          'include_dirs': [
-            'lwnode/codes/escargotshim/include',
-          ],
+        [ 'lwnode=="true"', {
           'dependencies': [
-            'lwnode/codes/escargotshim/escargotshim.gyp:escargotshim',
-          ],
-          'ldflags': [
-            '-Wl,-z,noexecstack',
-            '-Wl,--whole-archive',
-            '<(obj_dir)/<(STATIC_LIB_PREFIX)<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
-            '-Wl,--no-whole-archive',
+            '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
           ],
         }],
-        # @lwnode end
         [ 'openssl_default_cipher_list!=""', {
           'defines': [
             'NODE_OPENSSL_DEFAULT_CIPHER_LIST="<(openssl_default_cipher_list)"'
@@ -1192,7 +1180,7 @@
       'include_dirs': [
         'src',
         'tools/msvs/genfiles',
-        'deps/v8/include',
+        '<(lwnode_jsengine_path)/include',
         'deps/cares/include',
         'deps/uv/include',
         'deps/uvwasi/include',
@@ -1238,7 +1226,7 @@
       'include_dirs': [
         'src',
         'tools/msvs/genfiles',
-        'deps/v8/include',
+        '<(lwnode_jsengine_path)/include',
         'deps/cares/include',
         'deps/uv/include',
         'deps/uvwasi/include',
@@ -1334,7 +1322,7 @@
       'include_dirs': [
         'src',
         'tools/msvs/genfiles',
-        'deps/v8/include',
+        '<(lwnode_jsengine_path)/include',
         'deps/cares/include',
         'deps/uv/include',
         'deps/uvwasi/include',
@@ -1393,7 +1381,7 @@
       'include_dirs': [
         'src',
         'tools/msvs/genfiles',
-        'deps/v8/include',
+        '<(lwnode_jsengine_path)/include',
         'deps/cares/include',
         'deps/uv/include',
         'deps/uvwasi/include',
@@ -1448,7 +1436,7 @@
       'include_dirs': [
         'src',
         'tools/msvs/genfiles',
-        'deps/v8/include',
+        '<(lwnode_jsengine_path)/include',
         'deps/cares/include',
         'deps/uv/include',
         'deps/uvwasi/include',
@@ -1501,7 +1489,7 @@
           'dependencies': ['<(node_lib_target_name)'],
           'include_dirs': [
             'src',
-            'deps/v8/include',
+            '<(lwnode_jsengine_path)/include',
           ],
           'sources': [
             '<@(library_files)',
