@@ -23,6 +23,7 @@
       ],
     },
     'force_load%': '<(force_load)',
+    'lwnode_jsengine_path%': 'deps/v8',
   },
 
   'conditions': [
@@ -256,9 +257,8 @@
         'NODE_PLATFORM="sunos"',
       ],
     }],
-    # @lwnode : add 'and node_use_bundled_v8=="true"'
-    [ '(OS=="freebsd" or OS=="linux") and node_shared=="false"'
-        ' and force_load=="true" and node_use_bundled_v8 =="true"', {
+    [ 'lwnode=="false" and (OS=="freebsd" or OS=="linux") and node_shared=="false"'
+        ' and force_load=="true"', {
       'ldflags': [
         '-Wl,-z,noexecstack',
         '-Wl,--whole-archive <(v8_base)',

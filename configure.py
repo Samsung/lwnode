@@ -71,6 +71,70 @@ intl_optgroup = optparse.OptionGroup(parser, "Internationalization",
 http2_optgroup = optparse.OptionGroup(parser, "HTTP2",
     "Flags that allows you to control HTTP2 features in Node.js")
 
+lwnode_optgroup = optparse.OptionGroup(parser, "LightWeight Node.js",
+    "Flags that allows you to control LWNode.js build options")
+
+# @lwnode
+lwnode_optgroup.add_option('--engine',
+    action='store',
+    dest='engine',
+    default=False,
+    help='Use escargot JS engine)')
+
+lwnode_optgroup.add_option('--tizen',
+    action='store_true',
+    dest='tizen',
+    default=False,
+    help='Platform: tizen')
+
+lwnode_optgroup.add_option('--profile',
+    choices=['none', 'tv', 'kiosk'],
+    default='none',
+    help='Build profile: none | tv | kiosk')
+
+lwnode_optgroup.add_option('--enable-external-builtin-scripts',
+    action='store_true',
+    dest='enable_external_builtin_scripts',
+    default=False,
+    help='Store builtin scripts outside of executable')
+
+parser.add_option_group(lwnode_optgroup)
+
+def get_lwnode_gyp_options():
+  args = []
+
+  if options.engine == 'escargot' :
+    args += ['-Dlwnode='+ 'true']
+
+    lwnode_jsengine_path = 'lwnode/codes/escargotshim';
+    args += ['-Dlwnode_jsengine_path='+ lwnode_jsengine_path]
+
+    if options.enable_external_builtin_scripts:
+      args += ['-Denable_external_builtin_scripts=true']
+    else:
+      args += ['-Denable_external_builtin_scripts=false']
+  else:
+    args += ['-Dlwnode='+ 'false']
+
+  if options.debug:
+    args += ['-Dbuild_mode=debug']
+  else:
+    args += ['-Dbuild_mode=release']
+
+  if options.tizen:
+    args += ['-Dtarget_os=tizen']
+    args += ['-Dprofile='+ str(options.profile)]
+    args += ['-Descargot_host=tizen_obs']
+  else:
+    args += ['-Dtarget_os=linux']
+
+  options.verbose = True
+  print_verbose("lwnode options: [" + " ".join(str(x) for x in args) + "]")
+  options.verbose = False
+
+  return args
+# end of @lwnode
+
 # Options should be in alphabetical order but keep --prefix at the top,
 # that's arguably the one people will be looking for most.
 parser.add_option('--prefix',
@@ -1896,6 +1960,7 @@ if options.compile_commands_json:
 
 # pass the leftover positional arguments to GYP
 gyp_args += args
+gyp_args += get_lwnode_gyp_options()
 
 if warn.warned and not options.verbose:
   warn('warnings were emitted in the configure phase')

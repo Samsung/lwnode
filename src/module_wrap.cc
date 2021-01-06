@@ -161,7 +161,7 @@ void ModuleWrap::New(const FunctionCallbackInfo<Value>& args) {
       Local<Array> export_names_arr = args[2].As<Array>();
 
       uint32_t len = export_names_arr->Length();
-      std::vector<Local<String>> export_names(len);
+      const std::vector<Local<String>> export_names(len); // @lwnode
       for (uint32_t i = 0; i < len; i++) {
         Local<Value> export_name_val =
             export_names_arr->Get(context, i).ToLocalChecked();

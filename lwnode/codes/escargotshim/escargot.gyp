@@ -47,9 +47,9 @@
         'action': [
           'cmake', '<(escargot_dir)', '-B<(output_dir)',
           '-GNinja',
+          '-DESCARGOT_ARCH=<(target_arch)',
           '-DESCARGOT_MODE=<(build_mode)',
-          '-DESCARGOT_ARCH=<(host_arch)',
-          '-DESCARGOT_HOST=<(escargot_os)',
+          '-DESCARGOT_HOST=<(build_host)',
           '-DESCARGOT_OUTPUT=static_lib',
           # TODO: use VALGRIND
           # '-DVALGRIND=<(support_valgrind)',

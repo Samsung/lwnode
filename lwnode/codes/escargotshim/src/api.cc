@@ -4302,11 +4302,6 @@ const CpuProfileNode* CpuProfileNode::GetParent() const {
   LWNODE_RETURN_NULLPTR;
 }
 
-const std::vector<CpuProfileDeoptInfo>& CpuProfileNode::GetDeoptInfos() const {
-  LWNODE_UNIMPLEMENT;
-  return std::vector<CpuProfileDeoptInfo>();
-}
-
 void CpuProfile::Delete() {
   LWNODE_RETURN_VOID;
 }

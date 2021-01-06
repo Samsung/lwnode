@@ -1,9 +1,9 @@
 {
   'variables': {
-    'host_arch%': 'x64',
+    'target_arch%': 'x64', # configure with --dest-cpu
+    'target_os%': 'none',  # configure with --tizen
     'build_mode%': 'debug',
-    'target_os%': 'none',
-    'escargot_os%': '<(OS)',
+    'build_host%': '<(OS)',
   },
   'target_defaults': {
     'defines': [],
@@ -18,5 +18,23 @@
       },
     }
   },
-  'conditions': [],
+  'conditions': [
+    ['target_os=="tizen"', {
+      'target_defaults': {
+        'defines': [
+          'HOST_TIZEN',
+        ],
+        'ldflags': [
+          '-mthumb',
+          '-pie',
+          '-Wl,-z,relro,-z,now',
+        ],
+        'cflags': [
+          '-fPIC', '-fPIE',
+          '-fstack-protector-strong',
+          '-D_FORTIFY_SOURCE=2',
+        ],
+      },
+    }],
+  ],
 }
