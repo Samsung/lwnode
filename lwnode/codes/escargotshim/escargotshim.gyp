@@ -7,7 +7,7 @@
     'enable_external_builtin_scripts%': 'false',
   },
   'targets': [
-    { #escargotshim start
+    {
       'target_name': 'escargotshim',
       'type': '<(library)',
       'dependencies': [
@@ -28,20 +28,21 @@
         'src/libplatform/tracing/trace-config.cc',
         'src/libplatform/tracing/trace-object.cc',
         'src/libplatform/tracing/trace-writer.cc',
+        'src/api/isolate.cc',
       ],
       'cflags_cc': [
         '-std=gnu++11',
+        '-Wno-unused-parameter',
       ],
       'direct_dependent_settings': {
         'defines': [
         ],
         'include_dirs': [
-          'src',
           'include',
           '.',
         ],
       },
-    }, #escargotshim end
+    },
     {
       # TODO: remove escargotshim_old
       'target_name': 'escargotshim_old',

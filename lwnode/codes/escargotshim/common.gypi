@@ -12,7 +12,9 @@
       'libraries': [ '-ldl', '-lrt' ],
     },
     'configurations': {
-      'Debug': {},
+      'Debug': {
+        'cflags': [ '-g', '-O0', '-Wall', '-Wextra', '-Wno-error' ],
+      },
       'Release': {
         'defines': ['NDEBUG'],
       },

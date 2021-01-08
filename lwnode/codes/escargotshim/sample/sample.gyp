@@ -8,6 +8,9 @@
         '../escargot.gyp:escargot',
         '../escargotshim.gyp:escargotshim',
        ],
+      'cflags_cc': [
+        '-Wno-unused-parameter',
+      ],
       'sources': [
         'hello-world.cc',
         'escargot-sample.cc',

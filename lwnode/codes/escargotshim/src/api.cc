@@ -30,8 +30,10 @@
 #include "v8-util.h"
 
 #include "escargotshim-base.h"
+#include "api/isolate.h"
 
 namespace i = v8::internal;
+namespace e = EscargotShim;
 
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \
@@ -3100,7 +3102,7 @@ void Isolate::SetIdle(bool is_idle) {
 }
 
 ArrayBuffer::Allocator* Isolate::GetArrayBufferAllocator() {
-  LWNODE_RETURN_NULLPTR;
+  return e::Isolate::fromV8(this)->array_buffer_allocator();
 }
 
 bool Isolate::InContext() {
@@ -3208,18 +3210,20 @@ Isolate* Isolate::GetCurrent() {
 
 // static
 Isolate* Isolate::Allocate() {
-  LWNODE_RETURN_NULLPTR;
+  return e::Isolate::toV8(e::Isolate::New());
 }
 
 // static
 // This is separate so that tests can provide a different |isolate|.
 void Isolate::Initialize(Isolate* isolate,
                          const v8::Isolate::CreateParams& params) {
-  LWNODE_RETURN_VOID;
+  e::Isolate::fromV8(isolate)->Initialize(params);
 }
 
 Isolate* Isolate::New(const Isolate::CreateParams& params) {
-  LWNODE_RETURN_NULLPTR;
+  Isolate* isolate = Allocate();
+  Initialize(isolate, params);
+  return isolate;
 }
 
 void Isolate::Dispose() {
