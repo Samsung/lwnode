@@ -317,20 +317,22 @@ void V8::InternalFieldOutOfBounds(int index) {
 
 // --- H a n d l e s ---
 
-HandleScope::HandleScope(Isolate* isolate) {
-  LWNODE_UNIMPLEMENT;
-}
+HandleScope::HandleScope(Isolate* isolate) { Initialize(isolate); }
 
 void HandleScope::Initialize(Isolate* isolate) {
-  LWNODE_RETURN_VOID;
+
+  isolate_ = (reinterpret_cast<i::Isolate*>(isolate));
+
+  e::Isolate::fromV8(isolate_)->PushHandleScope(this);
 }
 
 HandleScope::~HandleScope() {
-  LWNODE_UNIMPLEMENT;
+  e::Isolate::fromV8(isolate_)->PopHandleScope(this);
 }
 
 void* HandleScope::operator new(size_t) {
   LWNODE_UNIMPLEMENT;
+  // TODO: abort : only stack is available
   return new HandleScope(nullptr);
 }
 void* HandleScope::operator new[](size_t) {
@@ -3239,11 +3241,11 @@ void Isolate::DiscardThreadSpecificMetadata() {
 }
 
 void Isolate::Enter() {
-  LWNODE_RETURN_VOID;
+  e::Isolate::fromV8(this)->Enter();
 }
 
 void Isolate::Exit() {
-  LWNODE_RETURN_VOID;
+  e::Isolate::fromV8(this)->Exit();
 }
 
 void Isolate::SetAbortOnUncaughtExceptionCallback(

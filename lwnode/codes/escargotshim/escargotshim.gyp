@@ -29,6 +29,7 @@
         'src/libplatform/tracing/trace-object.cc',
         'src/libplatform/tracing/trace-writer.cc',
         'src/api/isolate.cc',
+        'src/api/handlescope.cc',
       ],
       'cflags_cc': [
         '-std=gnu++11',

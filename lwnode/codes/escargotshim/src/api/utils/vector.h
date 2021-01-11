@@ -17,8 +17,7 @@
  *  USA
  */
 
-#ifndef __StarfishVector__
-#define __StarfishVector__
+#pragma once
 
 #include <math.h>  // log21
 #include <deque>
@@ -28,9 +27,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "misc.h"
-
-#define NESCARGOT_ASSERT LWNODE_ASSERT
+#include "misc.h"  // LWNODE_ASSERT
 
 namespace Starfish {
 
@@ -112,7 +109,7 @@ class Vector {
   void emplace_back(T&& val) { pushBack(val); }
 
   void insert(size_t pos, const T& val) {
-    NESCARGOT_ASSERT(pos <= m_size);
+    LWNODE_ASSERT(pos <= m_size);
     insertImpl(pos, val);
   }
 
@@ -152,8 +149,8 @@ class Vector {
 
   void erase(size_t start, size_t end) {
     if (start == end) return;
-    NESCARGOT_ASSERT(start >= 0);
-    NESCARGOT_ASSERT(end <= m_size);
+    LWNODE_ASSERT(start >= 0);
+    LWNODE_ASSERT(end <= m_size);
 
     size_t howMuch = end - start;
     size_t newLen = m_size - howMuch;
@@ -227,22 +224,22 @@ class Vector {
   void pop_back() { erase(m_size - 1); }
 
   T& operator[](const size_t& idx) {
-    NESCARGOT_ASSERT(idx < m_size);
+    LWNODE_ASSERT(idx < m_size);
     return m_buffer[idx];
   }
 
   const T& operator[](const size_t& idx) const {
-    NESCARGOT_ASSERT(idx < m_size);
+    LWNODE_ASSERT(idx < m_size);
     return m_buffer[idx];
   }
 
   T& at(const size_t& idx) {
-    NESCARGOT_ASSERT(idx < m_size);
+    LWNODE_ASSERT(idx < m_size);
     return m_buffer[idx];
   }
 
   const T& at(const size_t& idx) const {
-    NESCARGOT_ASSERT(idx < m_size);
+    LWNODE_ASSERT(idx < m_size);
     return m_buffer[idx];
   }
 
@@ -348,9 +345,9 @@ class Vector {
 
   void eraseImpl(size_t start, size_t sizeToErase) {
     size_t end = start + sizeToErase;
-    NESCARGOT_ASSERT(start < end);
-    NESCARGOT_ASSERT(start >= 0);
-    NESCARGOT_ASSERT(end <= m_size);
+    LWNODE_ASSERT(start < end);
+    LWNODE_ASSERT(start >= 0);
+    LWNODE_ASSERT(end <= m_size);
 
     size_t c = end - start;
     size_t newLen = m_size - c;
@@ -401,7 +398,7 @@ class Vector {
   }
 
   void insertImpl(size_t pos, const T& v) {
-    NESCARGOT_ASSERT(pos <= m_size);
+    LWNODE_ASSERT(pos <= m_size);
 
     size_t newLen = m_size + 1;
 
@@ -455,6 +452,5 @@ class Vector {
   size_t m_size;
   size_t m_capacity;
 };
-}  // namespace Starfish
 
-#endif
+}  // namespace Starfish

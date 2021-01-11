@@ -21,6 +21,9 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
+THREAD_LOCAL Isolate* Isolate::s_currentIsolate;
+THREAD_LOCAL Isolate* Isolate::s_previousIsolate;
+
 Isolate::Isolate() {}
 Isolate::~Isolate() {}
 
@@ -52,6 +55,37 @@ void Isolate::Initialize(const v8::Isolate::CreateParams& params) {
     LWNODE_CHECK_NOT_NULL(params.array_buffer_allocator);
     isolate->set_array_buffer_allocator(params.array_buffer_allocator);
   }
+}
+
+void Isolate::Enter() {
+  LWNODE_CHECK(s_currentIsolate == nullptr && s_currentIsolate != this);
+
+  s_previousIsolate = s_currentIsolate;
+  s_currentIsolate = this;
+}
+
+void Isolate::Exit() {
+  LWNODE_CHECK(s_currentIsolate == this);
+
+  s_currentIsolate = s_previousIsolate;
+  s_previousIsolate = nullptr;
+}
+
+void Isolate::PushHandleScope(v8::HandleScope* handleScope) {
+  m_handleScopes.push_back(new HandleScope(handleScope));
+}
+
+void Isolate::PopHandleScope(v8::HandleScope* handleScope) {
+  LWNODE_CHECK(m_handleScopes.back()->GetV8HandleScope() == handleScope);
+
+  m_handleScopes.pop_back();
+}
+
+void Isolate::EscapeHandle(Handle* value) {
+  LWNODE_CHECK(m_handleScopes.size() > 1);
+
+  auto last = m_handleScopes.rbegin();
+  (*(++last))->Add(value);
 }
 
 }  // namespace EscargotShim
