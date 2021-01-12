@@ -21,19 +21,26 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-THREAD_LOCAL Isolate* Isolate::s_currentIsolate;
-THREAD_LOCAL Isolate* Isolate::s_previousIsolate;
+THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
+THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
-Isolate::Isolate() {}
-Isolate::~Isolate() {}
+IsolateWrap::IsolateWrap() {
+  initialize();
+}
 
-Isolate* Isolate::New() {
-  Isolate* isolate = new Isolate();
+IsolateWrap::~IsolateWrap() {}
+
+IsolateWrap* IsolateWrap::New() {
+  IsolateWrap* isolate = new IsolateWrap();
   return isolate;
 }
 
-void Isolate::Initialize(const v8::Isolate::CreateParams& params) {
-  Isolate* isolate = this;
+void IsolateWrap::Dispose() {
+  deinitialize();
+}
+
+void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
+  IsolateWrap* isolate = this;
 
   LWNODE_CHECK(params.code_event_handler == nullptr ||
                params.snapshot_blob == nullptr ||
@@ -57,35 +64,65 @@ void Isolate::Initialize(const v8::Isolate::CreateParams& params) {
   }
 }
 
-void Isolate::Enter() {
+void IsolateWrap::Enter() {
   LWNODE_CHECK(s_currentIsolate == nullptr && s_currentIsolate != this);
 
   s_previousIsolate = s_currentIsolate;
   s_currentIsolate = this;
 }
 
-void Isolate::Exit() {
+void IsolateWrap::Exit() {
   LWNODE_CHECK(s_currentIsolate == this);
 
   s_currentIsolate = s_previousIsolate;
   s_previousIsolate = nullptr;
 }
 
-void Isolate::PushHandleScope(v8::HandleScope* handleScope) {
-  m_handleScopes.push_back(new HandleScope(handleScope));
+IsolateWrap* IsolateWrap::getCurrentIsolate() {
+  return s_currentIsolate;
 }
 
-void Isolate::PopHandleScope(v8::HandleScope* handleScope) {
-  LWNODE_CHECK(m_handleScopes.back()->GetV8HandleScope() == handleScope);
+PersistentRefHolder<ContextRef> IsolateWrap::createContext() {
+  auto context = App::createContext();
+  initializeGlobal(context);
+  return context;
+}
+
+bool IsolateWrap::initializeGlobal(ContextRef* context) {
+#if defined(HOST_TIZEN)
+// TODO: setup device APIs
+#endif
+  return true;
+}
+
+void IsolateWrap::pushHandleScope(v8::HandleScope* handleScope) {
+  m_handleScopes.push_back(new HandleScopeWrap(handleScope));
+}
+
+void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
+  LWNODE_CHECK(m_handleScopes.back()->v8HandleScope() == handleScope);
 
   m_handleScopes.pop_back();
 }
 
-void Isolate::EscapeHandle(Handle* value) {
+void IsolateWrap::escapeHandle(HandleWrap* value) {
   LWNODE_CHECK(m_handleScopes.size() > 1);
 
   auto last = m_handleScopes.rbegin();
-  (*(++last))->Add(value);
+  (*(++last))->add(value);
+}
+
+void IsolateWrap::pushContext(Escargot::ContextRef* context) {
+  m_contexts.push_back(context);
+}
+
+void IsolateWrap::popContext(Escargot::ContextRef* context) {
+  LWNODE_CHECK(m_contexts.back() == context);
+  m_contexts.pop_back();
+}
+
+Escargot::ContextRef* IsolateWrap::CurrentContext() {
+  return m_contexts.back();
 }
 
 }  // namespace EscargotShim

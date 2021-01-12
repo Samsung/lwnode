@@ -29,11 +29,14 @@
 #include "v8-profiler.h"
 #include "v8-util.h"
 
-#include "escargotshim-base.h"
+#include "api/escargot-util.h"
+#include "api/handle.h"
 #include "api/isolate.h"
+#include "escargotshim-base.h"
+
+using namespace EscargotShim;
 
 namespace i = v8::internal;
-namespace e = EscargotShim;
 
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \
@@ -317,17 +320,18 @@ void V8::InternalFieldOutOfBounds(int index) {
 
 // --- H a n d l e s ---
 
-HandleScope::HandleScope(Isolate* isolate) { Initialize(isolate); }
+HandleScope::HandleScope(Isolate* isolate) {
+  Initialize(isolate);
+}
 
 void HandleScope::Initialize(Isolate* isolate) {
-
   isolate_ = (reinterpret_cast<i::Isolate*>(isolate));
 
-  e::Isolate::fromV8(isolate_)->PushHandleScope(this);
+  IsolateWrap::fromV8(isolate_)->pushHandleScope(this);
 }
 
 HandleScope::~HandleScope() {
-  e::Isolate::fromV8(isolate_)->PopHandleScope(this);
+  IsolateWrap::fromV8(isolate_)->popHandleScope(this);
 }
 
 void* HandleScope::operator new(size_t) {
@@ -402,11 +406,11 @@ void SealHandleScope::operator delete[](void*, size_t) {
 }
 
 void Context::Enter() {
-  LWNODE_UNIMPLEMENT;
+  auto ctx = reinterpret_cast<HandleWrap*>(this);
 }
 
 void Context::Exit() {
-  LWNODE_UNIMPLEMENT;
+  auto ctx = reinterpret_cast<HandleWrap*>(this);
 }
 
 Context::BackupIncumbentScope::BackupIncumbentScope(
@@ -2338,7 +2342,19 @@ Local<Context> v8::Context::New(
     v8::MaybeLocal<Value> global_object,
     DeserializeInternalFieldsCallback internal_fields_deserializer,
     v8::MicrotaskQueue* microtask_queue) {
-  LWNODE_RETURN_LOCAL(Context);
+
+  auto isolate = IsolateWrap::fromV8(external_isolate);
+  auto handle = new JsValue(isolate->createContext());
+
+  if (!global_template.IsEmpty() || !global_object.IsEmpty() ||
+      microtask_queue) {
+    LWNODE_UNIMPLEMENT;
+  }
+
+  Local<Context> ctx =
+      Local<Context>::New(external_isolate, reinterpret_cast<Context*>(handle));
+
+  return ctx;
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -3104,7 +3120,7 @@ void Isolate::SetIdle(bool is_idle) {
 }
 
 ArrayBuffer::Allocator* Isolate::GetArrayBufferAllocator() {
-  return e::Isolate::fromV8(this)->array_buffer_allocator();
+  return IsolateWrap::fromV8(this)->array_buffer_allocator();
 }
 
 bool Isolate::InContext() {
@@ -3212,14 +3228,14 @@ Isolate* Isolate::GetCurrent() {
 
 // static
 Isolate* Isolate::Allocate() {
-  return e::Isolate::toV8(e::Isolate::New());
+  return IsolateWrap::toV8(IsolateWrap::New());
 }
 
 // static
 // This is separate so that tests can provide a different |isolate|.
 void Isolate::Initialize(Isolate* isolate,
                          const v8::Isolate::CreateParams& params) {
-  e::Isolate::fromV8(isolate)->Initialize(params);
+  IsolateWrap::fromV8(isolate)->Initialize(params);
 }
 
 Isolate* Isolate::New(const Isolate::CreateParams& params) {
@@ -3241,11 +3257,11 @@ void Isolate::DiscardThreadSpecificMetadata() {
 }
 
 void Isolate::Enter() {
-  e::Isolate::fromV8(this)->Enter();
+  IsolateWrap::fromV8(this)->Enter();
 }
 
 void Isolate::Exit() {
-  e::Isolate::fromV8(this)->Exit();
+  IsolateWrap::fromV8(this)->Exit();
 }
 
 void Isolate::SetAbortOnUncaughtExceptionCallback(

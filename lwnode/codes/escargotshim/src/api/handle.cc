@@ -13,35 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#pragma once
-
-#include <v8.h>
-#include "handle.h"
-#include "utils/gc.h"
-
-namespace EscargotShim {
-
-class HandleScopeWrap : public gc {
- public:
-  enum Type : int {
-    Normal = 0,
-    Escapable,
-    Sealed,
-  };
-
-  HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type = Type::Normal);
-  virtual ~HandleScopeWrap() = default;
-
-  void add(HandleWrap* value);
-
-  v8::HandleScope* v8HandleScope() const { return m_scope; }
-
- private:
-  Type m_type;
-  v8::HandleScope* m_scope;
-
-  GCVector<HandleWrap*> m_handles;
-};
-
-}  // namespace EscargotShim

@@ -19,37 +19,32 @@
 #include <EscargotPublic.h>
 #include <v8.h>
 
-#include "utils/gc.h"
-#include "utils/compiler.h"
 #include "handlescope.h"
+#include "utils/compiler.h"
+#include "utils/gc.h"
+#include "escargot-app.h"
 
 namespace EscargotShim {
 
-// class HandleScopeManager
-
-class Isolate : public gc {
+class IsolateWrap : public App {
  public:
-  virtual ~Isolate();
+  virtual ~IsolateWrap();
 
-  static Isolate* New();
+  static IsolateWrap* New();
   void Initialize(const v8::Isolate::CreateParams& params);
+  void Dispose();
   void Enter();
   void Exit();
 
-  // HandleScope
-  void PushHandleScope(v8::HandleScope* handleScope);
-  void PopHandleScope(v8::HandleScope* handleScope);
-  void EscapeHandle(Handle* value);
-
   // Cast functions
-  static v8::Isolate* toV8(Isolate* iso) {
+  static v8::Isolate* toV8(IsolateWrap* iso) {
     return reinterpret_cast<v8::Isolate*>(iso);
   }
-  static Isolate* fromV8(v8::Isolate* iso) {
-    return reinterpret_cast<Isolate*>(iso);
+  static IsolateWrap* fromV8(v8::Isolate* iso) {
+    return reinterpret_cast<IsolateWrap*>(iso);
   }
-  static Isolate* fromV8(v8::internal::Isolate* iso) {
-    return reinterpret_cast<Isolate*>(iso);
+  static IsolateWrap* fromV8(v8::internal::Isolate* iso) {
+    return reinterpret_cast<IsolateWrap*>(iso);
   }
 
   // V8 internals
@@ -65,14 +60,33 @@ class Isolate : public gc {
     return m_array_buffer_allocator;
   }
 
- private:
-  Isolate();
+  virtual PersistentRefHolder<ContextRef> createContext() override;
+  virtual bool initializeGlobal(ContextRef* context) override;
 
-  GCVector<HandleScope*> m_handleScopes;
+  static IsolateWrap* getCurrentIsolate();
+
+  // HandleScope
+  void pushHandleScope(v8::HandleScope* handleScope);
+  void popHandleScope(v8::HandleScope* handleScope);
+  void escapeHandle(HandleWrap* value);
+
+  // Context
+  void pushContext(Escargot::ContextRef* context);
+  void popContext(Escargot::ContextRef* context);
+  Escargot::ContextRef* CurrentContext();
+
+ private:
+  IsolateWrap();
+
+  // TODO: use managed Vector? gced
+  // TODO: App should be inherited from GC?
+  GCVector<HandleScopeWrap*> m_handleScopes;
+  GCVector<Escargot::ContextRef*> m_contexts;
+  Escargot::PersistentRefHolder<Escargot::VMInstanceRef> m_instance;
 
   // Isolate Scope
-  static THREAD_LOCAL Isolate* s_currentIsolate;
-  static THREAD_LOCAL Isolate* s_previousIsolate;
+  static THREAD_LOCAL IsolateWrap* s_currentIsolate;
+  static THREAD_LOCAL IsolateWrap* s_previousIsolate;
 
   // V8 CreateParams
   v8::ArrayBuffer::Allocator* m_array_buffer_allocator = nullptr;

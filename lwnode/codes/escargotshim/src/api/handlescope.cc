@@ -18,10 +18,10 @@
 
 namespace EscargotShim {
 
-HandleScope::HandleScope(v8::HandleScope* scope, HandleScope::Type type)
+HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type)
     : m_type(type), m_scope(scope) {}
 
-void HandleScope::Add(Handle* value) {
+void HandleScopeWrap::add(HandleWrap* value) {
   m_handles.push_back(value);
 }
 
