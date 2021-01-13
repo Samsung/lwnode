@@ -16,36 +16,27 @@
 
 #pragma once
 
-#include <v8.h>
+#include <EscargotPublic.h>
 #include "utils/gc.h"
 
 namespace EscargotShim {
 
 class IsolateWrap;
-class HandleWrap;
 
-class HandleScopeWrap : public gc {
+class ContextWrap : public gc {
  public:
-  enum Type : int {
-    Normal = 0,
-    Escapable,
-    Sealed,
-  };
+  ContextWrap(IsolateWrap* isolate);
+  virtual ~ContextWrap();
 
-  HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type = Type::Normal);
-  virtual ~HandleScopeWrap() = default;
+  static ContextWrap* New(IsolateWrap* isolate);
 
-  void add(HandleWrap* value);
-
-  v8::HandleScope* v8HandleScope() const { return m_scope; }
-
-  static HandleWrap* CreateHandle(IsolateWrap* isolate, HandleWrap* value);
+  void Enter();
+  void Exit();
+  IsolateWrap* GetIsolate();
 
  private:
-  Type m_type;
-  v8::HandleScope* m_scope;
-
-  GCVector<HandleWrap*> m_handles;
+  IsolateWrap* m_isolate;
+  Escargot::ContextRef* m_context;
 };
 
 }  // namespace EscargotShim

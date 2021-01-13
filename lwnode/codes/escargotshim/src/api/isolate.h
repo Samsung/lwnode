@@ -26,6 +26,8 @@
 
 namespace EscargotShim {
 
+class ContextWrap;
+
 class IsolateWrap : public App {
  public:
   virtual ~IsolateWrap();
@@ -65,23 +67,22 @@ class IsolateWrap : public App {
 
   static IsolateWrap* getCurrentIsolate();
 
-  // HandleScope
+  // HandleScope & Handle
   void pushHandleScope(v8::HandleScope* handleScope);
   void popHandleScope(v8::HandleScope* handleScope);
   void escapeHandle(HandleWrap* value);
+  void addHandle(HandleWrap* value);
 
   // Context
-  void pushContext(Escargot::ContextRef* context);
-  void popContext(Escargot::ContextRef* context);
-  Escargot::ContextRef* CurrentContext();
+  void pushContext(ContextWrap* context);
+  void popContext(ContextWrap* context);
+  ContextWrap* CurrentContext();
 
  private:
   IsolateWrap();
 
-  // TODO: use managed Vector? gced
-  // TODO: App should be inherited from GC?
   GCVector<HandleScopeWrap*> m_handleScopes;
-  GCVector<Escargot::ContextRef*> m_contexts;
+  GCVector<ContextWrap*> m_contexts;
   Escargot::PersistentRefHolder<Escargot::VMInstanceRef> m_instance;
 
   // Isolate Scope

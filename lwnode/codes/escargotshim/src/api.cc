@@ -29,6 +29,7 @@
 #include "v8-profiler.h"
 #include "v8-util.h"
 
+#include "api/context.h"
 #include "api/escargot-util.h"
 #include "api/handle.h"
 #include "api/isolate.h"
@@ -355,7 +356,10 @@ int HandleScope::NumberOfHandles(Isolate* isolate) {
 }
 
 i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
-  LWNODE_RETURN_NULLPTR;
+  auto handle = HandleScopeWrap::CreateHandle(
+      IsolateWrap::fromV8(isolate), reinterpret_cast<HandleWrap*>(value));
+
+  return reinterpret_cast<i::Address*>(handle);
 }
 
 EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate) {
@@ -406,11 +410,11 @@ void SealHandleScope::operator delete[](void*, size_t) {
 }
 
 void Context::Enter() {
-  auto ctx = reinterpret_cast<HandleWrap*>(this);
+  ValueWrap<ContextWrap, Context>(this).get()->Enter();
 }
 
 void Context::Exit() {
-  auto ctx = reinterpret_cast<HandleWrap*>(this);
+  ValueWrap<ContextWrap, Context>(this).get()->Exit();
 }
 
 Context::BackupIncumbentScope::BackupIncumbentScope(
@@ -2342,19 +2346,16 @@ Local<Context> v8::Context::New(
     v8::MaybeLocal<Value> global_object,
     DeserializeInternalFieldsCallback internal_fields_deserializer,
     v8::MicrotaskQueue* microtask_queue) {
-
-  auto isolate = IsolateWrap::fromV8(external_isolate);
-  auto handle = new JsValue(isolate->createContext());
-
   if (!global_template.IsEmpty() || !global_object.IsEmpty() ||
       microtask_queue) {
     LWNODE_UNIMPLEMENT;
   }
 
-  Local<Context> ctx =
-      Local<Context>::New(external_isolate, reinterpret_cast<Context*>(handle));
+  auto context = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
+  auto value = new ValueWrap<ContextWrap, Context>(context);
+  auto local = Local<Context>::New(external_isolate, value->toV8());
 
-  return ctx;
+  return local;
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -3245,7 +3246,7 @@ Isolate* Isolate::New(const Isolate::CreateParams& params) {
 }
 
 void Isolate::Dispose() {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::fromV8(this)->Dispose();
 }
 
 void Isolate::DumpAndResetStats() {

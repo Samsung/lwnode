@@ -15,14 +15,27 @@
  */
 
 #include "handlescope.h"
+#include "isolate.h"
 
 namespace EscargotShim {
 
-HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type)
+HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope,
+                                 HandleScopeWrap::Type type)
     : m_type(type), m_scope(scope) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
   m_handles.push_back(value);
+}
+
+HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,
+                                          HandleWrap* value) {
+  if (!value) {
+    return nullptr;
+  }
+
+  isolate->addHandle(value);
+
+  return value;
 }
 
 }  // namespace EscargotShim

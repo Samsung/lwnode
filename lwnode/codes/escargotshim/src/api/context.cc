@@ -14,38 +14,35 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <v8.h>
-#include "utils/gc.h"
+#include "context.h"
+#include "isolate.h"
 
 namespace EscargotShim {
 
-class IsolateWrap;
-class HandleWrap;
+ContextWrap::ContextWrap(IsolateWrap* isolate) {
+  m_isolate = isolate;
+  m_context = isolate->createContext();
+  isolate->initializeGlobal(m_context);
+}
 
-class HandleScopeWrap : public gc {
- public:
-  enum Type : int {
-    Normal = 0,
-    Escapable,
-    Sealed,
-  };
+ContextWrap::~ContextWrap() {}
 
-  HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type = Type::Normal);
-  virtual ~HandleScopeWrap() = default;
+ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
+  auto context = new ContextWrap(isolate);
+  return context;
+}
 
-  void add(HandleWrap* value);
+void ContextWrap::Enter() {
+  m_isolate->Enter();
+  m_isolate->pushContext(this);
+}
 
-  v8::HandleScope* v8HandleScope() const { return m_scope; }
+void ContextWrap::Exit() {
+  m_isolate->popContext(this);
+}
 
-  static HandleWrap* CreateHandle(IsolateWrap* isolate, HandleWrap* value);
-
- private:
-  Type m_type;
-  v8::HandleScope* m_scope;
-
-  GCVector<HandleWrap*> m_handles;
-};
+IsolateWrap* ContextWrap::GetIsolate() {
+  return m_isolate;
+}
 
 }  // namespace EscargotShim

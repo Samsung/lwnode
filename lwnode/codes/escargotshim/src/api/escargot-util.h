@@ -23,24 +23,24 @@
 
 #define _Out_
 
-typedef Escargot::VMInstanceRef* JsVMInstanceRef;
-typedef Escargot::ContextRef* JsContextRef;
-typedef Escargot::ExecutionStateRef* JsExecutionStateRef;
-typedef Escargot::ValueRef* JsValueRef;
-typedef Escargot::ValueRef* JsNumberRef;
-typedef Escargot::PointerValueRef* JsPointerValueRef;
-typedef Escargot::ObjectRef* JsObjectRef;
-typedef Escargot::ArrayObjectRef* JsArrayObjectRef;
-typedef Escargot::StringRef* JsStringRef;
-typedef Escargot::ScriptRef* JsScriptRef;
-typedef Escargot::SymbolRef* JsSymbolRef;
-typedef Escargot::SymbolObjectRef* JsSymbolObjectRef;
-typedef Escargot::FunctionObjectRef* JsFunctionRef;
-typedef Escargot::ProxyObjectRef* JsProxyRef;
-typedef Escargot::ArrayBufferObjectRef* JsArrayBufferRef;
+typedef Escargot::VMInstanceRef JsVMInstance;
+typedef Escargot::ContextRef JsContext;
+typedef Escargot::ExecutionStateRef JsExecutionState;
+typedef Escargot::ValueRef JsValue;
+typedef Escargot::ValueRef JsNumber;
+typedef Escargot::PointerValueRef JsPointerValue;
+typedef Escargot::ObjectRef JsObject;
+typedef Escargot::ArrayObjectRef JsArrayObject;
+typedef Escargot::StringRef JsString;
+typedef Escargot::ScriptRef JsScript;
+typedef Escargot::SymbolRef JsSymbol;
+typedef Escargot::SymbolObjectRef JsSymbolObject;
+typedef Escargot::FunctionObjectRef JsFunction;
+typedef Escargot::ProxyObjectRef JsProxy;
+typedef Escargot::ArrayBufferObjectRef JsArrayBuffer;
 typedef Escargot::FunctionObjectRef::NativeFunctionInfo JsNativeFunctionInfo;
-typedef Escargot::ValueVectorRef* JsValueVectorRef;
-typedef Escargot::BooleanObjectRef* JsBooleanObjectRef;
+typedef Escargot::ValueVectorRef JsValueVector;
+typedef Escargot::BooleanObjectRef JsBooleanObject;
 typedef Escargot::ErrorObjectRef::Code JsErrorObjectCode;
 
 namespace EscargotShim {
@@ -55,28 +55,17 @@ enum JsErrorCode {
   JsErrorFatal,
 };
 
-JsContextRef CreateJsContext(JsVMInstanceRef vmInstance);
-
-JsValueRef JsUndefined();
-JsValueRef JsTrue();
-JsValueRef JsFalse();
-JsValueRef CreateJsValue(bool value);
-JsValueRef CreateJsValue(int value);
-JsValueRef CreateJsValue(uint32_t value);
-JsValueRef CreateJsValue(float value);
-JsValueRef CreateJsValue(double value);
-JsValueRef CreateJsValue(long value);
-JsValueRef CreateJsValue(unsigned long value);
-JsValueRef CreateJsValue(long long value);
-JsValueRef CreateJsValue(unsigned long long value);
-JsValueRef CreateJsValue(JsPointerValueRef value);
-JsValueRef CreateJsNull();
-JsValueRef CreateJsUndefined();
-JsValueRef CreateJsValueString(const char* str);
-JsValueRef CreateJsValueSymbol(JsStringRef string);
-JsValueRef CreateJsValueSymbolFor(JsVMInstanceRef vminstance,
-                                  JsStringRef string);
-JsErrorCode CreateJsObject(JsContextRef context, _Out_ JsObjectRef& object);
-JsErrorCode CreateJsObject(JsContextRef context, _Out_ JsObjectRef& object);
+JsValue* JsUndefined();
+JsValue* JsTrue();
+JsValue* JsFalse();
+JsValue* CreateJsValue(bool value);
+JsValue* CreateJsValue(int value);
+JsValue* CreateJsValue(uint32_t value);
+JsValue* CreateJsValue(float value);
+JsValue* CreateJsValue(double value);
+JsValue* CreateJsValue(long value);
+JsValue* CreateJsValue(unsigned long value);
+JsValue* CreateJsValue(long long value);
+JsValue* CreateJsValue(unsigned long long value);
 
 }  // namespace EscargotShim

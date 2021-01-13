@@ -396,7 +396,7 @@ void App::initialize() {
 
 void App::deinitialize() {
   // Dispose the instance and tear down Escargot.
-  // _context.release();
+  _context.release();
 
   _instance.release();
   Globals::finalize();

@@ -23,7 +23,7 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-JsContextRef CreateJsContext(JsVMInstanceRef vmInstance) {
+JsContext* CreateJsContext(JsVMInstance* vmInstance) {
   return ContextRef::create(vmInstance);
 }
 

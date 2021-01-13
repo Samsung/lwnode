@@ -65,6 +65,10 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
 }
 
 void IsolateWrap::Enter() {
+  if (s_currentIsolate == this) {
+    return;
+  }
+
   LWNODE_CHECK(s_currentIsolate == nullptr && s_currentIsolate != this);
 
   s_previousIsolate = s_currentIsolate;
@@ -83,9 +87,7 @@ IsolateWrap* IsolateWrap::getCurrentIsolate() {
 }
 
 PersistentRefHolder<ContextRef> IsolateWrap::createContext() {
-  auto context = App::createContext();
-  initializeGlobal(context);
-  return context;
+  return App::createContext();
 }
 
 bool IsolateWrap::initializeGlobal(ContextRef* context) {
@@ -112,16 +114,20 @@ void IsolateWrap::escapeHandle(HandleWrap* value) {
   (*(++last))->add(value);
 }
 
-void IsolateWrap::pushContext(Escargot::ContextRef* context) {
+void IsolateWrap::addHandle(HandleWrap* value) {
+  m_handleScopes.back()->add(value);
+}
+
+void IsolateWrap::pushContext(ContextWrap* context) {
   m_contexts.push_back(context);
 }
 
-void IsolateWrap::popContext(Escargot::ContextRef* context) {
+void IsolateWrap::popContext(ContextWrap* context) {
   LWNODE_CHECK(m_contexts.back() == context);
   m_contexts.pop_back();
 }
 
-Escargot::ContextRef* IsolateWrap::CurrentContext() {
+ContextWrap* IsolateWrap::CurrentContext() {
   return m_contexts.back();
 }
 

@@ -10758,9 +10758,13 @@ template <class T>
 Local<T> Local<T>::New(Isolate* isolate, T* that) {
   if (that == nullptr) return Local<T>();
   T* that_ptr = that;
-  internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
+  // @lwnode
+  // internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
+  // return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
+  //     reinterpret_cast<internal::Isolate*>(isolate), *p)));
+  internal::Address p = reinterpret_cast<internal::Address>(that_ptr);
   return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
-      reinterpret_cast<internal::Isolate*>(isolate), *p)));
+      reinterpret_cast<internal::Isolate*>(isolate), p)));
 }
 
 
