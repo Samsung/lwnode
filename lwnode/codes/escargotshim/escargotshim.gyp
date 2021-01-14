@@ -34,9 +34,11 @@
         'src/api/isolate.cc',
         'src/api/context.cc',
       ],
+      'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [
         '-std=gnu++11',
         '-Wno-unused-parameter',
+        '-fexceptions',
       ],
       'direct_dependent_settings': {
         'defines': [

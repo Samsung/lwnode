@@ -59,7 +59,8 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     isolate->set_array_buffer_allocator(allocator.get());
     isolate->set_array_buffer_allocator_shared(std::move(allocator));
   } else {
-    LWNODE_CHECK_NOT_NULL(params.array_buffer_allocator);
+    // LWNODE_CHECK_NOT_NULL(params.array_buffer_allocator);
+    LWNODE_UNIMPLEMENT;
     isolate->set_array_buffer_allocator(params.array_buffer_allocator);
   }
 }

@@ -16,6 +16,9 @@
 
 ./configure --without-npm --without-bundled-v8 --without-v8-platform \
   --without-inspector --without-node-code-cache --without-node-snapshot \
+  --with-intl none --shared-openssl --shared-zlib \
+  --dest-os linux --dest-cpu x64 \
+  --engine escargot \
   --ninja
 
 ninja -v -C out/Release node

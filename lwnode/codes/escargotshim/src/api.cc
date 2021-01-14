@@ -35,6 +35,7 @@
 #include "api/isolate.h"
 #include "escargotshim-base.h"
 
+using namespace Escargot;
 using namespace EscargotShim;
 
 namespace i = v8::internal;
@@ -893,6 +894,31 @@ ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCacheForFunction(
 MaybeLocal<Script> Script::Compile(Local<Context> context,
                                    Local<String> source,
                                    ScriptOrigin* origin) {
+  StringRef* sourcename;
+
+  if (origin) {
+    LWNODE_UNIMPLEMENT;
+  } else {
+    sourcename = StringRef::emptyString();
+  }
+
+  auto _context = ValueWrap<ContextWrap, Context>(*context).get()->get();
+  auto _soruce = ValueWrap<StringRef, String>(*source).get();
+
+  // Compile the source code
+  auto scriptInitializeResult =
+      _context->scriptParser()->initializeScript(_soruce, sourcename, false);
+
+  // Run the script to get the result.
+  auto evalResult = Evaluator::execute(
+      _context,
+      [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
+        return script->execute(state);
+      },
+      scriptInitializeResult.script.get());
+
+  LWNODE_UNIMPLEMENT;
+
   LWNODE_RETURN_LOCAL(Script);
 }
 
@@ -2352,8 +2378,8 @@ Local<Context> v8::Context::New(
   }
 
   auto context = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
-  auto value = new ValueWrap<ContextWrap, Context>(context);
-  auto local = Local<Context>::New(external_isolate, value->toV8());
+  auto value = ValueWrap<ContextWrap, Context>::New(context);
+  auto local = Local<Context>::New(external_isolate, value);
 
   return local;
 }
@@ -2470,6 +2496,29 @@ void* External::Value() const {
   LWNODE_RETURN_NULLPTR;
 }
 
+// anonymous namespace for string creation helper functions
+namespace {
+
+inline int StringLength(const char* string) {
+  size_t len = strlen(string);
+  LWNODE_CHECK_GE(v8::String::kMaxLength, len);
+  return static_cast<int>(len);
+}
+
+inline int StringLength(const uint8_t* string) {
+  return StringLength(reinterpret_cast<const char*>(string));
+}
+
+inline int StringLength(const uint16_t* string) {
+  size_t length = 0;
+  while (string[length] != '\0') length++;
+  LWNODE_CHECK_GE(v8::String::kMaxLength, length);
+  return static_cast<int>(length);
+}
+
+}  // anonymous namespace
+
+
 // TODO(dcarney): throw a context free exception.
 #define NEW_STRING(                                                            \
     isolate, class_name, function_name, Char, data, type, length)              \
@@ -2501,7 +2550,21 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
                                        const char* data,
                                        NewStringType type,
                                        int length) {
-  LWNODE_RETURN_LOCAL(String);
+  MaybeLocal<String> result;
+
+  if (length == 0) {
+    result = String::Empty(isolate);
+  } else if (length > v8::String::kMaxLength) {
+    result = MaybeLocal<String>();
+  } else {
+    if (length < 0) length = StringLength(data);
+
+    StringRef* source = StringRef::createFromUTF8(data, length);
+    HandleWrap* value = ValueWrap<StringRef, String>::New(source);
+    result = Local<String>::New(isolate, value);
+  }
+
+  return result;
 }
 
 MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,

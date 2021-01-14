@@ -30,6 +30,13 @@
 #include "v8-version.h"   // NOLINT(build/include_directory)
 #include "v8config.h"     // NOLINT(build/include_directory)
 
+// @lwnode
+namespace EscargotShim{
+class HandleWrap;
+}
+namespace e = EscargotShim;
+// end of @lwnode
+
 // We reserve the V8_* prefix for macros defined in V8 public API and
 // assume there are no name conflicts with the embedder's code.
 
@@ -337,6 +344,11 @@ class Local {
   explicit V8_INLINE Local(T* that) : val_(that) {}
   V8_INLINE static Local<T> New(Isolate* isolate, T* that);
   T* val_;
+
+// @lwnode
+private:
+  V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
+// end of @lwnode
 };
 
 
@@ -10758,15 +10770,21 @@ template <class T>
 Local<T> Local<T>::New(Isolate* isolate, T* that) {
   if (that == nullptr) return Local<T>();
   T* that_ptr = that;
-  // @lwnode
-  // internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
-  // return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
-  //     reinterpret_cast<internal::Isolate*>(isolate), *p)));
+  internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
+  return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
+      reinterpret_cast<internal::Isolate*>(isolate), *p)));
+}
+
+// @lwnode
+template <class T>
+Local<T> Local<T>::New(Isolate* isolate, e::HandleWrap* that) {
+  if (that == nullptr) return Local<T>();
+  T* that_ptr = reinterpret_cast<T*>(that);
   internal::Address p = reinterpret_cast<internal::Address>(that_ptr);
   return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
       reinterpret_cast<internal::Isolate*>(isolate), p)));
 }
-
+// end of @lwnode
 
 template<class T>
 template<class S>

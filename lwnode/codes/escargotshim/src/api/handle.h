@@ -26,7 +26,7 @@ namespace EscargotShim {
 
 class ContextWrap;
 
-class HandleWrap : public gc {
+class HandleWrap {
  public:
   enum Type {
     Context,
@@ -44,6 +44,12 @@ class HandleWrap : public gc {
  protected:
   HandleWrap() = default;
 
+  void* operator new(size_t size) { return Escargot::Memory::gcMalloc(size); }
+  void* operator new(size_t, void* ptr) { return ptr; }
+  void* operator new[](size_t size) = delete;
+  void operator delete(void* ptr) { Escargot::Memory::gcFree(ptr); }
+  void operator delete[](void* obj) = delete;
+
  private:
   Type m_type = Type::Unknown;
 };
@@ -51,14 +57,14 @@ class HandleWrap : public gc {
 template <typename T, typename V8>
 class ValueWrap : public HandleWrap {
  public:
-  virtual ~ValueWrap() {
-    m_holder = nullptr;
-  };
+  virtual ~ValueWrap() { m_holder = nullptr; };
 
   ValueWrap(T* ptr) {
-    if (std::is_same<T, ContextWrap>::value) {
+    if (std::is_same<ContextWrap, T>::value) {
+      LWNODE_CHECK((std::is_same<v8::Context, V8>::value));
       setType(HandleWrap::Type::Context);
-    } else if (std::is_same<T, Escargot::ValueRef>::value) {
+    } else if (std::is_base_of<Escargot::ValueRef, T>::value) {
+      LWNODE_CHECK((std::is_base_of<v8::Value, V8>::value));
       setType(HandleWrap::Type::JsValue);
     } else {
       setType(HandleWrap::Type::Unknown);
@@ -67,13 +73,18 @@ class ValueWrap : public HandleWrap {
     m_holder = ptr;
   }
 
-  ValueWrap(V8* ptr) {
-    auto src = reinterpret_cast<ValueWrap<T, V8>*>(ptr);
+  static ValueWrap<T, V8>* New(T* that);
 
-    if (std::is_same<V8, v8::Context>::value) {
-      LWNODE_ASSERT(src->type() == HandleWrap::Type::Context);
-    } else if (std::is_same<V8, v8::Value>::value) {
-      LWNODE_ASSERT(src->type() == HandleWrap::Type::JsValue);
+  ValueWrap(V8* ptr) {
+    auto base = reinterpret_cast<HandleWrap*>(ptr);
+    auto src = static_cast<ValueWrap<T, V8>*>(base);
+
+    if (std::is_same<v8::Context, V8>::value) {
+      LWNODE_CHECK((std::is_same<ContextWrap, T>::value));
+      LWNODE_CHECK(src->type() == HandleWrap::Type::Context);
+    } else if (std::is_base_of<v8::Value, V8>::value) {
+      LWNODE_CHECK((std::is_base_of<Escargot::ValueRef, T>::value));
+      LWNODE_CHECK(src->type() == HandleWrap::Type::JsValue);
     } else {
       LWNODE_ASSERT(0);
     }
@@ -115,5 +126,10 @@ class ValueWrap : public HandleWrap {
  private:
   T* m_holder = nullptr;
 };
+
+template <typename T, typename V8>
+ValueWrap<T, V8>* ValueWrap<T, V8>::New(T* that) {
+  return new ValueWrap<T, V8>(that);
+}
 
 }  // namespace EscargotShim

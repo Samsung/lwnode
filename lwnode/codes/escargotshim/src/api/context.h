@@ -34,6 +34,8 @@ class ContextWrap : public gc {
   void Exit();
   IsolateWrap* GetIsolate();
 
+  Escargot::ContextRef* get() { return m_context; }
+
  private:
   IsolateWrap* m_isolate;
   Escargot::ContextRef* m_context;

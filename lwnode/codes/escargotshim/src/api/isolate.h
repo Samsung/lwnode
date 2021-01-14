@@ -83,7 +83,6 @@ class IsolateWrap : public App {
 
   GCVector<HandleScopeWrap*> m_handleScopes;
   GCVector<ContextWrap*> m_contexts;
-  Escargot::PersistentRefHolder<Escargot::VMInstanceRef> m_instance;
 
   // Isolate Scope
   static THREAD_LOCAL IsolateWrap* s_currentIsolate;

@@ -37,17 +37,20 @@
 #endif
 #endif
 
+#define LWNODE_ASSERT(assertion) assert(assertion)
+
+// Use CHECK when abort should occurs if the condition fails
 #define LWNODE_CHECK(condition)                                                \
   do {                                                                         \
     if (LWNODE_UNLIKELY(!(condition))) {                                       \
-      LWNODE_LOG_WARN("CHECK FAILED at %s (%s:%d)\n",                          \
-                      __PRETTY_FUNCTION__,                                     \
-                      __FILE__,                                                \
-                      __LINE__);                                               \
+      LWNODE_LOG_ERROR("CHECK FAILED at %s (%s:%d)\n",                         \
+                       __PRETTY_FUNCTION__,                                    \
+                       __FILE__,                                               \
+                       __LINE__);                                              \
+      LWNODE_ASSERT(0);                                                        \
     }                                                                          \
   } while (false)
 
 #define LWNODE_CHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
 #define LWNODE_CHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)
-
-#define LWNODE_ASSERT(assertion) assert(assertion)
+#define LWNODE_CHECK_GE(lhs, rhs) LWNODE_CHECK((lhs >= rhs))
