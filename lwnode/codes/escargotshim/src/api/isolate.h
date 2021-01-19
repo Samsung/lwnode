@@ -49,6 +49,10 @@ class IsolateWrap : public App {
     return reinterpret_cast<IsolateWrap*>(iso);
   }
 
+  v8::Isolate* toV8() {
+    return reinterpret_cast<v8::Isolate*>(this);
+  }
+
   // V8 internals
   void set_array_buffer_allocator_shared(
       std::shared_ptr<v8::ArrayBuffer::Allocator> allocator) {
@@ -62,21 +66,24 @@ class IsolateWrap : public App {
     return m_array_buffer_allocator;
   }
 
-  virtual PersistentRefHolder<ContextRef> createContext() override;
-  virtual bool initializeGlobal(ContextRef* context) override;
+  ContextRef* createContext();
+  bool initializeGlobal(ContextRef* context);
 
-  static IsolateWrap* getCurrentIsolate();
+  // @desc Gets the currently entered isolate.
+  static IsolateWrap* currentIsolate();
 
   // HandleScope & Handle
   void pushHandleScope(v8::HandleScope* handleScope);
   void popHandleScope(v8::HandleScope* handleScope);
-  void escapeHandle(HandleWrap* value);
-  void addHandle(HandleWrap* value);
+  void escapeHandleFromCurrentHandleScope(HandleWrap* value);
+  void addHandleToCurrentHandleScope(HandleWrap* value);
 
   // Context
   void pushContext(ContextWrap* context);
   void popContext(ContextWrap* context);
   ContextWrap* CurrentContext();
+
+  bool IsExecutionTerminating();
 
  private:
   IsolateWrap();

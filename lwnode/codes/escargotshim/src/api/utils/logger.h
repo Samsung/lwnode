@@ -37,6 +37,10 @@
 #define COLOR_BCYAN "\033[01;36m"
 #define COLOR_BGREEN "\033[01;32m"
 #define COLOR_WHITE "\033[01;37m"
+#define COLOR_REDBG "\033[0;41m"
+
+#define TRACE_FMT " at %s (%s:%d)"
+#define TRACE_ARGS __PRETTY_FUNCTION__, __FILE__, __LINE__
 
 #define LWNODE_LOG_INFO(...)                                                   \
   do {                                                                         \
@@ -56,9 +60,7 @@
 #define LWNODE_UNIMPLEMENT                                                     \
   do {                                                                         \
     LWNODE_LOG_INFO(COLOR_RED                                                  \
-                    "LWNODE_UNIMPLEMENTED (TODO) at %s (%s:%d)\n" COLOR_RESET, \
-                    __PRETTY_FUNCTION__,                                       \
-                    __FILE__,                                                  \
-                    __LINE__);                                                 \
+                    "LWNODE_UNIMPLEMENTED (TODO)" TRACE_FMT COLOR_RESET "\n",  \
+                    TRACE_ARGS);                                               \
     assert(true);                                                              \
   } while (0)

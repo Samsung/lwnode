@@ -7,16 +7,22 @@
   },
   'target_defaults': {
     'defines': [],
-    'cflags': [],
+    'cflags': [
+      '-Wall', '-Wextra', '-Wno-error',
+      '-Wno-unused-variable',
+      '-Wno-unused-function',
+      '-Wno-unused-but-set-variable',
+    ],
     'link_settings': {
       'libraries': [ '-ldl', '-lrt' ],
     },
     'configurations': {
       'Debug': {
-        'cflags': [ '-g', '-O0', '-Wall', '-Wextra', '-Wno-error' ],
+        'cflags': [ '-g', '-O0' ],
       },
       'Release': {
         'defines': ['NDEBUG'],
+        'cflags': [ '-Wfatal-errors' ],
       },
     }
   },
@@ -32,6 +38,7 @@
           '-Wl,-z,relro,-z,now',
         ],
         'cflags': [
+          '-g', '-O0',
           '-fPIC', '-fPIE',
           '-fstack-protector-strong',
           '-D_FORTIFY_SOURCE=2',

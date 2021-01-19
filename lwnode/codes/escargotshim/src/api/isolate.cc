@@ -39,6 +39,12 @@ void IsolateWrap::Dispose() {
   deinitialize();
 }
 
+bool IsolateWrap::IsExecutionTerminating()
+{
+  LWNODE_UNIMPLEMENT;
+  return false;
+}
+
 void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   IsolateWrap* isolate = this;
 
@@ -83,12 +89,12 @@ void IsolateWrap::Exit() {
   s_previousIsolate = nullptr;
 }
 
-IsolateWrap* IsolateWrap::getCurrentIsolate() {
+IsolateWrap* IsolateWrap::currentIsolate() {
   return s_currentIsolate;
 }
 
-PersistentRefHolder<ContextRef> IsolateWrap::createContext() {
-  return App::createContext();
+ContextRef* IsolateWrap::createContext() {
+  return ContextRef::create(vmInstance());
 }
 
 bool IsolateWrap::initializeGlobal(ContextRef* context) {
@@ -108,14 +114,16 @@ void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
   m_handleScopes.pop_back();
 }
 
-void IsolateWrap::escapeHandle(HandleWrap* value) {
+void IsolateWrap::escapeHandleFromCurrentHandleScope(HandleWrap* value) {
   LWNODE_CHECK(m_handleScopes.size() > 1);
 
   auto last = m_handleScopes.rbegin();
   (*(++last))->add(value);
 }
 
-void IsolateWrap::addHandle(HandleWrap* value) {
+void IsolateWrap::addHandleToCurrentHandleScope(HandleWrap* value) {
+  LWNODE_CHECK(m_handleScopes.size() >= 1);
+
   m_handleScopes.back()->add(value);
 }
 

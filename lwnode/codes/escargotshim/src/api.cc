@@ -33,6 +33,7 @@
 #include "api/escargot-util.h"
 #include "api/handle.h"
 #include "api/isolate.h"
+#include "api/utils/string.h"
 #include "escargotshim-base.h"
 
 using namespace Escargot;
@@ -309,11 +310,11 @@ Value* V8::Eternalize(Isolate* v8_isolate, Value* value) {
 }
 
 void V8::FromJustIsNothing() {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(false);
 }
 
 void V8::ToLocalEmpty() {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(false);
 }
 
 void V8::InternalFieldOutOfBounds(int index) {
@@ -411,11 +412,11 @@ void SealHandleScope::operator delete[](void*, size_t) {
 }
 
 void Context::Enter() {
-  ValueWrap<ContextWrap, Context>(this).get()->Enter();
+  ValueWrap<ContextWrap, Context>::fromV8(this)->Enter();
 }
 
 void Context::Exit() {
-  ValueWrap<ContextWrap, Context>(this).get()->Exit();
+  ValueWrap<ContextWrap, Context>::fromV8(this)->Exit();
 }
 
 Context::BackupIncumbentScope::BackupIncumbentScope(
@@ -695,7 +696,19 @@ void ScriptCompiler::ExternalSourceStream::ResetToBookmark() {
 // ScriptCompiler::StreamedSource::~StreamedSource() = default;
 
 Local<Script> UnboundScript::BindToCurrentContext() {
-  LWNODE_RETURN_LOCAL(Script);
+  /*
+    @todo Unboundscript needs to include an `isolate` which will be used to
+    require current context on the isolate.
+
+    @todo Script needs to include the `context` obtained from the above step,
+    and it will be used on Script::Run.
+
+    @todo ValueWrap needs to have an extra space to carry gc objects above.
+  */
+  auto isolate = IsolateWrap::currentIsolate()->toV8();
+  auto that = ValueWrap<ScriptRef, UnboundScript>(this);
+  auto value = ValueWrap<ScriptRef, Script>::New(that);
+  return value->toLocal(isolate);
 }
 
 int UnboundScript::GetId() {
@@ -719,6 +732,22 @@ Local<Value> UnboundScript::GetSourceMappingURL() {
 }
 
 MaybeLocal<Value> Script::Run(Local<Context> context) {
+  LWNODE_UNIMPLEMENT;
+
+  ContextRef* _context =
+      ValueWrap<ContextWrap, Context>::fromV8(context)->get();
+  ScriptRef* _script = ValueWrap<ScriptRef, Script>::fromV8(this);
+
+  auto evalResult = Evaluator::execute(
+      _context,
+      [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
+        return script->execute(state);
+      },
+      _script);
+
+  // Convert the result to an UTF8 string and print it.
+  puts(evalResult.resultOrErrorToString(_context)->toStdUTF8String().data());
+
   LWNODE_RETURN_LOCAL(Value);
 }
 
@@ -826,7 +855,45 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
     Source* source,
     CompileOptions options,
     NoCacheReason no_cache_reason) {
-  LWNODE_RETURN_LOCAL(UnboundScript);
+  auto _isolate = IsolateWrap::fromV8(v8_isolate);
+
+  if (_isolate->IsExecutionTerminating()) {
+    return MaybeLocal<UnboundScript>();
+  }
+
+  if (options == kConsumeCodeCache) {
+    LWNODE_UNIMPLEMENT;
+    // @todo @feature
+    // CodeCache feature seemingly requires finding a cache, which is the same
+    // script compiled, based on the given source string. Escargot doesn't
+    // provide such a feature. Do we need to handle it here?
+  }
+
+  // @todo @escargot
+  // Escargot::NativeCodeBlock associates a Context to get access to
+  // AtomicStrings. Why not a VmInstance instead of a Context? Context isn't
+  // related to compiling scripts.
+
+  StringRef* source_string =
+      ValueWrap<StringRef, String>::fromV8(source->source_string);
+
+  StringRef* resource_name = StringRef::emptyString();
+
+  if (!source->resource_name.IsEmpty()) {
+    LWNODE_UNIMPLEMENT;
+  }
+
+  ScriptParserRef* parser = _isolate->scriptParser();
+  ScriptParserRef::InitializeScriptResult result =
+      parser->initializeScript(source_string, resource_name, false);
+
+  if (!result.isSuccessful()) {
+    return MaybeLocal<UnboundScript>();
+  }
+
+  auto value = ValueWrap<ScriptRef, UnboundScript>::New(result.script.get());
+
+  return value->toLocal(v8_isolate);
 }
 
 MaybeLocal<Script> ScriptCompiler::Compile(Local<Context> context,
@@ -894,32 +961,12 @@ ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCacheForFunction(
 MaybeLocal<Script> Script::Compile(Local<Context> context,
                                    Local<String> source,
                                    ScriptOrigin* origin) {
-  StringRef* sourcename;
-
   if (origin) {
-    LWNODE_UNIMPLEMENT;
-  } else {
-    sourcename = StringRef::emptyString();
+    ScriptCompiler::Source script_source(source, *origin);
+    return ScriptCompiler::Compile(context, &script_source);
   }
-
-  auto _context = ValueWrap<ContextWrap, Context>(*context).get()->get();
-  auto _soruce = ValueWrap<StringRef, String>(*source).get();
-
-  // Compile the source code
-  auto scriptInitializeResult =
-      _context->scriptParser()->initializeScript(_soruce, sourcename, false);
-
-  // Run the script to get the result.
-  auto evalResult = Evaluator::execute(
-      _context,
-      [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
-        return script->execute(state);
-      },
-      scriptInitializeResult.script.get());
-
-  LWNODE_UNIMPLEMENT;
-
-  LWNODE_RETURN_LOCAL(Script);
+  ScriptCompiler::Source script_source(source);
+  return ScriptCompiler::Compile(context, &script_source);
 }
 
 // --- E x c e p t i o n s ---
@@ -2372,7 +2419,7 @@ Local<Context> v8::Context::New(
     v8::MaybeLocal<Value> global_object,
     DeserializeInternalFieldsCallback internal_fields_deserializer,
     v8::MicrotaskQueue* microtask_queue) {
-  if (!global_template.IsEmpty() || !global_object.IsEmpty() ||
+  if (extensions || !global_template.IsEmpty() || !global_object.IsEmpty() ||
       microtask_queue) {
     LWNODE_UNIMPLEMENT;
   }
@@ -2496,29 +2543,6 @@ void* External::Value() const {
   LWNODE_RETURN_NULLPTR;
 }
 
-// anonymous namespace for string creation helper functions
-namespace {
-
-inline int StringLength(const char* string) {
-  size_t len = strlen(string);
-  LWNODE_CHECK_GE(v8::String::kMaxLength, len);
-  return static_cast<int>(len);
-}
-
-inline int StringLength(const uint8_t* string) {
-  return StringLength(reinterpret_cast<const char*>(string));
-}
-
-inline int StringLength(const uint16_t* string) {
-  size_t length = 0;
-  while (string[length] != '\0') length++;
-  LWNODE_CHECK_GE(v8::String::kMaxLength, length);
-  return static_cast<int>(length);
-}
-
-}  // anonymous namespace
-
-
 // TODO(dcarney): throw a context free exception.
 #define NEW_STRING(                                                            \
     isolate, class_name, function_name, Char, data, type, length)              \
@@ -2531,7 +2555,7 @@ inline int StringLength(const uint16_t* string) {
     i::Isolate* i_isolate = reinterpret_cast<internal::Isolate*>(isolate);     \
     ENTER_V8_NO_SCRIPT_NO_EXCEPTION(i_isolate);                                \
     LOG_API(i_isolate, class_name, function_name);                             \
-    if (length < 0) length = StringLength(data);                               \
+    if (length < 0) length = stringLength(data);                               \
     i::Handle<i::String> handle_result =                                       \
         NewString(                                                             \
             i_isolate->factory(), type, i::Vector<const Char>(data, length))   \
@@ -2557,7 +2581,7 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
   } else if (length > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
-    if (length < 0) length = StringLength(data);
+    if (length < 0) length = stringLength(data);
 
     StringRef* source = StringRef::createFromUTF8(data, length);
     HandleWrap* value = ValueWrap<StringRef, String>::New(source);

@@ -15,6 +15,7 @@
  */
 
 #include "escargot-app.h"
+#include "utils/string.h"
 
 using namespace Escargot;
 
@@ -389,7 +390,9 @@ void App::initialize() {
   _instance->setOnVMInstanceDelete(
       [](VMInstanceRef* instance) { delete instance->platform(); });
 
-  // _context = App::createContext(_instance.get());
+  // NOTE: Any execution upon this context is NOT allowed. It intends for
+  // compiling source only.
+  _context = ContextRef::create(_instance);
 
   _isInitialized = true;
 }
@@ -400,10 +403,6 @@ void App::deinitialize() {
 
   _instance.release();
   Globals::finalize();
-}
-
-PersistentRefHolder<ContextRef> App::createContext() {
-  return ContextRef::create(_instance);
 }
 
 bool App::initializeGlobal(ContextRef* context) {
@@ -497,25 +496,15 @@ bool App::initializeGlobal(ContextRef* context) {
   return true;
 }
 
-bool App::evalScript(const char* str,
+bool App::evalScript(ContextRef* context,
+                     const char* str,
                      const char* fileName,
                      bool shouldPrintScriptResult,
                      bool isModule) {
-  auto strRef = StringRef::createFromUTF8(str, strlen(str));
-  auto fileNameRef = StringRef::createFromUTF8(fileName, strlen(fileName));
-  return evalScript(strRef, fileNameRef, shouldPrintScriptResult, isModule);
-}
-
-bool App::evalScript(StringRef* str,
-                     StringRef* fileName,
-                     bool shouldPrintScriptResult,
-                     bool isModule) {
-  if (_context.get() == nullptr) {
-    return false;
-  }
-
-  return App::evalScript(
-      _context, str, fileName, shouldPrintScriptResult, isModule);
+  auto strRef = StringRef::createFromUTF8(str, stringLength(str));
+  auto fileNameRef = StringRef::createFromUTF8(fileName, stringLength(fileName));
+  return evalScript(
+      context, strRef, fileNameRef, shouldPrintScriptResult, isModule);
 }
 
 bool App::evalScript(ContextRef* context,

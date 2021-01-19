@@ -32,7 +32,8 @@ class HandleScopeWrap : public gc {
     Sealed,
   };
 
-  HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type = Type::Normal);
+  HandleScopeWrap(v8::HandleScope* scope,
+                  HandleScopeWrap::Type type = Type::Normal);
   virtual ~HandleScopeWrap() = default;
 
   void add(HandleWrap* value);
@@ -43,8 +44,7 @@ class HandleScopeWrap : public gc {
 
  private:
   Type m_type;
-  v8::HandleScope* m_scope;
-
+  v8::HandleScope* m_scope = nullptr;
   GCVector<HandleWrap*> m_handles;
 };
 

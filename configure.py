@@ -71,10 +71,10 @@ intl_optgroup = optparse.OptionGroup(parser, "Internationalization",
 http2_optgroup = optparse.OptionGroup(parser, "HTTP2",
     "Flags that allows you to control HTTP2 features in Node.js")
 
+# @lwnode
 lwnode_optgroup = optparse.OptionGroup(parser, "LightWeight Node.js",
     "Flags that allows you to control LWNode.js build options")
 
-# @lwnode
 lwnode_optgroup.add_option('--engine',
     action='store',
     dest='engine',
@@ -1960,7 +1960,9 @@ if options.compile_commands_json:
 
 # pass the leftover positional arguments to GYP
 gyp_args += args
+# @lwnode
 gyp_args += get_lwnode_gyp_options()
+# @end of lwnode
 
 if warn.warned and not options.verbose:
   warn('warnings were emitted in the configure phase')

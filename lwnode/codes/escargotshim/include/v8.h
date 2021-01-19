@@ -33,6 +33,8 @@
 // @lwnode
 namespace EscargotShim{
 class HandleWrap;
+template <class Escargot, class V8>
+class ValueWrap;
 }
 namespace e = EscargotShim;
 // end of @lwnode
@@ -347,6 +349,8 @@ class Local {
 
 // @lwnode
 private:
+  template <class Escargot, class V8>
+  friend class e::ValueWrap;
   V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
 // end of @lwnode
 };

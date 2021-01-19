@@ -37,19 +37,23 @@
 #endif
 #endif
 
-#define LWNODE_ASSERT(assertion) assert(assertion)
-
+/* CHECK */
 // Use CHECK when abort should occurs if the condition fails
-#define LWNODE_CHECK(condition)                                                \
+#define CHECK_FMT COLOR_REDBG "CHECK FAILED" COLOR_RESET " "
+
+#define LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                  \
+  LWNODE_LOG_INFO(                                                             \
+      CHECK_FMT msg "\n\t" TRACE_FMT "\n", ##__VA_ARGS__, TRACE_ARGS);         \
+  std::abort();
+
+#define LWNODE_CHECK_MSG(condition, msg, ...)                                  \
   do {                                                                         \
     if (LWNODE_UNLIKELY(!(condition))) {                                       \
-      LWNODE_LOG_ERROR("CHECK FAILED at %s (%s:%d)\n",                         \
-                       __PRETTY_FUNCTION__,                                    \
-                       __FILE__,                                               \
-                       __LINE__);                                              \
-      LWNODE_ASSERT(0);                                                        \
+      LWNODE_CHECK_FAILED_HANDLER(msg, ##__VA_ARGS__);                         \
     }                                                                          \
-  } while (false)
+  } while (0)
+
+#define LWNODE_CHECK(condition) LWNODE_CHECK_MSG(condition, #condition)
 
 #define LWNODE_CHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
 #define LWNODE_CHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)

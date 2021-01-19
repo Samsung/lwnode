@@ -79,6 +79,72 @@ int helloV8(int argc, char* argv[]) {
   return 0;
 }
 
+
+int helloV8_UnboundScript(int argc, char* argv[]) {
+  // Initialize V8.
+  /* V8::InitializeICUDefaultLocation(argv[0]);
+    V8::InitializeExternalStartupData(argv[0]); */
+  // Platform* platform = platform::CreateDefaultPlatform();
+  // V8::InitializePlatform(platform);
+  V8::Initialize();
+  printf("start escargotshim sample\n");
+
+  // Create a new Isolate and make it the current one.
+  Isolate::CreateParams create_params;
+  /*  create_params.array_buffer_allocator =
+      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+  create_params.array_buffer_allocator =
+      new v8::ArrayBuffer::Allocator(1000); */
+
+  Isolate* isolate = Isolate::New(create_params);
+  {
+    Isolate::Scope isolate_scope(isolate);
+
+    // Create a stack-allocated handle scope.
+    HandleScope handle_scope(isolate);
+
+    // // Create a string containing the JavaScript source code.
+    Local<String> source =
+        String::NewFromUtf8(
+            isolate, "'Hello' + ', V8!'", NewStringType::kNormal)
+            .ToLocalChecked();
+
+    // Create a new context.
+    Local<Context> context = Context::New(isolate);
+
+    // // Create a Source
+    ScriptCompiler::Source script_source(source);
+
+    Local<UnboundScript> script;
+    if (!ScriptCompiler::CompileUnboundScript(isolate, &script_source)
+            .ToLocal(&script)) {
+      return 1;
+    }
+
+    // Enter the context for compiling and running the hello world script.
+    Context::Scope context_scope(context);
+    Local<Value> result;
+
+    // Run the script to get the result.
+    if(script->BindToCurrentContext()->Run(context).ToLocal(&result)) {
+      return 1;
+    }
+
+    // Convert the result to an UTF8 string and print it.
+    // String::Utf8Value utf8(result);
+    // printf("%s\n", *utf8);
+    return 0;
+  }
+
+  // Dispose the isolate and tear down V8.
+  isolate->Dispose();
+  V8::Dispose();
+  // V8::ShutdownPlatform();
+  // delete platform;
+  /* delete create_params.array_buffer_allocator; */
+  return 0;
+}
+
 int helloEscargot(int argc, char* argv[]) {
   Globals::initialize();
 
@@ -132,7 +198,8 @@ int helloEscargotSample(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-  helloV8(argc, argv);
+  helloV8_UnboundScript(argc, argv);
+  // helloV8(argc, argv);
   helloEscargot(argc, argv);
   helloEscargotSample(argc, argv);
   return 0;

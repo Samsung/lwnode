@@ -33,7 +33,7 @@ HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,
     return nullptr;
   }
 
-  isolate->addHandle(value);
+  isolate->addHandleToCurrentHandleScope(value);
 
   return value;
 }

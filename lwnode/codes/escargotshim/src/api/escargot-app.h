@@ -20,6 +20,8 @@
 #include <string.h>
 #include <vector>
 
+#include "utils/gc.h"
+
 using namespace Escargot;
 
 namespace EscargotShim {
@@ -51,22 +53,17 @@ class Platform : public PlatformRef {
       loadedModules;
 };
 
-class App {
+class App : public gc {
  public:
   App();
   virtual ~App();
-  bool evalScript(const char* str,
-                  const char* fileName,
-                  bool shouldPrintScriptResult,
-                  bool isModule);
-  bool evalScript(StringRef* str,
-                  StringRef* fileName,
-                  bool shouldPrintScriptResult,
-                  bool isModule);
 
  public:
-  virtual PersistentRefHolder<ContextRef> createContext();
-  virtual bool initializeGlobal(ContextRef* context);
+  static bool evalScript(ContextRef* context,
+                         const char* str,
+                         const char* fileName,
+                         bool shouldPrintScriptResult,
+                         bool isModule);
 
   static bool evalScript(ContextRef* context,
                          StringRef* str,
@@ -75,6 +72,7 @@ class App {
                          bool isModule);
 
   VMInstanceRef* vmInstance() { return _instance; }
+  ScriptParserRef* scriptParser() { return _context->scriptParser(); }
 
  protected:
   void initialize();
@@ -84,5 +82,6 @@ class App {
   PersistentRefHolder<VMInstanceRef> _instance;
   PersistentRefHolder<ContextRef> _context;
   bool _isInitialized = false;
+  bool initializeGlobal(ContextRef* context);
 };
 }  // namespace EscargotShim
