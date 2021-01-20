@@ -83,6 +83,7 @@ class IsolateWrap : public App {
   void popContext(ContextWrap* context);
   ContextWrap* CurrentContext();
 
+  void scheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
 
  private:
@@ -98,6 +99,8 @@ class IsolateWrap : public App {
   // V8 CreateParams
   v8::ArrayBuffer::Allocator* m_array_buffer_allocator = nullptr;
   std::shared_ptr<v8::ArrayBuffer::Allocator> m_array_buffer_allocator_shared;
+
+  bool m_hasScheduledThrow = false;
 };
 
 }  // namespace EscargotShim

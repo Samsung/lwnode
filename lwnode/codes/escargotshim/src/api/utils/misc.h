@@ -42,8 +42,7 @@
 #define CHECK_FMT COLOR_REDBG "CHECK FAILED" COLOR_RESET " "
 
 #define LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                  \
-  LWNODE_LOG_INFO(                                                             \
-      CHECK_FMT msg "\n\t" TRACE_FMT "\n", ##__VA_ARGS__, TRACE_ARGS);         \
+  LWNODE_LOG_INFO(CHECK_FMT msg "\n\t" TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);  \
   std::abort();
 
 #define LWNODE_CHECK_MSG(condition, msg, ...)                                  \
@@ -54,7 +53,4 @@
   } while (0)
 
 #define LWNODE_CHECK(condition) LWNODE_CHECK_MSG(condition, #condition)
-
-#define LWNODE_CHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
 #define LWNODE_CHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)
-#define LWNODE_CHECK_GE(lhs, rhs) LWNODE_CHECK((lhs >= rhs))

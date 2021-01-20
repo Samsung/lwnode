@@ -39,10 +39,17 @@ void IsolateWrap::Dispose() {
   deinitialize();
 }
 
-bool IsolateWrap::IsExecutionTerminating()
-{
+bool IsolateWrap::IsExecutionTerminating() {
   LWNODE_UNIMPLEMENT;
+  if (m_hasScheduledThrow) {
+    return true;
+  }
   return false;
+}
+
+void IsolateWrap::scheduleThrow(Escargot::ValueRef* result) {
+  LWNODE_UNIMPLEMENT;
+  m_hasScheduledThrow = true;
 }
 
 void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {

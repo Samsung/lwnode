@@ -42,9 +42,9 @@
 #define TRACE_FMT " at %s (%s:%d)"
 #define TRACE_ARGS __PRETTY_FUNCTION__, __FILE__, __LINE__
 
-#define LWNODE_LOG_INFO(...)                                                   \
+#define LWNODE_LOG_INFO(fmt, ...)                                              \
   do {                                                                         \
-    fprintf(stdout, __VA_ARGS__);                                              \
+    fprintf(stdout, fmt "\n", ##__VA_ARGS__);                                  \
   } while (0);
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
@@ -60,7 +60,7 @@
 #define LWNODE_UNIMPLEMENT                                                     \
   do {                                                                         \
     LWNODE_LOG_INFO(COLOR_RED                                                  \
-                    "LWNODE_UNIMPLEMENTED (TODO)" TRACE_FMT COLOR_RESET "\n",  \
+                    "LWNODE_UNIMPLEMENTED (TODO)" TRACE_FMT COLOR_RESET,       \
                     TRACE_ARGS);                                               \
     assert(true);                                                              \
   } while (0)

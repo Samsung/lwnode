@@ -20,8 +20,9 @@
 //                                GC CONTAINERS
 // --------------------------------------------------------------------------------
 
-#include "GCUtil.h"
-#include "vector.h"
+#include <GCUtil.h>
+#include "gc-vector.h"
+#include "gc-container.h"
 
 // typedef of GC-aware vector
 template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>

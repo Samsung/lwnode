@@ -39,6 +39,26 @@
 using namespace Escargot;
 using namespace EscargotShim;
 
+#define API_INIT_VALUE_AND_THAT(T, V8)                                         \
+  auto _value = ValueWrap<T, V8>::ref(this);                                   \
+  auto __that = _value.get();
+
+#define PRIVATE_UTIL_1(_isolate, bailout_value)                                \
+  if (_isolate->IsExecutionTerminating()) {                                    \
+    return bailout_value;                                                      \
+  }
+
+#define API_ENTER(isolate, bailout_value)                                      \
+  auto _isolate = IsolateWrap::fromV8(isolate);                                \
+  PRIVATE_UTIL_1(_isolate, bailout_value)
+
+#define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
+  auto _isolate =                                                              \
+      context.IsEmpty()                                                        \
+          ? IsolateWrap::currentIsolate()                                      \
+          : ValueWrap<ContextWrap, Context>::fromV8(context)->GetIsolate();    \
+  PRIVATE_UTIL_1(_isolate, bailout_value)
+
 namespace i = v8::internal;
 
 // V has parameters (Type, type, TYPE, C type)
@@ -697,18 +717,27 @@ void ScriptCompiler::ExternalSourceStream::ResetToBookmark() {
 
 Local<Script> UnboundScript::BindToCurrentContext() {
   /*
-    @todo Unboundscript needs to include an `isolate` which will be used to
-    require current context on the isolate.
+    @note Unboundscript includes an `isolate` which will be used to
+    get the `current context` of the isolate.
 
-    @todo Script needs to include the `context` obtained from the above step,
-    and it will be used on Script::Run.
+    @note Script includes the `current context` obtained from the above
+    step, and it will be used on Script::Run.
 
-    @todo ValueWrap needs to have an extra space to carry gc objects above.
+    @note ValueWrap includes an extra space to carry the gc objects above.
   */
-  auto isolate = IsolateWrap::currentIsolate()->toV8();
-  auto that = ValueWrap<ScriptRef, UnboundScript>(this);
-  auto value = ValueWrap<ScriptRef, Script>::New(that);
-  return value->toLocal(isolate);
+  auto unboundScriptValue = ValueWrap<ScriptRef, UnboundScript>::ref(this);
+  auto scriptValue = ValueWrap<ScriptRef, Script>::New(unboundScriptValue);
+
+  // get `isolate` used during compiling this script.
+  IsolateWrap* _isolateUsed =
+      unboundScriptValue.getExtra<IsolateWrap>(0).getChecked();
+
+  // add the `current context` into this ValueWrap for Script
+  ExtraValues extra(1);
+  extra[0] = _isolateUsed->CurrentContext();
+  scriptValue->setExtra(std::move(extra));
+
+  return scriptValue->toLocal(IsolateWrap::currentIsolate()->toV8());
 }
 
 int UnboundScript::GetId() {
@@ -732,23 +761,30 @@ Local<Value> UnboundScript::GetSourceMappingURL() {
 }
 
 MaybeLocal<Value> Script::Run(Local<Context> context) {
-  LWNODE_UNIMPLEMENT;
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  API_INIT_VALUE_AND_THAT(ScriptRef, Script);
 
-  ContextRef* _context =
-      ValueWrap<ContextWrap, Context>::fromV8(context)->get();
-  ScriptRef* _script = ValueWrap<ScriptRef, Script>::fromV8(this);
-
-  auto evalResult = Evaluator::execute(
-      _context,
+  auto _contextUsed = _value.getExtra<ContextWrap>(0).getChecked();
+  auto result = Evaluator::execute(
+      _contextUsed->get(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
-      _script);
+      __that);
 
-  // Convert the result to an UTF8 string and print it.
-  puts(evalResult.resultOrErrorToString(_context)->toStdUTF8String().data());
+  if (!result.isSuccessful()) {
+    _isolate->scheduleThrow(result.error.get());
+    return MaybeLocal<Value>();
+  }
 
-  LWNODE_RETURN_LOCAL(Value);
+  auto __context = ValueWrap<ContextWrap, Context>::fromV8(*context)->get();
+  auto __resultString = result.resultOrErrorToString(__context);
+
+  // @todo remove this
+  puts(result.resultOrErrorToString(__context)->toStdUTF8String().data());
+
+  return ValueWrap<StringRef, String>::New(__resultString)
+      ->toLocal(_isolate->toV8());
 }
 
 Local<Value> ScriptOrModule::GetResourceName() {
@@ -855,11 +891,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
     Source* source,
     CompileOptions options,
     NoCacheReason no_cache_reason) {
-  auto _isolate = IsolateWrap::fromV8(v8_isolate);
-
-  if (_isolate->IsExecutionTerminating()) {
-    return MaybeLocal<UnboundScript>();
-  }
+  API_ENTER(v8_isolate, MaybeLocal<UnboundScript>());
 
   if (options == kConsumeCodeCache) {
     LWNODE_UNIMPLEMENT;
@@ -874,10 +906,9 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
   // AtomicStrings. Why not a VmInstance instead of a Context? Context isn't
   // related to compiling scripts.
 
-  StringRef* source_string =
-      ValueWrap<StringRef, String>::fromV8(source->source_string);
-
-  StringRef* resource_name = StringRef::emptyString();
+  auto __source =
+      ValueWrap<StringRef, String>::fromV8(source->source_string).getChecked();
+  auto __resource_name = StringRef::emptyString();
 
   if (!source->resource_name.IsEmpty()) {
     LWNODE_UNIMPLEMENT;
@@ -885,15 +916,19 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
 
   ScriptParserRef* parser = _isolate->scriptParser();
   ScriptParserRef::InitializeScriptResult result =
-      parser->initializeScript(source_string, resource_name, false);
+      parser->initializeScript(__source, __resource_name, false);
 
   if (!result.isSuccessful()) {
     return MaybeLocal<UnboundScript>();
   }
 
-  auto value = ValueWrap<ScriptRef, UnboundScript>::New(result.script.get());
+  auto newValue = ValueWrap<ScriptRef, UnboundScript>::New(result.script.get());
 
-  return value->toLocal(v8_isolate);
+  ExtraValues extra(1);
+  extra[0] = _isolate;
+  newValue->setExtra(std::move(extra));
+
+  return newValue->toLocal(v8_isolate);
 }
 
 MaybeLocal<Script> ScriptCompiler::Compile(Local<Context> context,
@@ -2424,11 +2459,10 @@ Local<Context> v8::Context::New(
     LWNODE_UNIMPLEMENT;
   }
 
-  auto context = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
-  auto value = ValueWrap<ContextWrap, Context>::New(context);
-  auto local = Local<Context>::New(external_isolate, value);
+  auto _context = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
+  auto _newValue = ValueWrap<ContextWrap, Context>::New(_context);
 
-  return local;
+  return _newValue->toLocal(external_isolate);
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(

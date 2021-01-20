@@ -22,6 +22,7 @@
 
 #include "utils/gc.h"
 #include "utils/misc.h"
+#include "utils/optional.h"
 
 namespace EscargotShim {
 
@@ -50,11 +51,49 @@ class HandleWrap : public gc {
   Type m_type = Type::Unknown;
 };
 
+typedef GCContainer<void*> ExtraValues;
+
 template <typename T, typename V8>
 class ValueWrap : public HandleWrap {
  public:
-  virtual ~ValueWrap() { m_holder = nullptr; };
+  static ValueWrap<T, V8>* New(T* that);
+  static Optional<T> fromV8(v8::Local<V8> local);
+  static T* fromV8(V8* ptr);
+  static ValueWrap<T, V8> ref(V8* ptr);
 
+  v8::Local<V8> toLocal(v8::Isolate* isolate) {
+    return v8::Local<V8>::New(isolate, this);
+  }
+
+  operator T*() const { return m_holder; }
+  T* get() const { return m_holder; }
+
+  void setExtra(ExtraValues&& other) {
+    m_extra = new ExtraValues(std::move(other));
+  }
+
+  template <typename E>
+  Optional<E> getExtra(const size_t idx) const {
+    return reinterpret_cast<E*>((*m_extra)[idx]);
+  }
+
+  ValueWrap(ValueWrap<T, V8>&& src) {
+    m_holder = src.m_holder;
+    m_extra = src.m_extra;
+
+    src.m_holder = nullptr;
+    src.m_extra = nullptr;
+  }
+
+  ValueWrap(const ValueWrap<T, V8>& src) = delete;
+  const ValueWrap<T, V8>& operator=(const ValueWrap<T, V8>& src) = delete;
+  const ValueWrap<T, V8>& operator=(ValueWrap<T, V8>&& src) {
+    m_holder = src.m_holder;
+    src.m_holder = nullptr;
+    return *this;
+  }
+
+ private:
   ValueWrap(T* ptr) {
     if (std::is_same<ContextWrap, T>::value) {
       LWNODE_CHECK((std::is_same<v8::Context, V8>::value));
@@ -98,34 +137,11 @@ class ValueWrap : public HandleWrap {
     }
 
     setType(src->type());
+
     m_holder = src->m_holder;
+    m_extra = src->m_extra;
   }
 
-  ValueWrap(ValueWrap<T, V8>&& src) {
-    m_holder = src.m_holder;
-    src.m_holder = nullptr;
-  }
-
-  ValueWrap(const ValueWrap<T, V8>&) = delete;
-
-  const ValueWrap<T, V8>& operator=(const ValueWrap<T, V8>&) = delete;
-  const ValueWrap<T, V8>& operator=(ValueWrap<T, V8>&& src) {
-    m_holder = src.m_holder;
-    src.m_holder = nullptr;
-    return *this;
-  }
-
-  operator T*() { return m_holder; }
-
-  static ValueWrap<T, V8>* New(T* that);
-  static T* fromV8(v8::Local<V8> local);
-  static T* fromV8(V8* ptr);
-
-  v8::Local<V8> toLocal(v8::Isolate* isolate) {
-    return v8::Local<V8>::New(isolate, this);
-  }
-
-  T* get() { return m_holder; }
   T* reset() {
     if (m_holder) {
       T* ptr = m_holder;
@@ -137,6 +153,7 @@ class ValueWrap : public HandleWrap {
 
  private:
   T* m_holder = nullptr;
+  ExtraValues* m_extra = nullptr;
 };
 
 template <typename T, typename V8>
@@ -145,15 +162,21 @@ ValueWrap<T, V8>* ValueWrap<T, V8>::New(T* that) {
 }
 
 template <typename T, typename V8>
-T* ValueWrap<T, V8>::fromV8(v8::Local<V8> local) {
+Optional<T> ValueWrap<T, V8>::fromV8(v8::Local<V8> local) {
   ValueWrap<T, V8> value(*local);
   return value.get();
 }
 
 template <typename T, typename V8>
 T* ValueWrap<T, V8>::fromV8(V8* ptr) {
+  LWNODE_CHECK_NOT_NULL(ptr);
   ValueWrap<T, V8> value(ptr);
   return value.get();
+}
+
+template <typename T, typename V8>
+ValueWrap<T, V8> ValueWrap<T, V8>::ref(V8* ptr) {
+  return ValueWrap<T, V8>(ptr);
 }
 
 }  // namespace EscargotShim

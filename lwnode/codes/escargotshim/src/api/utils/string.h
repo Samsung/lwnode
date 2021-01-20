@@ -28,7 +28,7 @@ namespace EscargotShim {
 
 inline int stringLength(const char* string) {
   size_t len = strlen(string);
-  LWNODE_CHECK_GE(EscargotShim::Constants::kMaxStringLength, len);
+  LWNODE_CHECK(EscargotShim::Constants::kMaxStringLength >= len);
   return static_cast<int>(len);
 }
 
@@ -39,6 +39,6 @@ inline int stringLength(const uint8_t* string) {
 inline int stringLength(const uint16_t* string) {
   size_t length = 0;
   while (string[length] != '\0') length++;
-  LWNODE_CHECK_GE(EscargotShim::Constants::kMaxStringLength, length);
+  LWNODE_CHECK(EscargotShim::Constants::kMaxStringLength >= length);
   return static_cast<int>(length);
 }

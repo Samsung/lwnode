@@ -29,26 +29,34 @@
 
 - The postfix, `Ref`, stands for `Reference`. Thus, don't use it as a pointer `Ref*`.
 
-```
-typedef Escargot::ContextRef* JsContextRef; // (x)
+```diff
+- typedef Escargot::ContextRef* JsContextRef; // (x)
 ```
 
-
+* API Levels
+  * API level 1 : v8 apis
+  * API level 2 : EscargotShim apis (Wrapped Values)
+  * API level 3 : Escargot apis
+* In `api.cc` if there are same concepts among the API levels, use the following conventions:
+  * name a value of API level 3 (Escargot Value) with `__` .
+  * name a value of API level 2 (Wrapped Value) with `_`.
+  * name v8 Value without `_`.
 
 
 
 ## Sources
 
 ### Source regions
-```
-User apps (Node.js) -- v8 apis (`src/api.cc`) -- lwnode apis (`src/api`)
-```
 
-- In v8 apis, `api.cc`, `ValueWrap` should be used for type convertion between v8 and lwnode apis.
-- In lwnode apis,
-  - Use `Escargot type` for input params as many as possible.
-  - Use `ValueWrap` for input params isn't preferred.
-  - Use `v8 type` is allowed.
+|       Level 0       |        Level 1         |         Level 2         |       Level 3        |
+| :-----------------: | :--------------------: | :---------------------: | :------------------: |
+| User apps (Node.js) | v8 apis (`src/api.cc`) | lwnode apis (`src/api`) | js engine (escargot) |
+
+* In v8 apis, `api.cc`, `ValueWrap` should be used for type convertion between v8 and lwnode apis.
+* In lwnode apis
+  * Use `Escargot type` for input params as many as possible.
+  * Use `ValueWrap` for input params isn't preferred.
+  * Use `v8 type` is allowed.
 
 
 
@@ -148,6 +156,11 @@ return Local<Context>::New(external_isolate, value);
 ```
 
 
+
+### Exception Handling
+
+* `IsolateWrap::IsExecutionTerminating` returns true if a pending exception that should be thrown exists.
+* Scheduling throwing an excpetion can be set through `IsolateWrap::scheduleThrow`.
 
 
 
