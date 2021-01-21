@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -b | --build)
       BUILD_MODE_FIRST_LETTER_IN_UPPERCASE="$(tr '[:lower:]' '[:upper:]' <<< ${BUILD_MODE:0:1})${BUILD_MODE:1}"
-      build out/$BUILD_MODE_FIRST_LETTER_IN_UPPERCASE escargotshim_sample |& lwnode/tools2/colorize.sh
+      build out/$BUILD_MODE_FIRST_LETTER_IN_UPPERCASE escargotshim_sample |& lwnode/tools/colorize.sh
       ;;
     -r | --release)
       BUILD_MODE=release
