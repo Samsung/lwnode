@@ -128,8 +128,8 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
     Local<Value> result = script->BindToCurrentContext()->Run(context).ToLocalChecked();
 
     // Convert the result to an UTF8 string and print it.
-    // String::Utf8Value utf8(isolate, result);
-    // printf("%s\n", *utf8);
+    String::Utf8Value utf8(isolate, result);
+    printf("%s\n", *utf8);
 
     return 0;
   }

@@ -98,25 +98,19 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
   auto _value = VAL(this);
   auto _contextUsed = _value->getExtra<ContextWrap>(0).getChecked();
 
-  auto result = Evaluator::execute(
+  auto r = Evaluator::execute(
       _contextUsed->get(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
       _value->script());
 
-  if (!result.isSuccessful()) {
-    _isolate->scheduleThrow(result.error.get());
+  if (!r.isSuccessful()) {
+    _isolate->scheduleThrow(r.error.get());
     return MaybeLocal<Value>();
   }
 
-  auto __context = VAL(*context)->context()->get();
-  auto __resultString = result.resultOrErrorToString(__context);
-
-  // @todo remove this
-  puts(result.resultOrErrorToString(__context)->toStdUTF8String().data());
-
-  return Local<Value>::New(_isolate->toV8(), new ValueWrap(__resultString));
+  return Local<Value>::New(_isolate->toV8(), new ValueWrap(r.result));
 }
 
 Local<Value> ScriptOrModule::GetResourceName() {
@@ -335,4 +329,4 @@ MaybeLocal<Script> Script::Compile(Local<Context> context,
   return ScriptCompiler::Compile(context, &script_source);
 }
 
-}
+}  // namespace v8

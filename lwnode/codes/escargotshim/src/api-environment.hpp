@@ -1515,11 +1515,35 @@ bool MicrotasksScope::IsRunningMicrotasks(Isolate* v8_isolate) {
 
 String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
-  LWNODE_UNIMPLEMENT;
+  auto _isolate = IsolateWrap::fromV8(isolate);
+  auto _context = _isolate->CurrentContext();
+  auto _value = VAL(*obj);
+
+  auto r = Evaluator::execute(
+      _context->get(),
+      [](ExecutionStateRef* state, ValueRef* value) -> ValueRef* {
+        return value->toString(state);
+      },
+      _value->value());
+
+  if (!r.isSuccessful()) {
+    return;
+  }
+
+  auto str = r.result->asString()->toStdUTF8String();
+
+  length_ = str.size();
+  if (length_ == 0) {
+    return;
+  }
+
+  str_ = new char[length_ + 1];
+  strncpy(str_, str.data(), length_);
+  str_[length_] = '\0';
 }
 
 String::Utf8Value::~Utf8Value() {
-  LWNODE_UNIMPLEMENT;
+  delete[] str_;
 }
 
 String::Value::Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
@@ -1555,4 +1579,4 @@ Local<Message> Exception::CreateMessage(Isolate* isolate,
 Local<StackTrace> Exception::GetStackTrace(Local<Value> exception) {
   LWNODE_RETURN_LOCAL(StackTrace);
 }
-}
+}  // namespace v8

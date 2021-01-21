@@ -33,7 +33,7 @@ typedef GCContainer<void*> ExtraValues;
 
 class HandleWrap : public gc {
  public:
-  enum Type {
+  enum Type : uint8_t {
     Context = 0,
     Script,
     JsValue,
