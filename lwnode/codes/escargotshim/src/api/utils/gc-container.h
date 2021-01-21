@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include <GCUtil.h>
 #include <EscargotPublic.h>
+#include <cstdarg>
+
 #include "misc.h"
 
 namespace EscargotShim {
@@ -27,13 +28,20 @@ class GCContainer {
  public:
   GCContainer() {}
 
-  explicit GCContainer(size_t size) {
+  explicit GCContainer(const size_t size, ...) {
     if (size) {
       m_buffer = (T*)Escargot::Memory::gcMalloc(sizeof(T) * size);
       m_size = size;
       for (size_t i = 0; i < size; i++) {
         new (&m_buffer[i]) T();
       }
+
+      std::va_list args;
+      va_start(args, size);
+      for (size_t i = 0; i < size; ++i) {
+        m_buffer[i] = va_arg(args, T);
+      }
+      va_end(args);
     } else {
       m_buffer = nullptr;
       m_size = 0;

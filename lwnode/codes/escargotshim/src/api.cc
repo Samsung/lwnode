@@ -39,9 +39,7 @@
 using namespace Escargot;
 using namespace EscargotShim;
 
-#define API_INIT_VALUE_AND_THAT(T, V8)                                         \
-  auto _value = ValueWrap<T, V8>::ref(this);                                   \
-  auto __that = _value.get();
+#define VAL(that) reinterpret_cast<const ValueWrap*>(that)
 
 #define PRIVATE_UTIL_1(_isolate, bailout_value)                                \
   if (_isolate->IsExecutionTerminating()) {                                    \
@@ -53,10 +51,11 @@ using namespace EscargotShim;
   PRIVATE_UTIL_1(_isolate, bailout_value)
 
 #define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
-  auto _isolate =                                                              \
-      context.IsEmpty()                                                        \
-          ? IsolateWrap::currentIsolate()                                      \
-          : ValueWrap<ContextWrap, Context>::fromV8(context)->GetIsolate();    \
+  auto _isolate = context.IsEmpty()                                            \
+                      ? IsolateWrap::currentIsolate()                          \
+                      : ValueWrap(reinterpret_cast<ValueWrap*>(*context))      \
+                            .context()                                         \
+                            ->GetIsolate();                                    \
   PRIVATE_UTIL_1(_isolate, bailout_value)
 
 namespace i = v8::internal;
@@ -432,11 +431,11 @@ void SealHandleScope::operator delete[](void*, size_t) {
 }
 
 void Context::Enter() {
-  ValueWrap<ContextWrap, Context>::fromV8(this)->Enter();
+  ValueWrap(reinterpret_cast<ValueWrap*>(this)).context()->Enter();
 }
 
 void Context::Exit() {
-  ValueWrap<ContextWrap, Context>::fromV8(this)->Exit();
+  ValueWrap(reinterpret_cast<ValueWrap*>(this)).context()->Exit();
 }
 
 Context::BackupIncumbentScope::BackupIncumbentScope(
@@ -725,19 +724,16 @@ Local<Script> UnboundScript::BindToCurrentContext() {
 
     @note ValueWrap includes an extra space to carry the gc objects above.
   */
-  auto unboundScriptValue = ValueWrap<ScriptRef, UnboundScript>::ref(this);
-  auto scriptValue = ValueWrap<ScriptRef, Script>::New(unboundScriptValue);
 
-  // get `isolate` used during compiling this script.
-  IsolateWrap* _isolateUsed =
-      unboundScriptValue.getExtra<IsolateWrap>(0).getChecked();
+  auto _unboundscript = VAL(this);
+  auto _isolateUsed = _unboundscript->getExtra<IsolateWrap>(0).getChecked();
+  auto _script = ValueWrap::createScript(_unboundscript->script());
 
   // add the `current context` into this ValueWrap for Script
-  ExtraValues extra(1);
-  extra[0] = _isolateUsed->CurrentContext();
-  scriptValue->setExtra(std::move(extra));
+  ExtraValues extra(1, _isolateUsed->CurrentContext());
+  _script->setExtra(std::move(extra));
 
-  return scriptValue->toLocal(IsolateWrap::currentIsolate()->toV8());
+  return Local<Script>::New(IsolateWrap::currentIsolate()->toV8(), _script);
 }
 
 int UnboundScript::GetId() {
@@ -762,29 +758,29 @@ Local<Value> UnboundScript::GetSourceMappingURL() {
 
 MaybeLocal<Value> Script::Run(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
-  API_INIT_VALUE_AND_THAT(ScriptRef, Script);
 
-  auto _contextUsed = _value.getExtra<ContextWrap>(0).getChecked();
+  auto _value = VAL(this);
+  auto _contextUsed = _value->getExtra<ContextWrap>(0).getChecked();
+
   auto result = Evaluator::execute(
       _contextUsed->get(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
-      __that);
+      _value->script());
 
   if (!result.isSuccessful()) {
     _isolate->scheduleThrow(result.error.get());
     return MaybeLocal<Value>();
   }
 
-  auto __context = ValueWrap<ContextWrap, Context>::fromV8(*context)->get();
+  auto __context = VAL(*context)->context()->get();
   auto __resultString = result.resultOrErrorToString(__context);
 
   // @todo remove this
   puts(result.resultOrErrorToString(__context)->toStdUTF8String().data());
 
-  return ValueWrap<StringRef, String>::New(__resultString)
-      ->toLocal(_isolate->toV8());
+  return Local<Value>::New(_isolate->toV8(), new ValueWrap(__resultString));
 }
 
 Local<Value> ScriptOrModule::GetResourceName() {
@@ -906,8 +902,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
   // AtomicStrings. Why not a VmInstance instead of a Context? Context isn't
   // related to compiling scripts.
 
-  auto __source =
-      ValueWrap<StringRef, String>::fromV8(source->source_string).getChecked();
+  auto __source = VAL(*source->source_string)->value()->asString();
   auto __resource_name = StringRef::emptyString();
 
   if (!source->resource_name.IsEmpty()) {
@@ -922,13 +917,12 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
     return MaybeLocal<UnboundScript>();
   }
 
-  auto newValue = ValueWrap<ScriptRef, UnboundScript>::New(result.script.get());
+  // wrap the parsed script with the current isolate
+  auto _value = ValueWrap::createScript(result.script.get());
+  ExtraValues extra(1, _isolate);
+  _value->setExtra(std::move(extra));
 
-  ExtraValues extra(1);
-  extra[0] = _isolate;
-  newValue->setExtra(std::move(extra));
-
-  return newValue->toLocal(v8_isolate);
+  return Local<UnboundScript>::New(v8_isolate, _value);
 }
 
 MaybeLocal<Script> ScriptCompiler::Compile(Local<Context> context,
@@ -1510,13 +1504,25 @@ bool Value::IsModuleNamespaceObject() const {
 }
 
 MaybeLocal<String> Value::ToString(Local<Context> context) const {
-    LWNODE_RETURN_LOCAL(String)}
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
+
+  auto __value = VAL(this)->value();
+  if (__value->isString()) {
+    return Local<String>::New(_isolate->toV8(), new ValueWrap(__value));
+  }
+
+  LWNODE_UNIMPLEMENT;
+
+  LWNODE_RETURN_LOCAL(String);
+}
 
 MaybeLocal<String> Value::ToDetailString(Local<Context> context) const {
-    LWNODE_RETURN_LOCAL(String)}
+  LWNODE_RETURN_LOCAL(String);
+}
 
 MaybeLocal<Object> Value::ToObject(Local<Context> context) const {
-    LWNODE_RETURN_LOCAL(Object)}
+  LWNODE_RETURN_LOCAL(Object);
+}
 
 MaybeLocal<BigInt> Value::ToBigInt(Local<Context> context) const {
   LWNODE_RETURN_LOCAL(BigInt)
@@ -2459,10 +2465,11 @@ Local<Context> v8::Context::New(
     LWNODE_UNIMPLEMENT;
   }
 
-  auto _context = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
-  auto _newValue = ValueWrap<ContextWrap, Context>::New(_context);
-
-  return _newValue->toLocal(external_isolate);
+  auto _context =
+      ValueWrap::createContext(IsolateWrap::fromV8(external_isolate));
+  auto l = Local<Context>::New(external_isolate, _context);
+  return l;
+  return Local<Context>::New(external_isolate, _context);
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -2618,8 +2625,7 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
     if (length < 0) length = stringLength(data);
 
     StringRef* source = StringRef::createFromUTF8(data, length);
-    HandleWrap* value = ValueWrap<StringRef, String>::New(source);
-    result = Local<String>::New(isolate, value);
+    result = Local<String>::New(isolate, new ValueWrap(source));
   }
 
   return result;

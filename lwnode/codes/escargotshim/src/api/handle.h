@@ -27,11 +27,14 @@
 namespace EscargotShim {
 
 class ContextWrap;
+class IsolateWrap;
+
+typedef GCContainer<void*> ExtraValues;
 
 class HandleWrap : public gc {
  public:
   enum Type {
-    Context,
+    Context = 0,
     Script,
     JsValue,
     ObjectTemplate,
@@ -39,45 +42,29 @@ class HandleWrap : public gc {
     Unknown,
   };
 
-  HandleWrap(Type type) : m_type(type) {}
-
   Type type() const { return m_type; }
-  void setType(Type type) { m_type = type; }
 
  protected:
   HandleWrap() = default;
-
- private:
-  Type m_type = Type::Unknown;
+  Type m_type = Unknown;
 };
 
-typedef GCContainer<void*> ExtraValues;
-
-template <typename T, typename V8>
 class ValueWrap : public HandleWrap {
  public:
-  static ValueWrap<T, V8>* New(T* that);
-  static Optional<T> fromV8(v8::Local<V8> local);
-  static T* fromV8(V8* ptr);
-  static ValueWrap<T, V8> ref(V8* ptr);
-
-  v8::Local<V8> toLocal(v8::Isolate* isolate) {
-    return v8::Local<V8>::New(isolate, this);
+  ValueWrap(Escargot::ValueRef* __value) {
+    LWNODE_CHECK_NOT_NULL(__value);
+    m_type = Type::JsValue;
+    m_holder = __value;
   }
 
-  operator T*() const { return m_holder; }
-  T* get() const { return m_holder; }
-
-  void setExtra(ExtraValues&& other) {
-    m_extra = new ExtraValues(std::move(other));
+  ValueWrap(ValueWrap* src) {
+    LWNODE_CHECK_NOT_NULL(src);
+    m_type = src->m_type;
+    m_holder = src->m_holder;
+    m_extra = src->m_extra;
   }
 
-  template <typename E>
-  Optional<E> getExtra(const size_t idx) const {
-    return reinterpret_cast<E*>((*m_extra)[idx]);
-  }
-
-  ValueWrap(ValueWrap<T, V8>&& src) {
+  ValueWrap(ValueWrap&& src) {
     m_holder = src.m_holder;
     m_extra = src.m_extra;
 
@@ -85,98 +72,40 @@ class ValueWrap : public HandleWrap {
     src.m_extra = nullptr;
   }
 
-  ValueWrap(const ValueWrap<T, V8>& src) = delete;
-  const ValueWrap<T, V8>& operator=(const ValueWrap<T, V8>& src) = delete;
-  const ValueWrap<T, V8>& operator=(ValueWrap<T, V8>&& src) {
-    m_holder = src.m_holder;
-    src.m_holder = nullptr;
-    return *this;
+  ValueWrap(const ValueWrap& src) = delete;
+  const ValueWrap& operator=(const ValueWrap& src) = delete;
+  const ValueWrap& operator=(ValueWrap&& src) = delete;
+
+  // Extra
+  void setExtra(ExtraValues&& other) {
+    m_extra = new ExtraValues(std::move(other));
   }
+  template <typename E>
+  Optional<E> getExtra(const size_t idx) const {
+    return reinterpret_cast<E*>((*m_extra)[idx]);
+  }
+
+  // Value
+  Escargot::ValueRef* value() const { return m_holder; }
+
+  // Context
+  // @todo: use factory to create Escargot instances
+  static ValueWrap* createContext(IsolateWrap* _isolate);
+  ContextWrap* context() const;
+
+  // Script
+  static ValueWrap* createScript(Escargot::ScriptRef* __script);
+  Escargot::ScriptRef* script() const;
 
  private:
-  ValueWrap(T* ptr) {
-    if (std::is_same<ContextWrap, T>::value) {
-      LWNODE_CHECK((std::is_same<v8::Context, V8>::value));
-      setType(HandleWrap::Type::Context);
-
-    } else if (std::is_same<Escargot::ScriptRef, T>::value) {
-      LWNODE_CHECK((std::is_same<v8::Script, V8>::value) ||
-                   (std::is_same<v8::UnboundScript, V8>::value));
-      setType(HandleWrap::Type::Script);
-
-    } else if (std::is_base_of<Escargot::ValueRef, T>::value) {
-      LWNODE_CHECK((std::is_base_of<v8::Value, V8>::value));
-      setType(HandleWrap::Type::JsValue);
-
-    } else {
-      LWNODE_CHECK_MSG(false, "No matched type");
-    }
-
-    m_holder = ptr;
+  // `void*` must be wrapped along with a type inside ValueWrap
+  ValueWrap(void* ptr, HandleWrap::Type type) {
+    m_type = type;
+    m_holder = reinterpret_cast<Escargot::ValueRef*>(ptr);
   }
 
-  ValueWrap(V8* ptr) {
-    auto base = reinterpret_cast<HandleWrap*>(ptr);
-    auto src = static_cast<ValueWrap<T, V8>*>(base);
-
-    if (std::is_same<v8::Context, V8>::value) {
-      LWNODE_CHECK((std::is_same<ContextWrap, T>::value));
-      LWNODE_CHECK(src->type() == HandleWrap::Type::Context);
-
-    } else if (std::is_same<v8::Script, V8>::value ||
-               std::is_same<v8::UnboundScript, V8>::value) {
-      LWNODE_CHECK((std::is_same<Escargot::ScriptRef, T>::value));
-      LWNODE_CHECK(src->type() == HandleWrap::Type::Script);
-
-    } else if (std::is_base_of<v8::Value, V8>::value) {
-      LWNODE_CHECK((std::is_base_of<Escargot::ValueRef, T>::value));
-      LWNODE_CHECK(src->type() == HandleWrap::Type::JsValue);
-
-    } else {
-      LWNODE_CHECK_MSG(false, "No matched type");
-    }
-
-    setType(src->type());
-
-    m_holder = src->m_holder;
-    m_extra = src->m_extra;
-  }
-
-  T* reset() {
-    if (m_holder) {
-      T* ptr = m_holder;
-      m_holder = nullptr;
-      return ptr;
-    }
-    return nullptr;
-  }
-
- private:
-  T* m_holder = nullptr;
+  Escargot::ValueRef* m_holder = nullptr;
   ExtraValues* m_extra = nullptr;
 };
-
-template <typename T, typename V8>
-ValueWrap<T, V8>* ValueWrap<T, V8>::New(T* that) {
-  return new ValueWrap<T, V8>(that);
-}
-
-template <typename T, typename V8>
-Optional<T> ValueWrap<T, V8>::fromV8(v8::Local<V8> local) {
-  ValueWrap<T, V8> value(*local);
-  return value.get();
-}
-
-template <typename T, typename V8>
-T* ValueWrap<T, V8>::fromV8(V8* ptr) {
-  LWNODE_CHECK_NOT_NULL(ptr);
-  ValueWrap<T, V8> value(ptr);
-  return value.get();
-}
-
-template <typename T, typename V8>
-ValueWrap<T, V8> ValueWrap<T, V8>::ref(V8* ptr) {
-  return ValueWrap<T, V8>(ptr);
-}
 
 }  // namespace EscargotShim

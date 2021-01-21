@@ -123,16 +123,14 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
 
     // Enter the context for compiling and running the hello world script.
     Context::Scope context_scope(context);
-    Local<Value> result;
 
     // Run the script to get the result.
-    if(script->BindToCurrentContext()->Run(context).ToLocal(&result)) {
-      return 1;
-    }
+    Local<Value> result = script->BindToCurrentContext()->Run(context).ToLocalChecked();
 
     // Convert the result to an UTF8 string and print it.
-    // String::Utf8Value utf8(result);
+    // String::Utf8Value utf8(isolate, result);
     // printf("%s\n", *utf8);
+
     return 0;
   }
 

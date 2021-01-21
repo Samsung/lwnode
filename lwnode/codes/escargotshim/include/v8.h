@@ -33,8 +33,6 @@
 // @lwnode
 namespace EscargotShim{
 class HandleWrap;
-template <class Escargot, class V8>
-class ValueWrap;
 }
 namespace e = EscargotShim;
 // end of @lwnode
@@ -349,8 +347,46 @@ class Local {
 
 // @lwnode
 private:
-  template <class Escargot, class V8>
-  friend class e::ValueWrap;
+  friend class Script;
+  friend class Module;
+  friend class String;
+  friend class Symbol;
+  friend class Array;
+  friend class ArrayBuffer;
+  friend class ArrayBufferView;
+  friend class Uint8Array;
+  friend class Int8Array;
+  friend class Uint8ClampedArray;
+  friend class Uint16Array;
+  friend class Int16Array;
+  friend class Uint32Array;
+  friend class Int32Array;
+  friend class BigInt64Array;
+  friend class BigUint64Array;
+  friend class Float32Array;
+  friend class Float64Array;
+  friend class DataView;
+  friend class Map;
+  friend class Set;
+  friend class Integer;
+  friend class Number;
+  friend class Value;
+  friend class FunctionTemplate;
+  friend class ObjectTemplate;
+  friend class Function;
+  friend class External;
+  friend class Exception;
+  friend class SharedArrayBuffer;
+  friend class Signature;
+  friend class TryCatch;
+  friend class Context;
+  friend class Isolate;
+  friend class Promise;
+  friend class UnboundScript;
+  friend class ScriptCompiler;
+  friend class EscapableHandleScope;
+  friend class PrimitiveArray;
+  friend class ValueDeserializer;
   V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
 // end of @lwnode
 };
@@ -10774,9 +10810,14 @@ template <class T>
 Local<T> Local<T>::New(Isolate* isolate, T* that) {
   if (that == nullptr) return Local<T>();
   T* that_ptr = that;
-  internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
+  // @lwnode
+  // internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
+  // return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
+  //     reinterpret_cast<internal::Isolate*>(isolate), *p)));
+  internal::Address p = reinterpret_cast<internal::Address>(that_ptr);
   return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
-      reinterpret_cast<internal::Isolate*>(isolate), *p)));
+      reinterpret_cast<internal::Isolate*>(isolate), p)));
+  // end of @lwnode
 }
 
 // @lwnode
