@@ -21,8 +21,9 @@
 namespace EscargotShim {
 
 /*
-    Note:
-    NodeArrayBufferAllocator, DebuggingArrayBufferAllocator (Node.js)
+  @note this is mainly for Allocator::NewDefaultAllocator
+  Node.js recommends NodeArrayBufferAllocator or
+  DebuggingArrayBufferAllocator for embedders.
 */
 
 class Allocator : public v8::ArrayBuffer::Allocator {
@@ -43,8 +44,8 @@ class Allocator : public v8::ArrayBuffer::Allocator {
   }
 
  private:
-  static size_t currentMemorySize = 0;
-  static size_t peakMemorySize = 0;
+  static size_t currentMemorySize;
+  static size_t peakMemorySize;
 };
 
 }  // namespace EscargotShim

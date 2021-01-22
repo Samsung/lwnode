@@ -28,7 +28,7 @@
         'src/libplatform/tracing/trace-config.cc',
         'src/libplatform/tracing/trace-object.cc',
         'src/libplatform/tracing/trace-writer.cc',
-        'src/api/escargot-app.cc',
+        'src/api/engine.cc',
         'src/api/escargot-util.cc',
         'src/api/handle.cc',
         'src/api/handlescope.cc',

@@ -19,15 +19,22 @@
 
 namespace EscargotShim {
 
-ContextWrap::ContextWrap(IsolateWrap* isolate) {
-  m_isolate = isolate;
-  m_context = isolate->createContext();
-  isolate->initializeGlobal(m_context);
+static bool createGlobals(ContextRef* context) {
+#if defined(HOST_TIZEN)
+// @todo setup device APIs
+#endif
+  return true;
 }
 
-ContextWrap::~ContextWrap() {}
+ContextWrap::ContextWrap(IsolateWrap* isolate) {
+  m_isolate = isolate;
+  m_context = ContextRef::create(isolate->vmInstance());
+
+  createGlobals(m_context);
+}
 
 ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
+  LWNODE_CHECK_NOT_NULL(isolate);
   auto context = new ContextWrap(isolate);
   return context;
 }

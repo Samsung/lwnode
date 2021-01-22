@@ -7,8 +7,9 @@
   },
   'target_defaults': {
     'defines': [],
+    'cflags!': [ '-Wno-error' ],
     'cflags': [
-      '-Wall', '-Wextra', '-Wno-error',
+      '-Wall', '-Wextra', '-Werror',
       '-Wno-unused-variable',
       '-Wno-unused-function',
       '-Wno-unused-but-set-variable',
@@ -18,7 +19,7 @@
     },
     'configurations': {
       'Debug': {
-        'cflags': [ '-g', '-O0' ],
+        'cflags': [ '-g', '-O0', '-Werror' ],
       },
       'Release': {
         'defines': ['NDEBUG'],

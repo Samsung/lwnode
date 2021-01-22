@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "escargot-app.h"
+#include "engine.h"
+#include "allocator.h"
 #include "utils/string.h"
 
 using namespace Escargot;
@@ -276,6 +277,12 @@ static ValueRef* builtinGc(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 }
 
+// --- P l a t f o r m ---
+Platform::Platform(v8::ArrayBuffer::Allocator* allocator) {
+  LWNODE_CHECK_NOT_NULL(allocator);
+  m_allocator = allocator;
+}
+
 void Platform::didPromiseJobEnqueued(ContextRef* relatedContext,
                                      PromiseObjectRef* obj) {
   // ignore. we always check pending job after eval script
@@ -285,13 +292,13 @@ void Platform::didPromiseJobEnqueued(ContextRef* relatedContext,
 void* Platform::onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
                                                     ArrayBufferObjectRef* obj,
                                                     size_t sizeInByte) {
-  return calloc(sizeInByte, 1);
+  return m_allocator->Allocate(sizeInByte);
 }
 
 void Platform::onArrayBufferObjectDataBufferFree(ContextRef* whereObjectMade,
                                                  ArrayBufferObjectRef* obj,
                                                  void* buffer) {
-  return free(buffer);
+  return m_allocator->Free(buffer, obj->byteLength());
 }
 
 PlatformRef::LoadModuleResult Platform::onLoadModule(
@@ -363,11 +370,26 @@ void Platform::hostImportModuleDynamically(ContextRef* relatedContext,
                                            StringRef* src,
                                            PromiseObjectRef* promise) {}
 
-App::App() {}
+// --- E n g i n e ---
 
-App::~App() {}
+static Engine* s_engine;
 
-void App::initialize() {
+bool Engine::Initialize() {
+  static Engine _engine;
+
+  if (s_engine == nullptr) {
+    s_engine = &_engine;
+    s_engine->initialize();
+  }
+  return true;
+}
+
+bool Engine::TearDown() {
+  s_engine->finalize();
+  return true;
+}
+
+void Engine::initialize() {
 #ifndef NDEBUG
   setbuf(stdout, NULL);
   setbuf(stderr, NULL);
@@ -381,31 +403,13 @@ void App::initialize() {
 #endif
   Globals::initialize();
   Memory::setGCFrequency(24);
-
-  // Create a platform
-  Platform* platform = new Platform();
-
-  // Create a new VMInstance and make a Context.
-  _instance = VMInstanceRef::create(platform);
-  _instance->setOnVMInstanceDelete(
-      [](VMInstanceRef* instance) { delete instance->platform(); });
-
-  // NOTE: Any execution upon this context is NOT allowed. It intends for
-  // compiling source only.
-  _context = ContextRef::create(_instance);
-
-  _isInitialized = true;
 }
 
-void App::deinitialize() {
-  // Dispose the instance and tear down Escargot.
-  _context.release();
-
-  _instance.release();
+void Engine::finalize() {
   Globals::finalize();
 }
 
-bool App::initializeGlobal(ContextRef* context) {
+bool Engine::createDefaultGlobals(ContextRef* context) {
   Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
     ContextRef* context = state->context();
     {
@@ -496,22 +500,23 @@ bool App::initializeGlobal(ContextRef* context) {
   return true;
 }
 
-bool App::evalScript(ContextRef* context,
-                     const char* str,
-                     const char* fileName,
-                     bool shouldPrintScriptResult,
-                     bool isModule) {
+bool Engine::evalScript(ContextRef* context,
+                        const char* str,
+                        const char* fileName,
+                        bool shouldPrintScriptResult,
+                        bool isModule) {
   auto strRef = StringRef::createFromUTF8(str, stringLength(str));
-  auto fileNameRef = StringRef::createFromUTF8(fileName, stringLength(fileName));
+  auto fileNameRef =
+      StringRef::createFromUTF8(fileName, stringLength(fileName));
   return evalScript(
       context, strRef, fileNameRef, shouldPrintScriptResult, isModule);
 }
 
-bool App::evalScript(ContextRef* context,
-                     StringRef* str,
-                     StringRef* fileName,
-                     bool shouldPrintScriptResult,
-                     bool isModule) {
+bool Engine::evalScript(ContextRef* context,
+                        StringRef* str,
+                        StringRef* fileName,
+                        bool shouldPrintScriptResult,
+                        bool isModule) {
   if (stringEndsWith(fileName->toStdUTF8String(), "mjs")) {
     isModule = isModule || true;
   }

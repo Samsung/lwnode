@@ -19,16 +19,16 @@
 #include <EscargotPublic.h>
 #include <v8.h>
 
+#include "engine.h"
 #include "handlescope.h"
 #include "utils/compiler.h"
 #include "utils/gc.h"
-#include "escargot-app.h"
 
 namespace EscargotShim {
 
 class ContextWrap;
 
-class IsolateWrap : public App {
+class IsolateWrap : public gc {
  public:
   virtual ~IsolateWrap();
 
@@ -49,25 +49,19 @@ class IsolateWrap : public App {
     return reinterpret_cast<IsolateWrap*>(iso);
   }
 
-  v8::Isolate* toV8() {
-    return reinterpret_cast<v8::Isolate*>(this);
-  }
+  v8::Isolate* toV8() { return reinterpret_cast<v8::Isolate*>(this); }
 
   // V8 internals
   void set_array_buffer_allocator_shared(
       std::shared_ptr<v8::ArrayBuffer::Allocator> allocator) {
     m_array_buffer_allocator_shared = std::move(allocator);
   }
-
   void set_array_buffer_allocator(v8::ArrayBuffer::Allocator* allocator) {
     m_array_buffer_allocator = allocator;
   }
   v8::ArrayBuffer::Allocator* array_buffer_allocator() const {
     return m_array_buffer_allocator;
   }
-
-  ContextRef* createContext();
-  bool initializeGlobal(ContextRef* context);
 
   // @desc Gets the currently entered isolate.
   static IsolateWrap* currentIsolate();
@@ -86,6 +80,13 @@ class IsolateWrap : public App {
   void scheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
 
+  VMInstanceRef* get() { return m_vmInstance; }
+  VMInstanceRef* vmInstance() { return m_vmInstance; }
+  ScriptParserRef* scriptParser() {
+    LWNODE_CHECK_NOT_NULL(m_pureContext);
+    return m_pureContext->scriptParser();
+  }
+
  private:
   IsolateWrap();
 
@@ -101,6 +102,9 @@ class IsolateWrap : public App {
   std::shared_ptr<v8::ArrayBuffer::Allocator> m_array_buffer_allocator_shared;
 
   bool m_hasScheduledThrow = false;
+
+  VMInstanceRef* m_vmInstance;
+  ContextRef* m_pureContext;
 };
 
 }  // namespace EscargotShim

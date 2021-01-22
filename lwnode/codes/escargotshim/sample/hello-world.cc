@@ -83,16 +83,15 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
   // Initialize V8.
   /* V8::InitializeICUDefaultLocation(argv[0]);
     V8::InitializeExternalStartupData(argv[0]); */
-  // Platform* platform = platform::CreateDefaultPlatform();
+  // v8::Platform* platform = platform::CreateDefaultPlatform();
   // V8::InitializePlatform(platform);
   V8::Initialize();
-
-  printf("start escargotshim sample\n");
 
   // Create a new Isolate and make it the current one.
   Isolate::CreateParams create_params;
   create_params.array_buffer_allocator =
       v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+  // @check use create_params.array_buffer_allocator_shared
 
   Isolate* isolate = Isolate::New(create_params);
   {
@@ -136,9 +135,10 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
   // Dispose the isolate and tear down V8.
   isolate->Dispose();
   V8::Dispose();
+
   // V8::ShutdownPlatform();
   // delete platform;
-  /* delete create_params.array_buffer_allocator; */
+  delete create_params.array_buffer_allocator; // @check node do this?
   return 0;
 }
 

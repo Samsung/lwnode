@@ -18,6 +18,7 @@
 
 #include <EscargotPublic.h>
 #include <string.h>
+#include <v8.h>
 #include <vector>
 
 #include "utils/gc.h"
@@ -28,6 +29,8 @@ namespace EscargotShim {
 
 class Platform : public PlatformRef {
  public:
+  Platform(v8::ArrayBuffer::Allocator* allocator);
+
   void didPromiseJobEnqueued(ContextRef* relatedContext,
                              PromiseObjectRef* obj) override;
   void* onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
@@ -51,37 +54,32 @@ class Platform : public PlatformRef {
                          ContextRef*,
                          PersistentRefHolder<ScriptRef>>>
       loadedModules;
+
+ private:
+  v8::ArrayBuffer::Allocator* m_allocator = nullptr;
 };
 
-class App : public gc {
+class Engine {
  public:
-  App();
-  virtual ~App();
+  Engine() = default;
 
- public:
+  static bool Initialize();
+  static bool TearDown();
+
   static bool evalScript(ContextRef* context,
                          const char* str,
                          const char* fileName,
                          bool shouldPrintScriptResult,
                          bool isModule);
-
   static bool evalScript(ContextRef* context,
                          StringRef* str,
                          StringRef* fileName,
                          bool shouldPrintScriptResult,
                          bool isModule);
-
-  VMInstanceRef* vmInstance() { return _instance; }
-  ScriptParserRef* scriptParser() { return _context->scriptParser(); }
-
- protected:
-  void initialize();
-  void deinitialize();
+  static bool createDefaultGlobals(ContextRef* context);
 
  private:
-  PersistentRefHolder<VMInstanceRef> _instance;
-  PersistentRefHolder<ContextRef> _context;
-  bool _isInitialized = false;
-  bool initializeGlobal(ContextRef* context);
+  void initialize();
+  void finalize();
 };
 }  // namespace EscargotShim

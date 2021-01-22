@@ -25,9 +25,6 @@ class IsolateWrap;
 
 class ContextWrap : public gc {
  public:
-  ContextWrap(IsolateWrap* isolate);
-  virtual ~ContextWrap();
-
   static ContextWrap* New(IsolateWrap* isolate);
 
   void Enter();
@@ -37,6 +34,8 @@ class ContextWrap : public gc {
   Escargot::ContextRef* get() { return m_context; }
 
  private:
+  ContextWrap(IsolateWrap* isolate);
+
   IsolateWrap* m_isolate;
   Escargot::ContextRef* m_context;
 };

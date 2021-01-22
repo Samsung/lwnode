@@ -17,14 +17,17 @@
 namespace v8 {
 // --- E n v i r o n m e n t ---
 
-void v8::V8::InitializePlatform(Platform* platform) {}
+void v8::V8::InitializePlatform(Platform* platform) {
+  /* NOTHING TO DO */
+}
 
 void v8::V8::ShutdownPlatform() {
-  LWNODE_RETURN_VOID;
+  /* NOTHING TO DO */
 }
 
 bool v8::V8::Initialize(const int build_config) {
-  LWNODE_RETURN_FALSE;
+  Engine::Initialize();
+  return true;
 }
 
 bool V8::TryHandleSignal(int signum, void* info, void* context) {
@@ -51,6 +54,7 @@ void v8::V8::SetReturnAddressLocationResolver(
 }
 
 bool v8::V8::Dispose() {
+  Engine::TearDown();
   LWNODE_RETURN_FALSE;
 }
 

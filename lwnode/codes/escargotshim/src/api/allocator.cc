@@ -19,6 +19,9 @@
 
 namespace EscargotShim {
 
+size_t Allocator::currentMemorySize = 0;
+size_t Allocator::peakMemorySize = 0;
+
 void* Allocator::Allocate(size_t length) {
   currentMemorySize += length;
   if (currentMemorySize > peakMemorySize) peakMemorySize = currentMemorySize;

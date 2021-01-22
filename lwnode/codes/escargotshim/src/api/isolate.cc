@@ -24,9 +24,7 @@ namespace EscargotShim {
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
-IsolateWrap::IsolateWrap() {
-  initialize();
-}
+IsolateWrap::IsolateWrap() {}
 
 IsolateWrap::~IsolateWrap() {}
 
@@ -36,7 +34,11 @@ IsolateWrap* IsolateWrap::New() {
 }
 
 void IsolateWrap::Dispose() {
-  deinitialize();
+  // @check
+  // GCVector<HandleScopeWrap*> m_handleScopes;
+  // GCVector<ContextWrap*> m_contexts;
+  // m_pureContext.release();
+  // m_vmInstance.release();
 }
 
 bool IsolateWrap::IsExecutionTerminating() {
@@ -71,11 +73,20 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     isolate->set_array_buffer_allocator(allocator.get());
     isolate->set_array_buffer_allocator_shared(std::move(allocator));
   } else {
-    LWNODE_CHECK_NOT_NULL(params.array_buffer_allocator);
     isolate->set_array_buffer_allocator(params.array_buffer_allocator);
   }
 
-  //@todo: set escargot array allocator
+  LWNODE_CHECK_NOT_NULL(m_array_buffer_allocator);
+
+  m_vmInstance = VMInstanceRef::create(new Platform(m_array_buffer_allocator));
+  m_vmInstance->setOnVMInstanceDelete([](VMInstanceRef* instance) {
+    // @check this callback is invoked on termination.
+    delete instance->platform();
+  });
+
+  // @note any execution upon this context is NOT allowed. It intends for
+  // compiling source only.
+  m_pureContext = ContextRef::create(m_vmInstance);
 }
 
 void IsolateWrap::Enter() {
@@ -98,17 +109,6 @@ void IsolateWrap::Exit() {
 
 IsolateWrap* IsolateWrap::currentIsolate() {
   return s_currentIsolate;
-}
-
-ContextRef* IsolateWrap::createContext() {
-  return ContextRef::create(vmInstance());
-}
-
-bool IsolateWrap::initializeGlobal(ContextRef* context) {
-#if defined(HOST_TIZEN)
-// TODO: setup device APIs
-#endif
-  return true;
 }
 
 void IsolateWrap::pushHandleScope(v8::HandleScope* handleScope) {
