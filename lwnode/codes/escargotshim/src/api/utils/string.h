@@ -20,9 +20,8 @@
 namespace EscargotShim {
   class Constants {
     public:
-      static constexpr int kApiSystemPointerSize = sizeof(void*);
       static constexpr int kMaxStringLength =
-        kApiSystemPointerSize == 4 ? (1 << 28) - 16 : (1 << 29) - 24;
+        sizeof(void*) == 4 ? (1 << 28) - 16 : (1 << 29) - 24;
   };
 }
 

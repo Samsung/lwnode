@@ -79,7 +79,6 @@ int helloV8(int argc, char* argv[]) {
   return 0;
 }
 
-
 int helloV8_UnboundScript(int argc, char* argv[]) {
   // Initialize V8.
   /* V8::InitializeICUDefaultLocation(argv[0]);
@@ -87,14 +86,13 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
   // Platform* platform = platform::CreateDefaultPlatform();
   // V8::InitializePlatform(platform);
   V8::Initialize();
+
   printf("start escargotshim sample\n");
 
   // Create a new Isolate and make it the current one.
   Isolate::CreateParams create_params;
-  /*  create_params.array_buffer_allocator =
-      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
   create_params.array_buffer_allocator =
-      new v8::ArrayBuffer::Allocator(1000); */
+      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 
   Isolate* isolate = Isolate::New(create_params);
   {
@@ -117,7 +115,7 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
 
     Local<UnboundScript> script;
     if (!ScriptCompiler::CompileUnboundScript(isolate, &script_source)
-            .ToLocal(&script)) {
+             .ToLocal(&script)) {
       return 1;
     }
 
@@ -125,7 +123,8 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
     Context::Scope context_scope(context);
 
     // Run the script to get the result.
-    Local<Value> result = script->BindToCurrentContext()->Run(context).ToLocalChecked();
+    Local<Value> result =
+        script->BindToCurrentContext()->Run(context).ToLocalChecked();
 
     // Convert the result to an UTF8 string and print it.
     String::Utf8Value utf8(isolate, result);

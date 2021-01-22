@@ -40,7 +40,6 @@ void IsolateWrap::Dispose() {
 }
 
 bool IsolateWrap::IsExecutionTerminating() {
-  LWNODE_UNIMPLEMENT;
   if (m_hasScheduledThrow) {
     return true;
   }
@@ -72,10 +71,11 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     isolate->set_array_buffer_allocator(allocator.get());
     isolate->set_array_buffer_allocator_shared(std::move(allocator));
   } else {
-    // LWNODE_CHECK_NOT_NULL(params.array_buffer_allocator);
-    LWNODE_UNIMPLEMENT;
+    LWNODE_CHECK_NOT_NULL(params.array_buffer_allocator);
     isolate->set_array_buffer_allocator(params.array_buffer_allocator);
   }
+
+  //@todo: set escargot array allocator
 }
 
 void IsolateWrap::Enter() {
