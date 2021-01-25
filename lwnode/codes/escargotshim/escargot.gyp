@@ -22,6 +22,11 @@
         '-lpthread',
         '<@(escargot_libs)',
       ],
+      'configurations': {
+        'Debug': {
+          'defines': ['_GLIBCXX_DEBUG', 'GC_DEBUG'],
+        },
+      },
     },
     'direct_dependent_settings': {
       'defines': [
@@ -32,11 +37,6 @@
         '<(escargot_dir)/src/api',
         '<(escargot_dir)/third_party/GCutil',
         '<(escargot_dir)/third_party/GCutil/bdwgc/include',
-      ],
-      'conditions': [
-        ['build_mode=="debug"', {
-          'defines': ['_GLIBCXX_DEBUG', 'GC_DEBUG'],
-        }],
       ],
     },
     'actions': [

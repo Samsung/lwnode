@@ -103,6 +103,11 @@ parser.add_option_group(lwnode_optgroup)
 def get_lwnode_gyp_options():
   args = []
 
+  if options.debug:
+    args += ['-Dbuild_mode=debug']
+  else:
+    args += ['-Dbuild_mode=release']
+
   if options.engine == 'escargot' :
     args += ['-Dlwnode='+ 'true']
 
@@ -116,11 +121,6 @@ def get_lwnode_gyp_options():
   else:
     args += ['-Dlwnode='+ 'false']
 
-  if options.debug:
-    args += ['-Dbuild_mode=debug']
-  else:
-    args += ['-Dbuild_mode=release']
-
   if options.tizen:
     args += ['-Dtarget_os=tizen']
     args += ['-Dprofile='+ str(options.profile)]
@@ -129,7 +129,7 @@ def get_lwnode_gyp_options():
     args += ['-Dtarget_os=linux']
 
   options.verbose = True
-  print_verbose("lwnode options: [" + " ".join(str(x) for x in args) + "]")
+  print_verbose("LWNode.js options: [" + " ".join(str(x) for x in args) + "]")
   options.verbose = False
 
   return args

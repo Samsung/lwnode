@@ -14,11 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-./configure --without-npm --without-bundled-v8 --without-v8-platform \
-  --without-inspector --without-node-code-cache --without-node-snapshot \
-  --with-intl none --shared-openssl --shared-zlib \
-  --dest-os linux --dest-cpu x64 \
-  --engine escargot \
-  --ninja
+set -e
 
-ninja -v -C out/Release node
+CONFIG="--without-npm --without-bundled-v8 --without-v8-platform \
+    --without-inspector --without-node-code-cache --without-node-snapshot \
+    --with-intl none --shared-openssl --shared-zlib \
+    --dest-os linux --dest-cpu x64 \
+    --engine escargot \
+    --ninja"
+
+if [[ $1 == "-d" ]]; then
+  ./configure $CONFIG --debug --debug-node
+  ninja -v -C out/Debug node |& lwnode/tools2/colorize.sh
+
+else
+  ./configure $CONFIG
+  ninja -v -C out/Release node |& lwnode/tools2/colorize.sh
+fi
