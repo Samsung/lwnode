@@ -153,8 +153,23 @@ struct V8Platform {
   tracing::AgentWriterHandle tracing_file_writer_;
   NodePlatform* platform_;
 #else   // !NODE_USE_V8_PLATFORM
-  inline void Initialize(int thread_pool_size) {}
-  inline void Dispose() {}
+  // @lwnode
+  inline void Initialize(int thread_pool_size) {
+    CHECK(!initialized_);
+    initialized_ = true;
+
+    // @lwnode @todo set thread_pool_size
+    platform_ = MultiIsolatePlatform::Create(0);
+
+    v8::V8::InitializePlatform(platform_.get());
+  }
+
+  inline void Dispose() {
+    if (!initialized_)
+      return;
+    initialized_ = false;
+  }
+
   inline void DrainVMTasks(v8::Isolate* isolate) {}
   inline void StartTracingAgent() {
     if (!per_process::cli_options->trace_event_categories.empty()) {
@@ -167,7 +182,9 @@ struct V8Platform {
 
   inline tracing::AgentWriterHandle* GetTracingAgentWriter() { return nullptr; }
 
-  inline NodePlatform* Platform() { return nullptr; }
+  inline MultiIsolatePlatform* Platform() { return platform_.get(); }
+
+  std::unique_ptr<MultiIsolatePlatform> platform_;
 #endif  // !NODE_USE_V8_PLATFORM
 };
 
