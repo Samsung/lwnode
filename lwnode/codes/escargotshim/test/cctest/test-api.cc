@@ -31,8 +31,8 @@
 #include <memory>
 #include <string>
 
-#include "cctest/cctest.h"
-#include "cctest/globals.h"
+#include "cctest.h"
+#include "globals.h"
 
 #if V8_OS_POSIX
 #include <unistd.h>  // NOLINT

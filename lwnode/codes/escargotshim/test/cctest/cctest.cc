@@ -17,7 +17,7 @@
  *  USA
  */
 
-#include "cctest/cctest.h"
+#include "cctest.h"
 
 LocalContext::~LocalContext() {
   v8::HandleScope scope(isolate_);
@@ -35,10 +35,6 @@ void LocalContext::Initialize(v8::Isolate* isolate,
       v8::Context::New(isolate, extensions, global_template, global_object);
 
   context_.Reset(isolate, context);
-
-  if (CcTest::contextScope_ != nullptr) {
-    CcTest::disposeScope();
-  }
   context->Enter();
   // We can't do this later perhaps because of a fatal error.
   isolate_ = isolate;
@@ -55,14 +51,14 @@ v8::Isolate* CcTest::isolate() {
   return isolate_;
 }
 
-v8::Isolate* CcTest::disposeScope() {
+void CcTest::disposeScope() {
   if (contextScope_ != nullptr) {
     delete contextScope_;
     contextScope_ = nullptr;
   }
 }
 
-v8::Isolate* CcTest::disposeIsolate() {
+void CcTest::disposeIsolate() {
   if (isolate_ != nullptr) {
     isolate_->Exit();
     isolate_->Dispose();
@@ -77,17 +73,17 @@ static inline bool startsWith(const std::string& string,
 }
 
 void InitializeTest::SetUp() {
-  v8::V8::Initialize();
+  // v8::V8::Initialize();
 }
 
 void InitializeTest::TearDown() {
-  CcTest::disposeScope();
-  CcTest::disposeIsolate();
-  v8::V8::Dispose();
+  // CcTest::disposeScope();
+  // CcTest::disposeIsolate();
+  // v8::V8::Dispose();
 }
 
 int main(int argc, char* argv[]) {
-  NESCARGOT_LOG_INFO("============= Start EscargotShim Test ============= \n");
+  printf("============= Start EscargotShim Test ============= \n");
 
   for (int i = 1; i < argc; i++) {
     std::string arg(argv[i]);
@@ -96,7 +92,7 @@ int main(int argc, char* argv[]) {
       std::string f = std::string("*") + arg.substr(strlen("-f="));
       ::testing::GTEST_FLAG(filter) = f.c_str();
     } else {
-      NESCARGOT_LOG_WARN("unknown options: %s\n", argv[i]);
+      printf("unknown options: %s\n", argv[i]);
     }
   }
 

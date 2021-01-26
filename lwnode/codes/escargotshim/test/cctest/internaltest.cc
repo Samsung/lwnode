@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cctest/cctest.h"
+#include "cctest.h"
 #include "include/v8.h"
 using namespace v8;
 
