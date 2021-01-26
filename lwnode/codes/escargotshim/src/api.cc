@@ -29,6 +29,7 @@
 #include "v8-profiler.h"
 #include "v8-util.h"
 
+#include <inttypes.h>  // For PRIu64
 #include "api/context.h"
 #include "api/escargot-util.h"
 #include "api/flags.h"
@@ -288,7 +289,11 @@ void ResourceConstraints::ConfigureDefaultsFromHeapSize(
 
 void ResourceConstraints::ConfigureDefaults(uint64_t physical_memory,
                                             uint64_t virtual_memory_limit) {
-  LWNODE_RETURN_VOID;
+  int MB = 1024 * 1024;
+  LWNODE_LOG_INFO("physical memory: %" PRIu64 "MB"
+                  ", virtual memory limit: %" PRIu64 "MB",
+                  physical_memory / MB,
+                  virtual_memory_limit / MB);
 }
 
 size_t ResourceConstraints::max_semi_space_size_in_kb() const {

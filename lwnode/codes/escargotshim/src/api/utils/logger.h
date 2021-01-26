@@ -17,6 +17,7 @@
 #pragma once
 
 #include <assert.h>
+#include <string.h>
 #include <cstdio>
 
 #define COLOR_RESET "\033[0m"
@@ -39,27 +40,40 @@
 #define COLOR_WHITE "\033[01;37m"
 #define COLOR_REDBG "\033[0;41m"
 
-#define TRACE_FMT " at %s (%s:%d)"
-#define TRACE_ARGS __PRETTY_FUNCTION__, __FILE__, __LINE__
+#define __FILENAME__                                                           \
+  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define TRACE_FMT " %s (%s:%d)"
+#define TRACE_ARGS __PRETTY_FUNCTION__, __FILENAME__, __LINE__
+
+#define LWNODE_LOG_RAW(fmt, ...) fprintf(stdout, fmt "\n", ##__VA_ARGS__);
 
 #define LWNODE_LOG_INFO(fmt, ...)                                              \
   do {                                                                         \
-    fprintf(stdout, fmt "\n", ##__VA_ARGS__);                                  \
+    fprintf(stdout, "INFO " fmt "\n", ##__VA_ARGS__);                          \
   } while (0);
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
   do {                                                                         \
-    fprintf(stderr, COLOR_YELLOW fmt COLOR_RESET, ##__VA_ARGS__);              \
+    fprintf(stderr, COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);              \
   } while (0);
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
   do {                                                                         \
-    fprintf(stderr, COLOR_BRED fmt COLOR_RESET, ##__VA_ARGS__);                \
+    fprintf(stderr, COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);                \
   } while (0);
 
 #define LWNODE_UNIMPLEMENT                                                     \
   do {                                                                         \
-    LWNODE_LOG_INFO(COLOR_RED                                                  \
-                    "LWNODE_UNIMPLEMENTED (TODO)" TRACE_FMT COLOR_RESET,       \
-                    TRACE_ARGS);                                               \
+    LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED" TRACE_FMT COLOR_RESET,            \
+                   TRACE_ARGS);                                                \
   } while (0)
+
+#ifdef NDEBUG
+#define LWNODE_CALL_TRACE
+#else
+#define LWNODE_CALL_TRACE                                                      \
+  do {                                                                         \
+    LWNODE_LOG_RAW("TRACE" TRACE_FMT, TRACE_ARGS);                             \
+  } while (0)
+
+#endif

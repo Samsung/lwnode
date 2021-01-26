@@ -45,7 +45,7 @@ bool V8::EnableWebAssemblyTrapHandler(bool use_v8_signal_handler) {
 }
 
 void v8::V8::SetEntropySource(EntropySource entropy_source) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CALL_TRACE;
 }
 
 void v8::V8::SetReturnAddressLocationResolver(
