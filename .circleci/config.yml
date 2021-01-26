@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  build_release:
+    machine:
+      image: art.sec.samsung.net/ci-docker/lws/starfish:latest
+    environment:
+      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    steps:
+      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - checkout
+      - run: git submodule sync; git submodule update --init --recursive
+      - run: ./configure --without-npm --without-bundled-v8 --without-v8-platform
+             --without-inspector --without-node-code-cache --without-node-snapshot
+             --with-intl none --shared-zlib --dest-os linux --dest-cpu x64
+             --engine escargot --ninja
+      - run: ninja -v -C out/Release node
+      - run: ls ./out/Release/node
+  test:
+    machine:
+      image: art.sec.samsung.net/ci-docker/lws/starfish:latest
+    environment:
+      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    steps:
+      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - checkout
+      - run: git submodule sync; git submodule update --init --recursive
+      - run: ./lwnode/build-cctest.sh
+      - run: ./out/Debug/cctest
+workflows:
+    version: 2
+    build_release:
+      jobs:
+        - build_release
+    test:
+      jobs:
+        - test

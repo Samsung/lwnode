@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-gyp ./lwnode/codes/escargotshim/test/cctest.gyp --depth=. -f ninja
+./tools/gyp/gyp ./lwnode/codes/escargotshim/test/cctest.gyp --depth=. -f ninja
 
 ninja -v -C ./out/Debug cctest
