@@ -869,15 +869,19 @@ Local<Private> v8::Private::ForApi(Isolate* isolate, Local<String> name) {
   LWNODE_RETURN_LOCAL(Private);
 }
 
-Local<Number> v8::Number::New(Isolate* isolate,
-                              double value){LWNODE_RETURN_LOCAL(Number)}
+Local<Number> v8::Number::New(Isolate* isolate, double value) {
+  auto _number = ValueWrap::createValue(Escargot::ValueRef::create(value));
+  return Local<Integer>::New(isolate, _number);
+}
 
 Local<Integer> v8::Integer::New(Isolate* isolate, int32_t value) {
-  LWNODE_RETURN_LOCAL(Integer);
+  auto _integer = ValueWrap::createValue(Escargot::ValueRef::create(value));
+  return Local<Integer>::New(isolate, _integer);
 }
 
 Local<Integer> v8::Integer::NewFromUnsigned(Isolate* isolate, uint32_t value) {
-  LWNODE_RETURN_LOCAL(Integer);
+  auto _integer = ValueWrap::createValue(Escargot::ValueRef::create(value));
+  return Local<Integer>::New(isolate, _integer);
 }
 
 Local<BigInt> v8::BigInt::New(Isolate* isolate, int64_t value) {

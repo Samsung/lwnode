@@ -42,4 +42,8 @@ ScriptRef* ValueWrap::script() const {
   return reinterpret_cast<ScriptRef*>(m_holder);
 }
 
+ValueWrap* ValueWrap::createValue(Escargot::ValueRef* __value) {
+  return new ValueWrap(__value);
+}
+
 }  // namespace EscargotShim

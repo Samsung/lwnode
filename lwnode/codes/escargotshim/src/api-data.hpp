@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-namespace v8
-{
-  // --- D a t a ---
+namespace v8 {
+// --- D a t a ---
 
 bool Value::FullIsUndefined() const {
   LWNODE_RETURN_FALSE;
@@ -86,7 +85,11 @@ bool Value::IsObject() const {
 }
 
 bool Value::IsNumber() const {
-  LWNODE_RETURN_FALSE;
+  auto _value = VAL(this);
+  if (_value->type() != ValueWrap::Type::JsValue) {
+    return false;
+  }
+  return _value->value()->isNumber();
 }
 
 bool Value::IsBigInt() const {
@@ -124,11 +127,19 @@ bool Value::IsExternal() const {
 }
 
 bool Value::IsInt32() const {
-  LWNODE_RETURN_FALSE;
+  auto _value = VAL(this);
+  if (_value->type() != ValueWrap::Type::JsValue) {
+    return false;
+  }
+  return _value->value()->isInt32();
 }
 
 bool Value::IsUint32() const {
-  LWNODE_RETURN_FALSE;
+  auto _value = VAL(this);
+  if (_value->type() != ValueWrap::Type::JsValue) {
+    return false;
+  }
+  return _value->value()->isUInt32();
 }
 
 bool Value::IsNativeError() const {
@@ -954,8 +965,34 @@ Local<Value> Private::Name() const {
   LWNODE_RETURN_LOCAL(Value);
 }
 
+template <typename T, typename F>
+static T getValue(ValueRef* __value, F toValue) {
+  auto _context = IsolateWrap::currentIsolate()->CurrentContext();
+  LWNODE_CHECK(_context != nullptr);
+  T v = 0;
+  auto r = Evaluator::execute(
+      _context->get(),
+      [](ExecutionStateRef* __state, ValueRef* __value, T* v, F toValue)
+          -> ValueRef* {
+        *v = toValue(__value, __state);
+        return __value;
+      },
+      __value,
+      &v,
+      toValue);
+
+  if (!r.isSuccessful()) {
+    LWNODE_RETURN_0; // TODO: handle error
+  }
+
+  return v;
+}
+
 double Number::Value() const {
-  LWNODE_RETURN_0;
+  return getValue<double>(VAL(this)->value(),
+                          [](ValueRef* __value, ExecutionStateRef* __state) {
+                            return __value->toNumber(__state);
+                          });
 }
 
 bool Boolean::Value() const {
@@ -963,15 +1000,24 @@ bool Boolean::Value() const {
 }
 
 int64_t Integer::Value() const {
-  LWNODE_RETURN_0;
+  return getValue<int64_t>(VAL(this)->value(),
+                           [](ValueRef* __value, ExecutionStateRef* __state) {
+                             return __value->toNumber(__state);
+                           });
 }
 
 int32_t Int32::Value() const {
-  LWNODE_RETURN_0;
+  return getValue<int32_t>(VAL(this)->value(),
+                           [](ValueRef* __value, ExecutionStateRef* __state) {
+                             return __value->toInt32(__state);
+                           });
 }
 
 uint32_t Uint32::Value() const {
-  LWNODE_RETURN_0;
+  return getValue<uint32_t>(VAL(this)->value(),
+                            [](ValueRef* __value, ExecutionStateRef* __state) {
+                              return __value->toUint32(__state);
+                            });
 }
 
 int v8::Object::InternalFieldCount() {
@@ -1003,4 +1049,4 @@ void v8::Object::SetAlignedPointerInInternalFields(int argc,
 //   return
 //   reinterpret_cast<void*>(i::Foreign::cast(foreign).foreign_address());
 // }
-} // namespace v8
+}  // namespace v8

@@ -20,6 +20,7 @@
       'sources': [
         'cctest/cctest.cc',
         'cctest/v14_test_1.cc',
+        'cctest/v14_test_2.cc',
       ]
     },
   ],

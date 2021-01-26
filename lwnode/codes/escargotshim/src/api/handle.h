@@ -97,6 +97,9 @@ class ValueWrap : public HandleWrap {
   static ValueWrap* createScript(Escargot::ScriptRef* __script);
   Escargot::ScriptRef* script() const;
 
+  // Value
+  static ValueWrap* createValue(Escargot::ValueRef* __value);
+
  private:
   // `void*` must be wrapped along with a type inside ValueWrap
   ValueWrap(void* ptr, HandleWrap::Type type) {
