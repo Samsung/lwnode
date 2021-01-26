@@ -18,12 +18,12 @@
 #include "misc.h"
 
 namespace EscargotShim {
-  class Constants {
-    public:
-      static constexpr int kMaxStringLength =
-        sizeof(void*) == 4 ? (1 << 28) - 16 : (1 << 29) - 24;
-  };
-}
+class Constants {
+ public:
+  static constexpr int kMaxStringLength =
+      sizeof(void*) == 4 ? (1 << 28) - 16 : (1 << 29) - 24;
+};
+}  // namespace EscargotShim
 
 inline int stringLength(const char* string) {
   size_t len = strlen(string);
@@ -40,4 +40,13 @@ inline int stringLength(const uint16_t* string) {
   while (string[length] != '\0') length++;
   LWNODE_CHECK(EscargotShim::Constants::kMaxStringLength >= length);
   return static_cast<int>(length);
+}
+
+inline bool strEquals(const char* str, const char* pat) {
+  return strncmp(str, pat, EscargotShim::Constants::kMaxStringLength) == 0;
+}
+
+template <size_t N>
+bool strStartsWith(const char* str, const char (&prefix)[N]) {
+  return strncmp(str, prefix, N - 1) == 0;
 }

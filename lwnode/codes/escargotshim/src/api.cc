@@ -31,6 +31,7 @@
 
 #include "api/context.h"
 #include "api/escargot-util.h"
+#include "api/flags.h"
 #include "api/handle.h"
 #include "api/isolate.h"
 #include "api/utils/string.h"
@@ -203,7 +204,50 @@ void V8::SetFlagsFromString(const char* str, size_t length) {
 }
 
 void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
-  LWNODE_RETURN_VOID;
+  flags_t flags = Flags::Empty;
+
+  for (int i = 1; i < *argc; i++) {
+    char* arg = argv[i];
+    bool checked = false;
+
+    if (strEquals("--expose-gc", arg) || strEquals("--expose_gc", arg)) {
+      flags |= Flags::ExposeGC;
+      checked = true;
+    } else if (strEquals("--use-strict", arg) ||
+               strEquals("--use_strict", arg)) {
+      flags |= Flags::UseStrict;
+      checked = true;
+    } else if (strEquals("--off-idlegc", arg) ||
+               strEquals("--off_idlegc", arg)) {
+      flags |= Flags::DisableIdleGC;
+      checked = true;
+    } else if (strEquals("--harmony-top-level-await", arg)) {
+      flags |= Flags::TopLevelWait;
+      checked = true;
+      // @check https://github.sec.samsung.net/lws/node-escargot/issues/394
+    } else if (remove_flags && (strStartsWith(arg, "--debug") ||
+                                strStartsWith(arg, "--stack-size=") ||
+                                strStartsWith(arg, "--nolazy") ||
+                                strStartsWith(arg, "--trace_debug"))) {
+      checked = true;
+    }
+
+    if (checked && remove_flags) {
+      argv[i] = nullptr;
+    }
+  }
+
+  e::setFlags(flags);
+
+  if (remove_flags) {
+    int count = 0;
+    for (int idx = 0; idx < *argc; idx++) {
+      if (argv[idx]) {
+        argv[count++] = argv[idx];
+      }
+    }
+    *argc = count;
+  }
 }
 
 // RegisteredExtension* RegisteredExtension::first_extension_ = nullptr;
@@ -364,11 +408,11 @@ MaybeLocal<String> JSON::Stringify(Local<Context> context,
 
 }  // namespace v8
 
-#include "api-handles.hpp"
-#include "api-template.hpp"
-#include "api-scripts.hpp"
-#include "api-exception.hpp"
-#include "api-serialization.hpp"
 #include "api-data.hpp"
-#include "api-environment.hpp"
 #include "api-debug.hpp"
+#include "api-environment.hpp"
+#include "api-exception.hpp"
+#include "api-handles.hpp"
+#include "api-scripts.hpp"
+#include "api-serialization.hpp"
+#include "api-template.hpp"

@@ -114,7 +114,7 @@ void v8::V8::InitializeExternalStartupDataFromFile(const char* snapshot_blob) {
 }
 
 const char* v8::V8::GetVersion() {
-  LWNODE_RETURN_NULLPTR;
+  return "@todo NOT DEFINED YET";
 }
 
 void V8::GetSharedMemoryStatistics(SharedMemoryStatistics* statistics) {
