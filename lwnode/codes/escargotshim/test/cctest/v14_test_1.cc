@@ -16,6 +16,7 @@
 
 #include "cctest.h"
 #include "v8.h"
+#include "v14_test.h"
 
 using namespace v8;
 
@@ -67,7 +68,6 @@ TEST(UnboundScript) {
 
     // Convert the result to an UTF8 string and print it.
     String::Utf8Value utf8(isolate, result);
-    printf("%s\n", *utf8);
     CHECK_EQ(std::string("Hello, V8!").compare(std::string(*utf8)), 0);
   }
 
@@ -78,4 +78,37 @@ TEST(UnboundScript) {
   // V8::ShutdownPlatform();
   // delete platform;
   delete create_params.array_buffer_allocator;  // @check node do this?
+}
+
+TEST(StringCreateNewFromOneTwoByte) {
+  SETUP()
+
+  const int length = 4;
+  const int buffer_size = length * sizeof(uint16_t);
+
+  void* buffer = malloc(buffer_size);
+  if (buffer == NULL) return;
+  memset(buffer, 'A', buffer_size);
+
+  Local<String> empty = String::Empty(isolate);
+  {
+    v8::TryCatch try_catch(isolate);
+    uint8_t* data = reinterpret_cast<uint8_t*>(buffer);
+
+    CHECK_EQ(v8::String::NewFromOneByte(
+                 isolate, data, v8::NewStringType::kNormal, length)
+                 .IsEmpty(),
+             false);
+  }
+  {
+    v8::TryCatch try_catch(isolate);
+    uint16_t* data = reinterpret_cast<uint16_t*>(buffer);
+    CHECK_EQ(v8::String::NewFromTwoByte(
+                 isolate, data, v8::NewStringType::kNormal, length)
+                 .IsEmpty(),
+             false);
+  }
+  free(buffer);
+
+  TEARDOWN()
 }

@@ -384,7 +384,7 @@ bool Engine::Initialize() {
   return true;
 }
 
-bool Engine::TearDown() {
+bool Engine::Dispose() {
   s_engine->finalize();
   return true;
 }

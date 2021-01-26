@@ -54,8 +54,8 @@ void v8::V8::SetReturnAddressLocationResolver(
 }
 
 bool v8::V8::Dispose() {
-  Engine::TearDown();
-  LWNODE_RETURN_FALSE;
+  Engine::Dispose();
+  return true;
 }
 
 SharedMemoryStatistics::SharedMemoryStatistics()
@@ -283,6 +283,10 @@ void* External::Value() const {
     result = Utils::ToLocal(handle_result);                                    \
   }
 
+Local<String> String::_Empty(Isolate* isolate) {
+  return Local<String>::New(isolate, new ValueWrap(StringRef::emptyString()));
+}
+
 Local<String> String::NewFromUtf8Literal(Isolate* isolate,
                                          const char* literal,
                                          NewStringType type,
@@ -302,9 +306,8 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
     result = MaybeLocal<String>();
   } else {
     if (length < 0) length = stringLength(data);
-
-    StringRef* source = StringRef::createFromUTF8(data, length);
-    result = Local<String>::New(isolate, new ValueWrap(source));
+    StringRef* __source = StringRef::createFromUTF8(data, length);
+    result = Local<String>::New(isolate, new ValueWrap(__source));
   }
 
   return result;
@@ -314,14 +317,39 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
                                           const uint8_t* data,
                                           NewStringType type,
                                           int length) {
-  LWNODE_RETURN_LOCAL(String);
+  MaybeLocal<String> result;
+
+  if (length == 0) {
+    result = String::Empty(isolate);
+  } else if (length > v8::String::kMaxLength) {
+    result = MaybeLocal<String>();
+  } else {
+    if (length < 0) length = stringLength(data);
+    StringRef* __source = StringRef::createFromLatin1(data, length);
+    result = Local<String>::New(isolate, new ValueWrap(__source));
+  }
+
+  return result;
 }
 
 MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
                                           const uint16_t* data,
                                           NewStringType type,
                                           int length) {
-  LWNODE_RETURN_LOCAL(String);
+  MaybeLocal<String> result;
+
+  if (length == 0) {
+    result = String::Empty(isolate);
+  } else if (length > v8::String::kMaxLength) {
+    result = MaybeLocal<String>();
+  } else {
+    if (length < 0) length = stringLength(data);
+    StringRef* __source = StringRef::createFromUTF16(
+        reinterpret_cast<const char16_t*>(data), length);
+    result = Local<String>::New(isolate, new ValueWrap(__source));
+  }
+
+  return result;
 }
 
 Local<String> v8::String::Concat(Isolate* v8_isolate,

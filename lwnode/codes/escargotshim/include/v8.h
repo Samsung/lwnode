@@ -3387,6 +3387,10 @@ class V8_EXPORT String : public Name {
                                               NewStringType type, int length);
 
   static void CheckCast(v8::Value* obj);
+
+  // @lwnode
+  static Local<String> _Empty(Isolate* isolate);
+  // end of @lwnode
 };
 
 // Zero-length string specialization (templated string size includes
@@ -10811,9 +10815,11 @@ Local<T> Local<T>::New(Isolate* isolate, T* that) {
   if (that == nullptr) return Local<T>();
   T* that_ptr = that;
   // @lwnode
-  // internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
-  // return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
-  //     reinterpret_cast<internal::Isolate*>(isolate), *p)));
+#if 0
+  internal::Address* p = reinterpret_cast<internal::Address*>(that_ptr);
+  return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
+      reinterpret_cast<internal::Isolate*>(isolate), *p)));
+#endif
   internal::Address p = reinterpret_cast<internal::Address>(that_ptr);
   return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
       reinterpret_cast<internal::Isolate*>(isolate), p)));
@@ -11502,11 +11508,16 @@ String* String::Cast(v8::Value* value) {
 
 
 Local<String> String::Empty(Isolate* isolate) {
+  // @lwnode
+#if 0
   typedef internal::Address S;
   typedef internal::Internals I;
   I::CheckInitialized(isolate);
   S* slot = I::GetRoot(isolate, I::kEmptyStringRootIndex);
   return Local<String>(reinterpret_cast<String*>(slot));
+#endif
+  return _Empty(isolate);
+  // end of @lwnode
 }
 
 

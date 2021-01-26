@@ -62,5 +62,4 @@
     LWNODE_LOG_INFO(COLOR_RED                                                  \
                     "LWNODE_UNIMPLEMENTED (TODO)" TRACE_FMT COLOR_RESET,       \
                     TRACE_ARGS);                                               \
-    assert(true);                                                              \
   } while (0)

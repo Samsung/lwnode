@@ -64,7 +64,7 @@ class Engine {
   Engine() = default;
 
   static bool Initialize();
-  static bool TearDown();
+  static bool Dispose();
 
   static bool evalScript(ContextRef* context,
                          const char* str,
