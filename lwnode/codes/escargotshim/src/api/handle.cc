@@ -25,25 +25,31 @@ namespace EscargotShim {
 ValueWrap* ValueWrap::createContext(IsolateWrap* _isolate) {
   LWNODE_CHECK_NOT_NULL(_isolate);
   auto _context = ContextWrap::New(_isolate);
-  return new ValueWrap(_context, ValueWrap::Type::Context);
+  return new ValueWrap(_context, Type::Context);
 };
 
 ContextWrap* ValueWrap::context() const {
-  LWNODE_CHECK(type() == ValueWrap::Type::Context);
+  LWNODE_CHECK(type() == Type::Context);
   return reinterpret_cast<ContextWrap*>(m_holder);
 }
 
 ValueWrap* ValueWrap::createScript(ScriptRef* __script) {
-  return new ValueWrap(__script, ValueWrap::Type::Script);
+  return new ValueWrap(__script, Type::Script);
 };
 
 ScriptRef* ValueWrap::script() const {
-  LWNODE_CHECK(type() == ValueWrap::Type::Script);
-  return reinterpret_cast<ScriptRef*>(m_holder);
+  LWNODE_CHECK(type() == Type::Script);
+  auto extended = reinterpret_cast<ExtendedHolder*>(m_holder);
+  return reinterpret_cast<ScriptRef*>(extended->holder());
 }
 
 ValueWrap* ValueWrap::createValue(Escargot::ValueRef* __value) {
-  return new ValueWrap(__value);
+  return new ValueWrap(__value, Type::JsValue);
+}
+
+ValueRef* ValueWrap::value() const {
+  LWNODE_CHECK(type() == Type::JsValue);
+  return reinterpret_cast<ValueRef*>(m_holder);
 }
 
 }  // namespace EscargotShim

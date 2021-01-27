@@ -29,64 +29,51 @@ namespace EscargotShim {
 class ContextWrap;
 class IsolateWrap;
 
-typedef GCContainer<void*> ExtraValues;
+typedef GCContainer<void*> ExtraData;
 
 class HandleWrap : public gc {
  public:
   enum Type : uint8_t {
-    Context = 0,
-    Script,
+    NotPresent = 0,
     JsValue,
+    Context,
     ObjectTemplate,
     FunctionTemplate,
-    Unknown,
+    // Only types having an ExtraData are allowed after this point
+    ExtraDataPresent,
+    Script,
   };
 
   Type type() const { return m_type; }
 
  protected:
   HandleWrap() = default;
-  Type m_type = Unknown;
+  Type m_type = NotPresent;
 };
 
 class ValueWrap : public HandleWrap {
  public:
-  ValueWrap(Escargot::ValueRef* __value) {
-    LWNODE_CHECK_NOT_NULL(__value);
-    m_type = Type::JsValue;
-    m_holder = __value;
-  }
-
-  ValueWrap(ValueWrap* src) {
-    LWNODE_CHECK_NOT_NULL(src);
-    m_type = src->m_type;
-    m_holder = src->m_holder;
-    m_extra = src->m_extra;
-  }
-
-  ValueWrap(ValueWrap&& src) {
-    m_holder = src.m_holder;
-    m_extra = src.m_extra;
-
-    src.m_holder = nullptr;
-    src.m_extra = nullptr;
-  }
-
   ValueWrap(const ValueWrap& src) = delete;
   const ValueWrap& operator=(const ValueWrap& src) = delete;
   const ValueWrap& operator=(ValueWrap&& src) = delete;
 
   // Extra
-  void setExtra(ExtraValues&& other) {
-    m_extra = new ExtraValues(std::move(other));
+  void setExtra(ExtraData&& other) {
+    LWNODE_CHECK(type() >= ExtraDataPresent);
+    auto newHolder = new ExtendedHolder(m_holder, std::move(other));
+    m_holder = reinterpret_cast<Escargot::ValueRef*>(newHolder);
   }
+
   template <typename E>
   Optional<E> getExtra(const size_t idx) const {
-    return reinterpret_cast<E*>((*m_extra)[idx]);
+    LWNODE_CHECK(type() >= ExtraDataPresent);
+    auto extended = reinterpret_cast<ExtendedHolder*>(m_holder);
+    return reinterpret_cast<E*>((*extended->extra())[idx]);
   }
 
   // Value
-  Escargot::ValueRef* value() const { return m_holder; }
+  static ValueWrap* createValue(Escargot::ValueRef* __value);
+  Escargot::ValueRef* value() const;
 
   // Context
   // @todo: use factory to create Escargot instances
@@ -97,18 +84,29 @@ class ValueWrap : public HandleWrap {
   static ValueWrap* createScript(Escargot::ScriptRef* __script);
   Escargot::ScriptRef* script() const;
 
-  // Value
-  static ValueWrap* createValue(Escargot::ValueRef* __value);
-
  private:
-  // `void*` must be wrapped along with a type inside ValueWrap
+  struct ExtendedHolder : public gc {
+    ExtendedHolder(void* ptr, ExtraData&& other) {
+      LWNODE_CHECK(m_extra == nullptr);
+      LWNODE_CHECK(m_holder == nullptr);
+      m_holder = ptr;
+      m_extra = new ExtraData(std::move(other));
+    }
+    inline void* holder() { return m_holder; }
+    inline ExtraData* extra() { return m_extra; }
+
+   private:
+    void* m_holder = nullptr;
+    ExtraData* m_extra = nullptr;
+  };
+
   ValueWrap(void* ptr, HandleWrap::Type type) {
+    LWNODE_CHECK_NOT_NULL(ptr);
     m_type = type;
-    m_holder = reinterpret_cast<Escargot::ValueRef*>(ptr);
+    m_holder = ptr;
   }
 
-  Escargot::ValueRef* m_holder = nullptr;
-  ExtraValues* m_extra = nullptr;
+  void* m_holder = nullptr;
 };
 
 }  // namespace EscargotShim

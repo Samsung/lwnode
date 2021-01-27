@@ -106,11 +106,11 @@ void SealHandleScope::operator delete[](void*, size_t) {
 }
 
 void Context::Enter() {
-  ValueWrap(reinterpret_cast<ValueWrap*>(this)).context()->Enter();
+  VAL(this)->context()->Enter();
 }
 
 void Context::Exit() {
-  ValueWrap(reinterpret_cast<ValueWrap*>(this)).context()->Exit();
+  VAL(this)->context()->Exit();
 }
 
 Context::BackupIncumbentScope::BackupIncumbentScope(

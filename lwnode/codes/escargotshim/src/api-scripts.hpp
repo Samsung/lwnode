@@ -66,7 +66,7 @@ Local<Script> UnboundScript::BindToCurrentContext() {
   auto _script = ValueWrap::createScript(_unboundscript->script());
 
   // add the `current context` into this ValueWrap for Script
-  ExtraValues extra(1, _isolateUsed->CurrentContext());
+  ExtraData extra(1, _isolateUsed->CurrentContext());
   _script->setExtra(std::move(extra));
 
   return Local<Script>::New(IsolateWrap::currentIsolate()->toV8(), _script);
@@ -110,7 +110,7 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
     return MaybeLocal<Value>();
   }
 
-  return Local<Value>::New(_isolate->toV8(), new ValueWrap(r.result));
+  return Local<Value>::New(_isolate->toV8(), ValueWrap::createValue(r.result));
 }
 
 Local<Value> ScriptOrModule::GetResourceName() {
@@ -250,7 +250,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
 
   // wrap the parsed script with the current isolate
   auto _value = ValueWrap::createScript(result.script.get());
-  ExtraValues extra(1, _isolate);
+  ExtraData extra(1, _isolate);
   _value->setExtra(std::move(extra));
 
   return Local<UnboundScript>::New(v8_isolate, _value);

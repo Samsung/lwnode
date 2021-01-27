@@ -52,7 +52,7 @@
 
 * In the level 1, `ValueWrap` should be used for type convertion between v8 and lwnode apis.
 
-  
+
 
 ## Type conversion between lwnode world and v8 world
 
@@ -65,12 +65,13 @@
 
 ```c++
 // Escargot::ValueRef* inherited
-auto string = StringRef::createFromUTF8(...);
-auto value = new ValueWrap(string);
+auto __string = StringRef::createFromUTF8(...);
+auto _value = ValueWrap::createValue(string);
+// auto value = ValueWrap::createValue(string); // deprecated
 
-// Others 
+// Others
 // e.g) Escargot::Script
-auto value = ValueWrap::createScript(...);
+auto _value = ValueWrap::createScript(...);
 ```
 
 
@@ -85,7 +86,10 @@ auto value = ValueWrap::createScript(...);
 // Usage:
 VAL(this); // = ValueWrap(reinterpret_cast<ValueWrap*>(this));
 
-// e.g) access StringRef*
+// e.g) use ValueRef* from `Local<String> name`
+VAL(*name)->value()->asString();
+
+// e.g) use StringRef* from `Local<String> source_string of Source*`
 VAL(*source->source_string)->value()->asString();
 
 // e.g) access ContextWrap::Enter();
@@ -99,10 +103,10 @@ VAL(this)->context()->Enter();
 * Retrun a `ValueWrap` using a `Local`
 
 ```c++
-auto string = StringRef::createFromUTF8(...);
+auto __string = StringRef::createFromUTF8(...);
 
-// Usage:   
-return Local<String>::New(isolate, new ValueWrap(string));
+// Usage:
+return Local<String>::New(isolate, ValueWrap::createValue(__string));
 ```
 
 

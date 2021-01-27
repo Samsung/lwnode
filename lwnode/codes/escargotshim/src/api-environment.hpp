@@ -284,7 +284,7 @@ void* External::Value() const {
   }
 
 Local<String> String::_Empty(Isolate* isolate) {
-  return Local<String>::New(isolate, new ValueWrap(StringRef::emptyString()));
+  return Local<String>::New(isolate, ValueWrap::createValue(StringRef::emptyString()));
 }
 
 Local<String> String::NewFromUtf8Literal(Isolate* isolate,
@@ -307,7 +307,7 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
   } else {
     if (length < 0) length = stringLength(data);
     StringRef* __source = StringRef::createFromUTF8(data, length);
-    result = Local<String>::New(isolate, new ValueWrap(__source));
+    result = Local<String>::New(isolate, ValueWrap::createValue(__source));
   }
 
   return result;
@@ -326,7 +326,7 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
   } else {
     if (length < 0) length = stringLength(data);
     StringRef* __source = StringRef::createFromLatin1(data, length);
-    result = Local<String>::New(isolate, new ValueWrap(__source));
+    result = Local<String>::New(isolate, ValueWrap::createValue(__source));
   }
 
   return result;
@@ -346,7 +346,7 @@ MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
     if (length < 0) length = stringLength(data);
     StringRef* __source = StringRef::createFromUTF16(
         reinterpret_cast<const char16_t*>(data), length);
-    result = Local<String>::New(isolate, new ValueWrap(__source));
+    result = Local<String>::New(isolate, ValueWrap::createValue(__source));
   }
 
   return result;
@@ -855,7 +855,19 @@ std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
 }
 
 Local<Symbol> v8::Symbol::New(Isolate* isolate, Local<String> name) {
-  LWNODE_RETURN_LOCAL(Symbol);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  StringRef* __name;
+
+  if (name.IsEmpty()) {
+    __name = StringRef::emptyString();
+  } else {
+    LWNODE_CHECK(VAL(*name)->value()->isString());
+    __name = VAL(*name)->value()->asString();
+  }
+  auto _value = ValueWrap::createValue(SymbolRef::create(__name));
+
+  return Local<Symbol>::New(isolate, _value);
 }
 
 Local<Symbol> v8::Symbol::For(Isolate* isolate, Local<String> name) {
@@ -890,7 +902,23 @@ WELL_KNOWN_SYMBOLS(SYMBOL_GETTER)
 #undef WELL_KNOWN_SYMBOLS
 
 Local<Private> v8::Private::New(Isolate* isolate, Local<String> name) {
-  LWNODE_RETURN_LOCAL(Private);
+  API_ENTER_NO_EXCEPTION(isolate);
+  StringRef* __name;
+
+  if (name.IsEmpty()) {
+    __name = StringRef::emptyString();
+  } else {
+    LWNODE_CHECK(VAL(*name)->value()->isString());
+    __name = VAL(*name)->value()->asString();
+  }
+  // @note
+  // A private symbol in V8 is similar to a Symbol, except that it’s not
+  // enumerable and doesn’t leak to userspace JavaScript.
+  // @todo For now, we ignore the private attribute and use a normal Symbol
+  // instead.
+  auto _value = ValueWrap::createValue(SymbolRef::create(__name));
+
+  return Local<Private>::New(isolate, _value);
 }
 
 Local<Private> v8::Private::ForApi(Isolate* isolate, Local<String> name) {

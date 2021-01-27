@@ -183,7 +183,7 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 
   auto __value = VAL(this)->value();
   if (__value->isString()) {
-    return Local<String>::New(_isolate->toV8(), new ValueWrap(__value));
+    return Local<String>::New(_isolate->toV8(), ValueWrap::createValue(__value));
   }
 
   LWNODE_UNIMPLEMENT;

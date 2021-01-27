@@ -52,12 +52,12 @@ using namespace EscargotShim;
   auto _isolate = IsolateWrap::fromV8(isolate);                                \
   PRIVATE_UTIL_1(_isolate, bailout_value)
 
+#define API_ENTER_NO_EXCEPTION(isolate)                                        \
+  auto _isolate = IsolateWrap::fromV8(isolate);
+
 #define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
-  auto _isolate = context.IsEmpty()                                            \
-                      ? IsolateWrap::currentIsolate()                          \
-                      : ValueWrap(reinterpret_cast<ValueWrap*>(*context))      \
-                            .context()                                         \
-                            ->GetIsolate();                                    \
+  auto _isolate = context.IsEmpty() ? IsolateWrap::currentIsolate()            \
+                                    : VAL(*context)->context()->GetIsolate();  \
   PRIVATE_UTIL_1(_isolate, bailout_value)
 
 namespace i = v8::internal;
