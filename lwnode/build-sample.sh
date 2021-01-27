@@ -16,47 +16,9 @@
 
 set -e
 
-configure() {
-  local build_type=$1
-  local gyp_file=$2
+ROOT_PATH=./out/sample
 
-  tools/gyp/gyp \
-    -f ninja --depth=. \
-    -Dbuild_mode=$build_type \
-    $gyp_file
-}
+gyp ./lwnode/codes/escargotshim/sample/sample.gyp --depth=. -f ninja \
+  --generator-output=$ROOT_PATH
 
-build() {
-  local build_out_dir=$1
-  local build_target=$2
-
-  ninja -v -C $build_out_dir $build_target
-}
-
-BUILD_MODE=debug
-
-opt=$(getopt \
-      -o cbr \
-      -l config,build,release,clean \
-      -- "$@")
-
-eval set -- "$opt"
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -c | --config)
-      configure $BUILD_MODE lwnode/codes/escargotshim/sample/sample.gyp
-      ;;
-    -b | --build)
-      BUILD_MODE_FIRST_LETTER_IN_UPPERCASE="$(tr '[:lower:]' '[:upper:]' <<< ${BUILD_MODE:0:1})${BUILD_MODE:1}"
-      build out/$BUILD_MODE_FIRST_LETTER_IN_UPPERCASE escargotshim_sample |& lwnode/tools/colorize.sh
-      ;;
-    -r | --release)
-      BUILD_MODE=release
-      ;;
-    --clean)
-      rm -rf out
-      ;;
-  esac
-  shift
-done
+ninja -v -C $ROOT_PATH/out/Debug sample

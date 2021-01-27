@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-./tools/gyp/gyp ./lwnode/codes/escargotshim/test/cctest.gyp --depth=. -f ninja
+ROOT_PATH=out/cctest
 
-ninja -v -C ./out/Debug cctest
+./tools/gyp/gyp ./lwnode/codes/escargotshim/test/cctest.gyp --depth=. -f ninja \
+  --generator-output=$ROOT_PATH
+
+ninja -v -C $ROOT_PATH/out/Debug cctest

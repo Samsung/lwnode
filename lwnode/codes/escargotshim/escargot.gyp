@@ -22,6 +22,8 @@
         '-lpthread',
         '<@(escargot_libs)',
       ],
+      'cflags': [ '-pthread' ],
+      'ldflags': [ '-pthread' ],
       'configurations': {
         'Debug': {
           'defines': ['_GLIBCXX_DEBUG', 'GC_DEBUG'],

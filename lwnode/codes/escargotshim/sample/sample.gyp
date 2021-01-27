@@ -2,7 +2,7 @@
   'includes': ['../common.gypi'],
   'targets': [
     {
-      'target_name': 'escargotshim_sample',
+      'target_name': 'sample',
       'type': 'executable',
       'dependencies': [
         '../escargot.gyp:escargot',
