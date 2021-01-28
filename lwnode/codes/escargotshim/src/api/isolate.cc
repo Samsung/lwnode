@@ -80,7 +80,6 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
 
   m_vmInstance = VMInstanceRef::create(new Platform(m_array_buffer_allocator));
   m_vmInstance->setOnVMInstanceDelete([](VMInstanceRef* instance) {
-    // @check this callback is invoked on termination.
     delete instance->platform();
   });
 

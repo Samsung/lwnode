@@ -16,7 +16,8 @@
         '-std=gnu++11',
       ],
       'include_dirs': [
-        './cctest'
+        './cctest',
+        '../src',
       ],
       'sources': [
         'cctest/cctest.cc',

@@ -19,6 +19,9 @@
 
 #include "cctest.h"
 
+// internals
+#include "api/flags.h"
+
 LocalContext::~LocalContext() {
   v8::HandleScope scope(isolate_);
   v8::Local<v8::Context>::New(isolate_, context_)->Exit();
@@ -91,7 +94,10 @@ int main(int argc, char* argv[]) {
     if (startsWith(arg, std::string("-f="))) {
       std::string f = std::string("*") + arg.substr(strlen("-f="));
       ::testing::GTEST_FLAG(filter) = f.c_str();
-    } else {
+    } else if(startsWith(arg, std::string("--trace-gc"))) {
+      EscargotShim::Flags::add(EscargotShim::FlagType::TraceGC);
+    }
+    else {
       printf("unknown options: %s\n", argv[i]);
     }
   }

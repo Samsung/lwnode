@@ -16,6 +16,7 @@
 
 #include "engine.h"
 #include "allocator.h"
+#include "flags.h"
 #include "utils/string.h"
 
 using namespace Escargot;
@@ -375,17 +376,19 @@ void Platform::hostImportModuleDynamically(ContextRef* relatedContext,
 static Engine* s_engine;
 
 bool Engine::Initialize() {
-  static Engine _engine;
-
   if (s_engine == nullptr) {
-    s_engine = &_engine;
+    s_engine = new Engine();
     s_engine->initialize();
   }
   return true;
 }
 
 bool Engine::Dispose() {
-  s_engine->finalize();
+  if (s_engine) {
+    s_engine->finalize();
+    s_engine = nullptr;
+  }
+
   return true;
 }
 
@@ -401,12 +404,19 @@ void Engine::initialize() {
 #ifdef M_MMAP_MAX
   mallopt(M_MMAP_MAX, 1024 * 1024);
 #endif
+
   Globals::initialize();
   Memory::setGCFrequency(24);
+
+  auto flags = Flags::get();
+  if (flags & FlagType::TraceGC) {
+    MemoryUtil::startGCStatsTrace();
+  }
 }
 
 void Engine::finalize() {
   Globals::finalize();
+  MemoryUtil::doFullGCWithoutSeeingStack();
 }
 
 bool Engine::createDefaultGlobals(ContextRef* context) {
@@ -505,9 +515,8 @@ bool Engine::evalScript(ContextRef* context,
                         const char* fileName,
                         bool shouldPrintScriptResult,
                         bool isModule) {
-  auto strRef = StringRef::createFromUTF8(str, stringLength(str));
-  auto fileNameRef =
-      StringRef::createFromUTF8(fileName, stringLength(fileName));
+  auto strRef = StringRef::createFromUTF8(str, strLength(str));
+  auto fileNameRef = StringRef::createFromUTF8(fileName, strLength(fileName));
   return evalScript(
       context, strRef, fileNameRef, shouldPrintScriptResult, isModule);
 }

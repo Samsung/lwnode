@@ -281,7 +281,7 @@ void* External::Value() const {
     i::Isolate* i_isolate = reinterpret_cast<internal::Isolate*>(isolate);     \
     ENTER_V8_NO_SCRIPT_NO_EXCEPTION(i_isolate);                                \
     LOG_API(i_isolate, class_name, function_name);                             \
-    if (length < 0) length = stringLength(data);                               \
+    if (length < 0) length = strLength(data);                               \
     i::Handle<i::String> handle_result =                                       \
         NewString(                                                             \
             i_isolate->factory(), type, i::Vector<const Char>(data, length))   \
@@ -312,7 +312,7 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
   } else if (length > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
-    if (length < 0) length = stringLength(data);
+    if (length < 0) length = strLength(data);
     StringRef* __source = StringRef::createFromUTF8(data, length);
     result = Local<String>::New(isolate, ValueWrap::createValue(__source));
   }
@@ -331,7 +331,7 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
   } else if (length > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
-    if (length < 0) length = stringLength(data);
+    if (length < 0) length = strLength(data);
     StringRef* __source = StringRef::createFromLatin1(data, length);
     result = Local<String>::New(isolate, ValueWrap::createValue(__source));
   }
@@ -350,7 +350,7 @@ MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
   } else if (length > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
-    if (length < 0) length = stringLength(data);
+    if (length < 0) length = strLength(data);
     StringRef* __source = StringRef::createFromUTF16(
         reinterpret_cast<const char16_t*>(data), length);
     result = Local<String>::New(isolate, ValueWrap::createValue(__source));

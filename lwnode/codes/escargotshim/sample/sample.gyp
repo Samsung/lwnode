@@ -11,6 +11,9 @@
       'cflags_cc': [
         '-Wno-unused-parameter',
       ],
+      'include_dirs': [
+        '../src',
+      ],
       'sources': [
         'hello-world.cc',
         'escargot-sample.cc',

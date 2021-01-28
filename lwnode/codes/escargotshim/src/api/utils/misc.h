@@ -41,14 +41,14 @@
 // Use CHECK when abort should occurs if the condition fails
 #define CHECK_FMT COLOR_REDBG "CHECK FAILED" COLOR_RESET " "
 
-#define _LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                  \
-  LWNODE_LOG_RAW(CHECK_FMT msg "\n\t" TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);  \
+#define _LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                 \
+  LWNODE_LOG_RAW(CHECK_FMT msg "\n\t" TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);   \
   std::abort();
 
 #define LWNODE_CHECK_MSG(condition, msg, ...)                                  \
   do {                                                                         \
     if (LWNODE_UNLIKELY(!(condition))) {                                       \
-      _LWNODE_CHECK_FAILED_HANDLER(msg, ##__VA_ARGS__);                         \
+      _LWNODE_CHECK_FAILED_HANDLER(msg, ##__VA_ARGS__);                        \
     }                                                                          \
   } while (0)
 

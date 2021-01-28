@@ -21,8 +21,9 @@
 // --------------------------------------------------------------------------------
 
 #include <GCUtil.h>
-#include "gc-vector.h"
+#include "compiler.h"
 #include "gc-container.h"
+#include "gc-vector.h"
 
 // typedef of GC-aware vector
 template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>
@@ -121,3 +122,17 @@ template <typename T,
           typename Allocator = GCUtil::gc_malloc_allocator<T>>
 class GCUnorderedSet : public GCUnorderedSetT<T, Hasher, Predicate, Allocator>,
                        public gc {};
+
+class ESCARGOT_EXPORT MemoryUtil {
+ public:
+  static void startGCStatsTrace();
+  static void endGCStatsTrace();
+  static void doFullGCWithoutSeeingStack();
+  static void printEveryReachableGCObjects();
+  static void printGCStats();
+  static void printBacktrace(void *gcPtr);
+  static void prettyBytes(char* buf,
+                          size_t nBuf,
+                          size_t bytes,
+                          std::function<bool(uint, double)> filter = nullptr);
+};

@@ -19,67 +19,16 @@
 #include <string.h>
 #include "escargot-sample.h"
 #include "include/v8.h"
+// internals
+#include "api/flags.h"
+#include "api/utils/gc.h"
 
 using namespace v8;
 using namespace Escargot;
+using namespace EscargotShim;
 using namespace EscargotSample;
 
 int helloV8(int argc, char* argv[]) {
-  // Initialize V8.
-  /* V8::InitializeICUDefaultLocation(argv[0]);
-    V8::InitializeExternalStartupData(argv[0]); */
-  // Platform* platform = platform::CreateDefaultPlatform();
-  // V8::InitializePlatform(platform);
-  V8::Initialize();
-  printf("start escargotshim sample\n");
-
-  // Create a new Isolate and make it the current one.
-  Isolate::CreateParams create_params;
-  /*  create_params.array_buffer_allocator =
-      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-  create_params.array_buffer_allocator =
-      new v8::ArrayBuffer::Allocator(1000); */
-
-  Isolate* isolate = Isolate::New(create_params);
-  {
-    Isolate::Scope isolate_scope(isolate);
-
-    // Create a stack-allocated handle scope.
-    HandleScope handle_scope(isolate);
-
-    // Create a new context.
-    Local<Context> context = Context::New(isolate);
-
-    // Enter the context for compiling and running the hello world script.
-    Context::Scope context_scope(context);
-
-    // Create a string containing the JavaScript source code.
-    Local<String> source =
-        String::NewFromUtf8(
-            isolate, "'Hello' + ', V8!'", NewStringType::kNormal)
-            .ToLocalChecked();
-
-    // Compile the source code.
-    Local<Script> script = Script::Compile(context, source).ToLocalChecked();
-
-    // Run the script to get the result.
-    Local<Value> result = script->Run(context).ToLocalChecked();
-
-    // Convert the result to an UTF8 string and print it.
-    // String::Utf8Value utf8(result);
-    // printf("%s\n", *utf8);
-  }
-
-  // Dispose the isolate and tear down V8.
-  isolate->Dispose();
-  V8::Dispose();
-  // V8::ShutdownPlatform();
-  // delete platform;
-  /* delete create_params.array_buffer_allocator; */
-  return 0;
-}
-
-int helloV8_UnboundScript(int argc, char* argv[]) {
   // Initialize V8.
   /* V8::InitializeICUDefaultLocation(argv[0]);
     V8::InitializeExternalStartupData(argv[0]); */
@@ -128,8 +77,6 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
     // Convert the result to an UTF8 string and print it.
     String::Utf8Value utf8(isolate, result);
     printf("%s\n", *utf8);
-
-    return 0;
   }
 
   // Dispose the isolate and tear down V8.
@@ -138,7 +85,7 @@ int helloV8_UnboundScript(int argc, char* argv[]) {
 
   // V8::ShutdownPlatform();
   // delete platform;
-  delete create_params.array_buffer_allocator; // @check node do this?
+  delete create_params.array_buffer_allocator;  // @check node do this?
   return 0;
 }
 
@@ -150,6 +97,9 @@ int helloEscargot(int argc, char* argv[]) {
   // Create a new VMInstance and make a Context.
   PersistentRefHolder<VMInstanceRef> instance = VMInstanceRef::create(platform);
   PersistentRefHolder<ContextRef> context = ContextRef::create(instance);
+
+  instance->setOnVMInstanceDelete(
+      [](VMInstanceRef* instance) { delete instance->platform(); });
 
   // Create a string containing the JavaScript source code
   const char* rawsource = "'Hello' + ', Escargot!'";
@@ -183,21 +133,20 @@ int helloEscargot(int argc, char* argv[]) {
 int helloEscargotSample(int argc, char* argv[]) {
   App app;
 
-  const char* filename = "hello-world.js";
-  app.evalScript("'Hello' + ', Escargot!'", filename, true, false);
-
   const char* const source =
       R"(
         print('Hello' + ', Escargot!');
       )";
-  app.evalScript(source, filename, false, false);
+  app.evalScript(source, "", false, false);
   return 0;
 }
 
 int main(int argc, char* argv[]) {
-  helloV8_UnboundScript(argc, argv);
-  // helloV8(argc, argv);
-  helloEscargot(argc, argv);
+  Flags::add(FlagType::TraceGC);
+
+  helloV8(argc, argv);
+  // helloEscargot(argc, argv);
   helloEscargotSample(argc, argv);
+
   return 0;
 }

@@ -17,3 +17,8 @@
 #pragma once
 
 #define THREAD_LOCAL thread_local
+
+#if !defined(LWNODE_EXPORT)
+#define LWNODE_EXPORT __attribute__((visibility("default")))
+#define LWNODE_LOCAL __attribute__((visibility("hidden")))
+#endif

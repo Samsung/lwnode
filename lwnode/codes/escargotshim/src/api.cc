@@ -153,27 +153,30 @@ void V8::SetFlagsFromString(const char* str, size_t length) {
 }
 
 void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
-  flags_t flags = Flags::Empty;
+  flag_t flags = FlagType::Empty;
 
   for (int i = 1; i < *argc; i++) {
     char* arg = argv[i];
     bool checked = false;
 
     if (strEquals("--expose-gc", arg) || strEquals("--expose_gc", arg)) {
-      flags |= Flags::ExposeGC;
+      flags |= FlagType::ExposeGC;
       checked = true;
     } else if (strEquals("--use-strict", arg) ||
                strEquals("--use_strict", arg)) {
-      flags |= Flags::UseStrict;
+      flags |= FlagType::UseStrict;
       checked = true;
     } else if (strEquals("--off-idlegc", arg) ||
                strEquals("--off_idlegc", arg)) {
-      flags |= Flags::DisableIdleGC;
+      flags |= FlagType::DisableIdleGC;
       checked = true;
     } else if (strEquals("--harmony-top-level-await", arg)) {
-      flags |= Flags::TopLevelWait;
-      checked = true;
       // @check https://github.sec.samsung.net/lws/node-escargot/issues/394
+      flags |= FlagType::TopLevelWait;
+      checked = true;
+    } else if (strEquals("--trace-gc", arg)) {
+      flags |= FlagType::TraceGC;
+      checked = true;
     } else if (remove_flags && (strStartsWith(arg, "--debug") ||
                                 strStartsWith(arg, "--stack-size=") ||
                                 strStartsWith(arg, "--nolazy") ||
@@ -186,7 +189,7 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     }
   }
 
-  e::setFlags(flags);
+  Flags::set(flags);
 
   if (remove_flags) {
     int count = 0;

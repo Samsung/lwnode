@@ -2,8 +2,9 @@
   'includes': ['common.gypi'],
   'variables': {
     'escargot_dir%': 'deps/escargot',
-    'support_valgrind%': 'OFF',
+    "lib_type%": 'static_lib', # static_lib | shared_lib
     'lib_ext%': '.a',
+    'build_asan%': '<(build_asan)',
   },
   'targets': [{
     'target_name': 'escargot',
@@ -52,9 +53,8 @@
           '-DESCARGOT_ARCH=<(target_arch)',
           '-DESCARGOT_MODE=<(build_mode)',
           '-DESCARGOT_HOST=<(build_host)',
-          '-DESCARGOT_OUTPUT=static_lib',
-          # TODO: use VALGRIND
-          # '-DVALGRIND=<(support_valgrind)',
+          '-DESCARGOT_OUTPUT=<(lib_type)',
+          '-DESCARGOT_ASAN=<(build_asan)',
         ],
       },
       {

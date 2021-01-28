@@ -59,7 +59,7 @@ class Platform : public PlatformRef {
   v8::ArrayBuffer::Allocator* m_allocator = nullptr;
 };
 
-class Engine {
+class Engine : public gc {
  public:
   Engine() = default;
 

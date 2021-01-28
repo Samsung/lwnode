@@ -25,17 +25,17 @@ class Constants {
 };
 }  // namespace EscargotShim
 
-inline int stringLength(const char* string) {
+inline int strLength(const char* string) {
   size_t len = strlen(string);
   LWNODE_CHECK(EscargotShim::Constants::kMaxStringLength >= len);
   return static_cast<int>(len);
 }
 
-inline int stringLength(const uint8_t* string) {
-  return stringLength(reinterpret_cast<const char*>(string));
+inline int strLength(const uint8_t* string) {
+  return strLength(reinterpret_cast<const char*>(string));
 }
 
-inline int stringLength(const uint16_t* string) {
+inline int strLength(const uint16_t* string) {
   size_t length = 0;
   while (string[length] != '\0') length++;
   LWNODE_CHECK(EscargotShim::Constants::kMaxStringLength >= length);

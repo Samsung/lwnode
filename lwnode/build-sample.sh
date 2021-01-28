@@ -19,6 +19,6 @@ set -e
 ROOT_PATH=./out/sample
 
 gyp ./lwnode/codes/escargotshim/sample/sample.gyp --depth=. -f ninja \
-  --generator-output=$ROOT_PATH
+  --generator-output=$ROOT_PATH -Dbuild_asan=1
 
 ninja -v -C $ROOT_PATH/out/Debug sample

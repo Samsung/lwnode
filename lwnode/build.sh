@@ -24,7 +24,7 @@ CONFIG="--without-npm --without-bundled-v8 --without-v8-platform \
     --ninja"
 
 if [[ $1 =~ ^"-d" ]]; then
-  ! [[ $1 =~ .*"0" ]] && ./configure $CONFIG --debug --debug-node
+  ! [[ $1 =~ .*"b" ]] && ./configure $CONFIG --debug --debug-node
   ninja -v -C out/Debug node |& lwnode/tools/colorize.sh
 
 else
