@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 
 // --- S c r i p t s ---
@@ -124,7 +130,6 @@ Local<PrimitiveArray> ScriptOrModule::GetHostDefinedOptions() {
 Local<UnboundScript> Script::GetUnboundScript() {
   LWNODE_RETURN_LOCAL(UnboundScript);
 }
-
 
 // static
 Local<PrimitiveArray> PrimitiveArray::New(Isolate* v8_isolate, int length) {

@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 // --- V a l u e   S e r i a l i z a t i o n ---
 
@@ -148,4 +154,4 @@ bool ValueDeserializer::ReadDouble(double* value) {
 bool ValueDeserializer::ReadRawBytes(size_t length, const void** data) {
   LWNODE_RETURN_FALSE;
 }
-}
+}  // namespace v8

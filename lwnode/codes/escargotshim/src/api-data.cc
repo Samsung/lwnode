@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 // --- D a t a ---
 
@@ -183,7 +189,8 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 
   auto __value = VAL(this)->value();
   if (__value->isString()) {
-    return Local<String>::New(_isolate->toV8(), ValueWrap::createValue(__value));
+    return Local<String>::New(_isolate->toV8(),
+                              ValueWrap::createValue(__value));
   }
 
   LWNODE_UNIMPLEMENT;
@@ -982,7 +989,7 @@ static T getValue(ValueRef* __value, F toValue) {
       toValue);
 
   if (!r.isSuccessful()) {
-    LWNODE_RETURN_0; // TODO: handle error
+    LWNODE_RETURN_0;  // TODO: handle error
   }
 
   return v;

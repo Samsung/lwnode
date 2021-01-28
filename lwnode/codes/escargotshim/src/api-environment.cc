@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 // --- E n v i r o n m e n t ---
 
@@ -284,7 +290,8 @@ void* External::Value() const {
   }
 
 Local<String> String::_Empty(Isolate* isolate) {
-  return Local<String>::New(isolate, ValueWrap::createValue(StringRef::emptyString()));
+  return Local<String>::New(isolate,
+                            ValueWrap::createValue(StringRef::emptyString()));
 }
 
 Local<String> String::NewFromUtf8Literal(Isolate* isolate,

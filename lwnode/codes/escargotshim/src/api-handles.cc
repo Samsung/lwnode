@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 
 // --- H a n d l e s ---

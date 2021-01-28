@@ -18,63 +18,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <signal.h>
-#include <algorithm>  // For min
-#include <cmath>      // For isnan.
-#include <limits>
-#include <string>
-#include <utility>  // For move
-#include <vector>
-
-#include "v8-profiler.h"
-#include "v8-util.h"
-
-#include <inttypes.h>  // For PRIu64
-#include "api/context.h"
-#include "api/escargot-util.h"
-#include "api/flags.h"
-#include "api/handle.h"
-#include "api/isolate.h"
-#include "api/utils/string.h"
+#include "api.h"
 #include "escargotshim-base.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
-
-#define VAL(that) reinterpret_cast<const ValueWrap*>(that)
-
-#define PRIVATE_UTIL_1(_isolate, bailout_value)                                \
-  if (_isolate->IsExecutionTerminating()) {                                    \
-    return bailout_value;                                                      \
-  }
-
-#define API_ENTER(isolate, bailout_value)                                      \
-  auto _isolate = IsolateWrap::fromV8(isolate);                                \
-  PRIVATE_UTIL_1(_isolate, bailout_value)
-
-#define API_ENTER_NO_EXCEPTION(isolate)                                        \
-  auto _isolate = IsolateWrap::fromV8(isolate);
-
-#define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
-  auto _isolate = context.IsEmpty() ? IsolateWrap::currentIsolate()            \
-                                    : VAL(*context)->context()->GetIsolate();  \
-  PRIVATE_UTIL_1(_isolate, bailout_value)
-
-namespace i = v8::internal;
-
-// V has parameters (Type, type, TYPE, C type)
-#define TYPED_ARRAYS(V)                                                        \
-  V(Uint8, uint8, UINT8, uint8_t)                                              \
-  V(Int8, int8, INT8, int8_t)                                                  \
-  V(Uint16, uint16, UINT16, uint16_t)                                          \
-  V(Int16, int16, INT16, int16_t)                                              \
-  V(Uint32, uint32, UINT32, uint32_t)                                          \
-  V(Int32, int32, INT32, int32_t)                                              \
-  V(Float32, float32, FLOAT32, float)                                          \
-  V(Float64, float64, FLOAT64, double)                                         \
-  V(Uint8Clamped, uint8_clamped, UINT8_CLAMPED, uint8_t)                       \
-  V(BigUint64, biguint64, BIGUINT64, uint64_t)                                 \
-  V(BigInt64, bigint64, BIGINT64, int64_t)
 
 namespace v8 {
 
@@ -389,12 +337,6 @@ void V8::InternalFieldOutOfBounds(int index) {
   LWNODE_RETURN_VOID;
 }
 
-// --- H a n d l e s ---
-// --- T e m p l a t e ---
-// --- S c r i p t s ---
-// --- E x c e p t i o n s ---
-// --- J S O N ---
-
 MaybeLocal<Value> JSON::Parse(Local<Context> context,
                               Local<String> json_string) {
   LWNODE_RETURN_LOCAL(Value);
@@ -406,18 +348,4 @@ MaybeLocal<String> JSON::Stringify(Local<Context> context,
   LWNODE_RETURN_LOCAL(String);
 }
 
-// --- V a l u e   S e r i a l i z a t i o n ---
-// --- D a t a ---
-// --- E n v i r o n m e n t ---
-// --- D e b u g   S u p p o r t ---
-
 }  // namespace v8
-
-#include "api-data.hpp"
-#include "api-debug.hpp"
-#include "api-environment.hpp"
-#include "api-exception.hpp"
-#include "api-handles.hpp"
-#include "api-scripts.hpp"
-#include "api-serialization.hpp"
-#include "api-template.hpp"

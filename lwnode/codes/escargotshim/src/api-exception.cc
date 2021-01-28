@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
-  // --- E x c e p t i o n s ---
+// --- E x c e p t i o n s ---
 
 v8::TryCatch::TryCatch(v8::Isolate* isolate)
     : isolate_(nullptr),
@@ -221,4 +227,4 @@ bool StackFrame::IsWasm() const {
 bool StackFrame::IsUserJavaScript() const {
   LWNODE_RETURN_FALSE;
 }
-}
+}  // namespace v8

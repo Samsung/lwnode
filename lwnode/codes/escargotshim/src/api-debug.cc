@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 // --- D e b u g   S u p p o r t ---
 
@@ -935,4 +941,4 @@ void EmbedderHeapTracer::ResetHandleInNonTracingGC(
 //     : address_(address), type_info_(type_info) {
 //   LWNODE_RETURN_VOID;
 // }
-}
+}  // namespace v8

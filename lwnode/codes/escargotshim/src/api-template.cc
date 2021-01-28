@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+#include "api.h"
+#include "escargotshim-base.h"
+
+using namespace Escargot;
+using namespace EscargotShim;
+
 namespace v8 {
 // --- T e m p l a t e ---
 
@@ -226,4 +232,4 @@ bool ObjectTemplate::IsImmutableProto() {
 }
 
 void ObjectTemplate::SetImmutableProto() {}
-}
+}  // namespace v8
