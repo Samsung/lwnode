@@ -63,7 +63,6 @@ class IsolateWrap : public gc {
     return m_array_buffer_allocator;
   }
 
-  // @desc Gets the currently entered isolate.
   static IsolateWrap* currentIsolate();
 
   // HandleScope & Handle
@@ -77,6 +76,9 @@ class IsolateWrap : public gc {
   void popContext(ContextWrap* context);
   ContextWrap* CurrentContext();
 
+  // Eternal
+  void addEternal(Escargot::ValueRef* value);
+
   void scheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
 
@@ -87,9 +89,32 @@ class IsolateWrap : public gc {
     return m_pureContext->scriptParser();
   }
 
+  void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
+    promise_reject_callback_ = callback;
+  }
+
+  void SetFatalErrorHandler(v8::FatalErrorCallback callback) {
+    fatal_error_callback_ = callback;
+  }
+
+  void SetPrepareStackTraceCallback(v8::PrepareStackTraceCallback callback) {
+    prepare_stack_trace_callback_ = callback;
+  }
+
+  void SetAbortOnUncaughtExceptionCallback(
+      v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
+    set_abort_on_uncaught_exception_callback_ = callback;
+  }
+
+  void AddMessageListenerWithErrorLevel(v8::MessageCallback callback) {
+    LWNODE_DCHECK_NULL(message_callback_);
+    message_callback_ = callback;
+  }
+
  private:
   IsolateWrap();
 
+  GCVector<Escargot::ValueRef*> eternals_;
   GCVector<HandleScopeWrap*> m_handleScopes;
   GCVector<ContextWrap*> m_contexts;
 
@@ -103,8 +128,15 @@ class IsolateWrap : public gc {
 
   bool m_hasScheduledThrow = false;
 
-  VMInstanceRef* m_vmInstance;
-  ContextRef* m_pureContext;
+  VMInstanceRef* m_vmInstance = nullptr;
+  ContextRef* m_pureContext = nullptr;
+
+  v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
+  v8::MessageCallback message_callback_ = nullptr;
+  v8::FatalErrorCallback fatal_error_callback_ = nullptr;
+  v8::PrepareStackTraceCallback prepare_stack_trace_callback_ = nullptr;
+  v8::Isolate::AbortOnUncaughtExceptionCallback
+      set_abort_on_uncaught_exception_callback_ = nullptr;
 };
 
 }  // namespace EscargotShim

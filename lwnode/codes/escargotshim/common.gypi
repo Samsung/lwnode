@@ -47,8 +47,8 @@
         },
       }],
       ['build_asan==1', {
-        'cflags+':    [ '-fsanitize=address', '-fno-omit-frame-pointer', '-fsanitize-recover=address', '-fno-common', '-D_FORTIFY_SOURCE=2' ],
-        'cflags_cc+': [ '-fsanitize=address', '-fno-omit-frame-pointer', '-fsanitize-recover=address', '-fno-common', '-D_FORTIFY_SOURCE=2' ],
+        'cflags+':    [ '-fsanitize=address', '-fno-omit-frame-pointer', '-fno-common', '-D_FORTIFY_SOURCE=2' ],
+        'cflags_cc+': [ '-fsanitize=address', '-fno-omit-frame-pointer', '-fno-common', '-D_FORTIFY_SOURCE=2' ],
         'cflags!': [ '-fomit-frame-pointer' ],
         'ldflags': [ '-fsanitize=address' ],
         'libraries': [ '-lasan' ],

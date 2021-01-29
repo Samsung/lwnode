@@ -54,12 +54,12 @@
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
   do {                                                                         \
-    fprintf(stderr, COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);              \
+    fprintf(stderr, COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);      \
   } while (0);
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
   do {                                                                         \
-    fprintf(stderr, COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);                \
+    fprintf(stderr, COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);       \
   } while (0);
 
 #define LWNODE_UNIMPLEMENT                                                     \
@@ -68,12 +68,21 @@
                    TRACE_ARGS);                                                \
   } while (0)
 
-#ifdef NDEBUG
-#define LWNODE_CALL_TRACE
-#else
+// conditional loggers
+
+#if !defined(NDEBUG)
+#define LWNODE_DLOG_RAW(fmt, ...) LWNODE_LOG_RAW(fmt, ##__VA_ARGS__)
+#define LWNODE_DLOG_INFO(fmt, ...) LWNODE_LOG_INFO(fmt, ##__VA_ARGS__)
+#define LWNODE_DLOG_WARN(fmt, ...) LWNODE_LOG_WARN(fmt, ##__VA_ARGS__)
+#define LWNODE_DLOG_ERROR(fmt, ...) LWNODE_LOG_ERROR(fmt, ##__VA_ARGS__)
 #define LWNODE_CALL_TRACE                                                      \
   do {                                                                         \
-    LWNODE_LOG_RAW("TRACE" TRACE_FMT, TRACE_ARGS);                             \
+    LWNODE_DLOG_RAW("TRACE" TRACE_FMT, TRACE_ARGS);                            \
   } while (0)
-
+#else
+#define LWNODE_DLOG_RAW(fmt, ...)
+#define LWNODE_DLOG_INFO(fmt, ...)
+#define LWNODE_DLOG_WARN(fmt, ...)
+#define LWNODE_DLOG_ERROR(fmt, ...)
+#define LWNODE_CALL_TRACE
 #endif

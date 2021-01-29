@@ -79,9 +79,8 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   LWNODE_CHECK_NOT_NULL(m_array_buffer_allocator);
 
   m_vmInstance = VMInstanceRef::create(new Platform(m_array_buffer_allocator));
-  m_vmInstance->setOnVMInstanceDelete([](VMInstanceRef* instance) {
-    delete instance->platform();
-  });
+  m_vmInstance->setOnVMInstanceDelete(
+      [](VMInstanceRef* instance) { delete instance->platform(); });
 
   // @note any execution upon this context is NOT allowed. It intends for
   // compiling source only.
@@ -144,6 +143,10 @@ void IsolateWrap::popContext(ContextWrap* context) {
 
 ContextWrap* IsolateWrap::CurrentContext() {
   return m_contexts.back();
+}
+
+void IsolateWrap::addEternal(ValueRef* value) {
+  eternals_.push_back(value);
 }
 
 }  // namespace EscargotShim

@@ -53,4 +53,15 @@
   } while (0)
 
 #define LWNODE_CHECK(condition) LWNODE_CHECK_MSG(condition, #condition)
+#define LWNODE_CHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
 #define LWNODE_CHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)
+
+#if !defined(NDEBUG)
+#define LWNODE_DCHECK(condition) LWNODE_CHECK_MSG(condition, #condition)
+#define LWNODE_DCHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
+#define LWNODE_DCHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)
+#else
+#define LWNODE_DCHECK(condition)
+#define LWNODE_DCHECK_NULL(x)
+#define LWNODE_DCHECK_NOT_NULL(x)
+#endif

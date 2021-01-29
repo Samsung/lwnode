@@ -281,7 +281,7 @@ void* External::Value() const {
     i::Isolate* i_isolate = reinterpret_cast<internal::Isolate*>(isolate);     \
     ENTER_V8_NO_SCRIPT_NO_EXCEPTION(i_isolate);                                \
     LOG_API(i_isolate, class_name, function_name);                             \
-    if (length < 0) length = strLength(data);                               \
+    if (length < 0) length = strLength(data);                                  \
     i::Handle<i::String> handle_result =                                       \
         NewString(                                                             \
             i_isolate->factory(), type, i::Vector<const Char>(data, length))   \
@@ -1140,7 +1140,7 @@ void Isolate::Exit() {
 
 void Isolate::SetAbortOnUncaughtExceptionCallback(
     AbortOnUncaughtExceptionCallback callback) {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::fromV8(this)->SetAbortOnUncaughtExceptionCallback(callback);
 }
 
 void Isolate::SetHostCleanupFinalizationGroupCallback(
@@ -1164,7 +1164,7 @@ void Isolate::SetHostInitializeImportMetaObjectCallback(
 }
 
 void Isolate::SetPrepareStackTraceCallback(PrepareStackTraceCallback callback) {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::fromV8(this)->SetPrepareStackTraceCallback(callback);
 }
 
 Isolate::DisallowJavascriptExecutionScope::DisallowJavascriptExecutionScope(
@@ -1299,7 +1299,7 @@ void Isolate::SetPromiseHook(PromiseHook hook) {
 }
 
 void Isolate::SetPromiseRejectCallback(PromiseRejectCallback callback) {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::fromV8(this)->SetPromiseRejectCallback(callback);
 }
 
 void Isolate::PerformMicrotaskCheckpoint() {
@@ -1315,7 +1315,7 @@ void Isolate::EnqueueMicrotask(MicrotaskCallback callback, void* data) {
 }
 
 void Isolate::SetMicrotasksPolicy(MicrotasksPolicy policy) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CALL_TRACE;
 }
 
 MicrotasksPolicy Isolate::GetMicrotasksPolicy() const {
@@ -1449,7 +1449,11 @@ size_t Isolate::CopyCodePages(size_t capacity, MemoryRange* code_pages_out) {
 #define CALLBACK_SETTER(ExternalName, Type, InternalName)                      \
   void Isolate::Set##ExternalName(Type callback) { LWNODE_RETURN_VOID; }
 
-CALLBACK_SETTER(FatalErrorHandler, FatalErrorCallback, exception_behavior)
+// CALLBACK_SETTER(FatalErrorHandler, FatalErrorCallback, exception_behavior)
+void Isolate::SetFatalErrorHandler(FatalErrorCallback that) {
+  IsolateWrap::fromV8(this)->SetFatalErrorHandler(that);
+}
+
 CALLBACK_SETTER(OOMErrorHandler, OOMErrorCallback, oom_behavior)
 CALLBACK_SETTER(AllowCodeGenerationFromStringsCallback,
                 AllowCodeGenerationFromStringsCallback,
@@ -1505,7 +1509,12 @@ bool Isolate::AddMessageListener(MessageCallback that, Local<Value> data) {
 bool Isolate::AddMessageListenerWithErrorLevel(MessageCallback that,
                                                int message_levels,
                                                Local<Value> data) {
-  LWNODE_RETURN_FALSE;
+  // @note: node use this only once with
+  // Isolate::MessageErrorLevel::kMessageError |
+  // Isolate::MessageErrorLevel::kMessageWarning
+  IsolateWrap::fromV8(this)->AddMessageListenerWithErrorLevel(that);
+
+  return true;
 }
 
 void Isolate::RemoveMessageListeners(MessageCallback that) {

@@ -2,7 +2,21 @@
 
 
 
-## Naming apis
+--------
+
+### directives
+
+* **SHALL** is used to express mandatory requirements. (negative form: **SHALL NOT**)
+  * Do not use MUST as an alternative to SHALL.
+* **SHOULD** is used to express recommendations. (negative form: **SHOULD NOT**)
+* **MAY** is used to express permissions .  (negative form: **NEED NOT**)
+  * do not use CAN as an alternative to MAY.
+
+---------
+
+
+
+## Naming
 
 - If a corresponding class or a simlar concept exists in v8, name it with a postfix, `Wrap`.
 ```
@@ -12,20 +26,20 @@
   - IsolateWrap (lwnode)
 ```
 
-- If there is a corresponding functions in v8, use the exact name.
+- If there is a corresponding functions in v8, it **SHALL** use the exact name.
 ```
   ContextWrap::Enter (lwnode)
   Context::Enter (v8)
 ```
 
-- If not, use the name starting with lower letter.
+- If not, it **SHALL** use the name starting with a small letter.
 ```
   IsolateWrap::pushHandleScope (lwnode internal)
 ```
 
-- If posssible, avoid using a brand name (e.g lwnode) to name apis. Because the brand name could be changed in future.
+- It **SHOULD NOT** use a brand name (e.g lwnode) to name apis. Because the brand name could be changed in future.
 
-- The postfix, `Ref`, stands for `Reference`. Thus, don't use it as a pointer `Ref*`.
+- The postfix, `Ref`, stands for `Reference`. Thus, it **SHOULD NOT** use it as a pointer `Ref*`.
 
 ```diff
 - typedef Escargot::ContextRef* JsContextRef; // (x)
@@ -35,10 +49,13 @@
   * API level 1 : v8 apis
   * API level 2 : EscargotShim apis (Wrapped Values)
   * API level 3 : Escargot apis
-* In `api.cc` if there are same concepts among the API levels, use the following conventions:
+* Regarding Variable Names, 
+* In Level 1, if there are same concepts among the API levels, it **SHOULD** use the following conventions:
   * name a value of API level 3 (Escargot Value) with `__` .
   * name a value of API level 2 (Wrapped Value) with `_`.
   * name v8 Value without `_`.
+  * It **SHALL** use the above especially when using `auto` type inference.
+* In Level 3, it **NEEDS NOT** to meet the above conventions.
 
 
 
@@ -50,13 +67,13 @@
 | :-----------------: | :--------------------: | :---------------------: | :------------------: |
 | User apps (Node.js) | v8 apis (`src/api.cc`) | lwnode apis (`src/api`) | js engine (escargot) |
 
-* In the level 1, `ValueWrap` should be used for type convertion between v8 and lwnode apis.
+* In the level 1, `ValueWrap` **SHALL** be used for type convertion between v8 and lwnode apis.
 
-
+  
 
 ## Type conversion between lwnode world and v8 world
 
-`api.cc` is like a middle land. Any value moving out from lwnode world should be wrapped using `ValueWrap`.
+`api.cc` is like a middle land. Any value moving out from lwnode world **SHALL** be wrapped using `ValueWrap`.
 
 
 
@@ -67,9 +84,9 @@
 // Escargot::ValueRef* inherited
 auto __string = StringRef::createFromUTF8(...);
 auto _value = ValueWrap::createValue(string);
-// auto value = ValueWrap::createValue(string); // deprecated
+// auto value = new ValueWrap(string); // deprecated
 
-// Others
+// Others 
 // e.g) Escargot::Script
 auto _value = ValueWrap::createScript(...);
 ```
@@ -105,8 +122,8 @@ VAL(this)->context()->Enter();
 ```c++
 auto __string = StringRef::createFromUTF8(...);
 
-// Usage:
-return Local<String>::New(isolate, ValueWrap::createValue(__string));
+// Usage:   
+return Local<String>::New(isolate, new ValueWrap(__string));
 ```
 
 
@@ -118,9 +135,17 @@ return Local<String>::New(isolate, ValueWrap::createValue(__string));
 
 
 
-## Relations
+# Language styles
 
-- IsolateWrap *-> ContextWrap
-- IsolateWrap *-> HandleScope
-- ContextWrap 1-> IsolateWrap
+- Type Names
+  - Type names start with a capital letter and have a capital letter for each new word: `MyClass`, `MyEnum`.
+- Variable Names
+  - Class data member (TBD)
+    - 1) m_value
+    - 2) value_ (node, v8)
+  - Common data (TBD)
+    - 1) stringValue
+    - 2) string_value (v8)
+- File Names
+  - Filenames should be all lowercase and may include dashes (-).
 

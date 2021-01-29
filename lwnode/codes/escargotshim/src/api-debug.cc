@@ -682,7 +682,7 @@ CpuProfile* CpuProfiler::StopProfiling(Local<String> title) {
 }
 
 void CpuProfiler::UseDetailedSourcePositionsForProfiling(Isolate* isolate) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CALL_TRACE;
 }
 
 uintptr_t CodeEvent::GetCodeStartAddress() {

@@ -182,6 +182,8 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
                                 strStartsWith(arg, "--nolazy") ||
                                 strStartsWith(arg, "--trace_debug"))) {
       checked = true;
+    } else {
+      LWNODE_DLOG_WARN("'%s' flag is ignored", arg);
     }
 
     if (checked && remove_flags) {
@@ -319,13 +321,9 @@ void V8::SetFinalizationCallbackTraced(
 }
 
 Value* V8::Eternalize(Isolate* v8_isolate, Value* value) {
-  // i::Isolate* isolate = reinterpret_cast<i::Isolate*>(v8_isolate);
-  // i::Object object = *Utils::OpenHandle(value);
-  // int index = -1;
-  // isolate->eternal_handles()->Create(isolate, object, &index);
-  // return reinterpret_cast<Value*>(
-  //     isolate->eternal_handles()->Get(index).location());
-  LWNODE_RETURN_NULLPTR;
+  API_ENTER_NO_EXCEPTION(v8_isolate);
+  _isolate->addEternal(VAL(value)->value());
+  return value;
 }
 
 void V8::FromJustIsNothing() {
