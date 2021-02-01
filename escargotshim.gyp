@@ -1,0 +1,64 @@
+{
+  'includes': ['common.gypi'],
+  'variables': {
+    'library%': 'static_library',
+    'tizen_device_api_dir': 'deps/tizen-device-api',
+    'enable_escargotshim_asan%': 0,
+    'enable_external_builtin_scripts%': 'false',
+  },
+  'targets': [
+    {
+      'target_name': 'escargotshim',
+      'type': '<(library)',
+      'dependencies': [
+        'escargot.gyp:escargot',
+      ],
+      'include_dirs': [
+        'src',
+        'include',
+        '.',
+      ],
+      'sources': [
+        'src/api.cc',
+        'src/api-data.cc',
+        'src/api-debug.cc',
+        'src/api-environment.cc',
+        'src/api-exception.cc',
+        'src/api-handles.cc',
+        'src/api-scripts.cc',
+        'src/api-serialization.cc',
+        'src/api-template.cc',
+        'src/init/v8.cc',
+        'src/execution/v8threads.cc',
+        'src/libplatform/default-platform.cc',
+        'src/libplatform/tracing/tracing-controller.cc',
+        'src/libplatform/tracing/trace-buffer.cc',
+        'src/libplatform/tracing/trace-config.cc',
+        'src/libplatform/tracing/trace-object.cc',
+        'src/libplatform/tracing/trace-writer.cc',
+        'src/api/utils/gc.cc',
+        'src/api/engine.cc',
+        'src/api/escargot-util.cc',
+        'src/api/flags.cc',
+        'src/api/handle.cc',
+        'src/api/handlescope.cc',
+        'src/api/isolate.cc',
+        'src/api/context.cc',
+      ],
+      'cflags_cc!': ['-fno-exceptions'],
+      'cflags_cc': [
+        '-std=gnu++11',
+        '-Wno-unused-parameter',
+        '-fexceptions',
+      ],
+      'direct_dependent_settings': {
+        'defines': [
+        ],
+        'include_dirs': [
+          'include',
+          '.',
+        ],
+      },
+    },
+  ],
+}
