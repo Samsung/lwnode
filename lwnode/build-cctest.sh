@@ -15,7 +15,7 @@
 
 ROOT_PATH=out/cctest
 
-./tools/gyp/gyp ./lwnode/codes/escargotshim/test/cctest.gyp --depth=. -f ninja \
+./tools/gyp/gyp ./lwnode/code/escargotshim/test/cctest.gyp --depth=. -f ninja \
   --generator-output=$ROOT_PATH -Dbuild_asan=1
 
 ninja -v -C $ROOT_PATH/out/Debug cctest

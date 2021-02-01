@@ -111,7 +111,7 @@ def get_lwnode_gyp_options():
   if options.engine == 'escargot' :
     args += ['-Dlwnode='+ 'true']
 
-    lwnode_jsengine_path = 'lwnode/codes/escargotshim';
+    lwnode_jsengine_path = 'lwnode/code/escargotshim';
     args += ['-Dlwnode_jsengine_path='+ lwnode_jsengine_path]
 
     if options.enable_external_builtin_scripts:
