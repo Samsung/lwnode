@@ -17,14 +17,27 @@
  *  USA
  */
 
-#include "escargot-util.h"
+#pragma once
+
+#include <EscargotPublic.h>
+#include "utils/gc.h"
 
 using namespace Escargot;
 
 namespace EscargotShim {
 
-JsContext* CreateJsContext(JsVMInstance* vmInstance) {
-  return ContextRef::create(vmInstance);
-}
+class IsolateWrap;
+
+typedef Evaluator::EvaluatorResult EvalResult;
+
+class Factory : public gc {
+ public:
+  Factory(IsolateWrap* isolate);
+
+  ValueRef* createObject();
+
+ private:
+  IsolateWrap* esIsolate_ = nullptr;
+};
 
 }  // namespace EscargotShim

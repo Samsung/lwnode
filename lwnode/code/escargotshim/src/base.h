@@ -20,22 +20,23 @@
 
 #define VAL(that) reinterpret_cast<const ValueWrap*>(that)
 
-#define PRIVATE_UTIL_1(_isolate, bailout_value)                                \
-  if (_isolate->IsExecutionTerminating()) {                                    \
+#define PRIVATE_UTIL_1(lwIsolate, bailout_value)                               \
+  if (lwIsolate->IsExecutionTerminating()) {                                   \
     return bailout_value;                                                      \
   }
 
 #define API_ENTER(isolate, bailout_value)                                      \
-  auto _isolate = IsolateWrap::fromV8(isolate);                                \
-  PRIVATE_UTIL_1(_isolate, bailout_value)
+  IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);                       \
+  PRIVATE_UTIL_1(lwIsolate, bailout_value)
 
 #define API_ENTER_NO_EXCEPTION(isolate)                                        \
-  auto _isolate = IsolateWrap::fromV8(isolate);
+  IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);
 
 #define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
-  auto _isolate = context.IsEmpty() ? IsolateWrap::currentIsolate()            \
-                                    : VAL(*context)->context()->GetIsolate();  \
-  PRIVATE_UTIL_1(_isolate, bailout_value)
+  IsolateWrap* lwIsolate = context.IsEmpty()                                   \
+                               ? IsolateWrap::currentIsolate()                 \
+                               : VAL(*context)->context()->GetIsolate();       \
+  PRIVATE_UTIL_1(lwIsolate, bailout_value)
 
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \

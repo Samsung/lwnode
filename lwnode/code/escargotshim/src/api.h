@@ -29,7 +29,6 @@
 #include "v8-util.h"
 
 #include "api/context.h"
-#include "api/escargot-util.h"
 #include "api/flags.h"
 #include "api/handle.h"
 #include "api/isolate.h"

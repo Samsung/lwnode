@@ -322,7 +322,7 @@ void V8::SetFinalizationCallbackTraced(
 
 Value* V8::Eternalize(Isolate* v8_isolate, Value* value) {
   API_ENTER_NO_EXCEPTION(v8_isolate);
-  _isolate->addEternal(VAL(value)->value());
+  lwIsolate->addEternal(VAL(value)->value());
   return value;
 }
 

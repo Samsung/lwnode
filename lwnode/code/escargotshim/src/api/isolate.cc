@@ -24,7 +24,9 @@ namespace EscargotShim {
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
-IsolateWrap::IsolateWrap() {}
+IsolateWrap::IsolateWrap() {
+  factory_ = new Factory(this);
+}
 
 IsolateWrap::~IsolateWrap() {}
 
