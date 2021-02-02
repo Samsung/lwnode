@@ -16,6 +16,7 @@
 
 #include "handlescope.h"
 #include "isolate.h"
+#include "handle.h"
 
 namespace EscargotShim {
 
@@ -32,6 +33,8 @@ HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,
   if (!value) {
     return nullptr;
   }
+
+  LWNODE_CHECK(value->isValid());
 
   isolate->addHandleToCurrentHandleScope(value);
 

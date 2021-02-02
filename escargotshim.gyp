@@ -39,7 +39,7 @@
         'src/libplatform/tracing/trace-writer.cc',
         'src/api/utils/gc.cc',
         'src/api/engine.cc',
-        'src/api/escargot-util.cc',
+        'src/api/factory.cc',
         'src/api/flags.cc',
         'src/api/handle.cc',
         'src/api/handlescope.cc',

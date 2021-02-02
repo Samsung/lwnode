@@ -34,17 +34,19 @@ typedef GCContainer<void*> ExtraData;
 class HandleWrap : public gc {
  public:
   enum Type : uint8_t {
-    NotPresent = 0,
-    JsValue,
+    JsValue = 0,
     Context,
     ObjectTemplate,
     FunctionTemplate,
     // Only types having an ExtraData are allowed after this point
     ExtraDataPresent,
     Script,
+    // NotPresent should be at last
+    NotPresent,
   };
 
   Type type() const { return m_type; }
+  bool isValid() const { return (m_type < HandleWrap::Type::NotPresent); }
 
  protected:
   HandleWrap() = default;
@@ -77,7 +79,7 @@ class ValueWrap : public HandleWrap {
 
   // Context
   // @todo: use factory to create Escargot instances
-  static ValueWrap* createContext(IsolateWrap* _isolate);
+  static ValueWrap* createContext(IsolateWrap* lwIsolate);
   ContextWrap* context() const;
 
   // Script

@@ -189,7 +189,7 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 
   auto __value = VAL(this)->value();
   if (__value->isString()) {
-    return Local<String>::New(_isolate->toV8(),
+    return Local<String>::New(lwIsolate->toV8(),
                               ValueWrap::createValue(__value));
   }
 

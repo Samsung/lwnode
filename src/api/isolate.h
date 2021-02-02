@@ -23,6 +23,7 @@
 #include "handlescope.h"
 #include "utils/compiler.h"
 #include "utils/gc.h"
+#include "factory.h"
 
 namespace EscargotShim {
 
@@ -111,6 +112,8 @@ class IsolateWrap : public gc {
     message_callback_ = callback;
   }
 
+  Factory* factory() { return factory_; }
+
  private:
   IsolateWrap();
 
@@ -137,6 +140,8 @@ class IsolateWrap : public gc {
   v8::PrepareStackTraceCallback prepare_stack_trace_callback_ = nullptr;
   v8::Isolate::AbortOnUncaughtExceptionCallback
       set_abort_on_uncaught_exception_callback_ = nullptr;
+
+  Factory* factory_ = nullptr;
 };
 
 }  // namespace EscargotShim

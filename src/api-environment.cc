@@ -152,8 +152,6 @@ Local<Context> v8::Context::New(
 
   auto _context =
       ValueWrap::createContext(IsolateWrap::fromV8(external_isolate));
-  auto l = Local<Context>::New(external_isolate, _context);
-  return l;
   return Local<Context>::New(external_isolate, _context);
 }
 
@@ -392,7 +390,10 @@ Isolate* v8::Object::GetIsolate() {
 }
 
 Local<v8::Object> v8::Object::New(Isolate* isolate) {
-  LWNODE_RETURN_LOCAL(Object);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  auto esValue = lwIsolate->factory()->createObject();
+  return Local<Object>::New(lwIsolate->toV8(), ValueWrap::createValue(esValue));
 }
 
 Local<v8::Object> v8::Object::New(Isolate* isolate,
@@ -1590,8 +1591,8 @@ bool MicrotasksScope::IsRunningMicrotasks(Isolate* v8_isolate) {
 
 String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
-  auto _isolate = IsolateWrap::fromV8(isolate);
-  auto _context = _isolate->CurrentContext();
+  auto lwIsolate = IsolateWrap::fromV8(isolate);
+  auto _context = lwIsolate->CurrentContext();
   auto _value = VAL(*obj);
 
   auto r = Evaluator::execute(

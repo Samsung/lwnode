@@ -112,11 +112,11 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
       _value->script());
 
   if (!r.isSuccessful()) {
-    _isolate->scheduleThrow(r.error.get());
+    lwIsolate->scheduleThrow(r.error.get());
     return MaybeLocal<Value>();
   }
 
-  return Local<Value>::New(_isolate->toV8(), ValueWrap::createValue(r.result));
+  return Local<Value>::New(lwIsolate->toV8(), ValueWrap::createValue(r.result));
 }
 
 Local<Value> ScriptOrModule::GetResourceName() {
@@ -245,7 +245,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
     LWNODE_UNIMPLEMENT;
   }
 
-  ScriptParserRef* parser = _isolate->scriptParser();
+  ScriptParserRef* parser = lwIsolate->scriptParser();
   ScriptParserRef::InitializeScriptResult result =
       parser->initializeScript(__source, __resource_name, false);
 
@@ -255,7 +255,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
 
   // wrap the parsed script with the current isolate
   auto _value = ValueWrap::createScript(result.script.get());
-  ExtraData extra(1, _isolate);
+  ExtraData extra(1, lwIsolate);
   _value->setExtra(std::move(extra));
 
   return Local<UnboundScript>::New(v8_isolate, _value);
