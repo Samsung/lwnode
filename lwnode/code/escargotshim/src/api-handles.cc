@@ -15,7 +15,7 @@
  */
 
 #include "api.h"
-#include "escargotshim-base.h"
+#include "base.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
@@ -137,8 +137,19 @@ v8::Local<v8::Value> Context::SlowGetEmbedderData(int index) {
   LWNODE_RETURN_LOCAL(Value);
 }
 
+// template <typename T, typename F>
+// inline T VALC(F* p) {
+//   return reinterpret_cast<const ValueWrap*>(that);
+// }
+
+// #define VALCC(that) reinterpret_cast<const ValueWrap*>(
+//                    const_cast<typename std::remove_const<F>::type*>(that))
+
+
 void Context::SetEmbedderData(int index, v8::Local<Value> value) {
-  LWNODE_RETURN_VOID;
+  auto v= VAL(*value);
+
+  VAL(this)->context()->SetEmbedderData(index, v);
 }
 
 void* Context::SlowGetAlignedPointerFromEmbedderData(int index) {

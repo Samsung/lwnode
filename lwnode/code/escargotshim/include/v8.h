@@ -35,7 +35,7 @@ namespace EscargotShim{
 class HandleWrap;
 }
 namespace e = EscargotShim;
-// end of @lwnode
+// end @lwnode
 
 // We reserve the V8_* prefix for macros defined in V8 public API and
 // assume there are no name conflicts with the embedder's code.
@@ -388,7 +388,7 @@ private:
   friend class PrimitiveArray;
   friend class ValueDeserializer;
   V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
-// end of @lwnode
+// end @lwnode
 };
 
 
@@ -3092,7 +3092,10 @@ class V8_EXPORT String : public Name {
   /**
    * A zero length string.
    */
-  V8_INLINE static Local<String> Empty(Isolate* isolate);
+  // @lwnode
+  // V8_INLINE static Local<String> Empty(Isolate* isolate);
+  V8_EXPORT static Local<String> Empty(Isolate* isolate);
+  // end @lwnode
 
   /**
    * Returns true if the string is external
@@ -3387,10 +3390,6 @@ class V8_EXPORT String : public Name {
                                               NewStringType type, int length);
 
   static void CheckCast(v8::Value* obj);
-
-  // @lwnode
-  static Local<String> _Empty(Isolate* isolate);
-  // end of @lwnode
 };
 
 // Zero-length string specialization (templated string size includes
@@ -7070,10 +7069,18 @@ void V8_EXPORT RegisterExtension(std::unique_ptr<Extension>);
 
 // --- Statics ---
 
+// @lwnode
+#if 0
 V8_INLINE Local<Primitive> Undefined(Isolate* isolate);
 V8_INLINE Local<Primitive> Null(Isolate* isolate);
 V8_INLINE Local<Boolean> True(Isolate* isolate);
 V8_INLINE Local<Boolean> False(Isolate* isolate);
+#endif
+V8_EXPORT Local<Primitive> Undefined(Isolate* isolate);
+V8_EXPORT Local<Primitive> Null(Isolate* isolate);
+V8_EXPORT Local<Boolean> True(Isolate* isolate);
+V8_EXPORT Local<Boolean> False(Isolate* isolate);
+// end @lwnode
 
 /**
  * A set of constraints that specifies the limits of the runtime's memory use.
@@ -10823,7 +10830,7 @@ Local<T> Local<T>::New(Isolate* isolate, T* that) {
   internal::Address p = reinterpret_cast<internal::Address>(that_ptr);
   return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
       reinterpret_cast<internal::Isolate*>(isolate), p)));
-  // end of @lwnode
+  // end @lwnode
 }
 
 // @lwnode
@@ -10835,7 +10842,7 @@ Local<T> Local<T>::New(Isolate* isolate, e::HandleWrap* that) {
   return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
       reinterpret_cast<internal::Isolate*>(isolate), p)));
 }
-// end of @lwnode
+// end @lwnode
 
 template<class T>
 template<class S>
@@ -11452,6 +11459,8 @@ AccessorSignature* AccessorSignature::Cast(Data* data) {
 }
 
 Local<Value> Object::GetInternalField(int index) {
+// @lwnode
+#if 0
 #ifndef V8_ENABLE_CHECKS
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -11475,11 +11484,15 @@ Local<Value> Object::GetInternalField(int index) {
     return Local<Value>(reinterpret_cast<Value*>(result));
   }
 #endif
+#endif
+// end @lwnode
   return SlowGetInternalField(index);
 }
 
 
 void* Object::GetAlignedPointerFromInternalField(int index) {
+// @lwnode
+#if 0
 #ifndef V8_ENABLE_CHECKS
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -11496,6 +11509,8 @@ void* Object::GetAlignedPointerFromInternalField(int index) {
     return reinterpret_cast<void*>(value);
   }
 #endif
+#endif
+// end @lwnode
   return SlowGetAlignedPointerFromInternalField(index);
 }
 
@@ -11506,20 +11521,17 @@ String* String::Cast(v8::Value* value) {
   return static_cast<String*>(value);
 }
 
-
-Local<String> String::Empty(Isolate* isolate) {
-  // @lwnode
+// @lwnode
 #if 0
+Local<String> String::Empty(Isolate* isolate) {
   typedef internal::Address S;
   typedef internal::Internals I;
   I::CheckInitialized(isolate);
   S* slot = I::GetRoot(isolate, I::kEmptyStringRootIndex);
   return Local<String>(reinterpret_cast<String*>(slot));
-#endif
-  return _Empty(isolate);
-  // end of @lwnode
 }
-
+#endif
+// end @lwnode
 
 String::ExternalStringResource* String::GetExternalStringResource() const {
   typedef internal::Address A;
@@ -12008,6 +12020,8 @@ bool PropertyCallbackInfo<T>::ShouldThrowOnError() const {
       reinterpret_cast<v8::internal::Isolate*>(GetIsolate()));
 }
 
+//@lwnode
+#if 0
 Local<Primitive> Undefined(Isolate* isolate) {
   typedef internal::Address S;
   typedef internal::Internals I;
@@ -12042,7 +12056,8 @@ Local<Boolean> False(Isolate* isolate) {
   S* slot = I::GetRoot(isolate, I::kFalseValueRootIndex);
   return Local<Boolean>(reinterpret_cast<Boolean*>(slot));
 }
-
+#endif
+// end @lwnode
 
 void Isolate::SetData(uint32_t slot, void* data) {
   typedef internal::Internals I;
@@ -12100,6 +12115,8 @@ int64_t Isolate::AdjustAmountOfExternalAllocatedMemory(
 }
 
 Local<Value> Context::GetEmbedderData(int index) {
+// @lwnode
+#if 0
 #ifndef V8_ENABLE_CHECKS
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -12122,10 +12139,15 @@ Local<Value> Context::GetEmbedderData(int index) {
 #else
   return SlowGetEmbedderData(index);
 #endif
+#endif
+  return SlowGetEmbedderData(index);
+// end @lwnode
 }
 
 
 void* Context::GetAlignedPointerFromEmbedderData(int index) {
+// @lwnode
+#if 0
 #ifndef V8_ENABLE_CHECKS
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -12140,6 +12162,9 @@ void* Context::GetAlignedPointerFromEmbedderData(int index) {
 #else
   return SlowGetAlignedPointerFromEmbedderData(index);
 #endif
+#endif
+  return SlowGetAlignedPointerFromEmbedderData(index);
+// end @lwnode
 }
 
 template <class T>

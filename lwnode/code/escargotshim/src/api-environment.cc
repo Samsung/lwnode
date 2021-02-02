@@ -15,7 +15,7 @@
  */
 
 #include "api.h"
-#include "escargotshim-base.h"
+#include "base.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
@@ -187,7 +187,7 @@ Local<Value> v8::Context::GetSecurityToken() {
 }
 
 v8::Isolate* Context::GetIsolate() {
-  LWNODE_RETURN_NULLPTR;
+  return VAL(this)->context()->GetIsolate()->toV8();
 }
 
 v8::Local<v8::Object> Context::Global() {
@@ -288,11 +288,6 @@ void* External::Value() const {
             .ToHandleChecked();                                                \
     result = Utils::ToLocal(handle_result);                                    \
   }
-
-Local<String> String::_Empty(Isolate* isolate) {
-  return Local<String>::New(isolate,
-                            ValueWrap::createValue(StringRef::emptyString()));
-}
 
 Local<String> String::NewFromUtf8Literal(Isolate* isolate,
                                          const char* literal,

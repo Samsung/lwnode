@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#include "escargotshim-base.h"
+#include "unimplemented.h"
 #include "include/libplatform/v8-tracing.h"
 
 namespace v8 {

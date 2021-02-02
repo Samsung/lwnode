@@ -22,7 +22,7 @@
 // found in the LICENSE file.
 
 #include "libplatform/tracing/trace-writer.h"
-#include "escargotshim-base.h"
+#include "unimplemented.h"
 #include "v8.h"
 
 namespace v8 {

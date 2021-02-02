@@ -16,31 +16,7 @@
 
 #pragma once
 
-#include "api/utils/logger.h"
-
-#define LWNODE_RETURN_VOID                                                     \
-  LWNODE_UNIMPLEMENT;                                                          \
-  return;
-
-#define LWNODE_RETURN_0                                                        \
-  LWNODE_UNIMPLEMENT;                                                          \
-  return 0;
-
-#define LWNODE_RETURN_FALSE                                                    \
-  LWNODE_UNIMPLEMENT;                                                          \
-  return false;
-
-#define LWNODE_RETURN_NULLPTR                                                  \
-  LWNODE_UNIMPLEMENT;                                                          \
-  return nullptr;
-
-#define LWNODE_RETURN_LOCAL(type)                                              \
-  LWNODE_UNIMPLEMENT;                                                          \
-  return Local<type>();
-
-#define LWNODE_RETURN_MAYBE(type)                                              \
-  LWNODE_UNIMPLEMENT;                                                          \
-  return Nothing<type>();
+#include "unimplemented.h"
 
 #define VAL(that) reinterpret_cast<const ValueWrap*>(that)
 

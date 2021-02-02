@@ -51,9 +51,9 @@
   * API level 3 : Escargot apis
 * Regarding Variable Names, 
 * In Level 1, if there are same concepts among the API levels, it **SHOULD** use the following conventions:
-  * name a value of API level 3 (Escargot Value) with `__` .
-  * name a value of API level 2 (Wrapped Value) with `_`.
-  * name v8 Value without `_`.
+  * name a value of API level 3 (Escargot Value) with `es` .
+  * name a value of API level 2 (Wrapped Value) with `lw`.
+  * name v8 Value with no prefix.
   * It **SHALL** use the above especially when using `auto` type inference.
 * In Level 3, it **NEEDS NOT** to meet the above conventions.
 
@@ -82,13 +82,13 @@
 
 ```c++
 // Escargot::ValueRef* inherited
-auto __string = StringRef::createFromUTF8(...);
-auto _value = ValueWrap::createValue(string);
+auto esString = StringRef::createFromUTF8(...);
+auto lwValue = ValueWrap::createValue(string);
 // auto value = new ValueWrap(string); // deprecated
 
 // Others 
 // e.g) Escargot::Script
-auto _value = ValueWrap::createScript(...);
+auto lwValue = ValueWrap::createScript(...);
 ```
 
 
@@ -120,10 +120,10 @@ VAL(this)->context()->Enter();
 * Retrun a `ValueWrap` using a `Local`
 
 ```c++
-auto __string = StringRef::createFromUTF8(...);
+auto esString = StringRef::createFromUTF8(...);
 
 // Usage:   
-return Local<String>::New(isolate, new ValueWrap(__string));
+return Local<String>::New(isolate, new ValueWrap(esString));
 ```
 
 
