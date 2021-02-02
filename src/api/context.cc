@@ -27,10 +27,10 @@ static bool createGlobals(ContextRef* context) {
 }
 
 ContextWrap::ContextWrap(IsolateWrap* isolate) {
-  m_isolate = isolate;
-  m_context = ContextRef::create(isolate->vmInstance());
+  isolate_ = isolate;
+  context_ = ContextRef::create(isolate->vmInstance());
 
-  createGlobals(m_context);
+  createGlobals(context_);
 }
 
 ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
@@ -40,16 +40,35 @@ ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
 }
 
 void ContextWrap::Enter() {
-  m_isolate->Enter();
-  m_isolate->pushContext(this);
+  isolate_->Enter();
+  isolate_->pushContext(this);
 }
 
 void ContextWrap::Exit() {
-  m_isolate->popContext(this);
+  isolate_->popContext(this);
 }
 
 IsolateWrap* ContextWrap::GetIsolate() {
-  return m_isolate;
+  return isolate_;
+}
+
+void ContextWrap::SetEmbedderData(int index, const ValueWrap* value) {
+  if (embedder_data_ == nullptr) {
+    embedder_data_ = new EmbedderDataMap();
+  }
+  embedder_data_->insert(std::make_pair(index, value));
+  auto a = GetEmbedderData(index);
+  LWNODE_CHECK(a == value);
+}
+
+const ValueWrap* ContextWrap::GetEmbedderData(int index) {
+  auto iter = embedder_data_->find(index);
+  if (iter != embedder_data_->end()) {
+    return iter->second;
+  }
+  return nullptr;
 }
 
 }  // namespace EscargotShim
+
+// namespace EscargotShim

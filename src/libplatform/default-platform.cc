@@ -21,7 +21,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "escargotshim-base.h"
+#include "base.h"
 #include "libplatform/libplatform.h"
 #include "v8.h"
 

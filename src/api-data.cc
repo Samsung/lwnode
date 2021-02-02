@@ -15,7 +15,7 @@
  */
 
 #include "api.h"
-#include "escargotshim-base.h"
+#include "base.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
@@ -244,7 +244,8 @@ bool i::ShouldThrowOnError(i::Isolate* isolate) {
 }
 
 void i::Internals::CheckInitializedImpl(v8::Isolate* external_isolate) {
-  LWNODE_RETURN_VOID;
+  i::Isolate* isolate = reinterpret_cast<i::Isolate*>(external_isolate);
+  LWNODE_CHECK_NOT_NULL(isolate);
 }
 
 void External::CheckCast(v8::Value* that) {

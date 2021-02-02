@@ -19,7 +19,7 @@
 // found in the LICENSE file.
 
 #include "api.h"
-#include "escargotshim-base.h"
+#include "base.h"
 
 using namespace Escargot;
 using namespace EscargotShim;

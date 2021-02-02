@@ -85,7 +85,8 @@ class ValueWrap : public HandleWrap {
   Escargot::ScriptRef* script() const;
 
  private:
-  struct ExtendedHolder : public gc {
+  class ExtendedHolder : public gc {
+   public:
     ExtendedHolder(void* ptr, ExtraData&& other) {
       LWNODE_CHECK(m_extra == nullptr);
       LWNODE_CHECK(m_holder == nullptr);

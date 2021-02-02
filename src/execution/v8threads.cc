@@ -22,7 +22,7 @@
 // found in the LICENSE file.
 
 #include "v8.h"
-#include "escargotshim-base.h"
+#include "base.h"
 
 namespace v8 {
 

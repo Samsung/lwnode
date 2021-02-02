@@ -22,6 +22,10 @@
 namespace EscargotShim {
 
 class IsolateWrap;
+class ValueWrap;
+
+// typedef GCContainer<const ValueWrap*> EmbedderData;
+typedef GCUnorderedMap<int, const ValueWrap*> EmbedderDataMap;
 
 class ContextWrap : public gc {
  public:
@@ -31,13 +35,19 @@ class ContextWrap : public gc {
   void Exit();
   IsolateWrap* GetIsolate();
 
-  Escargot::ContextRef* get() { return m_context; }
+  Escargot::ContextRef* get() { return context_; }
+
+  void SetEmbedderData(int index, const ValueWrap* value);
+  const ValueWrap* GetEmbedderData(int index);
 
  private:
+  static constexpr int kEmbedderDataSize = 2;
+  EmbedderDataMap* embedder_data_ = nullptr;
+
   ContextWrap(IsolateWrap* isolate);
 
-  IsolateWrap* m_isolate;
-  Escargot::ContextRef* m_context;
+  IsolateWrap* isolate_ = nullptr;
+  Escargot::ContextRef* context_ = nullptr;
 };
 
 }  // namespace EscargotShim

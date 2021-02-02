@@ -19,7 +19,7 @@
 // found in the LICENSE file.
 
 #include "libplatform/tracing/trace-buffer.h"
-#include "escargotshim-base.h"
+#include "unimplemented.h"
 
 namespace v8 {
 namespace platform {
