@@ -24,9 +24,7 @@ namespace EscargotShim {
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
-IsolateWrap::IsolateWrap() {
-  factory_ = new Factory(this);
-}
+IsolateWrap::IsolateWrap() {}
 
 IsolateWrap::~IsolateWrap() {}
 
@@ -135,16 +133,17 @@ void IsolateWrap::addHandleToCurrentHandleScope(HandleWrap* value) {
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  m_contexts.push_back(context);
+  m_contextScopes.push_back(context);
 }
 
 void IsolateWrap::popContext(ContextWrap* context) {
-  LWNODE_CHECK(m_contexts.back() == context);
-  m_contexts.pop_back();
+  LWNODE_CHECK(m_contextScopes.back() == context);
+  m_contextScopes.pop_back();
 }
 
 ContextWrap* IsolateWrap::CurrentContext() {
-  return m_contexts.back();
+  LWNODE_CHECK(m_contextScopes.size() >= 1);
+  return m_contextScopes.back();
 }
 
 void IsolateWrap::addEternal(ValueRef* value) {

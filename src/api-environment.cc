@@ -51,7 +51,7 @@ bool V8::EnableWebAssemblyTrapHandler(bool use_v8_signal_handler) {
 }
 
 void v8::V8::SetEntropySource(EntropySource entropy_source) {
-  LWNODE_CALL_TRACE;
+  LWNODE_CALL_TRACE();
 }
 
 void v8::V8::SetReturnAddressLocationResolver(
@@ -391,9 +391,8 @@ Isolate* v8::Object::GetIsolate() {
 
 Local<v8::Object> v8::Object::New(Isolate* isolate) {
   API_ENTER_NO_EXCEPTION(isolate);
-
-  auto esValue = lwIsolate->factory()->createObject();
-  return Local<Object>::New(lwIsolate->toV8(), ValueWrap::createValue(esValue));
+  auto esObject = ObjectRefHelper::create(lwIsolate->CurrentContext()->get());
+  return Local<Object>::New(lwIsolate->toV8(), ValueWrap::createValue(esObject));
 }
 
 Local<v8::Object> v8::Object::New(Isolate* isolate,
@@ -1311,7 +1310,7 @@ void Isolate::EnqueueMicrotask(MicrotaskCallback callback, void* data) {
 }
 
 void Isolate::SetMicrotasksPolicy(MicrotasksPolicy policy) {
-  LWNODE_CALL_TRACE;
+  LWNODE_CALL_TRACE();
 }
 
 MicrotasksPolicy Isolate::GetMicrotasksPolicy() const {

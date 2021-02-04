@@ -607,12 +607,29 @@ MaybeLocal<Value> v8::Object::GetOwnPropertyDescriptor(Local<Context> context,
 }
 
 Local<Value> v8::Object::GetPrototype() {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::currentIsolate();
+
+  ObjectRefHelper helper(lwIsolate->CurrentContext(), VAL(this)->value());
+
+  auto esObject = helper.getPrototype();
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), esObject);
 }
 
 Maybe<bool> v8::Object::SetPrototype(Local<Context> context,
                                      Local<Value> value) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto lwContext = VAL(*context)->context();
+  auto esSelf = VAL(this)->value();
+  auto esValue = VAL(*value)->value();
+
+  ObjectRefHelper helper(lwContext, esSelf);
+  EvalResult r = helper.setPrototype(esValue);
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(true);
 }
 
 Local<Object> v8::Object::FindInstanceInPrototypeChain(

@@ -15,8 +15,8 @@
  */
 
 #include "cctest.h"
-#include "v8.h"
 #include "v14_test.h"
+#include "v8.h"
 
 using namespace v8;
 
@@ -111,4 +111,18 @@ TEST(StringCreateNewFromOneTwoByte) {
   free(buffer);
 
   TEARDOWN()
+}
+
+THREADED_TEST(ObjectPrototype) {
+  SETUP();
+
+  Context::Scope context_scope(context);
+
+  Local<Object> object = Object::New(isolate);
+  Local<Object> prototype = Object::New(isolate);
+
+  object->SetPrototype(context, prototype).FromJust();
+  CHECK(object->GetPrototype() == prototype );
+
+  TEARDOWN();
 }

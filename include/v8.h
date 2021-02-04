@@ -32,6 +32,7 @@
 
 // @lwnode
 namespace EscargotShim{
+#include "lwnode-internal.h"
 class HandleWrap;
 }
 namespace e = EscargotShim;
@@ -238,7 +239,10 @@ class Local {
     internal::Address* b = reinterpret_cast<internal::Address*>(that.val_);
     if (a == nullptr) return b == nullptr;
     if (b == nullptr) return false;
-    return *a == *b;
+    //@lwnode
+    // return *a == *b;
+    return a[1] == b[1];
+    // end @lwnode
   }
 
   template <class S> V8_INLINE bool operator==(
@@ -247,7 +251,10 @@ class Local {
     internal::Address* b = reinterpret_cast<internal::Address*>(that.val_);
     if (a == nullptr) return b == nullptr;
     if (b == nullptr) return false;
-    return *a == *b;
+    // @lwnode
+    // return *a == *b;
+    return a[1] == b[1];
+    // end @lwnode
   }
 
   /**
