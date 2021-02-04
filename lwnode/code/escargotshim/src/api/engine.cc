@@ -15,7 +15,6 @@
  */
 
 #include "engine.h"
-#include "allocator.h"
 #include "flags.h"
 #include "utils/string.h"
 

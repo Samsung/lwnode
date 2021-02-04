@@ -101,20 +101,17 @@ Local<Value> UnboundScript::GetSourceMappingURL() {
 MaybeLocal<Value> Script::Run(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
 
-  auto _value = VAL(this);
-  auto _contextUsed = _value->getExtra<ContextWrap>(0).getChecked();
+  auto lwValue = VAL(this);
+  auto lwContextUsed = lwValue->getExtra<ContextWrap>(0).getChecked();
 
   auto r = Evaluator::execute(
-      _contextUsed->get(),
+      lwContextUsed->get(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
-      _value->script());
+      lwValue->script());
 
-  if (!r.isSuccessful()) {
-    lwIsolate->scheduleThrow(r.error.get());
-    return MaybeLocal<Value>();
-  }
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
   return Local<Value>::New(lwIsolate->toV8(), ValueWrap::createValue(r.result));
 }

@@ -75,14 +75,21 @@
 #define LWNODE_DLOG_INFO(fmt, ...) LWNODE_LOG_INFO(fmt, ##__VA_ARGS__)
 #define LWNODE_DLOG_WARN(fmt, ...) LWNODE_LOG_WARN(fmt, ##__VA_ARGS__)
 #define LWNODE_DLOG_ERROR(fmt, ...) LWNODE_LOG_ERROR(fmt, ##__VA_ARGS__)
-#define LWNODE_CALL_TRACE                                                      \
-  do {                                                                         \
-    LWNODE_DLOG_RAW("TRACE" TRACE_FMT, TRACE_ARGS);                            \
-  } while (0)
 #else
 #define LWNODE_DLOG_RAW(fmt, ...)
 #define LWNODE_DLOG_INFO(fmt, ...)
 #define LWNODE_DLOG_WARN(fmt, ...)
 #define LWNODE_DLOG_ERROR(fmt, ...)
-#define LWNODE_CALL_TRACE
+#endif
+
+// enable this when call tracing is needed.
+// #define LWNODE_ENABLE_CALL_TRACE
+
+#if !defined(NDEBUG) && defined(LWNODE_ENABLE_CALL_TRACE)
+#define LWNODE_CALL_TRACE()                                                    \
+  do {                                                                         \
+    LWNODE_DLOG_RAW("TRACE" TRACE_FMT, TRACE_ARGS);                            \
+  } while (0)
+#else
+#define LWNODE_CALL_TRACE()
 #endif

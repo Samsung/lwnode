@@ -122,8 +122,14 @@ VAL(this)->context()->Enter();
 ```c++
 auto esString = StringRef::createFromUTF8(...);
 
-// Usage:   
-return Local<String>::New(isolate, new ValueWrap(esString));
+// Usage 1:   
+return Local<String>::New(isolate, ValueWrap::createValue(esString));
+
+// Usage 2:
+API_RETURN_LOCAL(String, isolate, esString);
+
+#define API_RETURN_LOCAL(type, isolate, esValue)                      \
+  return Local<type>::New(isolate, ValueWrap::createValue(esValue));
 ```
 
 
@@ -132,6 +138,7 @@ return Local<String>::New(isolate, new ValueWrap(esString));
 
 * `IsolateWrap::IsExecutionTerminating` returns true if a pending exception that should be thrown exists.
 * Scheduling throwing an excpetion can be set through `IsolateWrap::scheduleThrow`.
+* If a javascript operation could make an exception (e.g `v8::Object::SetPrototype`), it should do exception handling.
 
 
 

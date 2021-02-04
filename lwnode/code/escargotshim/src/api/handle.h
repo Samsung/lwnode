@@ -45,12 +45,12 @@ class HandleWrap : public gc {
     NotPresent,
   };
 
-  Type type() const { return m_type; }
+  uint8_t type() const { return m_type; }
   bool isValid() const { return (m_type < HandleWrap::Type::NotPresent); }
 
  protected:
   HandleWrap() = default;
-  Type m_type = NotPresent;
+  uint8_t m_type = NotPresent;
 };
 
 class ValueWrap : public HandleWrap {
