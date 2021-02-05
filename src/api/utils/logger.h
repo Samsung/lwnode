@@ -86,10 +86,10 @@
 // #define LWNODE_ENABLE_CALL_TRACE
 
 #if !defined(NDEBUG) && defined(LWNODE_ENABLE_CALL_TRACE)
-#define LWNODE_CALL_TRACE()                                                    \
+#define LWNODE_CALL_TRACE(msg, ...)                                            \
   do {                                                                         \
-    LWNODE_DLOG_RAW("TRACE" TRACE_FMT, TRACE_ARGS);                            \
+    LWNODE_DLOG_RAW("TRACE" TRACE_FMT " " msg, TRACE_ARGS, ##__VA_ARGS__);     \
   } while (0)
 #else
-#define LWNODE_CALL_TRACE()
+#define LWNODE_CALL_TRACE(msg, ...)
 #endif

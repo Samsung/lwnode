@@ -91,7 +91,7 @@ bool Value::IsObject() const {
 }
 
 bool Value::IsNumber() const {
-  auto _value = VAL(this);
+  auto _value = CVAL(this);
   if (_value->type() != ValueWrap::Type::JsValue) {
     return false;
   }
@@ -133,7 +133,7 @@ bool Value::IsExternal() const {
 }
 
 bool Value::IsInt32() const {
-  auto _value = VAL(this);
+  auto _value = CVAL(this);
   if (_value->type() != ValueWrap::Type::JsValue) {
     return false;
   }
@@ -141,7 +141,7 @@ bool Value::IsInt32() const {
 }
 
 bool Value::IsUint32() const {
-  auto _value = VAL(this);
+  auto _value = CVAL(this);
   if (_value->type() != ValueWrap::Type::JsValue) {
     return false;
   }
@@ -187,7 +187,7 @@ bool Value::IsModuleNamespaceObject() const {
 MaybeLocal<String> Value::ToString(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
 
-  auto __value = VAL(this)->value();
+  auto __value = CVAL(this)->value();
   if (__value->isString()) {
     return Local<String>::New(lwIsolate->toV8(),
                               ValueWrap::createValue(__value));
@@ -1014,7 +1014,7 @@ static T getValue(ValueRef* __value, F toValue) {
 }
 
 double Number::Value() const {
-  return getValue<double>(VAL(this)->value(),
+  return getValue<double>(CVAL(this)->value(),
                           [](ValueRef* __value, ExecutionStateRef* __state) {
                             return __value->toNumber(__state);
                           });
@@ -1025,21 +1025,21 @@ bool Boolean::Value() const {
 }
 
 int64_t Integer::Value() const {
-  return getValue<int64_t>(VAL(this)->value(),
+  return getValue<int64_t>(CVAL(this)->value(),
                            [](ValueRef* __value, ExecutionStateRef* __state) {
                              return __value->toNumber(__state);
                            });
 }
 
 int32_t Int32::Value() const {
-  return getValue<int32_t>(VAL(this)->value(),
+  return getValue<int32_t>(CVAL(this)->value(),
                            [](ValueRef* __value, ExecutionStateRef* __state) {
                              return __value->toInt32(__state);
                            });
 }
 
 uint32_t Uint32::Value() const {
-  return getValue<uint32_t>(VAL(this)->value(),
+  return getValue<uint32_t>(CVAL(this)->value(),
                             [](ValueRef* __value, ExecutionStateRef* __state) {
                               return __value->toUint32(__state);
                             });

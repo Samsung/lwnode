@@ -119,14 +119,17 @@ void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
   m_handleScopes.pop_back();
 }
 
-void IsolateWrap::escapeHandleFromCurrentHandleScope(HandleWrap* value) {
+void IsolateWrap::escapeHandle(HandleWrap* value) {
   LWNODE_CHECK(m_handleScopes.size() > 1);
 
   auto last = m_handleScopes.rbegin();
-  (*(++last))->add(value);
+
+  if ((*last)->remove(value)) {
+    (*(++last))->add(value);
+  }
 }
 
-void IsolateWrap::addHandleToCurrentHandleScope(HandleWrap* value) {
+void IsolateWrap::addHandle(HandleWrap* value) {
   LWNODE_CHECK(m_handleScopes.size() >= 1);
 
   m_handleScopes.back()->add(value);

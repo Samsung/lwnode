@@ -18,7 +18,8 @@
 
 #include "unimplemented.h"
 
-#define VAL(that) reinterpret_cast<const ValueWrap*>(that)
+#define VAL(that) reinterpret_cast<ValueWrap*>(that)
+#define CVAL(that) reinterpret_cast<const ValueWrap*>(that)
 
 #define PRIVATE_UTIL_1(lwIsolate, bailout_value)                               \
   if (lwIsolate->IsExecutionTerminating()) {                                   \
@@ -44,8 +45,8 @@
     return bailout_value;                                                      \
   }
 
-#define API_RETURN_LOCAL(type, isolate, esValue)                               \
-  return Local<type>::New(isolate, ValueWrap::createValue(esValue));
+#define API_RETURN_LOCAL(type, v8_isolate, esValue)                            \
+  return Local<type>::New(v8_isolate, ValueWrap::createValue(esValue));
 
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \

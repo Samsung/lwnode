@@ -150,9 +150,10 @@ Local<Context> v8::Context::New(
     LWNODE_UNIMPLEMENT;
   }
 
-  auto _context =
+  auto lwContext =
       ValueWrap::createContext(IsolateWrap::fromV8(external_isolate));
-  return Local<Context>::New(external_isolate, _context);
+
+  return Local<Context>::New(external_isolate, lwContext);
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -189,7 +190,10 @@ v8::Isolate* Context::GetIsolate() {
 }
 
 v8::Local<v8::Object> Context::Global() {
-  LWNODE_RETURN_LOCAL(Object);
+  auto lwContext = VAL(this)->context();
+  GlobalObjectRef* esGlobalObject = lwContext->get()->globalObject();
+
+  API_RETURN_LOCAL(Object, lwContext->GetIsolate()->toV8(), esGlobalObject);
 }
 
 void Context::DetachGlobal() {
@@ -391,8 +395,9 @@ Isolate* v8::Object::GetIsolate() {
 
 Local<v8::Object> v8::Object::New(Isolate* isolate) {
   API_ENTER_NO_EXCEPTION(isolate);
-  auto esObject = ObjectRefHelper::create(lwIsolate->CurrentContext()->get());
-  return Local<Object>::New(lwIsolate->toV8(), ValueWrap::createValue(esObject));
+  ObjectRef* esObject = ObjectRefHelper::create(lwIsolate->CurrentContext()->get());
+
+  API_RETURN_LOCAL(Object, isolate, esObject);
 }
 
 Local<v8::Object> v8::Object::New(Isolate* isolate,

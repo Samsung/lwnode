@@ -15,17 +15,29 @@
  */
 
 #include "handlescope.h"
-#include "isolate.h"
 #include "handle.h"
+#include "isolate.h"
+
+#include <algorithm>
 
 namespace EscargotShim {
 
 HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope,
                                  HandleScopeWrap::Type type)
-    : m_type(type), m_scope(scope) {}
+    : type_(type), scope_(scope) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
-  m_handles.push_back(value);
+  handles_.push_back(value);
+}
+
+bool HandleScopeWrap::remove(HandleWrap* value) {
+  auto it = std::find(handles_.begin(), handles_.end(), value);
+
+  if (it != handles_.end()) {
+    handles_.erase(it);
+    return true;
+  }
+  return false;
 }
 
 HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,
@@ -36,7 +48,7 @@ HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,
 
   LWNODE_CHECK(value->isValid());
 
-  isolate->addHandleToCurrentHandleScope(value);
+  isolate->addHandle(value);
 
   return value;
 }

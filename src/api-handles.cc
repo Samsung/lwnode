@@ -24,6 +24,7 @@ namespace v8 {
 
 // --- H a n d l e s ---
 HandleScope::HandleScope(Isolate* isolate) {
+  LWNODE_CALL_TRACE("%p", this);
   Initialize(isolate);
 }
 
@@ -34,6 +35,7 @@ void HandleScope::Initialize(Isolate* isolate) {
 }
 
 HandleScope::~HandleScope() {
+  LWNODE_CALL_TRACE("%p", this);
   IsolateWrap::fromV8(isolate_)->popHandleScope(this);
 }
 
@@ -64,12 +66,17 @@ i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
   return reinterpret_cast<i::Address*>(handle);
 }
 
-EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate) {
-  LWNODE_UNIMPLEMENT;
+EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate)
+    : HandleScope(v8_isolate) {
+  LWNODE_CALL_TRACE("%p", this);
 }
 
 i::Address* EscapableHandleScope::Escape(i::Address* escape_value) {
-  LWNODE_RETURN_NULLPTR;
+  LWNODE_CALL_TRACE("%p", escape_value);
+
+  IsolateWrap::fromV8(GetIsolate())->escapeHandle(VAL(escape_value));
+
+  return escape_value;
 }
 
 void* EscapableHandleScope::operator new(size_t) {
@@ -145,9 +152,8 @@ v8::Local<v8::Value> Context::SlowGetEmbedderData(int index) {
 // #define VALCC(that) reinterpret_cast<const ValueWrap*>(
 //                    const_cast<typename std::remove_const<F>::type*>(that))
 
-
 void Context::SetEmbedderData(int index, v8::Local<Value> value) {
-  auto v= VAL(*value);
+  auto v = VAL(*value);
 
   VAL(this)->context()->SetEmbedderData(index, v);
 }

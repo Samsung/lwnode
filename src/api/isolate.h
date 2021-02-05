@@ -68,8 +68,8 @@ class IsolateWrap : public gc {
   // HandleScope & Handle
   void pushHandleScope(v8::HandleScope* handleScope);
   void popHandleScope(v8::HandleScope* handleScope);
-  void escapeHandleFromCurrentHandleScope(HandleWrap* value);
-  void addHandleToCurrentHandleScope(HandleWrap* value);
+  void addHandle(HandleWrap* value);
+  void escapeHandle(HandleWrap* value);
 
   // Context
   void pushContext(ContextWrap* context);
