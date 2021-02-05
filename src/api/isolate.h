@@ -54,13 +54,13 @@ class IsolateWrap : public gc {
   // V8 internals
   void set_array_buffer_allocator_shared(
       std::shared_ptr<v8::ArrayBuffer::Allocator> allocator) {
-    m_array_buffer_allocator_shared = std::move(allocator);
+    array_buffer_allocator_shared_ = std::move(allocator);
   }
   void set_array_buffer_allocator(v8::ArrayBuffer::Allocator* allocator) {
-    m_array_buffer_allocator = allocator;
+    array_buffer_allocator_ = allocator;
   }
   v8::ArrayBuffer::Allocator* array_buffer_allocator() const {
-    return m_array_buffer_allocator;
+    return array_buffer_allocator_;
   }
 
   static IsolateWrap* currentIsolate();
@@ -82,11 +82,11 @@ class IsolateWrap : public gc {
   void scheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
 
-  VMInstanceRef* get() { return m_vmInstance; }
-  VMInstanceRef* vmInstance() { return m_vmInstance; }
+  VMInstanceRef* get() { return vmInstance_; }
+  VMInstanceRef* vmInstance() { return vmInstance_; }
   ScriptParserRef* scriptParser() {
-    LWNODE_CHECK_NOT_NULL(m_pureContext);
-    return m_pureContext->scriptParser();
+    LWNODE_CHECK_NOT_NULL(pureContext_);
+    return pureContext_->scriptParser();
   }
 
   void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
@@ -111,25 +111,28 @@ class IsolateWrap : public gc {
     message_callback_ = callback;
   }
 
+  SymbolRef* getPrivateSymbol(StringRef* esString);
+
  private:
   IsolateWrap();
 
   GCVector<Escargot::ValueRef*> eternals_;
-  GCVector<HandleScopeWrap*> m_handleScopes;
-  GCVector<ContextWrap*> m_contextScopes;
+  GCVector<HandleScopeWrap*> handleScopes_;
+  GCVector<ContextWrap*> contextScopes_;
+  GCVector<Escargot::SymbolRef*> privateSymbols_;
 
   // Isolate Scope
   static THREAD_LOCAL IsolateWrap* s_currentIsolate;
   static THREAD_LOCAL IsolateWrap* s_previousIsolate;
 
   // V8 CreateParams
-  v8::ArrayBuffer::Allocator* m_array_buffer_allocator = nullptr;
-  std::shared_ptr<v8::ArrayBuffer::Allocator> m_array_buffer_allocator_shared;
+  v8::ArrayBuffer::Allocator* array_buffer_allocator_ = nullptr;
+  std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
 
-  bool m_hasScheduledThrow = false;
+  bool hasScheduledThrow_ = false;
 
-  VMInstanceRef* m_vmInstance = nullptr;
-  ContextRef* m_pureContext = nullptr;
+  VMInstanceRef* vmInstance_ = nullptr;
+  ContextRef* pureContext_ = nullptr;
 
   v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
   v8::MessageCallback message_callback_ = nullptr;

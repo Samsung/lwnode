@@ -35,12 +35,12 @@ enum FlagType : flag_t {
 
 class LWNODE_EXPORT Flags {
  public:
-  static void set(flag_t flags) { m_flags = flags; }
-  static void add(flag_t flags) { m_flags |= flags; }
-  static flag_t get() { return m_flags; };
+  static void set(flag_t flags) { s_flags = flags; }
+  static void add(flag_t flags) { s_flags |= flags; }
+  static flag_t get() { return s_flags; };
 
  private:
-  static flag_t m_flags;
+  static flag_t s_flags;
 };
 
 }  // namespace EscargotShim

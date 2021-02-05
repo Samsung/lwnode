@@ -42,7 +42,7 @@ class ContextWrap : public gc {
 
  private:
   static constexpr int kEmbedderDataSize = 2;
-  EmbedderDataMap* embedder_data_ = nullptr;
+  EmbedderDataMap* embedderData_ = nullptr;
 
   ContextWrap(IsolateWrap* isolate);
 

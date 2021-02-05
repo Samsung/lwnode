@@ -67,15 +67,15 @@ Local<Script> UnboundScript::BindToCurrentContext() {
     @note ValueWrap includes an extra space to carry the gc objects above.
   */
 
-  auto _unboundscript = VAL(this);
-  auto _isolateUsed = _unboundscript->getExtra<IsolateWrap>(0).getChecked();
-  auto _script = ValueWrap::createScript(_unboundscript->script());
+  auto lwUnboundscript = VAL(this);
+  auto lwIsolateUsed = lwUnboundscript->getExtra<IsolateWrap>(0).getChecked();
+  auto lwScript = ValueWrap::createScript(lwUnboundscript->script());
 
   // add the `current context` into this ValueWrap for Script
-  ExtraData extra(1, _isolateUsed->CurrentContext());
-  _script->setExtra(std::move(extra));
+  ExtraData extra(1, lwIsolateUsed->CurrentContext());
+  lwScript->setExtra(std::move(extra));
 
-  return Local<Script>::New(IsolateWrap::currentIsolate()->toV8(), _script);
+  return Local<Script>::New(IsolateWrap::currentIsolate()->toV8(), lwScript);
 }
 
 int UnboundScript::GetId() {
@@ -235,7 +235,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
   // AtomicStrings. Why not a VmInstance instead of a Context? Context isn't
   // related to compiling scripts.
 
-  auto __source = VAL(*source->source_string)->value()->asString();
+  auto esSource = VAL(*source->source_string)->value()->asString();
   auto __resource_name = StringRef::emptyString();
 
   if (!source->resource_name.IsEmpty()) {
@@ -244,18 +244,18 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
 
   ScriptParserRef* parser = lwIsolate->scriptParser();
   ScriptParserRef::InitializeScriptResult result =
-      parser->initializeScript(__source, __resource_name, false);
+      parser->initializeScript(esSource, __resource_name, false);
 
   if (!result.isSuccessful()) {
     return MaybeLocal<UnboundScript>();
   }
 
   // wrap the parsed script with the current isolate
-  auto _value = ValueWrap::createScript(result.script.get());
+  auto lwValue = ValueWrap::createScript(result.script.get());
   ExtraData extra(1, lwIsolate);
-  _value->setExtra(std::move(extra));
+  lwValue->setExtra(std::move(extra));
 
-  return Local<UnboundScript>::New(v8_isolate, _value);
+  return Local<UnboundScript>::New(v8_isolate, lwValue);
 }
 
 MaybeLocal<Script> ScriptCompiler::Compile(Local<Context> context,
