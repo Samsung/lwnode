@@ -45,12 +45,12 @@ class HandleWrap : public gc {
     NotPresent,
   };
 
-  uint8_t type() const { return m_type; }
-  bool isValid() const { return (m_type < HandleWrap::Type::NotPresent); }
+  uint8_t type() const { return type_; }
+  bool isValid() const { return (type_ < HandleWrap::Type::NotPresent); }
 
  protected:
   HandleWrap() = default;
-  uint8_t m_type = NotPresent;
+  uint8_t type_ = NotPresent;
 };
 
 class ValueWrap : public HandleWrap {
@@ -62,19 +62,19 @@ class ValueWrap : public HandleWrap {
   // Extra
   void setExtra(ExtraData&& other) {
     LWNODE_CHECK(type() >= ExtraDataPresent);
-    auto newHolder = new ExtendedHolder(m_holder, std::move(other));
-    m_holder = reinterpret_cast<Escargot::ValueRef*>(newHolder);
+    auto newHolder = new ExtendedHolder(holder_, std::move(other));
+    holder_ = reinterpret_cast<Escargot::ValueRef*>(newHolder);
   }
 
   template <typename E>
   Optional<E> getExtra(const size_t idx) const {
     LWNODE_CHECK(type() >= ExtraDataPresent);
-    auto extended = reinterpret_cast<ExtendedHolder*>(m_holder);
+    auto extended = reinterpret_cast<ExtendedHolder*>(holder_);
     return reinterpret_cast<E*>((*extended->extra())[idx]);
   }
 
   // Value
-  static ValueWrap* createValue(Escargot::ValueRef* __value);
+  static ValueWrap* createValue(Escargot::ValueRef* esValue);
   Escargot::ValueRef* value() const;
 
   // Context
@@ -83,33 +83,33 @@ class ValueWrap : public HandleWrap {
   ContextWrap* context() const;
 
   // Script
-  static ValueWrap* createScript(Escargot::ScriptRef* __script);
+  static ValueWrap* createScript(Escargot::ScriptRef* esScript);
   Escargot::ScriptRef* script() const;
 
  private:
   class ExtendedHolder : public gc {
    public:
     ExtendedHolder(void* ptr, ExtraData&& other) {
-      LWNODE_CHECK(m_extra == nullptr);
-      LWNODE_CHECK(m_holder == nullptr);
-      m_holder = ptr;
-      m_extra = new ExtraData(std::move(other));
+      LWNODE_CHECK(extra_ == nullptr);
+      LWNODE_CHECK(holder_ == nullptr);
+      holder_ = ptr;
+      extra_ = new ExtraData(std::move(other));
     }
-    inline void* holder() { return m_holder; }
-    inline ExtraData* extra() { return m_extra; }
+    inline void* holder() { return holder_; }
+    inline ExtraData* extra() { return extra_; }
 
    private:
-    void* m_holder = nullptr;
-    ExtraData* m_extra = nullptr;
+    void* holder_ = nullptr;
+    ExtraData* extra_ = nullptr;
   };
 
   ValueWrap(void* ptr, HandleWrap::Type type) {
     LWNODE_CHECK_NOT_NULL(ptr);
-    m_type = type;
-    m_holder = ptr;
+    type_ = type;
+    holder_ = ptr;
   }
 
-  void* m_holder = nullptr;
+  void* holder_ = nullptr;
 };
 
 }  // namespace EscargotShim

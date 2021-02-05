@@ -56,7 +56,7 @@ class Platform : public PlatformRef {
       loadedModules;
 
  private:
-  v8::ArrayBuffer::Allocator* m_allocator = nullptr;
+  v8::ArrayBuffer::Allocator* allocator_ = nullptr;
 };
 
 class Engine : public gc {

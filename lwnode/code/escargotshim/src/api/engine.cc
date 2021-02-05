@@ -280,7 +280,7 @@ static ValueRef* builtinGc(ExecutionStateRef* state,
 // --- P l a t f o r m ---
 Platform::Platform(v8::ArrayBuffer::Allocator* allocator) {
   LWNODE_CHECK_NOT_NULL(allocator);
-  m_allocator = allocator;
+  allocator_ = allocator;
 }
 
 void Platform::didPromiseJobEnqueued(ContextRef* relatedContext,
@@ -292,13 +292,13 @@ void Platform::didPromiseJobEnqueued(ContextRef* relatedContext,
 void* Platform::onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
                                                     ArrayBufferObjectRef* obj,
                                                     size_t sizeInByte) {
-  return m_allocator->Allocate(sizeInByte);
+  return allocator_->Allocate(sizeInByte);
 }
 
 void Platform::onArrayBufferObjectDataBufferFree(ContextRef* whereObjectMade,
                                                  ArrayBufferObjectRef* obj,
                                                  void* buffer) {
-  return m_allocator->Free(buffer, obj->byteLength());
+  return allocator_->Free(buffer, obj->byteLength());
 }
 
 PlatformRef::LoadModuleResult Platform::onLoadModule(

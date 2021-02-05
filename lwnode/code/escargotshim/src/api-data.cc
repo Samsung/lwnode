@@ -91,11 +91,11 @@ bool Value::IsObject() const {
 }
 
 bool Value::IsNumber() const {
-  auto _value = CVAL(this);
-  if (_value->type() != ValueWrap::Type::JsValue) {
+  auto lwValue = CVAL(this);
+  if (lwValue->type() != ValueWrap::Type::JsValue) {
     return false;
   }
-  return _value->value()->isNumber();
+  return lwValue->value()->isNumber();
 }
 
 bool Value::IsBigInt() const {
@@ -133,19 +133,19 @@ bool Value::IsExternal() const {
 }
 
 bool Value::IsInt32() const {
-  auto _value = CVAL(this);
-  if (_value->type() != ValueWrap::Type::JsValue) {
+  auto lwValue = CVAL(this);
+  if (lwValue->type() != ValueWrap::Type::JsValue) {
     return false;
   }
-  return _value->value()->isInt32();
+  return lwValue->value()->isInt32();
 }
 
 bool Value::IsUint32() const {
-  auto _value = CVAL(this);
-  if (_value->type() != ValueWrap::Type::JsValue) {
+  auto lwValue = CVAL(this);
+  if (lwValue->type() != ValueWrap::Type::JsValue) {
     return false;
   }
-  return _value->value()->isUInt32();
+  return lwValue->value()->isUInt32();
 }
 
 bool Value::IsNativeError() const {
@@ -187,10 +187,10 @@ bool Value::IsModuleNamespaceObject() const {
 MaybeLocal<String> Value::ToString(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
 
-  auto __value = CVAL(this)->value();
-  if (__value->isString()) {
+  auto esValue = CVAL(this)->value();
+  if (esValue->isString()) {
     return Local<String>::New(lwIsolate->toV8(),
-                              ValueWrap::createValue(__value));
+                              ValueWrap::createValue(esValue));
   }
 
   LWNODE_UNIMPLEMENT;
@@ -991,18 +991,18 @@ Local<Value> Private::Name() const {
 }
 
 template <typename T, typename F>
-static T getValue(ValueRef* __value, F toValue) {
-  auto _context = IsolateWrap::currentIsolate()->CurrentContext();
-  LWNODE_CHECK(_context != nullptr);
+static T getValue(ValueRef* esValue, F toValue) {
+  auto lwContext = IsolateWrap::currentIsolate()->CurrentContext();
+  LWNODE_CHECK(lwContext != nullptr);
   T v = 0;
   auto r = Evaluator::execute(
-      _context->get(),
-      [](ExecutionStateRef* __state, ValueRef* __value, T* v, F toValue)
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* esValue, T* v, F toValue)
           -> ValueRef* {
-        *v = toValue(__value, __state);
-        return __value;
+        *v = toValue(esValue, esState);
+        return esValue;
       },
-      __value,
+      esValue,
       &v,
       toValue);
 
@@ -1015,8 +1015,8 @@ static T getValue(ValueRef* __value, F toValue) {
 
 double Number::Value() const {
   return getValue<double>(CVAL(this)->value(),
-                          [](ValueRef* __value, ExecutionStateRef* __state) {
-                            return __value->toNumber(__state);
+                          [](ValueRef* esValue, ExecutionStateRef* esState) {
+                            return esValue->toNumber(esState);
                           });
 }
 
@@ -1026,22 +1026,22 @@ bool Boolean::Value() const {
 
 int64_t Integer::Value() const {
   return getValue<int64_t>(CVAL(this)->value(),
-                           [](ValueRef* __value, ExecutionStateRef* __state) {
-                             return __value->toNumber(__state);
+                           [](ValueRef* esValue, ExecutionStateRef* esState) {
+                             return esValue->toNumber(esState);
                            });
 }
 
 int32_t Int32::Value() const {
   return getValue<int32_t>(CVAL(this)->value(),
-                           [](ValueRef* __value, ExecutionStateRef* __state) {
-                             return __value->toInt32(__state);
+                           [](ValueRef* esValue, ExecutionStateRef* esState) {
+                             return esValue->toInt32(esState);
                            });
 }
 
 uint32_t Uint32::Value() const {
   return getValue<uint32_t>(CVAL(this)->value(),
-                            [](ValueRef* __value, ExecutionStateRef* __state) {
-                              return __value->toUint32(__state);
+                            [](ValueRef* esValue, ExecutionStateRef* esState) {
+                              return esValue->toUint32(esState);
                             });
 }
 

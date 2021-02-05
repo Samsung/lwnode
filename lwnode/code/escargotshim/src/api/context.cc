@@ -53,17 +53,15 @@ IsolateWrap* ContextWrap::GetIsolate() {
 }
 
 void ContextWrap::SetEmbedderData(int index, const ValueWrap* value) {
-  if (embedder_data_ == nullptr) {
-    embedder_data_ = new EmbedderDataMap();
+  if (embedderData_ == nullptr) {
+    embedderData_ = new EmbedderDataMap();
   }
-  embedder_data_->insert(std::make_pair(index, value));
-  auto a = GetEmbedderData(index);
-  LWNODE_CHECK(a == value);
+  embedderData_->insert(std::make_pair(index, value));
 }
 
 const ValueWrap* ContextWrap::GetEmbedderData(int index) {
-  auto iter = embedder_data_->find(index);
-  if (iter != embedder_data_->end()) {
+  auto iter = embedderData_->find(index);
+  if (iter != embedderData_->end()) {
     return iter->second;
   }
   return nullptr;

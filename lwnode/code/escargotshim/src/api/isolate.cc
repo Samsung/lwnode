@@ -35,14 +35,14 @@ IsolateWrap* IsolateWrap::New() {
 
 void IsolateWrap::Dispose() {
   // @check
-  // GCVector<HandleScopeWrap*> m_handleScopes;
-  // GCVector<ContextWrap*> m_contexts;
-  // m_pureContext.release();
-  // m_vmInstance.release();
+  // GCVector<HandleScopeWrap*> handleScopes_;
+  // GCVector<ContextWrap*> contexts_;
+  // pureContext_.release();
+  // vmInstance_.release();
 }
 
 bool IsolateWrap::IsExecutionTerminating() {
-  if (m_hasScheduledThrow) {
+  if (hasScheduledThrow_) {
     return true;
   }
   return false;
@@ -50,7 +50,7 @@ bool IsolateWrap::IsExecutionTerminating() {
 
 void IsolateWrap::scheduleThrow(Escargot::ValueRef* result) {
   LWNODE_UNIMPLEMENT;
-  m_hasScheduledThrow = true;
+  hasScheduledThrow_ = true;
 }
 
 void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
@@ -76,15 +76,15 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     isolate->set_array_buffer_allocator(params.array_buffer_allocator);
   }
 
-  LWNODE_CHECK_NOT_NULL(m_array_buffer_allocator);
+  LWNODE_CHECK_NOT_NULL(array_buffer_allocator_);
 
-  m_vmInstance = VMInstanceRef::create(new Platform(m_array_buffer_allocator));
-  m_vmInstance->setOnVMInstanceDelete(
+  vmInstance_ = VMInstanceRef::create(new Platform(array_buffer_allocator_));
+  vmInstance_->setOnVMInstanceDelete(
       [](VMInstanceRef* instance) { delete instance->platform(); });
 
   // @note any execution upon this context is NOT allowed. It intends for
   // compiling source only.
-  m_pureContext = ContextRef::create(m_vmInstance);
+  pureContext_ = ContextRef::create(vmInstance_);
 }
 
 void IsolateWrap::Enter() {
@@ -110,19 +110,19 @@ IsolateWrap* IsolateWrap::currentIsolate() {
 }
 
 void IsolateWrap::pushHandleScope(v8::HandleScope* handleScope) {
-  m_handleScopes.push_back(new HandleScopeWrap(handleScope));
+  handleScopes_.push_back(new HandleScopeWrap(handleScope));
 }
 
 void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
-  LWNODE_CHECK(m_handleScopes.back()->v8HandleScope() == handleScope);
+  LWNODE_CHECK(handleScopes_.back()->v8HandleScope() == handleScope);
 
-  m_handleScopes.pop_back();
+  handleScopes_.pop_back();
 }
 
 void IsolateWrap::escapeHandle(HandleWrap* value) {
-  LWNODE_CHECK(m_handleScopes.size() > 1);
+  LWNODE_CHECK(handleScopes_.size() > 1);
 
-  auto last = m_handleScopes.rbegin();
+  auto last = handleScopes_.rbegin();
 
   if ((*last)->remove(value)) {
     (*(++last))->add(value);
@@ -130,27 +130,45 @@ void IsolateWrap::escapeHandle(HandleWrap* value) {
 }
 
 void IsolateWrap::addHandle(HandleWrap* value) {
-  LWNODE_CHECK(m_handleScopes.size() >= 1);
+  LWNODE_CHECK(handleScopes_.size() >= 1);
 
-  m_handleScopes.back()->add(value);
+  handleScopes_.back()->add(value);
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  m_contextScopes.push_back(context);
+  contextScopes_.push_back(context);
 }
 
 void IsolateWrap::popContext(ContextWrap* context) {
-  LWNODE_CHECK(m_contextScopes.back() == context);
-  m_contextScopes.pop_back();
+  LWNODE_CHECK(contextScopes_.back() == context);
+  contextScopes_.pop_back();
 }
 
 ContextWrap* IsolateWrap::CurrentContext() {
-  LWNODE_CHECK(m_contextScopes.size() >= 1);
-  return m_contextScopes.back();
+  LWNODE_CHECK(contextScopes_.size() >= 1);
+  return contextScopes_.back();
 }
 
 void IsolateWrap::addEternal(ValueRef* value) {
   eternals_.push_back(value);
+}
+
+SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
+  // @check replace this container if this function is called a lot.
+  // LWNODE_CALL_TRACE();
+
+  for (size_t i = 0; i < privateSymbols_.size(); i++) {
+    if (privateSymbols_[i]->description()->equals(esString)) {
+      return privateSymbols_[i];
+    }
+  }
+
+  auto newSymbol = SymbolRef::create(esString);
+  privateSymbols_.push_back(newSymbol);
+
+  LWNODE_DLOG_INFO("private symbol: %s", esString->toStdUTF8String().c_str());
+
+  return newSymbol;
 }
 
 }  // namespace EscargotShim

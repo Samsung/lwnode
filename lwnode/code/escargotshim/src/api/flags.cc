@@ -18,6 +18,6 @@
 
 namespace EscargotShim {
 
-flag_t Flags::m_flags = FlagType::Empty;
+flag_t Flags::s_flags = FlagType::Empty;
 
 }  // namespace EscargotShim

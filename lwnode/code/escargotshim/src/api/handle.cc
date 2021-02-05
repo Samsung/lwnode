@@ -24,32 +24,32 @@ namespace EscargotShim {
 
 ValueWrap* ValueWrap::createContext(IsolateWrap* lwIsolate) {
   LWNODE_CHECK_NOT_NULL(lwIsolate);
-  auto _context = ContextWrap::New(lwIsolate);
-  return new ValueWrap(_context, Type::Context);
+  auto lwContext = ContextWrap::New(lwIsolate);
+  return new ValueWrap(lwContext, Type::Context);
 };
 
 ContextWrap* ValueWrap::context() const {
   LWNODE_CHECK(type() == Type::Context);
-  return reinterpret_cast<ContextWrap*>(m_holder);
+  return reinterpret_cast<ContextWrap*>(holder_);
 }
 
-ValueWrap* ValueWrap::createScript(ScriptRef* __script) {
-  return new ValueWrap(__script, Type::Script);
+ValueWrap* ValueWrap::createScript(ScriptRef* esScript) {
+  return new ValueWrap(esScript, Type::Script);
 };
 
 ScriptRef* ValueWrap::script() const {
   LWNODE_CHECK(type() == Type::Script);
-  auto extended = reinterpret_cast<ExtendedHolder*>(m_holder);
+  auto extended = reinterpret_cast<ExtendedHolder*>(holder_);
   return reinterpret_cast<ScriptRef*>(extended->holder());
 }
 
-ValueWrap* ValueWrap::createValue(Escargot::ValueRef* __value) {
-  return new ValueWrap(__value, Type::JsValue);
+ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
+  return new ValueWrap(esValue, Type::JsValue);
 }
 
 ValueRef* ValueWrap::value() const {
   LWNODE_CHECK(type() == Type::JsValue);
-  return reinterpret_cast<ValueRef*>(m_holder);
+  return reinterpret_cast<ValueRef*>(holder_);
 }
 
 }  // namespace EscargotShim

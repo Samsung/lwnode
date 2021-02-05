@@ -310,8 +310,8 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
     result = MaybeLocal<String>();
   } else {
     if (length < 0) length = strLength(data);
-    StringRef* __source = StringRef::createFromUTF8(data, length);
-    result = Local<String>::New(isolate, ValueWrap::createValue(__source));
+    StringRef* esSource = StringRef::createFromUTF8(data, length);
+    result = Local<String>::New(isolate, ValueWrap::createValue(esSource));
   }
 
   return result;
@@ -329,8 +329,8 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
     result = MaybeLocal<String>();
   } else {
     if (length < 0) length = strLength(data);
-    StringRef* __source = StringRef::createFromLatin1(data, length);
-    result = Local<String>::New(isolate, ValueWrap::createValue(__source));
+    StringRef* esSource = StringRef::createFromLatin1(data, length);
+    result = Local<String>::New(isolate, ValueWrap::createValue(esSource));
   }
 
   return result;
@@ -348,9 +348,9 @@ MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
     result = MaybeLocal<String>();
   } else {
     if (length < 0) length = strLength(data);
-    StringRef* __source = StringRef::createFromUTF16(
+    StringRef* esSource = StringRef::createFromUTF16(
         reinterpret_cast<const char16_t*>(data), length);
-    result = Local<String>::New(isolate, ValueWrap::createValue(__source));
+    result = Local<String>::New(isolate, ValueWrap::createValue(esSource));
   }
 
   return result;
@@ -395,7 +395,8 @@ Isolate* v8::Object::GetIsolate() {
 
 Local<v8::Object> v8::Object::New(Isolate* isolate) {
   API_ENTER_NO_EXCEPTION(isolate);
-  ObjectRef* esObject = ObjectRefHelper::create(lwIsolate->CurrentContext()->get());
+  ObjectRef* esObject =
+      ObjectRefHelper::create(lwIsolate->CurrentContext()->get());
 
   API_RETURN_LOCAL(Object, isolate, esObject);
 }
@@ -864,17 +865,17 @@ std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
 Local<Symbol> v8::Symbol::New(Isolate* isolate, Local<String> name) {
   API_ENTER_NO_EXCEPTION(isolate);
 
-  StringRef* __name;
+  StringRef* esName;
 
   if (name.IsEmpty()) {
-    __name = StringRef::emptyString();
+    esName = StringRef::emptyString();
   } else {
     LWNODE_CHECK(VAL(*name)->value()->isString());
-    __name = VAL(*name)->value()->asString();
+    esName = VAL(*name)->value()->asString();
   }
-  auto _value = ValueWrap::createValue(SymbolRef::create(__name));
+  auto lwValue = ValueWrap::createValue(SymbolRef::create(esName));
 
-  return Local<Symbol>::New(isolate, _value);
+  return Local<Symbol>::New(isolate, lwValue);
 }
 
 Local<Symbol> v8::Symbol::For(Isolate* isolate, Local<String> name) {
@@ -910,41 +911,47 @@ WELL_KNOWN_SYMBOLS(SYMBOL_GETTER)
 
 Local<Private> v8::Private::New(Isolate* isolate, Local<String> name) {
   API_ENTER_NO_EXCEPTION(isolate);
-  StringRef* __name;
+  StringRef* esName;
 
   if (name.IsEmpty()) {
-    __name = StringRef::emptyString();
+    esName = StringRef::emptyString();
   } else {
     LWNODE_CHECK(VAL(*name)->value()->isString());
-    __name = VAL(*name)->value()->asString();
+    esName = VAL(*name)->value()->asString();
   }
   // @note
   // A private symbol in V8 is similar to a Symbol, except that it’s not
   // enumerable and doesn’t leak to userspace JavaScript.
   // @todo For now, we ignore the private attribute and use a normal Symbol
   // instead.
-  auto _value = ValueWrap::createValue(SymbolRef::create(__name));
 
-  return Local<Private>::New(isolate, _value);
+  SymbolRef* esSymbol = lwIsolate->getPrivateSymbol(esName);
+
+  API_RETURN_LOCAL(Private, isolate, esSymbol);
 }
 
 Local<Private> v8::Private::ForApi(Isolate* isolate, Local<String> name) {
-  LWNODE_RETURN_LOCAL(Private);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  SymbolRef* esSymbol =
+      lwIsolate->getPrivateSymbol(VAL(*name)->value()->asString());
+
+  API_RETURN_LOCAL(Private, isolate, esSymbol);
 }
 
 Local<Number> v8::Number::New(Isolate* isolate, double value) {
-  auto _number = ValueWrap::createValue(Escargot::ValueRef::create(value));
-  return Local<Integer>::New(isolate, _number);
+  auto lwNumber = ValueWrap::createValue(Escargot::ValueRef::create(value));
+  return Local<Integer>::New(isolate, lwNumber);
 }
 
 Local<Integer> v8::Integer::New(Isolate* isolate, int32_t value) {
-  auto _integer = ValueWrap::createValue(Escargot::ValueRef::create(value));
-  return Local<Integer>::New(isolate, _integer);
+  auto lwInteger = ValueWrap::createValue(Escargot::ValueRef::create(value));
+  return Local<Integer>::New(isolate, lwInteger);
 }
 
 Local<Integer> v8::Integer::NewFromUnsigned(Isolate* isolate, uint32_t value) {
-  auto _integer = ValueWrap::createValue(Escargot::ValueRef::create(value));
-  return Local<Integer>::New(isolate, _integer);
+  auto lwInteger = ValueWrap::createValue(Escargot::ValueRef::create(value));
+  return Local<Integer>::New(isolate, lwInteger);
 }
 
 Local<BigInt> v8::BigInt::New(Isolate* isolate, int64_t value) {
@@ -1596,15 +1603,15 @@ bool MicrotasksScope::IsRunningMicrotasks(Isolate* v8_isolate) {
 String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
-  auto _context = lwIsolate->CurrentContext();
-  auto _value = VAL(*obj);
+  auto lwContext = lwIsolate->CurrentContext();
+  auto lwValue = VAL(*obj);
 
   auto r = Evaluator::execute(
-      _context->get(),
+      lwContext->get(),
       [](ExecutionStateRef* state, ValueRef* value) -> ValueRef* {
         return value->toString(state);
       },
-      _value->value());
+      lwValue->value());
 
   if (!r.isSuccessful()) {
     return;
