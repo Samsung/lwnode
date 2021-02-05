@@ -34,18 +34,18 @@ class HandleScopeWrap : public gc {
 
   HandleScopeWrap(v8::HandleScope* scope,
                   HandleScopeWrap::Type type = Type::Normal);
-  virtual ~HandleScopeWrap() = default;
 
   void add(HandleWrap* value);
+  bool remove(HandleWrap* value);
 
-  v8::HandleScope* v8HandleScope() const { return m_scope; }
+  v8::HandleScope* v8HandleScope() const { return scope_; }
 
   static HandleWrap* CreateHandle(IsolateWrap* isolate, HandleWrap* value);
 
  private:
-  Type m_type;
-  v8::HandleScope* m_scope = nullptr;
-  GCVector<HandleWrap*> m_handles;
+  Type type_;
+  v8::HandleScope* scope_ = nullptr;
+  GCVector<HandleWrap*> handles_;
 };
 
 }  // namespace EscargotShim

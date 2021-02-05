@@ -98,7 +98,8 @@ auto lwValue = ValueWrap::createScript(...);
 - Wrap any value using `ValueWrap` before use it.
 
 ```c++
-#define VAL(that) reinterpret_cast<const ValueWrap*>(that)
+#define VAL(that) reinterpret_cast<ValueWrap*>(that)
+#define CVAL(that) reinterpret_cast<const ValueWrap*>(that)
 
 // Usage:
 VAL(this); // = ValueWrap(reinterpret_cast<ValueWrap*>(this));
@@ -128,8 +129,8 @@ return Local<String>::New(isolate, ValueWrap::createValue(esString));
 // Usage 2:
 API_RETURN_LOCAL(String, isolate, esString);
 
-#define API_RETURN_LOCAL(type, isolate, esValue)                      \
-  return Local<type>::New(isolate, ValueWrap::createValue(esValue));
+#define API_RETURN_LOCAL(type, v8_isolate, esValue)                      \
+  return Local<type>::New(v8_isolate, ValueWrap::createValue(esValue));
 ```
 
 
