@@ -126,3 +126,53 @@ THREADED_TEST(ObjectPrototype) {
 
   TEARDOWN();
 }
+
+TEST(StringNewFromUtf8Literal) {
+  SETUP();
+
+  v8::TryCatch try_catch(isolate);
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "UTF8 String Test", v8::NewStringType::kNormal)
+               .IsEmpty(),
+           false);
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "UTF8 String Test", v8::NewStringType::kNormal)
+               ->Utf8Length(isolate),
+           static_cast<int>(strlen("UTF8 String Test")));
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "한글", v8::NewStringType::kNormal)
+               ->Utf8Length(isolate), 6);
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "UTF8 String Test", v8::NewStringType::kNormal)
+               ->Length(),
+           static_cast<int>(strlen("UTF8 String Test")));
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "한글", v8::NewStringType::kNormal)
+               ->Length(), 2);
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "UTF8 String Test", v8::NewStringType::kNormal)
+               ->ContainsOnlyOneByte(),
+           true);
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "한글", v8::NewStringType::kNormal)
+               ->ContainsOnlyOneByte(),
+           false);
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "UTF8 String Test", v8::NewStringType::kNormal)
+               ->IsOneByte(),
+           true);
+
+  CHECK_EQ(v8::String::NewFromUtf8Literal(
+               isolate, "한글", v8::NewStringType::kNormal)
+               ->IsOneByte(),
+           false);
+
+  TEARDOWN();
+}

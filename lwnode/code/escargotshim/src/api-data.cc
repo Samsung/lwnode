@@ -915,19 +915,26 @@ int Name::GetIdentityHash() {
 }
 
 int String::Length() const {
-  LWNODE_RETURN_0;
+  auto esString = CVAL(this)->value()->asString();
+  return esString->length();
 }
 
 bool String::IsOneByte() const {
-  LWNODE_RETURN_FALSE;
+  return ContainsOnlyOneByte();
 }
 
 bool String::ContainsOnlyOneByte() const {
-  LWNODE_RETURN_FALSE;
+  auto esString = CVAL(this)->value()->asString();
+  return esString->has8BitContent();
 }
 
 int String::Utf8Length(Isolate* isolate) const {
-  LWNODE_RETURN_0;
+  auto esString = CVAL(this)->value()->asString();
+  if (esString->has8BitContent()) {
+    return esString->length();
+  } else {
+    return esString->toStdUTF8String().length();
+  }
 }
 
 int String::WriteUtf8(Isolate* v8_isolate,
