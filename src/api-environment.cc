@@ -295,7 +295,8 @@ Local<String> String::NewFromUtf8Literal(Isolate* isolate,
                                          const char* literal,
                                          NewStringType type,
                                          int length) {
-  LWNODE_RETURN_LOCAL(String);
+  MaybeLocal<String> result = NewFromUtf8(isolate, literal, type, length);
+  return result.ToLocalChecked();
 }
 
 MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
