@@ -33,10 +33,10 @@
 #define API_ENTER_NO_EXCEPTION(isolate)                                        \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);
 
-#define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
-  IsolateWrap* lwIsolate = context.IsEmpty()                                   \
+#define API_ENTER_WITH_CONTEXT(local_context, bailout_value)                   \
+  IsolateWrap* lwIsolate = local_context.IsEmpty()                             \
                                ? IsolateWrap::GetCurrent()                     \
-                               : VAL(*context)->context()->GetIsolate();       \
+                               : VAL(*local_context)->context()->GetIsolate(); \
   PRIVATE_UTIL_1(lwIsolate, bailout_value)
 
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \

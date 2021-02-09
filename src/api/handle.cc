@@ -39,8 +39,7 @@ ValueWrap* ValueWrap::createScript(ScriptRef* esScript) {
 
 ScriptRef* ValueWrap::script() const {
   LWNODE_CHECK(type() == Type::Script);
-  auto extended = reinterpret_cast<ExtendedHolder*>(holder_);
-  return reinterpret_cast<ScriptRef*>(extended->holder());
+  return reinterpret_cast<ScriptRef*>(holder_);
 }
 
 ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {

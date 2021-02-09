@@ -24,19 +24,19 @@ namespace v8 {
 // --- D a t a ---
 
 bool Value::FullIsUndefined() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isUndefined();
 }
 
 bool Value::FullIsNull() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isNull();
 }
 
 bool Value::IsTrue() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isTrue();
 }
 
 bool Value::IsFalse() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isFalse();
 }
 
 bool Value::IsFunction() const {

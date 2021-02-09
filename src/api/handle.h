@@ -38,8 +38,6 @@ class HandleWrap : public gc {
     Context,
     ObjectTemplate,
     FunctionTemplate,
-    // Only types having an ExtraData are allowed after this point
-    ExtraDataPresent,
     Script,
     // NotPresent should be at last
     NotPresent,
@@ -59,26 +57,11 @@ class ValueWrap : public HandleWrap {
   const ValueWrap& operator=(const ValueWrap& src) = delete;
   const ValueWrap& operator=(ValueWrap&& src) = delete;
 
-  // Extra
-  void setExtra(ExtraData&& other) {
-    LWNODE_CHECK(type() >= ExtraDataPresent);
-    auto newHolder = new ExtendedHolder(holder_, std::move(other));
-    holder_ = reinterpret_cast<Escargot::ValueRef*>(newHolder);
-  }
-
-  template <typename E>
-  Optional<E> getExtra(const size_t idx) const {
-    LWNODE_CHECK(type() >= ExtraDataPresent);
-    auto extended = reinterpret_cast<ExtendedHolder*>(holder_);
-    return reinterpret_cast<E*>((*extended->extra())[idx]);
-  }
-
   // Value
   static ValueWrap* createValue(Escargot::ValueRef* esValue);
   Escargot::ValueRef* value() const;
 
   // Context
-  // @todo: use factory to create Escargot instances
   static ValueWrap* createContext(IsolateWrap* lwIsolate);
   ContextWrap* context() const;
 
@@ -87,22 +70,6 @@ class ValueWrap : public HandleWrap {
   Escargot::ScriptRef* script() const;
 
  private:
-  class ExtendedHolder : public gc {
-   public:
-    ExtendedHolder(void* ptr, ExtraData&& other) {
-      LWNODE_CHECK(extra_ == nullptr);
-      LWNODE_CHECK(holder_ == nullptr);
-      holder_ = ptr;
-      extra_ = new ExtraData(std::move(other));
-    }
-    inline void* holder() { return holder_; }
-    inline ExtraData* extra() { return extra_; }
-
-   private:
-    void* holder_ = nullptr;
-    ExtraData* extra_ = nullptr;
-  };
-
   ValueWrap(void* ptr, HandleWrap::Type type) {
     LWNODE_CHECK_NOT_NULL(ptr);
     type_ = type;
