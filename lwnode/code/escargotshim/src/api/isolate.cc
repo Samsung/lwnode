@@ -105,7 +105,7 @@ void IsolateWrap::Exit() {
   s_previousIsolate = nullptr;
 }
 
-IsolateWrap* IsolateWrap::currentIsolate() {
+IsolateWrap* IsolateWrap::GetCurrent() {
   return s_currentIsolate;
 }
 

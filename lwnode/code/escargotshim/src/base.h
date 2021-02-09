@@ -35,7 +35,7 @@
 
 #define API_ENTER_WITH_CONTEXT(context, bailout_value)                         \
   IsolateWrap* lwIsolate = context.IsEmpty()                                   \
-                               ? IsolateWrap::currentIsolate()                 \
+                               ? IsolateWrap::GetCurrent()                     \
                                : VAL(*context)->context()->GetIsolate();       \
   PRIVATE_UTIL_1(lwIsolate, bailout_value)
 

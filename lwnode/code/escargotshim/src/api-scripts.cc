@@ -75,7 +75,7 @@ Local<Script> UnboundScript::BindToCurrentContext() {
   ExtraData extra(1, lwIsolateUsed->CurrentContext());
   lwScript->setExtra(std::move(extra));
 
-  return Local<Script>::New(IsolateWrap::currentIsolate()->toV8(), lwScript);
+  return Local<Script>::New(IsolateWrap::GetCurrent()->toV8(), lwScript);
 }
 
 int UnboundScript::GetId() {
