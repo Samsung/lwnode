@@ -1105,7 +1105,8 @@ void Isolate::RequestGarbageCollectionForTesting(GarbageCollectionType type) {
 }
 
 Isolate* Isolate::GetCurrent() {
-  LWNODE_RETURN_NULLPTR;
+  auto lwIsolate = IsolateWrap::currentIsolate();
+  return IsolateWrap::toV8(lwIsolate);
 }
 
 // static

@@ -957,7 +957,30 @@ int String::WriteOneByte(Isolate* isolate,
                          int start,
                          int length,
                          int options) const {
-  LWNODE_RETURN_0;
+  auto esString = CVAL(this)->value()->asString();
+  auto bufferData = esString->stringBufferAccessData();
+
+  if (!buffer || length == 0 ||
+      static_cast<size_t>(start) > bufferData.length) {
+    return 0;
+  }
+
+  int capacity = length;
+  if (length < 0) {
+    capacity = bufferData.length + 1;
+  }
+
+  int count = std::min(capacity, static_cast<int>(bufferData.length) - start);
+  memcpy(buffer,
+         reinterpret_cast<const uint8_t*>(bufferData.buffer) + start,
+         count);
+
+  bool writeNull = !(options & String::NO_NULL_TERMINATION);
+  if (writeNull && (count < capacity)) {
+    buffer[count] = '\0';
+  }
+
+  return count;
 }
 
 int String::Write(Isolate* isolate,
@@ -965,7 +988,38 @@ int String::Write(Isolate* isolate,
                   int start,
                   int length,
                   int options) const {
-  LWNODE_RETURN_0;
+  auto esString = CVAL(this)->value()->asString();
+  auto bufferData = esString->stringBufferAccessData();
+
+  if (!buffer || length == 0 ||
+      static_cast<size_t>(start) > bufferData.length) {
+    return 0;
+  }
+
+  int capacity = length;
+  if (length < 0) {
+    capacity = bufferData.length + 1;
+  }
+
+  int count = std::min(capacity, static_cast<int>(bufferData.length) - start);
+  if (bufferData.has8BitContent) {
+    int i = 0;
+    for (int j = start; j < start + count; j++) {
+      buffer[i] = bufferData.uncheckedCharAtFor8Bit(j);
+      i++;
+    }
+  } else {
+    memcpy(buffer,
+           reinterpret_cast<const uint16_t*>(bufferData.buffer) + start,
+           count);
+  }
+
+  bool writeNull = !(options & String::NO_NULL_TERMINATION);
+  if (writeNull && (count < capacity)) {
+    buffer[count] = '\0';
+  }
+
+  return count;
 }
 
 bool v8::String::IsExternal() const {
