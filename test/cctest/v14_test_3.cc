@@ -161,9 +161,9 @@ int GetUtf8Length(v8::Isolate* isolate, Local<String> str) {
 THREADED_TEST(StringWrite) {
   SETUP();
 
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
+  // LocalContext context;
+  // v8::Isolate* isolate = context->GetIsolate();
+  // v8::HandleScope scope(isolate);
   v8::Local<String> str = v8_str("abcde");
   // abc<Icelandic eth><Unicode snowman>.
   v8::Local<String> str2 = v8_str("abc\xC3\xB0\xE2\x98\x83");
@@ -195,27 +195,27 @@ THREADED_TEST(StringWrite) {
           .ToLocalChecked();
   const int kStride = 4;  // Must match stride in for loops in JS below.
 
-//   CompileRun(
-//       "var left = '';"
-//       "for (var i = 0; i < 0xD800; i += 4) {"
-//       "  left = left + String.fromCharCode(i);"
-//       "}");
-//   CompileRun(
-//       "var right = '';"
-//       "for (var i = 0; i < 0xD800; i += 4) {"
-//       "  right = String.fromCharCode(i) + right;"
-//       "}");
-//   v8::Local<v8::Object> global = context->Global();
-//   Local<String> left_tree = global->Get(context.local(), v8_str("left"))
-//                                 .ToLocalChecked()
-//                                 .As<String>();
-//   Local<String> right_tree = global->Get(context.local(), v8_str("right"))
-//                                  .ToLocalChecked()
-//                                  .As<String>();
+  // CompileRun(
+  //     "var left = '';"
+  //     "for (var i = 0; i < 0xD800; i += 4) {"
+  //     "  left = left + String.fromCharCode(i);"
+  //     "}");
+  // CompileRun(
+  //     "var right = '';"
+  //     "for (var i = 0; i < 0xD800; i += 4) {"
+  //     "  right = String.fromCharCode(i) + right;"
+  //     "}");
+  // v8::Local<v8::Object> global = context->Global();
+  // Local<String> left_tree = global->Get(context.local(), v8_str("left"))
+  //                               .ToLocalChecked()
+  //                               .As<String>();
+  // Local<String> right_tree = global->Get(context.local(), v8_str("right"))
+  //                                .ToLocalChecked()
+  //                                .As<String>();
 
-//   CHECK_EQ(5, str2->Length());
-//   CHECK_EQ(0xD800 / kStride, left_tree->Length());
-//   CHECK_EQ(0xD800 / kStride, right_tree->Length());
+  // CHECK_EQ(5, str2->Length());
+  // CHECK_EQ(0xD800 / kStride, left_tree->Length());
+  // CHECK_EQ(0xD800 / kStride, right_tree->Length());
 
   char buf[100];
   char utf8buf[0xD800 * 3];
@@ -223,7 +223,6 @@ THREADED_TEST(StringWrite) {
   int len;
   int charlen;
 
-/*
   memset(utf8buf, 0x1, 1000);
   len = v8::String::Empty(isolate)->WriteUtf8(isolate, utf8buf, sizeof(utf8buf),
                                               &charlen);
@@ -318,31 +317,30 @@ THREADED_TEST(StringWrite) {
   CHECK_EQ(0, len);
   CHECK_EQ(0, charlen);
 
-  memset(utf8buf, 0x1, sizeof(utf8buf));
-  len = GetUtf8Length(isolate, left_tree);
-  int utf8_expected =
-      (0x80 + (0x800 - 0x80) * 2 + (0xD800 - 0x800) * 3) / kStride;
-  CHECK_EQ(utf8_expected, len);
-  len = left_tree->WriteUtf8(isolate, utf8buf, utf8_expected, &charlen);
-  CHECK_EQ(utf8_expected, len);
-  CHECK_EQ(0xD800 / kStride, charlen);
-  CHECK_EQ(0xED, static_cast<unsigned char>(utf8buf[utf8_expected - 3]));
-  CHECK_EQ(0x9F, static_cast<unsigned char>(utf8buf[utf8_expected - 2]));
-  CHECK_EQ(0xC0 - kStride,
-           static_cast<unsigned char>(utf8buf[utf8_expected - 1]));
-  CHECK_EQ(1, utf8buf[utf8_expected]);
+  // memset(utf8buf, 0x1, sizeof(utf8buf));
+  // len = GetUtf8Length(isolate, left_tree);
+  // int utf8_expected =
+  //     (0x80 + (0x800 - 0x80) * 2 + (0xD800 - 0x800) * 3) / kStride;
+  // CHECK_EQ(utf8_expected, len);
+  // len = left_tree->WriteUtf8(isolate, utf8buf, utf8_expected, &charlen);
+  // CHECK_EQ(utf8_expected, len);
+  // CHECK_EQ(0xD800 / kStride, charlen);
+  // CHECK_EQ(0xED, static_cast<unsigned char>(utf8buf[utf8_expected - 3]));
+  // CHECK_EQ(0x9F, static_cast<unsigned char>(utf8buf[utf8_expected - 2]));
+  // CHECK_EQ(0xC0 - kStride,
+  //          static_cast<unsigned char>(utf8buf[utf8_expected - 1]));
+  // CHECK_EQ(1, utf8buf[utf8_expected]);
 
-  memset(utf8buf, 0x1, sizeof(utf8buf));
-  len = GetUtf8Length(isolate, right_tree);
-  CHECK_EQ(utf8_expected, len);
-  len = right_tree->WriteUtf8(isolate, utf8buf, utf8_expected, &charlen);
-  CHECK_EQ(utf8_expected, len);
-  CHECK_EQ(0xD800 / kStride, charlen);
-  CHECK_EQ(0xED, static_cast<unsigned char>(utf8buf[0]));
-  CHECK_EQ(0x9F, static_cast<unsigned char>(utf8buf[1]));
-  CHECK_EQ(0xC0 - kStride, static_cast<unsigned char>(utf8buf[2]));
-  CHECK_EQ(1, utf8buf[utf8_expected]);
-*/
+  // memset(utf8buf, 0x1, sizeof(utf8buf));
+  // len = GetUtf8Length(isolate, right_tree);
+  // CHECK_EQ(utf8_expected, len);
+  // len = right_tree->WriteUtf8(isolate, utf8buf, utf8_expected, &charlen);
+  // CHECK_EQ(utf8_expected, len);
+  // CHECK_EQ(0xD800 / kStride, charlen);
+  // CHECK_EQ(0xED, static_cast<unsigned char>(utf8buf[0]));
+  // CHECK_EQ(0x9F, static_cast<unsigned char>(utf8buf[1]));
+  // CHECK_EQ(0xC0 - kStride, static_cast<unsigned char>(utf8buf[2]));
+  // CHECK_EQ(1, utf8buf[utf8_expected]);
 
   memset(buf, 0x1, sizeof(buf));
   memset(wbuf, 0x1, sizeof(wbuf));
@@ -446,27 +444,27 @@ THREADED_TEST(StringWrite) {
   buf[5] = '\0';
   CHECK_EQ(0, strcmp("abcde", buf));
 
-  // memset(utf8buf, 0x1, sizeof(utf8buf));
-  // utf8buf[8] = 'X';
-  // len = str2->WriteUtf8(isolate, utf8buf, sizeof(utf8buf), &charlen,
-  //                       String::NO_NULL_TERMINATION);
-  // CHECK_EQ(8, len);
-  // CHECK_EQ('X', utf8buf[8]);
-  // CHECK_EQ(5, charlen);
-  // CHECK_EQ(0, strncmp(utf8buf, "abc\xC3\xB0\xE2\x98\x83", 8));
-  // CHECK_NE(0, strcmp(utf8buf, "abc\xC3\xB0\xE2\x98\x83"));
-  // utf8buf[8] = '\0';
-  // CHECK_EQ(0, strcmp(utf8buf, "abc\xC3\xB0\xE2\x98\x83"));
+  memset(utf8buf, 0x1, sizeof(utf8buf));
+  utf8buf[8] = 'X';
+  len = str2->WriteUtf8(isolate, utf8buf, sizeof(utf8buf), &charlen,
+                        String::NO_NULL_TERMINATION);
+  CHECK_EQ(8, len);
+  CHECK_EQ('X', utf8buf[8]);
+  CHECK_EQ(5, charlen);
+  CHECK_EQ(0, strncmp(utf8buf, "abc\xC3\xB0\xE2\x98\x83", 8));
+  CHECK_NE(0, strcmp(utf8buf, "abc\xC3\xB0\xE2\x98\x83"));
+  utf8buf[8] = '\0';
+  CHECK_EQ(0, strcmp(utf8buf, "abc\xC3\xB0\xE2\x98\x83"));
 
-  // memset(utf8buf, 0x1, sizeof(utf8buf));
-  // utf8buf[5] = 'X';
-  // len = str->WriteUtf8(isolate, utf8buf, sizeof(utf8buf), &charlen,
-  //                      String::NO_NULL_TERMINATION);
-  // CHECK_EQ(5, len);
-  // CHECK_EQ('X', utf8buf[5]);  // Test that the sixth character is untouched.
-  // CHECK_EQ(5, charlen);
-  // utf8buf[5] = '\0';
-  // CHECK_EQ(0, strcmp(utf8buf, "abcde"));
+  memset(utf8buf, 0x1, sizeof(utf8buf));
+  utf8buf[5] = 'X';
+  len = str->WriteUtf8(isolate, utf8buf, sizeof(utf8buf), &charlen,
+                       String::NO_NULL_TERMINATION);
+  CHECK_EQ(5, len);
+  CHECK_EQ('X', utf8buf[5]);  // Test that the sixth character is untouched.
+  CHECK_EQ(5, charlen);
+  utf8buf[5] = '\0';
+  CHECK_EQ(0, strcmp(utf8buf, "abcde"));
 
   memset(buf, 0x1, sizeof(buf));
   len = str3->WriteOneByte(isolate, reinterpret_cast<uint8_t*>(buf));
@@ -477,8 +475,8 @@ THREADED_TEST(StringWrite) {
 
   CHECK_EQ(0, str->WriteOneByte(isolate, nullptr, 0, 0,
                                 String::NO_NULL_TERMINATION));
-  // CHECK_EQ(0, str->WriteUtf8(isolate, nullptr, 0, nullptr,
-  //                            String::NO_NULL_TERMINATION));
+  CHECK_EQ(0, str->WriteUtf8(isolate, nullptr, 0, nullptr,
+                             String::NO_NULL_TERMINATION));
   CHECK_EQ(0, str->Write(isolate, nullptr, 0, 0, String::NO_NULL_TERMINATION));
 
   TEARDOWN();
