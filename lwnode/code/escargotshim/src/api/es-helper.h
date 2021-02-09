@@ -27,23 +27,48 @@ class IsolateWrap;
 class ContextWrap;
 
 typedef Evaluator::EvaluatorResult EvalResult;
+typedef FunctionObjectRef::NativeFunctionPointer NativeFunctionPointer;
+typedef FunctionObjectRef::NativeFunctionInfo NativeFunctionInfo;
 
-class ObjectRefHelper : public gc {
+class ObjectRefHelper {
  public:
-  ObjectRefHelper(ContextRef* context);
-  ObjectRefHelper(ContextRef* context, ObjectRef* object);
-  ObjectRefHelper(ContextWrap* lwContext, ValueRef* value);
-
   static ObjectRef* create(ContextRef* context);
-  EvalResult setPrototype(ValueRef* proto);
-  ObjectRef* getPrototype();
 
-  void* operator new(size_t size) = delete;
-  void* operator new[](size_t size) = delete;
+  static ObjectRef* getPrototype(ContextRef* context, ObjectRef* object);
+  static EvalResult setPrototype(ContextRef* context,
+                                 ObjectRef* object,
+                                 ValueRef* proto);
+
+  static EvalResult getProperty(ContextRef* context,
+                                ObjectRef* object,
+                                ValueRef* key);
+  static EvalResult setProperty(ContextRef* context,
+                                ObjectRef* object,
+                                ValueRef* key,
+                                ValueRef* value);
+
+  static EvalResult getPrivate(ContextRef* context,
+                               ObjectRef* object,
+                               ValueRef* key);
+  static EvalResult setPrivate(ContextRef* context,
+                               ObjectRef* object,
+                               ValueRef* key,
+                               ValueRef* value);
+
+  static EvalResult defineDataProperty(
+      ContextRef* context,
+      ObjectRef* object,
+      ValueRef* propertyName,
+      bool isWritable,
+      bool isEnumerable,
+      bool isConfigurable,
+      ValueRef* propertyValue,
+      NativeFunctionPointer functionPropertyValue,
+      ValueRef* getter,
+      ValueRef* setter);
 
  private:
-  ObjectRef* object_ = nullptr;
-  ContextRef* context_ = nullptr;
+  static SymbolRef* s_symbolKeyForHiddenValues;
 };
 
 }  // namespace EscargotShim
