@@ -63,7 +63,7 @@ class IsolateWrap : public gc {
     return array_buffer_allocator_;
   }
 
-  static IsolateWrap* currentIsolate();
+  static IsolateWrap* GetCurrent();
 
   // HandleScope & Handle
   void pushHandleScope(v8::HandleScope* handleScope);

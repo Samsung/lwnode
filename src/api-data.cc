@@ -455,11 +455,24 @@ Maybe<bool> Value::InstanceOf(v8::Local<v8::Context> context,
 
 Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
                             v8::Local<Value> key,
-                            v8::Local<Value> value){LWNODE_RETURN_MAYBE(bool)}
+                            v8::Local<Value> value) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::setProperty(VAL(*context)->context()->get(),
+                                        VAL(this)->value()->asObject(),
+                                        VAL(*key)->value(),
+                                        VAL(*value)->value());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(true);
+}
 
 Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
                             uint32_t index,
-                            v8::Local<Value> value){LWNODE_RETURN_MAYBE(bool)}
+                            v8::Local<Value> value) {
+  LWNODE_RETURN_MAYBE(bool);
+}
 
 Maybe<bool> v8::Object::CreateDataProperty(v8::Local<v8::Context> context,
                                            v8::Local<Name> key,
@@ -570,9 +583,7 @@ Maybe<bool> v8::Object::SetPrivate(Local<Context> context,
                                    Local<Value> value) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
 
-  auto esContext = lwIsolate->CurrentContext()->get();
-
-  EvalResult r = ObjectRefHelper::setPrivate(esContext,
+  EvalResult r = ObjectRefHelper::setPrivate(VAL(*context)->context()->get(),
                                              VAL(this)->value()->asObject(),
                                              VAL(*key)->value(),
                                              VAL(*value)->value());
@@ -584,7 +595,15 @@ Maybe<bool> v8::Object::SetPrivate(Local<Context> context,
 
 MaybeLocal<Value> v8::Object::Get(Local<v8::Context> context,
                                   Local<Value> key) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+
+  auto r = ObjectRefHelper::getProperty(VAL(*context)->context()->get(),
+                                        VAL(this)->value()->asObject(),
+                                        VAL(*key)->value());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Value> v8::Object::Get(Local<Context> context, uint32_t index) {
@@ -595,10 +614,9 @@ MaybeLocal<Value> v8::Object::GetPrivate(Local<Context> context,
                                          Local<Private> key) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
 
-  auto esContext = lwIsolate->CurrentContext()->get();
-
-  EvalResult r = ObjectRefHelper::getPrivate(
-      esContext, VAL(this)->value()->asObject(), VAL(*key)->value());
+  EvalResult r = ObjectRefHelper::getPrivate(VAL(*context)->context()->get(),
+                                             VAL(this)->value()->asObject(),
+                                             VAL(*key)->value());
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
@@ -616,7 +634,7 @@ MaybeLocal<Value> v8::Object::GetOwnPropertyDescriptor(Local<Context> context,
 }
 
 Local<Value> v8::Object::GetPrototype() {
-  auto lwIsolate = IsolateWrap::currentIsolate();
+  auto lwIsolate = IsolateWrap::GetCurrent();
   auto esContext = lwIsolate->CurrentContext()->get();
   auto esObject =
       ObjectRefHelper::getPrototype(esContext, VAL(this)->value()->asObject());
@@ -1060,7 +1078,7 @@ Local<Value> Private::Name() const {
 
 template <typename T, typename F>
 static T getValue(ValueRef* esValue, F toValue) {
-  auto lwContext = IsolateWrap::currentIsolate()->CurrentContext();
+  auto lwContext = IsolateWrap::GetCurrent()->CurrentContext();
   LWNODE_CHECK(lwContext != nullptr);
   T v = 0;
   auto r = Evaluator::execute(
