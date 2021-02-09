@@ -962,12 +962,94 @@ int String::Utf8Length(Isolate* isolate) const {
   }
 }
 
+static int readAUtf8Sequence(char* start, const char* end) {
+  char byte1 = *start;
+  if ((byte1 & 0x80) == 0) {
+    return 1;
+  }
+
+  char byte2 = 0;
+  char byte3 = 0;
+  char byte4 = 0;
+  for (int i = 1; i < 4 && start + i < end; i++) {
+    if (i == 1) {
+      byte2 = *(start + 1);
+      if (((byte1 & 0xE0) == 0xC0) && ((byte2 & 0xC0) == 0x80)) {
+        return 2;
+      }
+    } else if (i == 2) {
+      byte3 = *(start + 2);
+      if ((byte1 & 0xF0) == 0xE0 && (byte2 & 0xC0) == 0x80 &&
+          (byte3 & 0xC0) == 0x80) {
+        return 3;
+      }
+    } else if (i == 3) {
+      byte4 = *(start + 3);
+      if ((byte1 & 0xF8) == 0xF0 && (byte2 & 0xC0) == 0x80 &&
+          (byte3 & 0xC0) == 0x80 && (byte4 & 0xC0) == 0x80) {
+        return 4;
+      }
+    }
+  }
+
+  return -1;
+}
+
+static void copyUtf8Sequences(
+    char* dest, const char* source, int maxBytes, int* nchars, int* nbytes) {
+  char* s = const_cast<char*>(source);
+  char* d = dest;
+  for (int i = 0; i < maxBytes;) {
+    int utf8CharLength = readAUtf8Sequence(s, source + maxBytes);
+    if (utf8CharLength > 0) {
+      memcpy(d, s, utf8CharLength);
+      s += utf8CharLength;
+      d += utf8CharLength;
+      *nchars += 1;
+      *nbytes += utf8CharLength;
+      i += utf8CharLength;
+    } else {
+      // invalid char
+      break;
+    }
+  }
+}
+
 int String::WriteUtf8(Isolate* v8_isolate,
                       char* buffer,
                       int capacity,
                       int* nchars_ref,
                       int options) const {
-  LWNODE_RETURN_0;
+  int nchars = 0;
+  int nbytes = 0;
+  int bufferCapacity = capacity >= 0 ? capacity : v8::String::kMaxLength;
+  int byteLength = 0;
+
+  auto esString = CVAL(this)->value()->asString();
+  auto bufferData = esString->stringBufferAccessData();
+  if (bufferData.has8BitContent) {
+    byteLength = bufferData.length;
+    int maxBytes = std::min(bufferCapacity, byteLength);
+    memcpy(buffer, bufferData.buffer, maxBytes);
+    nchars = nbytes = maxBytes;
+  } else {
+    std::string utf8Str = esString->toStdUTF8String(options);
+    byteLength = utf8Str.length();
+    int maxBytes = std::min(bufferCapacity, byteLength);
+    copyUtf8Sequences(buffer, utf8Str.data(), maxBytes, &nchars, &nbytes);
+  }
+
+  bool writeNull = !(options & String::NO_NULL_TERMINATION);
+  if (writeNull && (nbytes == byteLength) && (nbytes < bufferCapacity)) {
+    buffer[nbytes] = '\0';
+    nbytes++;
+  }
+
+  if (nchars_ref) {
+    *nchars_ref = nchars;
+  }
+
+  return nbytes;
 }
 
 int String::WriteOneByte(Isolate* isolate,
@@ -983,22 +1065,20 @@ int String::WriteOneByte(Isolate* isolate,
     return 0;
   }
 
-  int capacity = length;
-  if (length < 0) {
-    capacity = bufferData.length + 1;
-  }
+  int bufferCapacity = length >= 0 ? length : v8::String::kMaxLength;
 
-  int count = std::min(capacity, static_cast<int>(bufferData.length) - start);
+  int nchars =
+      std::min(bufferCapacity, static_cast<int>(bufferData.length) - start);
   memcpy(buffer,
          reinterpret_cast<const uint8_t*>(bufferData.buffer) + start,
-         count);
+         nchars);
 
   bool writeNull = !(options & String::NO_NULL_TERMINATION);
-  if (writeNull && (count < capacity)) {
-    buffer[count] = '\0';
+  if (writeNull && (nchars < bufferCapacity)) {
+    buffer[nchars] = '\0';
   }
 
-  return count;
+  return nchars;
 }
 
 int String::Write(Isolate* isolate,
@@ -1014,30 +1094,28 @@ int String::Write(Isolate* isolate,
     return 0;
   }
 
-  int capacity = length;
-  if (length < 0) {
-    capacity = bufferData.length + 1;
-  }
+  int bufferCapacity = length >= 0 ? length : v8::String::kMaxLength;
 
-  int count = std::min(capacity, static_cast<int>(bufferData.length) - start);
+  int nchars =
+      std::min(bufferCapacity, static_cast<int>(bufferData.length) - start);
   if (bufferData.has8BitContent) {
     int i = 0;
-    for (int j = start; j < start + count; j++) {
+    for (int j = start; j < start + nchars; j++) {
       buffer[i] = bufferData.uncheckedCharAtFor8Bit(j);
       i++;
     }
   } else {
     memcpy(buffer,
            reinterpret_cast<const uint16_t*>(bufferData.buffer) + start,
-           count);
+           nchars);
   }
 
   bool writeNull = !(options & String::NO_NULL_TERMINATION);
-  if (writeNull && (count < capacity)) {
-    buffer[count] = '\0';
+  if (writeNull && (nchars < bufferCapacity)) {
+    buffer[nchars] = '\0';
   }
 
-  return count;
+  return nchars;
 }
 
 bool v8::String::IsExternal() const {
