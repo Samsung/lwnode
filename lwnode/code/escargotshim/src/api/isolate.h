@@ -49,6 +49,8 @@ class IsolateWrap : public gc {
     return reinterpret_cast<IsolateWrap*>(iso);
   }
 
+  static IsolateWrap* fromEscargot(VMInstanceRef* vmInstance);
+
   v8::Isolate* toV8() { return reinterpret_cast<v8::Isolate*>(this); }
 
   // V8 internals
@@ -84,10 +86,6 @@ class IsolateWrap : public gc {
 
   VMInstanceRef* get() { return vmInstance_; }
   VMInstanceRef* vmInstance() { return vmInstance_; }
-  ScriptParserRef* scriptParser() {
-    LWNODE_CHECK_NOT_NULL(pureContext_);
-    return pureContext_->scriptParser();
-  }
 
   void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
     promise_reject_callback_ = callback;
@@ -132,7 +130,6 @@ class IsolateWrap : public gc {
   bool hasScheduledThrow_ = false;
 
   VMInstanceRef* vmInstance_ = nullptr;
-  ContextRef* pureContext_ = nullptr;
 
   v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
   v8::MessageCallback message_callback_ = nullptr;

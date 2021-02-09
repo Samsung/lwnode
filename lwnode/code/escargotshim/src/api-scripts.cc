@@ -57,25 +57,19 @@ void ScriptCompiler::ExternalSourceStream::ResetToBookmark() {
 // ScriptCompiler::StreamedSource::~StreamedSource() = default;
 
 Local<Script> UnboundScript::BindToCurrentContext() {
-  /*
-    @note Unboundscript includes an `isolate` which will be used to
-    get the `current context` of the isolate.
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esScript = VAL(this)->script();
+  auto esContext = lwIsolate->CurrentContext()->get();
 
-    @note Script includes the `current context` obtained from the above
-    step, and it will be used on Script::Run.
+  ScriptParserRef* parser = esContext->scriptParser();
+  ScriptParserRef::InitializeScriptResult result =
+      parser->initializeScript(esScript->sourceCode(), esScript->src(), false);
 
-    @note ValueWrap includes an extra space to carry the gc objects above.
-  */
+  // @note UnboundScript is already once successfully compiled.
+  LWNODE_CHECK(result.isSuccessful());
 
-  auto lwUnboundscript = VAL(this);
-  auto lwIsolateUsed = lwUnboundscript->getExtra<IsolateWrap>(0).getChecked();
-  auto lwScript = ValueWrap::createScript(lwUnboundscript->script());
-
-  // add the `current context` into this ValueWrap for Script
-  ExtraData extra(1, lwIsolateUsed->CurrentContext());
-  lwScript->setExtra(std::move(extra));
-
-  return Local<Script>::New(IsolateWrap::GetCurrent()->toV8(), lwScript);
+  return Local<Script>::New(lwIsolate->toV8(),
+                            ValueWrap::createScript(result.script.get()));
 }
 
 int UnboundScript::GetId() {
@@ -101,15 +95,21 @@ Local<Value> UnboundScript::GetSourceMappingURL() {
 MaybeLocal<Value> Script::Run(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
 
-  auto lwValue = VAL(this);
-  auto lwContextUsed = lwValue->getExtra<ContextWrap>(0).getChecked();
+  auto esScript = VAL(this)->script();
+
+  // @check: which context is used when doing script->execute?
+  // 1) lwContextUsed->get() ?
+  // 2) script->context() ?
+
+  // @todo use script->context() once Escargot updated
+  auto lwContextUsed = lwIsolate->CurrentContext();
 
   auto r = Evaluator::execute(
       lwContextUsed->get(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
-      lwValue->script());
+      esScript);
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
@@ -236,15 +236,16 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
   // related to compiling scripts.
 
   auto esSource = VAL(*source->source_string)->value()->asString();
-  auto __resource_name = StringRef::emptyString();
+  auto esResourceName = StringRef::emptyString();
 
   if (!source->resource_name.IsEmpty()) {
     LWNODE_UNIMPLEMENT;
   }
 
-  ScriptParserRef* parser = lwIsolate->scriptParser();
+  ContextRef* esPureContext = ContextRef::create(lwIsolate->vmInstance());
+  ScriptParserRef* parser = esPureContext->scriptParser();
   ScriptParserRef::InitializeScriptResult result =
-      parser->initializeScript(esSource, __resource_name, false);
+      parser->initializeScript(esSource, esResourceName, false);
 
   if (!result.isSuccessful()) {
     return MaybeLocal<UnboundScript>();
@@ -252,8 +253,9 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
 
   // wrap the parsed script with the current isolate
   auto lwValue = ValueWrap::createScript(result.script.get());
-  ExtraData extra(1, lwIsolate);
-  lwValue->setExtra(std::move(extra));
+
+  // ExtraData extra(1, lwIsolate);
+  // lwValue->setExtra(std::move(extra));
 
   return Local<UnboundScript>::New(v8_isolate, lwValue);
 }
@@ -283,6 +285,18 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
     CompileOptions options,
     NoCacheReason no_cache_reason,
     Local<ScriptOrModule>* script_or_module_out) {
+  API_ENTER_WITH_CONTEXT(v8_context, MaybeLocal<Function>());
+
+  if (options == kConsumeCodeCache) {
+    LWNODE_UNIMPLEMENT;
+  }
+
+  if (context_extension_count > 0) {
+    LWNODE_UNIMPLEMENT;
+  }
+
+  // @todo
+
   LWNODE_RETURN_LOCAL(Function);
 }
 

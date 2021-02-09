@@ -37,7 +37,6 @@ void IsolateWrap::Dispose() {
   // @check
   // GCVector<HandleScopeWrap*> handleScopes_;
   // GCVector<ContextWrap*> contexts_;
-  // pureContext_.release();
   // vmInstance_.release();
 }
 
@@ -81,10 +80,6 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   vmInstance_ = VMInstanceRef::create(new Platform(array_buffer_allocator_));
   vmInstance_->setOnVMInstanceDelete(
       [](VMInstanceRef* instance) { delete instance->platform(); });
-
-  // @note any execution upon this context is NOT allowed. It intends for
-  // compiling source only.
-  pureContext_ = ContextRef::create(vmInstance_);
 }
 
 void IsolateWrap::Enter() {
@@ -96,6 +91,12 @@ void IsolateWrap::Enter() {
 
   s_previousIsolate = s_currentIsolate;
   s_currentIsolate = this;
+}
+
+IsolateWrap* IsolateWrap::fromEscargot(VMInstanceRef* vmInstance)
+{
+  LWNODE_CHECK(s_currentIsolate->vmInstance() == vmInstance);
+  return s_currentIsolate;
 }
 
 void IsolateWrap::Exit() {

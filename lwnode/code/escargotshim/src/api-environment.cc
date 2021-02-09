@@ -271,6 +271,13 @@ void* External::Value() const {
   LWNODE_RETURN_NULLPTR;
 }
 
+namespace {
+
+static_assert(v8::String::kMaxLength == Constants::kMaxStringLength,
+              "String max size is different");
+
+}  // anonymous namespace
+
 // TODO(dcarney): throw a context free exception.
 #define NEW_STRING(                                                            \
     isolate, class_name, function_name, Char, data, type, length)              \
@@ -370,7 +377,24 @@ MaybeLocal<String> v8::String::NewExternalTwoByte(
 
 MaybeLocal<String> v8::String::NewExternalOneByte(
     Isolate* isolate, v8::String::ExternalOneByteStringResource* resource) {
-  LWNODE_RETURN_LOCAL(String);
+  LWNODE_CHECK_NOT_NULL(resource);
+
+  if (resource->length() > static_cast<size_t>(v8::String::kMaxLength)) {
+    return MaybeLocal<String>();
+  }
+
+  if (resource->length() == 0) {
+    resource->Dispose();
+
+    API_RETURN_LOCAL(String, isolate, StringRef::emptyString());
+  }
+
+  LWNODE_CHECK_NOT_NULL(resource->data());
+
+  auto externalString = StringRef::createExternalFromLatin1(
+      (const unsigned char*)(resource->data()), resource->length());
+
+  API_RETURN_LOCAL(String, isolate, externalString);
 }
 
 bool v8::String::MakeExternal(v8::String::ExternalStringResource* resource) {
