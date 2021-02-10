@@ -481,3 +481,34 @@ THREADED_TEST(StringWrite) {
 
   TEARDOWN();
 }
+
+// from node v8's internal
+TEST(SymbolPropertiesInternal) {
+  SETUP();
+  Context::Scope context_scope(context);
+
+  // LocalContext env;
+  // v8::Isolate* isolate = env->GetIsolate();
+  // v8::HandleScope scope(isolate);
+
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  v8::Local<v8::Symbol> sym1 = v8::Symbol::New(isolate);
+  v8::Local<v8::Symbol> sym2 = v8::Symbol::New(isolate, v8_str("my-symbol"));
+  v8::Local<v8::Symbol> sym3 = v8::Symbol::New(isolate, v8_str("sym3"));
+
+  CHECK(sym1->IsSymbol());
+  CHECK(sym2->IsSymbol());
+  CHECK(!obj->IsSymbol());
+
+  CHECK(sym1->Equals(context, sym1).FromJust());
+  CHECK(sym2->Equals(context, sym2).FromJust());
+  CHECK(!sym1->Equals(context, sym2).FromJust());
+  CHECK(!sym2->Equals(context, sym1).FromJust());
+  CHECK(sym1->StrictEquals(sym1));
+  CHECK(sym2->StrictEquals(sym2));
+  CHECK(!sym1->StrictEquals(sym2));
+  CHECK(!sym2->StrictEquals(sym1));
+  CHECK(sym2->Name()->Equals(context, v8_str("my-symbol")).FromJust());
+
+  TEARDOWN();
+}

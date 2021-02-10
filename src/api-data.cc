@@ -52,7 +52,7 @@ bool Value::FullIsString() const {
 }
 
 bool Value::IsSymbol() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isSymbol();
 }
 
 bool Value::IsArray() const {
@@ -434,11 +434,40 @@ MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
 }
 
 Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
-  LWNODE_RETURN_MAYBE(bool)
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto lwContext = VAL(*context)->context();
+
+  auto r = Evaluator::execute(lwContext->get(),
+                              [](ExecutionStateRef* esState,
+                                 ValueRef* self,
+                                 ValueRef* that) -> ValueRef* {
+                                bool r = self->equalsTo(esState, that);
+                                return ValueRef::create(r);
+                              },
+                              CVAL(this)->value(),
+                              CVAL(*that)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
 }
 
 bool Value::StrictEquals(Local<Value> that) const {
-  LWNODE_RETURN_FALSE;
+  auto esValue = CVAL(this)->value();
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->CurrentContext();
+
+  auto r = Evaluator::execute(lwContext->get(),
+                              [](ExecutionStateRef* esState,
+                                 ValueRef* self,
+                                 ValueRef* that) -> ValueRef* {
+                                bool r = self->abstractEqualsTo(esState, that);
+                                return ValueRef::create(r);
+                              },
+                              CVAL(this)->value(),
+                              CVAL(*that)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, false);
+
+  return r.result->asBoolean();
 }
 
 bool Value::SameValue(Local<Value> that) const {
@@ -1147,7 +1176,9 @@ v8::String::GetExternalOneByteStringResource() const {
 }
 
 Local<Value> Symbol::Description() const {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esDescription = CVAL(this)->value()->asSymbol()->description();
+  API_RETURN_LOCAL(String, lwIsolate->toV8(), esDescription);
 }
 
 Local<Value> Private::Name() const {
