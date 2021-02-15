@@ -512,3 +512,70 @@ TEST(SymbolPropertiesInternal) {
 
   TEARDOWN();
 }
+
+// from node 14's test-api.cc
+THREADED_TEST(Array) {
+  SETUP();
+  Context::Scope context_scope(context);
+
+  // LocalContext context;
+  // v8::HandleScope scope(context->GetIsolate());
+  Local<v8::Array> array = v8::Array::New(context->GetIsolate());
+  CHECK_EQ(0u, array->Length());
+
+  CHECK(array->Get(context, 0).ToLocalChecked()->IsUndefined());
+  CHECK(!array->Has(context, 0).FromJust());
+  CHECK(array->Get(context, 100).ToLocalChecked()->IsUndefined());
+  CHECK(!array->Has(context, 100).FromJust());
+  CHECK(array->Set(context, 2, v8_num(7)).FromJust());
+  CHECK_EQ(3u, array->Length());
+
+  CHECK(!array->Has(context, 0).FromJust());
+  CHECK(!array->Has(context, 1).FromJust());
+  CHECK(array->Has(context, 2).FromJust());
+  CHECK_EQ(7, array->Get(context, 2)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+  // Local<Value> obj = CompileRun("[1, 2, 3]");
+  // Local<v8::Array> arr = obj.As<v8::Array>();
+  Local<v8::Array> arr = v8::Array::New(context->GetIsolate());
+  CHECK(arr->Set(context, 0, v8_num(1)).FromJust());
+  CHECK(arr->Set(context, 1, v8_num(2)).FromJust());
+  CHECK(arr->Set(context, 2, v8_num(3)).FromJust());
+  CHECK_EQ(3u, arr->Length());
+  CHECK_EQ(1, arr->Get(context, 0)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+  CHECK_EQ(2, arr->Get(context, 1)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+  CHECK_EQ(3, arr->Get(context, 2)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+  array = v8::Array::New(context->GetIsolate(), 27);
+  CHECK_EQ(27u, array->Length());
+  array = v8::Array::New(context->GetIsolate(), -27);
+  CHECK_EQ(0u, array->Length());
+
+  std::vector<Local<Value>> vector = {v8_num(1), v8_num(2), v8_num(3)};
+  array = v8::Array::New(context->GetIsolate(), vector.data(), vector.size());
+  CHECK_EQ(vector.size(), array->Length());
+  CHECK_EQ(1, arr->Get(context, 0)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+  CHECK_EQ(2, arr->Get(context, 1)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+  CHECK_EQ(3, arr->Get(context, 2)
+                  .ToLocalChecked()
+                  ->Int32Value(context)
+                  .FromJust());
+
+  TEARDOWN();
+}

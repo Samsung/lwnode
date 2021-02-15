@@ -47,6 +47,10 @@ class ObjectRefHelper {
                                 ValueRef* key,
                                 ValueRef* value);
 
+  static EvalResult hasProperty(ContextRef* context,
+                                ObjectRef* object,
+                                ValueRef* key);
+
   static EvalResult getPrivate(ContextRef* context,
                                ObjectRef* object,
                                ValueRef* key);

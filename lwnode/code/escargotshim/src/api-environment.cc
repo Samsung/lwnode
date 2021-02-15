@@ -511,17 +511,62 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
-  LWNODE_RETURN_LOCAL(Array);
+  API_ENTER(isolate, Local<Array>());
+  auto lwContext = lwIsolate->GetCurrentContext();
+  uint64_t len = length;
+  if (length < 0) {
+    len = 0;
+  }
+
+  auto r = Evaluator::execute(lwContext->get(),
+                              [](ExecutionStateRef* esState, uint64_t len) -> ValueRef* {
+                                return ArrayObjectRef::create(esState, len);
+                              }, len);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Array>());
+
+  auto arrayObject = r.result->asObject()->asArrayObject();
+
+  API_RETURN_LOCAL(Array, isolate, arrayObject);
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate,
                                 Local<Value>* elements,
                                 size_t length) {
-  LWNODE_RETURN_LOCAL(Array);
+  API_ENTER(isolate, Local<Array>());
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  auto vector = ValueVectorRef::create();
+  for (size_t i = 0; i < length; i++) {
+    vector->pushBack(VAL(**(elements + i))->value());
+  }
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueVectorRef* vector) -> ValueRef* {
+        return ArrayObjectRef::create(esState, vector);
+      },
+      vector);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Array>());
+
+  auto arrayObject = r.result->asObject()->asArrayObject();
+
+  API_RETURN_LOCAL(Array, isolate, arrayObject);
 }
 
 uint32_t v8::Array::Length() const {
-  LWNODE_RETURN_0;
+  auto esArrayObject = CVAL(this)->value()->asArrayObject();
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ArrayObjectRef* object) -> ValueRef* {
+        return ValueRef::create(object->length(esState));
+      },
+      esArrayObject);
+  API_HANDLE_EXCEPTION(r, lwIsolate, 0);
+
+  return r.result->asUint32();
 }
 
 Local<v8::Map> v8::Map::New(Isolate* isolate) {
