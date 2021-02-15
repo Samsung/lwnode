@@ -27,8 +27,23 @@ bool Value::FullIsUndefined() const {
   return CVAL(this)->value()->isUndefined();
 }
 
+// @lwnode: from v8.h
+bool Value::QuickIsUndefined() const {
+  return FullIsUndefined();
+}
+
 bool Value::FullIsNull() const {
   return CVAL(this)->value()->isNull();
+}
+
+// @lwnode: from v8.h
+bool Value::QuickIsNull() const {
+  LWNODE_RETURN_FALSE;
+}
+
+// @lwnode: from v8.h
+bool Value::QuickIsNullOrUndefined() const {
+  LWNODE_RETURN_FALSE;
 }
 
 bool Value::IsTrue() const {
@@ -48,6 +63,10 @@ bool Value::IsName() const {
 }
 
 bool Value::FullIsString() const {
+  LWNODE_RETURN_FALSE;
+}
+
+bool Value::QuickIsString() const {
   LWNODE_RETURN_FALSE;
 }
 
@@ -207,6 +226,16 @@ Local<Boolean> Value::ToBoolean(Isolate* v8_isolate) const {
 }
 
 MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Number>());
+
+  auto esValue = CVAL(this)->value();
+  if (esValue->isNumber()) {
+    return Local<Number>::New(lwIsolate->toV8(),
+                              ValueWrap::createValue(esValue));
+  }
+
+  LWNODE_UNIMPLEMENT;
+
   LWNODE_RETURN_LOCAL(Number);
 }
 
@@ -422,7 +451,17 @@ Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
 }
 
 Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(int32_t);
+  API_ENTER_WITH_CONTEXT(context, Nothing<int32_t>());
+  auto lwContext = VAL(*context)->context();
+
+  auto r = Evaluator::execute(lwContext->get(),
+                              [](ExecutionStateRef* esState, ValueRef* self) {
+                                return ValueRef::create(self->toInt32(esState));
+                              },
+                              CVAL(this)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<int32_t>());
+
+  return Just(r.result->asInt32());
 }
 
 Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
@@ -500,7 +539,11 @@ Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
 Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
                             uint32_t index,
                             v8::Local<Value> value) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  return Set(context,
+             Local<Value>::New(lwIsolate->toV8(),
+                               ValueWrap::createValue(ValueRef::create(index))),
+             value);
 }
 
 Maybe<bool> v8::Object::CreateDataProperty(v8::Local<v8::Context> context,
@@ -636,7 +679,11 @@ MaybeLocal<Value> v8::Object::Get(Local<v8::Context> context,
 }
 
 MaybeLocal<Value> v8::Object::Get(Local<Context> context, uint32_t index) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  return Get(
+      context,
+      Local<Value>::New(lwIsolate->toV8(),
+                        ValueWrap::createValue(ValueRef::create(index))));
 }
 
 MaybeLocal<Value> v8::Object::GetPrivate(Local<Context> context,
@@ -735,8 +782,16 @@ Maybe<bool> v8::Object::DeletePrivate(Local<Context> context,
   LWNODE_RETURN_MAYBE(bool);
 }
 
-Maybe<bool> v8::Object::Has(Local<Context> context,
-                            Local<Value> key){LWNODE_RETURN_MAYBE(bool)}
+Maybe<bool> v8::Object::Has(Local<Context> context, Local<Value> key) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::hasProperty(VAL(*context)->context()->get(),
+                                        VAL(this)->value()->asObject(),
+                                        VAL(*key)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
+}
 
 Maybe<bool> v8::Object::HasPrivate(Local<Context> context, Local<Private> key) {
   LWNODE_RETURN_MAYBE(bool);
@@ -746,7 +801,11 @@ Maybe<bool> v8::Object::Delete(Local<Context> context,
                                uint32_t index){LWNODE_RETURN_MAYBE(bool)}
 
 Maybe<bool> v8::Object::Has(Local<Context> context, uint32_t index) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  return Has(
+      context,
+      Local<Value>::New(lwIsolate->toV8(),
+                        ValueWrap::createValue(ValueRef::create(index))));
 }
 
 template <typename Getter, typename Setter, typename Data>

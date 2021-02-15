@@ -68,9 +68,20 @@ EvalResult ObjectRefHelper::getProperty(ContextRef* context,
                                         ValueRef* key) {
   return Evaluator::execute(
       context,
-      [](ExecutionStateRef* state,
+      [](ExecutionStateRef* esState,
          ObjectRef* object,
-         ValueRef* param1) -> ValueRef* { return object->get(state, param1); },
+         ValueRef* key) -> ValueRef* { return object->get(esState, key); },
+      object,
+      key);
+}
+
+EvalResult ObjectRefHelper::hasProperty(ContextRef* context,
+                                        ObjectRef* object,
+                                        ValueRef* key) {
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ObjectRef* object, ValueRef* key)
+          -> ValueRef* { return ValueRef::create(object->has(state, key)); },
       object,
       key);
 }

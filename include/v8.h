@@ -2940,10 +2940,19 @@ class V8_EXPORT Value : public Data {
   Maybe<bool> InstanceOf(Local<Context> context, Local<Object> object);
 
  private:
+// @lwnode
+#if 0
   V8_INLINE bool QuickIsUndefined() const;
   V8_INLINE bool QuickIsNull() const;
   V8_INLINE bool QuickIsNullOrUndefined() const;
   V8_INLINE bool QuickIsString() const;
+#else
+  bool QuickIsUndefined() const;
+  bool QuickIsNull() const;
+  bool QuickIsNullOrUndefined() const;
+  bool QuickIsString() const;
+#endif
+// end @lwnode
   bool FullIsUndefined() const;
   bool FullIsNull() const;
   bool FullIsString() const;
@@ -11593,6 +11602,8 @@ bool Value::IsUndefined() const {
 #endif
 }
 
+// @lwnode
+#if 0
 bool Value::QuickIsUndefined() const {
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -11601,7 +11612,8 @@ bool Value::QuickIsUndefined() const {
   if (I::GetInstanceType(obj) != I::kOddballType) return false;
   return (I::GetOddballKind(obj) == I::kUndefinedOddballKind);
 }
-
+#endif
+// end @lwnode
 
 bool Value::IsNull() const {
 #ifdef V8_ENABLE_CHECKS
@@ -11611,6 +11623,8 @@ bool Value::IsNull() const {
 #endif
 }
 
+// @lwnode
+#if 0
 bool Value::QuickIsNull() const {
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -11619,6 +11633,8 @@ bool Value::QuickIsNull() const {
   if (I::GetInstanceType(obj) != I::kOddballType) return false;
   return (I::GetOddballKind(obj) == I::kNullOddballKind);
 }
+#endif
+// end @lwnode
 
 bool Value::IsNullOrUndefined() const {
 #ifdef V8_ENABLE_CHECKS
@@ -11628,6 +11644,8 @@ bool Value::IsNullOrUndefined() const {
 #endif
 }
 
+// @lwnode
+#if 0
 bool Value::QuickIsNullOrUndefined() const {
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -11637,6 +11655,8 @@ bool Value::QuickIsNullOrUndefined() const {
   int kind = I::GetOddballKind(obj);
   return kind == I::kNullOddballKind || kind == I::kUndefinedOddballKind;
 }
+#endif
+// end @lwnode
 
 bool Value::IsString() const {
 #ifdef V8_ENABLE_CHECKS
@@ -11646,6 +11666,8 @@ bool Value::IsString() const {
 #endif
 }
 
+// @lwnode
+#if 0
 bool Value::QuickIsString() const {
   typedef internal::Address A;
   typedef internal::Internals I;
@@ -11653,6 +11675,8 @@ bool Value::QuickIsString() const {
   if (!I::HasHeapObjectTag(obj)) return false;
   return (I::GetInstanceType(obj) < I::kFirstNonstringType);
 }
+#endif
+// end @lwnode
 
 
 template <class T> Value* Value::Cast(T* value) {
