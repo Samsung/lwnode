@@ -150,10 +150,9 @@ Local<Context> v8::Context::New(
     LWNODE_UNIMPLEMENT;
   }
 
-  auto lwContext =
-      ValueWrap::createContext(IsolateWrap::fromV8(external_isolate));
+  auto lwContext = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
 
-  return Local<Context>::New(external_isolate, lwContext);
+  return Local<Context>::New(external_isolate, ValueWrap::createContext(lwContext));
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -421,7 +420,7 @@ Isolate* v8::Object::GetIsolate() {
 Local<v8::Object> v8::Object::New(Isolate* isolate) {
   API_ENTER_NO_EXCEPTION(isolate);
   ObjectRef* esObject =
-      ObjectRefHelper::create(lwIsolate->CurrentContext()->get());
+      ObjectRefHelper::create(lwIsolate->GetCurrentContext()->get());
 
   API_RETURN_LOCAL(Object, isolate, esObject);
 }
@@ -1038,7 +1037,9 @@ void Isolate::ClearKeptObjects() {
 }
 
 v8::Local<v8::Context> Isolate::GetCurrentContext() {
-  LWNODE_RETURN_LOCAL(Context);
+  auto lwContext = IsolateWrap::fromV8(this)->GetCurrentContext();
+  return Local<Context>::New(this,
+                             ValueWrap::createContext(lwContext));
 }
 
 v8::Local<v8::Context> Isolate::GetEnteredContext() {
@@ -1628,7 +1629,7 @@ bool MicrotasksScope::IsRunningMicrotasks(Isolate* v8_isolate) {
 String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
-  auto lwContext = lwIsolate->CurrentContext();
+  auto lwContext = lwIsolate->GetCurrentContext();
   auto lwValue = VAL(*obj);
 
   auto r = Evaluator::execute(

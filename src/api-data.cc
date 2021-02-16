@@ -454,7 +454,7 @@ Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
 bool Value::StrictEquals(Local<Value> that) const {
   auto esValue = CVAL(this)->value();
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->CurrentContext();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   auto r = Evaluator::execute(lwContext->get(),
                               [](ExecutionStateRef* esState,
@@ -664,7 +664,7 @@ MaybeLocal<Value> v8::Object::GetOwnPropertyDescriptor(Local<Context> context,
 
 Local<Value> v8::Object::GetPrototype() {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esContext = lwIsolate->CurrentContext()->get();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esObject =
       ObjectRefHelper::getPrototype(esContext, VAL(this)->value()->asObject());
 
@@ -1187,7 +1187,7 @@ Local<Value> Private::Name() const {
 
 template <typename T, typename F>
 static T getValue(ValueRef* esValue, F toValue) {
-  auto lwContext = IsolateWrap::GetCurrent()->CurrentContext();
+  auto lwContext = IsolateWrap::GetCurrent()->GetCurrentContext();
   LWNODE_CHECK(lwContext != nullptr);
   T v = 0;
   auto r = Evaluator::execute(

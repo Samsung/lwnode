@@ -59,7 +59,7 @@ void ScriptCompiler::ExternalSourceStream::ResetToBookmark() {
 Local<Script> UnboundScript::BindToCurrentContext() {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esScript = VAL(this)->script();
-  auto esContext = lwIsolate->CurrentContext()->get();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
 
   ScriptParserRef* parser = esContext->scriptParser();
   ScriptParserRef::InitializeScriptResult result =
@@ -102,7 +102,7 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
   // 2) script->context() ?
 
   // @todo use script->context() once Escargot updated
-  auto lwContextUsed = lwIsolate->CurrentContext();
+  auto lwContextUsed = lwIsolate->GetCurrentContext();
 
   auto r = Evaluator::execute(
       lwContextUsed->get(),

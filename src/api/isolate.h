@@ -76,7 +76,7 @@ class IsolateWrap : public gc {
   // Context
   void pushContext(ContextWrap* context);
   void popContext(ContextWrap* context);
-  ContextWrap* CurrentContext();
+  ContextWrap* GetCurrentContext();
 
   // Eternal
   void addEternal(Escargot::ValueRef* value);

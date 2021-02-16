@@ -62,7 +62,7 @@ class ValueWrap : public HandleWrap {
   Escargot::ValueRef* value() const;
 
   // Context
-  static ValueWrap* createContext(IsolateWrap* lwIsolate);
+  static ValueWrap* createContext(ContextWrap* lwContext);
   ContextWrap* context() const;
 
   // Script

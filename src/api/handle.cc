@@ -22,9 +22,7 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-ValueWrap* ValueWrap::createContext(IsolateWrap* lwIsolate) {
-  LWNODE_CHECK_NOT_NULL(lwIsolate);
-  auto lwContext = ContextWrap::New(lwIsolate);
+ValueWrap* ValueWrap::createContext(ContextWrap* lwContext) {
   return new ValueWrap(lwContext, Type::Context);
 };
 
