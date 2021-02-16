@@ -31,8 +31,7 @@ class Platform : public PlatformRef {
  public:
   Platform(v8::ArrayBuffer::Allocator* allocator);
 
-  void didPromiseJobEnqueued(ContextRef* relatedContext,
-                             PromiseObjectRef* obj) override;
+  void markJSJobEnqueued(ContextRef* relatedContext) override;
   void* onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
                                             ArrayBufferObjectRef* obj,
                                             size_t sizeInByte) override;
@@ -65,18 +64,6 @@ class Engine : public gc {
 
   static bool Initialize();
   static bool Dispose();
-
-  static bool evalScript(ContextRef* context,
-                         const char* str,
-                         const char* fileName,
-                         bool shouldPrintScriptResult,
-                         bool isModule);
-  static bool evalScript(ContextRef* context,
-                         StringRef* str,
-                         StringRef* fileName,
-                         bool shouldPrintScriptResult,
-                         bool isModule);
-  static bool createDefaultGlobals(ContextRef* context);
 
  private:
   void initialize();
