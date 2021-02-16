@@ -101,11 +101,8 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
   // 1) lwContextUsed->get() ?
   // 2) script->context() ?
 
-  // @todo use script->context() once Escargot updated
-  auto lwContextUsed = lwIsolate->GetCurrentContext();
-
   auto r = Evaluator::execute(
-      lwContextUsed->get(),
+      esScript->context(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
