@@ -122,7 +122,67 @@ THREADED_TEST(ObjectPrototype) {
   Local<Object> prototype = Object::New(isolate);
 
   object->SetPrototype(context, prototype).FromJust();
-  CHECK(object->GetPrototype() == prototype );
+  CHECK(object->GetPrototype() == prototype);
+
+  TEARDOWN();
+}
+
+// Helper functions that compile and run the source.
+static inline Local<v8::Value> CompileRun_(v8::Local<v8::String> source) {
+  v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  Local<v8::Context> context = isolate->GetCurrentContext();
+
+  Local<UnboundScript> script;
+  ScriptCompiler::Source script_source(source);
+
+  if (!ScriptCompiler::CompileUnboundScript(isolate, &script_source)
+           .ToLocal(&script)) {
+    CHECK(false);
+  }
+
+  return script->BindToCurrentContext()->Run(context).ToLocalChecked();
+}
+
+#define CHECK_NOT_CAUGHT(__local_context__, try_catch, __op__)                 \
+  do {                                                                         \
+    const char* op = (__op__);                                                 \
+    v8::Local<v8::Context> context = (__local_context__);                      \
+    if (try_catch.HasCaught()) {                                               \
+      v8::String::Utf8Value error(                                             \
+          isolate, try_catch.Exception()->ToString(context).ToLocalChecked()); \
+      printf("FATAL: Unexpected exception thrown during %s:\n\t%s\n",          \
+             op,                                                               \
+             *error);                                                          \
+    }                                                                          \
+  } while (false)
+
+TEST(ScriptCompiler_CompileFunctionInContext) {
+  SETUP();
+
+  Context::Scope context_scope(context);
+
+  v8::ScriptOrigin origin(v8_str("test"), v8_int(17), v8_int(31));
+  v8::ScriptCompiler::Source script_source(v8_str("return 0"), origin);
+
+  v8::TryCatch try_catch(isolate);
+  v8::MaybeLocal<v8::Function> maybe_fun =
+      v8::ScriptCompiler::CompileFunctionInContext(
+          context, &script_source, 0, nullptr, 0, nullptr);
+
+  // CHECK_NOT_CAUGHT(
+  //     context, try_catch, "v8::ScriptCompiler::CompileFunctionInContext");
+
+  v8::Local<v8::Function> fun = maybe_fun.ToLocalChecked();
+  CHECK(!fun.IsEmpty());
+  // CHECK(!try_catch.HasCaught());
+
+  v8::Local<v8::String> result = fun->ToString(context).ToLocalChecked();
+  v8::Local<v8::String> expected = v8_str("function anonymous(\n"
+                                          ") {\n"
+                                          "return 0\n"
+                                          "}");
+
+  CHECK(expected->Equals(context, result).FromJust());
 
   TEARDOWN();
 }

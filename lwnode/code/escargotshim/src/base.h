@@ -21,14 +21,32 @@
 #define VAL(that) reinterpret_cast<ValueWrap*>(that)
 #define CVAL(that) reinterpret_cast<const ValueWrap*>(that)
 
-#define PRIVATE_UTIL_1(lwIsolate, bailout_value)                               \
+#define __TERMINATION_CHECK(lwIsolate, bailout_value)                          \
   if (lwIsolate->IsExecutionTerminating()) {                                   \
     return bailout_value;                                                      \
   }
 
+#if !defined(NDEBUG)
+#define __DLOG_EVAL_ERROR(eval_result)                                         \
+  LWNODE_DLOG_ERROR(                                                           \
+      "%s",                                                                    \
+      eval_result.resultOrErrorToString(lwIsolate->GetCurrentContext()->get()) \
+          ->toStdUTF8String()                                                  \
+          .c_str());                                                           \
+  for (size_t i = 0; i < eval_result.stackTraceData.size(); i++) {             \
+    LWNODE_DLOG_ERROR(                                                         \
+        "%s (%d:%d)",                                                          \
+        eval_result.stackTraceData[i].src->toStdUTF8String().data(),           \
+        (int)eval_result.stackTraceData[i].loc.line,                           \
+        (int)eval_result.stackTraceData[i].loc.column);                        \
+  }
+#else
+#define __DLOG_EVAL_ERROR(eval_result)
+#endif
+
 #define API_ENTER(isolate, bailout_value)                                      \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);                       \
-  PRIVATE_UTIL_1(lwIsolate, bailout_value)
+  __TERMINATION_CHECK(lwIsolate, bailout_value)
 
 #define API_ENTER_NO_EXCEPTION(isolate)                                        \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);
@@ -37,10 +55,11 @@
   IsolateWrap* lwIsolate = local_context.IsEmpty()                             \
                                ? IsolateWrap::GetCurrent()                     \
                                : VAL(*local_context)->context()->GetIsolate(); \
-  PRIVATE_UTIL_1(lwIsolate, bailout_value)
+  __TERMINATION_CHECK(lwIsolate, bailout_value)
 
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \
   if (!eval_result.isSuccessful()) {                                           \
+    __DLOG_EVAL_ERROR(eval_result);                                            \
     lwIsolate->scheduleThrow(eval_result.error.get());                         \
     return bailout_value;                                                      \
   }
