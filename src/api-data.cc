@@ -194,15 +194,24 @@ bool Value::IsModuleNamespaceObject() const {
 MaybeLocal<String> Value::ToString(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
 
+  auto esContext = VAL(*context)->context()->get();
+
   auto esValue = CVAL(this)->value();
   if (esValue->isString()) {
     return Local<String>::New(lwIsolate->toV8(),
                               ValueWrap::createValue(esValue));
   }
 
-  LWNODE_UNIMPLEMENT;
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state, ValueRef* esValue) -> ValueRef* {
+        return esValue->toString(state);
+      },
+      esValue);
 
-  LWNODE_RETURN_LOCAL(String);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<String>());
+
+  API_RETURN_LOCAL(String, lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<String> Value::ToDetailString(Local<Context> context) const {
@@ -476,15 +485,16 @@ Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
   auto lwContext = VAL(*context)->context();
 
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* esState,
-                                 ValueRef* self,
-                                 ValueRef* that) -> ValueRef* {
-                                bool r = self->equalsTo(esState, that);
-                                return ValueRef::create(r);
-                              },
-                              CVAL(this)->value(),
-                              CVAL(*that)->value());
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         ValueRef* self,
+         ValueRef* that) -> ValueRef* {
+        bool r = self->equalsTo(esState, that);
+        return ValueRef::create(r);
+      },
+      CVAL(this)->value(),
+      CVAL(*that)->value());
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(r.result->asBoolean());
@@ -495,15 +505,16 @@ bool Value::StrictEquals(Local<Value> that) const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
 
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* esState,
-                                 ValueRef* self,
-                                 ValueRef* that) -> ValueRef* {
-                                bool r = self->abstractEqualsTo(esState, that);
-                                return ValueRef::create(r);
-                              },
-                              CVAL(this)->value(),
-                              CVAL(*that)->value());
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         ValueRef* self,
+         ValueRef* that) -> ValueRef* {
+        bool r = self->abstractEqualsTo(esState, that);
+        return ValueRef::create(r);
+      },
+      CVAL(this)->value(),
+      CVAL(*that)->value());
   API_HANDLE_EXCEPTION(r, lwIsolate, false);
 
   return r.result->asBoolean();

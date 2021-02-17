@@ -284,7 +284,11 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
     Local<ScriptOrModule>* script_or_module_out) {
   API_ENTER_WITH_CONTEXT(v8_context, MaybeLocal<Function>());
 
-  if (options == kConsumeCodeCache) {
+  LWNODE_DCHECK(options == CompileOptions::kConsumeCodeCache ||
+                options == CompileOptions::kEagerCompile ||
+                options == CompileOptions::kNoCompileOptions);
+
+  if (options == CompileOptions::kConsumeCodeCache) {
     LWNODE_UNIMPLEMENT;
   }
 
@@ -292,9 +296,32 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
     LWNODE_UNIMPLEMENT;
   }
 
-  // @todo
+  auto esContext = VAL(*v8_context)->context()->get();
+  auto esSource = VAL(*source->source_string)->value()->asString();
 
-  LWNODE_RETURN_LOCAL(Function);
+  std::vector<ValueRef*> arguments_list;
+
+  for (size_t i = 0; i < arguments_count; i++) {
+    arguments_list.push_back(VAL(*arguments[i])->value());
+  }
+  arguments_list.push_back(esSource);
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         FunctionObjectRef* function,
+         const size_t argc,
+         ValueRef** argv) -> ValueRef* {
+        LWNODE_CHECK(function->isConstructible());
+        return function->construct(state, argc, argv);
+      },
+      esContext->globalObject()->function(),
+      arguments_list.size(),
+      arguments_list.data());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Function>());
+
+  API_RETURN_LOCAL(Function, lwIsolate->toV8(), r.result);
 }
 
 void ScriptCompiler::ScriptStreamingTask::Run() {}
