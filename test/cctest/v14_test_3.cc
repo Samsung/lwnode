@@ -15,14 +15,15 @@
  */
 
 #include "cctest.h"
-#include "v14_test.h"
 #include "v8.h"
 
 using namespace v8;
 
 // New internal TC
 TEST(StringNewFromUtf8Literal) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
   v8::TryCatch try_catch(isolate);
   CHECK_EQ(v8::String::NewFromUtf8Literal(
@@ -67,13 +68,13 @@ TEST(StringNewFromUtf8Literal) {
                isolate, "한글", v8::NewStringType::kNormal)
                ->IsOneByte(),
            false);
-
-  TEARDOWN();
 }
 
 // from node v8 internal
 TEST(WriteOneByte) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
   v8::TryCatch try_catch(isolate);
 
@@ -123,8 +124,6 @@ TEST(WriteOneByte) {
   CHECK_EQ(1, len);
   CHECK_EQ(1, len);
   CHECK_EQ(0, strncmp("d\1", buf, 2));
-
-  TEARDOWN();
 }
 
 static int StrCmp16(uint16_t* a, uint16_t* b) {
@@ -159,7 +158,10 @@ int GetUtf8Length(v8::Isolate* isolate, Local<String> str) {
 
 // from node 14's test-api.cc
 THREADED_TEST(StringWrite) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
 
   // LocalContext context;
   // v8::Isolate* isolate = context->GetIsolate();
@@ -478,13 +480,14 @@ THREADED_TEST(StringWrite) {
   CHECK_EQ(0, str->WriteUtf8(isolate, nullptr, 0, nullptr,
                              String::NO_NULL_TERMINATION));
   CHECK_EQ(0, str->Write(isolate, nullptr, 0, 0, String::NO_NULL_TERMINATION));
-
-  TEARDOWN();
 }
 
 // from node v8's internal
 TEST(SymbolPropertiesInternal) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
   Context::Scope context_scope(context);
 
   // LocalContext env;
@@ -509,13 +512,14 @@ TEST(SymbolPropertiesInternal) {
   CHECK(!sym1->StrictEquals(sym2));
   CHECK(!sym2->StrictEquals(sym1));
   CHECK(sym2->Name()->Equals(context, v8_str("my-symbol")).FromJust());
-
-  TEARDOWN();
 }
 
 // from node 14's test-api.cc
 THREADED_TEST(Array) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
   Context::Scope context_scope(context);
 
   // LocalContext context;
@@ -576,6 +580,4 @@ THREADED_TEST(Array) {
                   .ToLocalChecked()
                   ->Int32Value(context)
                   .FromJust());
-
-  TEARDOWN();
 }

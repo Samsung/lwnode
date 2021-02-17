@@ -16,6 +16,11 @@
 
 #include "cctest.h"
 
+v8::Isolate* CcTest::isolate_ = nullptr;
+v8::Context::Scope* CcTest::contextScope_ = nullptr;
+static bool disable_automatic_dispose_ = false;
+v8::Isolate::CreateParams create_params_;
+
 // internals
 #include "api/flags.h"
 
@@ -33,21 +38,19 @@ void LocalContext::Initialize(v8::Isolate* isolate,
   v8::HandleScope scope(isolate);
   v8::Local<v8::Context> context =
       v8::Context::New(isolate, extensions, global_template, global_object);
-
   context_.Reset(isolate, context);
   context->Enter();
   // We can't do this later perhaps because of a fatal error.
   isolate_ = isolate;
 }
 
-v8::Isolate* CcTest::isolate_ = nullptr;
-v8::Context::Scope* CcTest::contextScope_ = nullptr;
-
 v8::Isolate* CcTest::isolate() {
   if (isolate_ == nullptr) {
-    v8::Isolate::CreateParams create_params;
-    CcTest::isolate_ = v8::Isolate::New(create_params);
+    create_params_.array_buffer_allocator =
+      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+    CcTest::isolate_ = v8::Isolate::New(create_params_);
   }
+  isolate_->Enter();
   return isolate_;
 }
 
@@ -62,7 +65,15 @@ void CcTest::disposeIsolate() {
   if (isolate_ != nullptr) {
     isolate_->Exit();
     isolate_->Dispose();
+    delete create_params_.array_buffer_allocator;
     isolate_ = nullptr;
+  }
+}
+
+void CcTest::TearDown() {
+  if (isolate_ != nullptr) {
+    isolate_->Dispose();
+    delete create_params_.array_buffer_allocator;
   }
 }
 
@@ -73,13 +84,11 @@ static inline bool startsWith(const std::string& string,
 }
 
 void InitializeTest::SetUp() {
-  // v8::V8::Initialize();
 }
 
 void InitializeTest::TearDown() {
-  // CcTest::disposeScope();
-  // CcTest::disposeIsolate();
-  // v8::V8::Dispose();
+  CcTest::disposeScope();
+  CcTest::disposeIsolate();
 }
 
 int main(int argc, char* argv[]) {
@@ -101,5 +110,15 @@ int main(int argc, char* argv[]) {
 
   ::testing::InitGoogleTest(&argc, argv);
 
-  return RUN_ALL_TESTS();
+  v8::V8::Initialize();
+
+  auto result = RUN_ALL_TESTS();
+
+  CcTest::TearDown();
+  if (!disable_automatic_dispose_) {
+    v8::V8::Dispose();
+  }
+  v8::V8::ShutdownPlatform();
+
+  return result;
 }

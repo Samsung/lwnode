@@ -20,38 +20,22 @@
 using namespace v8;
 
 TEST(NumberValue) {
-  V8::Initialize();
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
 
-  Isolate::CreateParams create_params;
-  create_params.array_buffer_allocator =
-      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+  double pi_val = 3.1415926;
+  Local<v8::Number> pi_obj = v8::Number::New(isolate, pi_val);
+  CHECK(pi_obj->IsNumber());
+  CHECK_EQ(pi_val, pi_obj->Value());
 
-  Isolate* isolate = Isolate::New(create_params);
-  {
-    Isolate::Scope isolate_scope(isolate);
-    HandleScope handle_scope(isolate);
-    Local<Context> context = Context::New(isolate);
+  int32_t int32_val = 128;
+  Local<v8::Integer> int32_obj = v8::Int32::New(isolate, int32_val);
+  CHECK(int32_obj->IsInt32());
+  CHECK_EQ(int32_val, int32_obj->Value());
 
-    Context::Scope context_scope(context);
-
-    double pi_val = 3.1415926;
-    Local<v8::Number> pi_obj = v8::Number::New(isolate, pi_val);
-    CHECK(pi_obj->IsNumber());
-    CHECK_EQ(pi_val, pi_obj->Value());
-
-    int32_t int32_val = 128;
-    Local<v8::Integer> int32_obj = v8::Int32::New(isolate, int32_val);
-    CHECK(int32_obj->IsInt32());
-    CHECK_EQ(int32_val, int32_obj->Value());
-
-    uint32_t uint32_val = 256;
-    Local<v8::Integer> uint32_obj = v8::Int32::New(isolate, uint32_val);
-    CHECK(uint32_obj->IsUint32());
-    CHECK_EQ(uint32_val, uint32_obj->Value());
-
-  }
-
-  isolate->Dispose();
-  V8::Dispose();
-  delete create_params.array_buffer_allocator;
+  uint32_t uint32_val = 256;
+  Local<v8::Integer> uint32_obj = v8::Int32::New(isolate, uint32_val);
+  CHECK(uint32_obj->IsUint32());
+  CHECK_EQ(uint32_val, uint32_obj->Value());
 }

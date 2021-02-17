@@ -47,6 +47,7 @@ class CcTest {
   static void disposeScope();
   static void disposeIsolate();
   static v8::Context::Scope* contextScope_;
+  static void TearDown();
 
  private:
   static v8::Isolate* isolate_;
@@ -275,14 +276,14 @@ static inline void CheckDoubleEquals(double expected, double actual) {
 class LocalContext {
  public:
   LocalContext(v8::Isolate* isolate,
-               v8::ExtensionConfiguration* extensions = 0,
+               v8::ExtensionConfiguration* extensions = nullptr,
                v8::Local<v8::ObjectTemplate> global_template =
                    v8::Local<v8::ObjectTemplate>(),
                v8::Local<v8::Value> global_object = v8::Local<v8::Value>()) {
     Initialize(isolate, extensions, global_template, global_object);
   }
 
-  LocalContext(v8::ExtensionConfiguration* extensions = 0,
+  LocalContext(v8::ExtensionConfiguration* extensions = nullptr,
                v8::Local<v8::ObjectTemplate> global_template =
                    v8::Local<v8::ObjectTemplate>(),
                v8::Local<v8::Value> global_object = v8::Local<v8::Value>()) {
@@ -302,8 +303,7 @@ class LocalContext {
   }
 
  private:
-  void Initialize(v8::Isolate* isolate,
-                  v8::ExtensionConfiguration* extensions,
+  void Initialize(v8::Isolate* isolate, v8::ExtensionConfiguration* extensions,
                   v8::Local<v8::ObjectTemplate> global_template,
                   v8::Local<v8::Value> global_object);
 
