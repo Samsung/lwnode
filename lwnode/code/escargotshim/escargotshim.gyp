@@ -45,6 +45,7 @@
         'src/api/handlescope.cc',
         'src/api/isolate.cc',
         'src/api/context.cc',
+        'src/api/global-handles.cc',
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [

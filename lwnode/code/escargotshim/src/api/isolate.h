@@ -21,6 +21,7 @@
 
 #include "engine.h"
 #include "handlescope.h"
+#include "global-handles.h"
 #include "utils/compiler.h"
 #include "utils/gc.h"
 
@@ -111,6 +112,10 @@ class IsolateWrap : public gc {
 
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
+  GlobalHandles* globalHandles() {
+    return &globalHandles_;
+  }
+
  private:
   IsolateWrap();
 
@@ -130,6 +135,8 @@ class IsolateWrap : public gc {
   bool hasScheduledThrow_ = false;
 
   VMInstanceRef* vmInstance_ = nullptr;
+
+  GlobalHandles globalHandles_;
 
   v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
   v8::MessageCallback message_callback_ = nullptr;
