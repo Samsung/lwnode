@@ -19,3 +19,5 @@ ROOT_PATH=out/cctest
   --generator-output=$ROOT_PATH -Dbuild_asan=1
 
 ninja -v -C $ROOT_PATH/out/Debug cctest
+
+ln -sf $ROOT_PATH/out/Debug/cctest ./cctest

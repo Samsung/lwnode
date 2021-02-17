@@ -15,33 +15,16 @@
  */
 
 #include "cctest.h"
-#include "v14_test.h"
 #include "v8.h"
 
 using namespace v8;
 
 TEST(UnboundScript) {
-  // Initialize V8.
-  /* V8::InitializeICUDefaultLocation(argv[0]);
-    V8::InitializeExternalStartupData(argv[0]); */
-  // v8::Platform* platform = platform::CreateDefaultPlatform();
-  // V8::InitializePlatform(platform);
-  V8::Initialize();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-  // Create a new Isolate and make it the current one.
-  Isolate::CreateParams create_params;
-  create_params.array_buffer_allocator =
-      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-  // @check use create_params.array_buffer_allocator_shared
-
-  Isolate* isolate = Isolate::New(create_params);
-  {
-    Isolate::Scope isolate_scope(isolate);
-
-    // Create a stack-allocated handle scope.
-    HandleScope handle_scope(isolate);
-
-    // // Create a string containing the JavaScript source code.
+    // Create a string containing the JavaScript source code.
     Local<String> source =
         String::NewFromUtf8(
             isolate, "'Hello' + ', V8!'", NewStringType::kNormal)
@@ -50,7 +33,7 @@ TEST(UnboundScript) {
     // Create a new context.
     Local<Context> context = Context::New(isolate);
 
-    // // Create a Source
+    // Create a Source
     ScriptCompiler::Source script_source(source);
 
     Local<UnboundScript> script;
@@ -69,19 +52,12 @@ TEST(UnboundScript) {
     // Convert the result to an UTF8 string and print it.
     String::Utf8Value utf8(isolate, result);
     CHECK_EQ(std::string("Hello, V8!").compare(std::string(*utf8)), 0);
-  }
-
-  // Dispose the isolate and tear down V8.
-  isolate->Dispose();
-  V8::Dispose();
-
-  // V8::ShutdownPlatform();
-  // delete platform;
-  delete create_params.array_buffer_allocator;  // @check node do this?
 }
 
 TEST(StringCreateNewFromOneTwoByte) {
-  SETUP()
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
   const int length = 4;
   const int buffer_size = length * sizeof(uint16_t);
@@ -109,22 +85,20 @@ TEST(StringCreateNewFromOneTwoByte) {
              false);
   }
   free(buffer);
-
-  TEARDOWN()
 }
 
 THREADED_TEST(ObjectPrototype) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-  Context::Scope context_scope(context);
+  Context::Scope context_scope(env.local());
 
   Local<Object> object = Object::New(isolate);
   Local<Object> prototype = Object::New(isolate);
 
-  object->SetPrototype(context, prototype).FromJust();
+  object->SetPrototype(env.local(), prototype).FromJust();
   CHECK(object->GetPrototype() == prototype);
-
-  TEARDOWN();
 }
 
 // Helper functions that compile and run the source.
@@ -157,7 +131,10 @@ static inline Local<v8::Value> CompileRun_(v8::Local<v8::String> source) {
   } while (false)
 
 TEST(ScriptCompiler_CompileFunctionInContext) {
-  SETUP();
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
 
   Context::Scope context_scope(context);
 
@@ -183,6 +160,4 @@ TEST(ScriptCompiler_CompileFunctionInContext) {
                                           "}");
 
   CHECK(expected->Equals(context, result).FromJust());
-
-  TEARDOWN();
 }

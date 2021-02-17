@@ -28,10 +28,6 @@ namespace v8 {
 
 namespace {
 
-static inline ValueWrap* toValueWrap(i::Address* ptr) {
-  return reinterpret_cast<ValueWrap*>(ptr);
-}
-
 class ArrayBufferAllocator : public v8::ArrayBuffer::Allocator {
  public:
   void* Allocate(size_t length) override {
@@ -263,7 +259,7 @@ void ResourceConstraints::set_max_semi_space_size_in_kb(size_t limit_in_kb) {
 
 i::Address* V8::GlobalizeReference(i::Isolate* isolate, i::Address* obj) {
   LWNODE_CHECK(isolate);
-  IsolateWrap::fromV8(isolate)->globalHandles()->add(toValueWrap(obj));
+  IsolateWrap::fromV8(isolate)->globalHandles()->add(VAL(obj));
   return obj;
 }
 
@@ -313,7 +309,7 @@ void V8::AnnotateStrongRetainer(i::Address* location, const char* label) {
 
 void V8::DisposeGlobal(i::Address* location) {
   LWNODE_CHECK(IsolateWrap::GetCurrent());
-  IsolateWrap::GetCurrent()->globalHandles()->remove(toValueWrap(location));
+  IsolateWrap::GetCurrent()->globalHandles()->remove(VAL(location));
 }
 
 void V8::DisposeTracedGlobal(internal::Address* location) {
