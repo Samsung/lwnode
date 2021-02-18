@@ -515,7 +515,7 @@ TEST(SymbolPropertiesInternal) {
 }
 
 // from node 14's test-api.cc
-THREADED_TEST(Array) {
+THREADED_TEST(Array2) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope scope(isolate);
