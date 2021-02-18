@@ -15,6 +15,7 @@
  */
 
 #include "api.h"
+#include "api/utils.h"
 #include "base.h"
 
 using namespace Escargot;
@@ -452,22 +453,54 @@ void v8::RegExp::CheckCast(v8::Value* that) {
 }
 
 Maybe<double> Value::NumberValue(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(double);
+  API_ENTER_WITH_CONTEXT(context, Nothing<double>());
+  auto lwValue = CVAL(this)->value();
+  if (lwValue->isNumber()) {
+    return Just(lwValue->asNumber());
+  }
+
+  auto lwContext = CVAL(*context)->context();
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* self) {
+        return ValueRef::create(self->toNumber(esState));
+      },
+      lwValue);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<double>());
+
+  return Just(r.result->asNumber());
 }
 
 Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(int64_t);
+  API_ENTER_WITH_CONTEXT(context, Nothing<int64_t>());
+  auto lwValue = CVAL(this)->value();
+  if (lwValue->isNumber()) {
+    return Just(NumberToInt64(lwValue));
+  }
+
+  auto lwContext = VAL(*context)->context();
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* self) {
+        // TODO: change 'toNumber' to 'toInteger'
+        return ValueRef::create(self->toNumber(esState));
+      },
+      CVAL(this)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<int64_t>());
+
+  return Just(NumberToInt64(r.result));
 }
 
 Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, Nothing<int32_t>());
   auto lwContext = VAL(*context)->context();
 
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* esState, ValueRef* self) {
-                                return ValueRef::create(self->toInt32(esState));
-                              },
-                              CVAL(this)->value());
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* self) {
+        return ValueRef::create(self->toInt32(esState));
+      },
+      CVAL(this)->value());
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<int32_t>());
 
   return Just(r.result->asInt32());

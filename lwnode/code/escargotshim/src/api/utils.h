@@ -21,3 +21,4 @@
 #include "utils/logger.h"
 #include "utils/misc.h"
 #include "utils/string.h"
+#include "utils/conversions-inl.h"
