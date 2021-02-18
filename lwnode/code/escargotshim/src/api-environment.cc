@@ -1673,30 +1673,38 @@ bool MicrotasksScope::IsRunningMicrotasks(Isolate* v8_isolate) {
 
 String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
-  auto lwIsolate = IsolateWrap::fromV8(isolate);
+  API_ENTER_NO_EXCEPTION(isolate);
   auto lwContext = lwIsolate->GetCurrentContext();
-  auto lwValue = VAL(*obj);
 
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* state, ValueRef* value) -> ValueRef* {
         return value->toString(state);
       },
-      lwValue->value());
+      VAL(*obj)->value());
 
   if (!r.isSuccessful()) {
     return;
   }
 
-  auto str = r.result->asString()->toStdUTF8String();
-
-  length_ = str.size();
-  if (length_ == 0) {
-    return;
+  auto esString = CVAL(*obj)->value()->asString();
+  auto bufferData = esString->stringBufferAccessData();
+  std::string str;
+  if (bufferData.has8BitContent) {
+    length_ = bufferData.length;
+  } else {
+    str = r.result->asString()->toStdUTF8String();
+    length_ = str.size();
   }
 
   str_ = new char[length_ + 1];
-  strncpy(str_, str.data(), length_);
+
+  if (bufferData.has8BitContent) {
+    strncpy(str_, reinterpret_cast<const char*>(bufferData.buffer), length_);
+  } else {
+    strncpy(str_, str.data(), length_);
+  }
+
   str_[length_] = '\0';
 }
 
@@ -1706,11 +1714,19 @@ String::Utf8Value::~Utf8Value() {
 
 String::Value::Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
-  LWNODE_UNIMPLEMENT;
+  MaybeLocal<String> s = obj->ToString(isolate->GetCurrentContext());
+  Local<String> str;
+  if (!s.ToLocal(&str)) {
+    return;
+  }
+
+  length_ = str->Length();
+  str_ = new u_int16_t[length_ + 1];
+  str->Write(isolate, str_);
 }
 
 String::Value::~Value() {
-  LWNODE_UNIMPLEMENT;
+  delete[] str_;
 }
 
 #define DEFINE_ERROR(NAME, name)                                               \
