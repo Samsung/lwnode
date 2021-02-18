@@ -1296,7 +1296,7 @@ int String::Write(Isolate* isolate,
   } else {
     memcpy(buffer,
            reinterpret_cast<const uint16_t*>(bufferData.buffer) + start,
-           nchars);
+           nchars * 2);
   }
 
   bool writeNull = !(options & String::NO_NULL_TERMINATION);
