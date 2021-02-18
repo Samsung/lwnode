@@ -288,8 +288,21 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
                 options == CompileOptions::kEagerCompile ||
                 options == CompileOptions::kNoCompileOptions);
 
+  Isolate* isolate = v8_context->GetIsolate();
+
   if (options == CompileOptions::kConsumeCodeCache) {
-    LWNODE_UNIMPLEMENT;
+    CachedData* cached_data = source->cached_data;
+    LWNODE_DCHECK(cached_data->length == 0);
+
+    // @note node_contextify.cc:783 is related.
+    cached_data->rejected = true;
+
+    LWNODE_DLOG_INFO("ignored: CachedData (%s)",
+                     VAL(*source->resource_name)
+                         ->value()
+                         ->asString()
+                         ->toStdUTF8String()
+                         .c_str());
   }
 
   if (context_extension_count > 0) {
@@ -342,20 +355,41 @@ uint32_t ScriptCompiler::CachedDataVersionTag() {
   LWNODE_RETURN_0;
 }
 
+#ifndef NDEBUG
+static size_t s_track_data_size;
+#endif
+
 ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCache(
     Local<UnboundScript> unbound_script) {
-  LWNODE_RETURN_NULLPTR;
+#ifndef NDEBUG
+  s_track_data_size += sizeof(CachedData);
+  LWNODE_DLOG_WARN("total size of new CachedData: %zuB", s_track_data_size);
+#endif
+  return new CachedData();
 }
 
 // static
 ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCache(
     Local<UnboundModuleScript> unbound_module_script) {
-  LWNODE_RETURN_NULLPTR;
+#ifndef NDEBUG
+  s_track_data_size += sizeof(CachedData);
+  LWNODE_DLOG_WARN("total size of new CachedData: %zuB", s_track_data_size);
+#endif
+  return new CachedData();
 }
 
 ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCacheForFunction(
     Local<Function> function) {
-  LWNODE_RETURN_NULLPTR;
+  LWNODE_CALL_TRACE();
+  // @note
+  // this is because of CHECK_NOT_NULL in node_native_module.cc:318.
+  // if the total size of new CachedData is too much then we may modify
+  // the above node source. Before that is confirmed, track the size.
+#ifndef NDEBUG
+  s_track_data_size += sizeof(CachedData);
+  LWNODE_DLOG_WARN("total size of new CachedData: %zuB", s_track_data_size);
+#endif
+  return new CachedData();
 }
 
 MaybeLocal<Script> Script::Compile(Local<Context> context,

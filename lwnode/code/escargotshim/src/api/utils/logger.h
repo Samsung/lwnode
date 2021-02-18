@@ -54,12 +54,12 @@
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
   do {                                                                         \
-    fprintf(stderr, COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);      \
+    fprintf(stderr, COLOR_YELLOW "WARN " fmt COLOR_RESET "\n", ##__VA_ARGS__); \
   } while (0);
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
   do {                                                                         \
-    fprintf(stderr, COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);       \
+    fprintf(stderr, COLOR_BRED "ERROR " fmt COLOR_RESET "\n", ##__VA_ARGS__);  \
   } while (0);
 
 #define LWNODE_UNIMPLEMENT                                                     \
@@ -80,16 +80,4 @@
 #define LWNODE_DLOG_INFO(fmt, ...)
 #define LWNODE_DLOG_WARN(fmt, ...)
 #define LWNODE_DLOG_ERROR(fmt, ...)
-#endif
-
-// enable this when call tracing is needed.
-// #define LWNODE_ENABLE_CALL_TRACE
-
-#if !defined(NDEBUG) && defined(LWNODE_ENABLE_CALL_TRACE)
-#define LWNODE_CALL_TRACE(msg, ...)                                            \
-  do {                                                                         \
-    LWNODE_DLOG_RAW("TRACE" TRACE_FMT " " msg, TRACE_ARGS, ##__VA_ARGS__);     \
-  } while (0)
-#else
-#define LWNODE_CALL_TRACE(msg, ...)
 #endif

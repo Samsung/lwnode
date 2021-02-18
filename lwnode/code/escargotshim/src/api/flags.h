@@ -21,7 +21,7 @@
 
 namespace EscargotShim {
 
-typedef uint8_t flag_t;
+typedef uint16_t flag_t;
 
 enum FlagType : flag_t {
   Empty = 0,
@@ -30,7 +30,8 @@ enum FlagType : flag_t {
   DisableIdleGC = 1 << 3,
   TopLevelWait = 1 << 4,
   // lwnode
-  TraceGC = 1 << 5,
+  Trace = 1 << 5,
+  TraceGC = 1 << 6,
 };
 
 class LWNODE_EXPORT Flags {

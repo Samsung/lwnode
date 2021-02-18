@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "api/flags.h"
 #include "unimplemented.h"
 
 #define VAL(that) reinterpret_cast<ValueWrap*>(that)
@@ -80,3 +81,12 @@
   V(Uint8Clamped, uint8_clamped, UINT8_CLAMPED, uint8_t)                       \
   V(BigUint64, biguint64, BIGUINT64, uint64_t)                                 \
   V(BigInt64, bigint64, BIGINT64, int64_t)
+
+#if !defined(NDEBUG)
+#define LWNODE_CALL_TRACE(msg, ...)                                            \
+  if (EscargotShim::Flags::get() & EscargotShim::FlagType::Trace) {            \
+    LWNODE_DLOG_RAW("TRACE" TRACE_FMT " " msg, TRACE_ARGS, ##__VA_ARGS__);     \
+  }
+#else
+#define LWNODE_CALL_TRACE(msg, ...)
+#endif

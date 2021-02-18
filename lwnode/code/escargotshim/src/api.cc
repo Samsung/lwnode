@@ -177,6 +177,9 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     } else if (strEquals("--trace-gc", arg)) {
       flags |= FlagType::TraceGC;
       checked = true;
+    } else if (strEquals("--trace", arg)) {
+      flags |= FlagType::Trace;
+      checked = true;
     } else if (remove_flags && (strStartsWith(arg, "--debug") ||
                                 strStartsWith(arg, "--stack-size=") ||
                                 strStartsWith(arg, "--nolazy") ||

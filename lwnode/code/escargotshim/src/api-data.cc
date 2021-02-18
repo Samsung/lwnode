@@ -990,7 +990,32 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
                                      v8::Local<v8::Value> recv,
                                      int argc,
                                      v8::Local<v8::Value> argv[]) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+
+  auto lwContext = VAL(*context)->context();
+
+  std::vector<ValueRef*> arguments;
+  for (int i = 0; i < argc; i++) {
+    arguments.push_back(VAL(*argv[i])->value());
+  }
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state,
+         FunctionObjectRef* self,
+         ValueRef* receiver,
+         const size_t argc,
+         ValueRef** argv) -> ValueRef* {
+        return self->call(state, receiver, argc, argv);
+      },
+      CVAL(this)->value()->asFunctionObject(),
+      CVAL(*recv)->value(),
+      arguments.size(),
+      arguments.data());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
 
 void Function::SetName(v8::Local<v8::String> name) {}
