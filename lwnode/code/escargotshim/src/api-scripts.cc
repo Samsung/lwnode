@@ -209,14 +209,6 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
     Source* source,
     CompileOptions options,
     NoCacheReason no_cache_reason) {
-  LWNODE_RETURN_LOCAL(UnboundScript);
-}
-
-MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
-    Isolate* v8_isolate,
-    Source* source,
-    CompileOptions options,
-    NoCacheReason no_cache_reason) {
   API_ENTER(v8_isolate, MaybeLocal<UnboundScript>());
 
   if (options == kConsumeCodeCache) {
@@ -257,11 +249,25 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
   return Local<UnboundScript>::New(v8_isolate, lwValue);
 }
 
+MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
+    Isolate* v8_isolate,
+    Source* source,
+    CompileOptions options,
+    NoCacheReason no_cache_reason) {
+  return CompileUnboundInternal(v8_isolate, source, options, no_cache_reason);
+}
+
 MaybeLocal<Script> ScriptCompiler::Compile(Local<Context> context,
                                            Source* source,
                                            CompileOptions options,
                                            NoCacheReason no_cache_reason) {
-  LWNODE_RETURN_LOCAL(Script);
+  auto isolate = context->GetIsolate();
+  auto maybe =
+      CompileUnboundInternal(isolate, source, options, no_cache_reason);
+  Local<UnboundScript> result;
+  if (!maybe.ToLocal(&result)) return MaybeLocal<Script>();
+  v8::Context::Scope scope(context);
+  return result->BindToCurrentContext();
 }
 
 MaybeLocal<Module> ScriptCompiler::CompileModule(

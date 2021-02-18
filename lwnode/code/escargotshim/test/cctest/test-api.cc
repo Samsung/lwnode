@@ -435,13 +435,13 @@ THREADED_TEST(Access) {
 // }
 
 
-// THREADED_TEST(Script) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   const char* source = "1 + 2 + 3";
-//   Local<Script> script = v8_compile(source);
-//   CHECK_EQ(6, v8_run_int32value(script));
-// }
+THREADED_TEST(Script) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  const char* source = "1 + 2 + 3";
+  Local<Script> script = v8_compile(source);
+  CHECK_EQ(6, v8_run_int32value(script));
+}
 
 
 // class TestResource: public String::ExternalStringResource {
@@ -4879,60 +4879,60 @@ THREADED_TEST(Access) {
 // }
 
 
-// THREADED_TEST(Array) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   Local<v8::Array> array = v8::Array::New(context->GetIsolate());
-//   CHECK_EQ(0u, array->Length());
-//   CHECK(array->Get(context.local(), 0).ToLocalChecked()->IsUndefined());
-//   CHECK(!array->Has(context.local(), 0).FromJust());
-//   CHECK(array->Get(context.local(), 100).ToLocalChecked()->IsUndefined());
-//   CHECK(!array->Has(context.local(), 100).FromJust());
-//   CHECK(array->Set(context.local(), 2, v8_num(7)).FromJust());
-//   CHECK_EQ(3u, array->Length());
-//   CHECK(!array->Has(context.local(), 0).FromJust());
-//   CHECK(!array->Has(context.local(), 1).FromJust());
-//   CHECK(array->Has(context.local(), 2).FromJust());
-//   CHECK_EQ(7, array->Get(context.local(), 2)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   Local<Value> obj = CompileRun("[1, 2, 3]");
-//   Local<v8::Array> arr = obj.As<v8::Array>();
-//   CHECK_EQ(3u, arr->Length());
-//   CHECK_EQ(1, arr->Get(context.local(), 0)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(2, arr->Get(context.local(), 1)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(3, arr->Get(context.local(), 2)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   array = v8::Array::New(context->GetIsolate(), 27);
-//   CHECK_EQ(27u, array->Length());
-//   array = v8::Array::New(context->GetIsolate(), -27);
-//   CHECK_EQ(0u, array->Length());
+THREADED_TEST(Array) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  Local<v8::Array> array = v8::Array::New(context->GetIsolate());
+  CHECK_EQ(0u, array->Length());
+  CHECK(array->Get(context.local(), 0).ToLocalChecked()->IsUndefined());
+  CHECK(!array->Has(context.local(), 0).FromJust());
+  CHECK(array->Get(context.local(), 100).ToLocalChecked()->IsUndefined());
+  CHECK(!array->Has(context.local(), 100).FromJust());
+  CHECK(array->Set(context.local(), 2, v8_num(7)).FromJust());
+  CHECK_EQ(3u, array->Length());
+  CHECK(!array->Has(context.local(), 0).FromJust());
+  CHECK(!array->Has(context.local(), 1).FromJust());
+  CHECK(array->Has(context.local(), 2).FromJust());
+  CHECK_EQ(7, array->Get(context.local(), 2)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  Local<Value> obj = CompileRun("[1, 2, 3]");
+  Local<v8::Array> arr = obj.As<v8::Array>();
+  CHECK_EQ(3u, arr->Length());
+  CHECK_EQ(1, arr->Get(context.local(), 0)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(2, arr->Get(context.local(), 1)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(3, arr->Get(context.local(), 2)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  array = v8::Array::New(context->GetIsolate(), 27);
+  CHECK_EQ(27u, array->Length());
+  array = v8::Array::New(context->GetIsolate(), -27);
+  CHECK_EQ(0u, array->Length());
 
-//   std::vector<Local<Value>> vector = {v8_num(1), v8_num(2), v8_num(3)};
-//   array = v8::Array::New(context->GetIsolate(), vector.data(), vector.size());
-//   CHECK_EQ(vector.size(), array->Length());
-//   CHECK_EQ(1, arr->Get(context.local(), 0)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(2, arr->Get(context.local(), 1)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(3, arr->Get(context.local(), 2)
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-// }
+  std::vector<Local<Value>> vector = {v8_num(1), v8_num(2), v8_num(3)};
+  array = v8::Array::New(context->GetIsolate(), vector.data(), vector.size());
+  CHECK_EQ(vector.size(), array->Length());
+  CHECK_EQ(1, arr->Get(context.local(), 0)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(2, arr->Get(context.local(), 1)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(3, arr->Get(context.local(), 2)
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+}
 
 
 // void HandleF(const v8::FunctionCallbackInfo<v8::Value>& args) {
