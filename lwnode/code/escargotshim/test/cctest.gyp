@@ -13,6 +13,7 @@
        ],
       'cflags_cc': [
         '-Wno-unused-parameter',
+        '-Wno-comment',
         '-std=gnu++11',
       ],
       'include_dirs': [
@@ -24,6 +25,7 @@
         'cctest/v14_test_1.cc',
         'cctest/v14_test_2.cc',
         'cctest/v14_test_3.cc',
+        'cctest/test-api.cc',
       ]
     },
   ],
