@@ -1903,26 +1903,26 @@ THREADED_TEST(TinyInteger) {
 // }
 
 
-// THREADED_TEST(Number) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   double PI = 3.1415926;
-//   Local<v8::Number> pi_obj = v8::Number::New(env->GetIsolate(), PI);
-//   CHECK_EQ(PI, pi_obj->NumberValue(env.local()).FromJust());
-// }
+THREADED_TEST(Number) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  double PI = 3.1415926;
+  Local<v8::Number> pi_obj = v8::Number::New(env->GetIsolate(), PI);
+  CHECK_EQ(PI, pi_obj->NumberValue(env.local()).FromJust());
+}
 
 
-// THREADED_TEST(ToNumber) {
-//   LocalContext env;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<String> str = v8_str("3.1415926");
-//   CHECK_EQ(3.1415926, str->NumberValue(env.local()).FromJust());
-//   v8::Local<v8::Boolean> t = v8::True(isolate);
-//   CHECK_EQ(1.0, t->NumberValue(env.local()).FromJust());
-//   v8::Local<v8::Boolean> f = v8::False(isolate);
-//   CHECK_EQ(0.0, f->NumberValue(env.local()).FromJust());
-// }
+THREADED_TEST(ToNumber) {
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<String> str = v8_str("3.1415926");
+  CHECK_EQ(3.1415926, str->NumberValue(env.local()).FromJust());
+  v8::Local<v8::Boolean> t = v8::True(isolate);
+  CHECK_EQ(1.0, t->NumberValue(env.local()).FromJust());
+  v8::Local<v8::Boolean> f = v8::False(isolate);
+  CHECK_EQ(0.0, f->NumberValue(env.local()).FromJust());
+}
 
 
 // THREADED_TEST(Date) {
@@ -2073,13 +2073,13 @@ THREADED_TEST(TinyInteger) {
 //             ->BooleanValue(isolate));
 // }
 
-// THREADED_TEST(IntegerValue) {
-//   LocalContext env;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(IntegerValue) {
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
 
-//   CHECK_EQ(0, CompileRun("undefined")->IntegerValue(env.local()).FromJust());
-// }
+  CHECK_EQ(0, CompileRun("undefined")->IntegerValue(env.local()).FromJust());
+}
 
 // static void GetNirk(Local<String> name,
 //                     const v8::PropertyCallbackInfo<v8::Value>& info) {
