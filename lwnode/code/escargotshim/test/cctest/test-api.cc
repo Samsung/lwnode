@@ -152,21 +152,21 @@ using ::v8::Value;
 // }
 
 
-// // Tests that call v8::V8::Dispose() cannot be threaded.
-// UNINITIALIZED_TEST(InitializeAndDisposeOnce) {
-//   CHECK(v8::V8::Initialize());
-//   CHECK(v8::V8::Dispose());
-// }
+// Tests that call v8::V8::Dispose() cannot be threaded.
+UNINITIALIZED_TEST(InitializeAndDisposeOnce) {
+  CHECK(v8::V8::Initialize());
+  CHECK(v8::V8::Dispose());
+}
 
 
-// // Tests that call v8::V8::Dispose() cannot be threaded.
-// UNINITIALIZED_TEST(InitializeAndDisposeMultiple) {
-//   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
-//   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Initialize());
-//   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
-//   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Initialize());
-//   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
-// }
+// Tests that call v8::V8::Dispose() cannot be threaded.
+UNINITIALIZED_TEST(InitializeAndDisposeMultiple) {
+  for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
+  for (int i = 0; i < 3; ++i) CHECK(v8::V8::Initialize());
+  for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
+  for (int i = 0; i < 3; ++i) CHECK(v8::V8::Initialize());
+  for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
+}
 
 // THREADED_TEST(Handles) {
 //   v8::HandleScope scope(CcTest::isolate());
@@ -1527,15 +1527,15 @@ THREADED_TEST(Script) {
 // }
 
 
-// THREADED_TEST(TinyInteger) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(TinyInteger) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   int32_t value = 239;
-//   Local<v8::Integer> value_obj = v8::Integer::New(isolate, value);
-//   CHECK_EQ(static_cast<int64_t>(value), value_obj->Value());
-// }
+  int32_t value = 239;
+  Local<v8::Integer> value_obj = v8::Integer::New(isolate, value);
+  CHECK_EQ(static_cast<int64_t>(value), value_obj->Value());
+}
 
 
 // THREADED_TEST(BigSmiInteger) {
@@ -4360,12 +4360,12 @@ THREADED_TEST(Script) {
 //            v8::Number::New(CcTest::isolate(), 1));
 // }
 
-// THREADED_TEST(LocalHandle) {
-//   v8::HandleScope scope(CcTest::isolate());
-//   v8::Local<String> local =
-//       v8::Local<String>::New(CcTest::isolate(), v8_str("str"));
-//   CHECK_EQ(3, local->Length());
-// }
+THREADED_TEST(LocalHandle) {
+  v8::HandleScope scope(CcTest::isolate());
+  v8::Local<String> local =
+      v8::Local<String>::New(CcTest::isolate(), v8_str("str"));
+  CHECK_EQ(3, local->Length());
+}
 
 
 // class WeakCallCounter {
