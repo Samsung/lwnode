@@ -8640,39 +8640,39 @@ THREADED_TEST(Array) {
 // }
 
 
-// THREADED_TEST(ToArrayIndex) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(ToArrayIndex) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<String> str = v8_str("42");
-//   v8::MaybeLocal<v8::Uint32> index = str->ToArrayIndex(context.local());
-//   CHECK(!index.IsEmpty());
-//   CHECK_EQ(42.0,
-//            index.ToLocalChecked()->Uint32Value(context.local()).FromJust());
-//   str = v8_str("42asdf");
-//   index = str->ToArrayIndex(context.local());
-//   CHECK(index.IsEmpty());
-//   str = v8_str("-42");
-//   index = str->ToArrayIndex(context.local());
-//   CHECK(index.IsEmpty());
-//   str = v8_str("4294967294");
-//   index = str->ToArrayIndex(context.local());
-//   CHECK(!index.IsEmpty());
-//   CHECK_EQ(4294967294.0,
-//            index.ToLocalChecked()->Uint32Value(context.local()).FromJust());
-//   v8::Local<v8::Number> num = v8::Number::New(isolate, 1);
-//   index = num->ToArrayIndex(context.local());
-//   CHECK(!index.IsEmpty());
-//   CHECK_EQ(1.0,
-//            index.ToLocalChecked()->Uint32Value(context.local()).FromJust());
-//   num = v8::Number::New(isolate, -1);
-//   index = num->ToArrayIndex(context.local());
-//   CHECK(index.IsEmpty());
-//   v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//   index = obj->ToArrayIndex(context.local());
-//   CHECK(index.IsEmpty());
-// }
+  v8::Local<String> str = v8_str("42");
+  v8::MaybeLocal<v8::Uint32> index = str->ToArrayIndex(context.local());
+  CHECK(!index.IsEmpty());
+  CHECK_EQ(42.0,
+           index.ToLocalChecked()->Uint32Value(context.local()).FromJust());
+  str = v8_str("42asdf");
+  index = str->ToArrayIndex(context.local());
+  CHECK(index.IsEmpty());
+  str = v8_str("-42");
+  index = str->ToArrayIndex(context.local());
+  CHECK(index.IsEmpty());
+  str = v8_str("4294967294");
+  index = str->ToArrayIndex(context.local());
+  CHECK(!index.IsEmpty());
+  CHECK_EQ(4294967294.0,
+           index.ToLocalChecked()->Uint32Value(context.local()).FromJust());
+  v8::Local<v8::Number> num = v8::Number::New(isolate, 1);
+  index = num->ToArrayIndex(context.local());
+  CHECK(!index.IsEmpty());
+  CHECK_EQ(1.0,
+           index.ToLocalChecked()->Uint32Value(context.local()).FromJust());
+  num = v8::Number::New(isolate, -1);
+  index = num->ToArrayIndex(context.local());
+  CHECK(index.IsEmpty());
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  index = obj->ToArrayIndex(context.local());
+  CHECK(index.IsEmpty());
+}
 
 // THREADED_TEST(ErrorConstruction) {
 //   LocalContext context;

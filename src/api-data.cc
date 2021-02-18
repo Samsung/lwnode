@@ -474,11 +474,43 @@ Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
 }
 
 Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(uint32_t);
+  API_ENTER_WITH_CONTEXT(context, Nothing<uint32_t>());
+  auto lwContext = VAL(*context)->context();
+
+  uint32_t val = 0;
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* self, uint32_t* val) {
+        *val = self->toUint32(esState);
+        return ValueRef::create(*val);
+      },
+      CVAL(this)->value(),
+      &val);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<uint32_t>());
+
+  return Just(val);
 }
 
 MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
-  LWNODE_RETURN_LOCAL(Uint32);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Uint32>());
+  auto lwContext = VAL(*context)->context();
+
+  uint32_t index = ValueRef::InvalidArrayIndexValue;
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* self, uint32_t* index) {
+        *index = self->toArrayIndex(esState);
+        return ValueRef::create(*index);
+      },
+      CVAL(this)->value(),
+      &index);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Uint32>());
+
+  if (index == ValueRef::InvalidArrayIndexValue) {
+    return MaybeLocal<Uint32>();
+  }
+
+  API_RETURN_LOCAL(Uint32, lwIsolate->toV8(), r.result);
 }
 
 Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
