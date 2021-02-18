@@ -38,12 +38,12 @@ bool Value::FullIsNull() const {
 
 // @lwnode: from v8.h
 bool Value::QuickIsNull() const {
-  LWNODE_RETURN_FALSE;
+  return FullIsNull();
 }
 
 // @lwnode: from v8.h
 bool Value::QuickIsNullOrUndefined() const {
-  LWNODE_RETURN_FALSE;
+  return FullIsNull() || FullIsUndefined();
 }
 
 bool Value::IsTrue() const {
@@ -63,11 +63,11 @@ bool Value::IsName() const {
 }
 
 bool Value::FullIsString() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isString();
 }
 
 bool Value::QuickIsString() const {
-  LWNODE_RETURN_FALSE;
+  return FullIsString();
 }
 
 bool Value::IsSymbol() const {
