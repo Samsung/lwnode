@@ -1074,7 +1074,7 @@ ArrayBuffer::Allocator* Isolate::GetArrayBufferAllocator() {
 }
 
 bool Isolate::InContext() {
-  LWNODE_RETURN_FALSE;
+  return IsolateWrap::fromV8(this)->InContext();
 }
 
 void Isolate::ClearKeptObjects() {
