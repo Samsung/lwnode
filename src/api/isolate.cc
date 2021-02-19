@@ -145,6 +145,10 @@ void IsolateWrap::popContext(ContextWrap* context) {
   contextScopes_.pop_back();
 }
 
+bool IsolateWrap::InContext() {
+  return !contextScopes_.empty();
+}
+
 ContextWrap* IsolateWrap::GetCurrentContext() {
   LWNODE_CHECK(contextScopes_.size() >= 1);
   return contextScopes_.back();

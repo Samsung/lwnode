@@ -168,43 +168,43 @@ UNINITIALIZED_TEST(InitializeAndDisposeMultiple) {
   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
 }
 
-// THREADED_TEST(Handles) {
-//   v8::HandleScope scope(CcTest::isolate());
-//   Local<Context> local_env;
-//   {
-//     LocalContext env;
-//     local_env = env.local();
-//   }
+THREADED_TEST(Handles) {
+  v8::HandleScope scope(CcTest::isolate());
+  Local<Context> local_env;
+  {
+    LocalContext env;
+    local_env = env.local();
+  }
 
-//   // Local context should still be live.
-//   CHECK(!local_env.IsEmpty());
-//   local_env->Enter();
+  // Local context should still be live.
+  CHECK(!local_env.IsEmpty());
+  local_env->Enter();
 
-//   v8::Local<v8::Primitive> undef = v8::Undefined(CcTest::isolate());
-//   CHECK(!undef.IsEmpty());
-//   CHECK(undef->IsUndefined());
+  v8::Local<v8::Primitive> undef = v8::Undefined(CcTest::isolate());
+  CHECK(!undef.IsEmpty());
+  CHECK(undef->IsUndefined());
 
-//   const char* source = "1 + 2 + 3";
-//   Local<Script> script = v8_compile(source);
-//   CHECK_EQ(6, v8_run_int32value(script));
+  const char* source = "1 + 2 + 3";
+  Local<Script> script = v8_compile(source);
+  CHECK_EQ(6, v8_run_int32value(script));
 
-//   local_env->Exit();
-// }
+  local_env->Exit();
+}
 
 
-// THREADED_TEST(IsolateOfContext) {
-//   v8::HandleScope scope(CcTest::isolate());
-//   v8::Local<Context> env = Context::New(CcTest::isolate());
+THREADED_TEST(IsolateOfContext) {
+  v8::HandleScope scope(CcTest::isolate());
+  v8::Local<Context> env = Context::New(CcTest::isolate());
 
-//   CHECK(!env->GetIsolate()->InContext());
-//   CHECK(env->GetIsolate() == CcTest::isolate());
-//   env->Enter();
-//   CHECK(env->GetIsolate()->InContext());
-//   CHECK(env->GetIsolate() == CcTest::isolate());
-//   env->Exit();
-//   CHECK(!env->GetIsolate()->InContext());
-//   CHECK(env->GetIsolate() == CcTest::isolate());
-// }
+  CHECK(!env->GetIsolate()->InContext());
+  CHECK(env->GetIsolate() == CcTest::isolate());
+  env->Enter();
+  CHECK(env->GetIsolate()->InContext());
+  CHECK(env->GetIsolate() == CcTest::isolate());
+  env->Exit();
+  CHECK(!env->GetIsolate()->InContext());
+  CHECK(env->GetIsolate() == CcTest::isolate());
+}
 
 // static void TestSignatureLooped(const char* operation, Local<Value> receiver,
 //                                 v8::Isolate* isolate) {
@@ -412,27 +412,27 @@ THREADED_TEST(Access) {
 }
 
 
-// THREADED_TEST(AccessElement) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   Local<v8::Object> obj = v8::Object::New(env->GetIsolate());
-//   Local<Value> before = obj->Get(env.local(), 1).ToLocalChecked();
-//   CHECK(before->IsUndefined());
-//   Local<String> bar_str = v8_str("bar");
-//   CHECK(obj->Set(env.local(), 1, bar_str).FromJust());
-//   Local<Value> after = obj->Get(env.local(), 1).ToLocalChecked();
-//   CHECK(!after->IsUndefined());
-//   CHECK(after->IsString());
-//   CHECK(bar_str->Equals(env.local(), after).FromJust());
+THREADED_TEST(AccessElement) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  Local<v8::Object> obj = v8::Object::New(env->GetIsolate());
+  Local<Value> before = obj->Get(env.local(), 1).ToLocalChecked();
+  CHECK(before->IsUndefined());
+  Local<String> bar_str = v8_str("bar");
+  CHECK(obj->Set(env.local(), 1, bar_str).FromJust());
+  Local<Value> after = obj->Get(env.local(), 1).ToLocalChecked();
+  CHECK(!after->IsUndefined());
+  CHECK(after->IsString());
+  CHECK(bar_str->Equals(env.local(), after).FromJust());
 
-//   Local<v8::Array> value = CompileRun("[\"a\", \"b\"]").As<v8::Array>();
-//   CHECK(v8_str("a")
-//             ->Equals(env.local(), value->Get(env.local(), 0).ToLocalChecked())
-//             .FromJust());
-//   CHECK(v8_str("b")
-//             ->Equals(env.local(), value->Get(env.local(), 1).ToLocalChecked())
-//             .FromJust());
-// }
+  Local<v8::Array> value = CompileRun("[\"a\", \"b\"]").As<v8::Array>();
+  CHECK(v8_str("a")
+            ->Equals(env.local(), value->Get(env.local(), 0).ToLocalChecked())
+            .FromJust());
+  CHECK(v8_str("b")
+            ->Equals(env.local(), value->Get(env.local(), 1).ToLocalChecked())
+            .FromJust());
+}
 
 
 THREADED_TEST(Script) {

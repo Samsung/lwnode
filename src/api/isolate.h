@@ -77,6 +77,7 @@ class IsolateWrap : public gc {
   // Context
   void pushContext(ContextWrap* context);
   void popContext(ContextWrap* context);
+  bool InContext();
   ContextWrap* GetCurrentContext();
 
   // Eternal
