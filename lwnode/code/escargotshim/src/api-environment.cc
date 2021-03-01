@@ -366,15 +366,76 @@ MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
   return result;
 }
 
+static void copyStringToTwoByteArray(char16_t* dest, StringRef* src) {
+  auto bufferData = src->stringBufferAccessData();
+  if (bufferData.has8BitContent) {
+    for (size_t i = 0; i < bufferData.length; i++) {
+      dest[i] = bufferData.uncheckedCharAtFor8Bit(i);
+    }
+  } else {
+    memcpy(dest, bufferData.buffer, bufferData.length * sizeof(char16_t));
+  }
+}
+
 Local<String> v8::String::Concat(Isolate* v8_isolate,
                                  Local<String> left,
                                  Local<String> right) {
-  LWNODE_RETURN_LOCAL(String);
+  if (left.IsEmpty() || right.IsEmpty()) {
+    return Local<String>();
+  }
+
+  auto esLeftStr = VAL(*left)->value()->asString();
+  auto leftStrBufferData = esLeftStr->stringBufferAccessData();
+
+  auto esRightStr = VAL(*right)->value()->asString();
+  auto rightStrBufferData = esRightStr->stringBufferAccessData();
+
+  size_t nchars = leftStrBufferData.length + rightStrBufferData.length;
+  size_t charSize = sizeof(char16_t);
+  Local<String> r;
+
+  if (leftStrBufferData.has8BitContent && rightStrBufferData.has8BitContent) {
+    unsigned char* buf = new unsigned char[nchars];
+    memcpy(buf, leftStrBufferData.buffer, leftStrBufferData.length);
+    memcpy(buf + leftStrBufferData.length,
+           rightStrBufferData.buffer,
+           rightStrBufferData.length);
+
+    auto esNewStr = StringRef::createFromLatin1(buf, nchars);
+    r = Local<String>::New(v8_isolate, ValueWrap::createValue(esNewStr));
+    delete[] buf;
+  } else {
+    char16_t* buf = new char16_t[nchars];
+    copyStringToTwoByteArray(buf, esLeftStr);
+    copyStringToTwoByteArray(buf + leftStrBufferData.length, esRightStr);
+
+    auto esNewStr = StringRef::createFromUTF16(buf, nchars);
+    r = Local<String>::New(v8_isolate, ValueWrap::createValue(esNewStr));
+    delete[] buf;
+  }
+
+  return r;
 }
 
 MaybeLocal<String> v8::String::NewExternalTwoByte(
     Isolate* isolate, v8::String::ExternalStringResource* resource) {
-  LWNODE_RETURN_LOCAL(String);
+  LWNODE_CHECK_NOT_NULL(resource);
+
+  if (resource->length() > static_cast<size_t>(v8::String::kMaxLength)) {
+    return MaybeLocal<String>();
+  }
+
+  if (resource->length() == 0) {
+    resource->Dispose();
+    API_RETURN_LOCAL(String, isolate, StringRef::emptyString());
+  }
+
+  LWNODE_CHECK_NOT_NULL(resource->data());
+
+  auto esString = StringRef::createExternalFromUTF16(
+      reinterpret_cast<const char16_t*>(resource->data()), resource->length());
+
+  API_RETURN_LOCAL(String, isolate, esString);
 }
 
 MaybeLocal<String> v8::String::NewExternalOneByte(
@@ -413,7 +474,9 @@ bool v8::String::CanMakeExternal() {
 }
 
 bool v8::String::StringEquals(Local<String> that) {
-  LWNODE_RETURN_FALSE;
+  auto esSelf = VAL(this)->value()->asString();
+  auto esThatStr = VAL(*that)->value()->asString();
+  return esSelf->equals(esThatStr);
 }
 
 Isolate* v8::Object::GetIsolate() {

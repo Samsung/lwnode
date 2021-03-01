@@ -10,7 +10,7 @@ namespace v8 {
 namespace internal {
 
 typedef uint8_t byte;
-typedef byte* Address;
+// typedef byte* Address;
 
 template <typename T>
 T* NewArray(size_t size) {
@@ -24,6 +24,15 @@ template <typename T>
 void DeleteArray(T* array) {
   delete[] array;
 }
+
+static char* StrDup(const char* str) {
+  int len = strlen(str);
+  char* buf = new char[len + 1];
+  strncpy(buf, str, len);
+  buf[len] = '\0';
+  return buf;
+}
+
 }  // namespace internal
 }  // namespace v8
 
