@@ -19,6 +19,7 @@
 
 #include "gtest/gtest.h"
 #include "v8.h"
+#include "globals.h"
 
 #define TEST_CAST_NAME CCTest
 
@@ -270,6 +271,13 @@ static inline void CheckDoubleEquals(double expected, double actual) {
   const double kEpsilon = 1e-10;
   CHECK_LE(expected, actual + kEpsilon);
   CHECK_GE(expected, actual - kEpsilon);
+}
+
+static inline uint16_t* AsciiToTwoByteString(const char* source) {
+  size_t array_length = strlen(source) + 1;
+  uint16_t* converted = i::NewArray<uint16_t>(array_length);
+  for (size_t i = 0; i < array_length; i++) converted[i] = source[i];
+  return converted;
 }
 
 // A LocalContext holds a reference to a v8::Context.

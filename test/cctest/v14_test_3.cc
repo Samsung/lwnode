@@ -225,3 +225,147 @@ THREADED_TEST(Array2) {
                   ->Int32Value(context)
                   .FromJust());
 }
+
+class TestResource: public String::ExternalStringResource {
+ public:
+  explicit TestResource(uint16_t* data, int* counter = nullptr,
+                        bool owning_data = true)
+      : data_(data), length_(0), counter_(counter), owning_data_(owning_data) {
+    while (data[length_]) ++length_;
+  }
+
+  ~TestResource() override {
+    if (owning_data_) i::DeleteArray(data_);
+    if (counter_ != nullptr) ++*counter_;
+  }
+
+  const uint16_t* data() const override { return data_; }
+
+  size_t length() const override { return length_; }
+
+ private:
+  uint16_t* data_;
+  size_t length_;
+  int* counter_;
+  bool owning_data_;
+};
+
+class TestOneByteResource : public String::ExternalOneByteStringResource {
+ public:
+  explicit TestOneByteResource(const char* data, int* counter = nullptr,
+                               size_t offset = 0)
+      : orig_data_(data),
+        data_(data + offset),
+        length_(strlen(data) - offset),
+        counter_(counter) {}
+
+  ~TestOneByteResource() override {
+    i::DeleteArray(orig_data_);
+    if (counter_ != nullptr) ++*counter_;
+  }
+
+  const char* data() const override { return data_; }
+
+  size_t length() const override { return length_; }
+
+ private:
+  const char* orig_data_;
+  const char* data_;
+  size_t length_;
+  int* counter_;
+};
+
+THREADED_TEST(StringConcatInternal) {
+  TestOneByteResource* testOneByteResource;
+  TestResource* testResource;
+  {
+    LocalContext env;
+    v8::Isolate* isolate = env->GetIsolate();
+    v8::HandleScope scope(isolate);
+    const char* one_byte_string_1 = "function a_times_t";
+    const char* two_byte_string_1 = "wo_plus_b(a, b) {return ";
+    const char* one_byte_extern_1 = "a * 2 + b;} a_times_two_plus_b(4, 8) + ";
+    const char* two_byte_extern_1 = "a_times_two_plus_b(4, 8) + ";
+    const char* one_byte_string_2 = "a_times_two_plus_b(4, 8) + ";
+    const char* two_byte_string_2 = "a_times_two_plus_b(4, 8) + ";
+    const char* two_byte_extern_2 = "a_times_two_plus_b(1, 2);";
+    Local<String> left = v8_str(one_byte_string_1);
+
+    uint16_t* two_byte_source = AsciiToTwoByteString(two_byte_string_1);
+    Local<String> right =
+        String::NewFromTwoByte(env->GetIsolate(), two_byte_source)
+            .ToLocalChecked();
+    i::DeleteArray(two_byte_source);
+
+    Local<String> source = String::Concat(isolate, left, right);
+    {
+      uint16_t* str = AsciiToTwoByteString("function a_times_t"
+                                           "wo_plus_b(a, b) {return ");
+      Local<String> concat =
+          String::NewFromTwoByte(env->GetIsolate(), str).ToLocalChecked();
+      CHECK(source->StringEquals(concat));
+      i::DeleteArray(str);
+    }
+
+    testOneByteResource = new TestOneByteResource(i::StrDup(one_byte_extern_1));
+    right = String::NewExternalOneByte(
+                env->GetIsolate(),
+                testOneByteResource)
+                .ToLocalChecked();
+    source = String::Concat(isolate, source, right);
+    {
+      uint16_t* str =
+          AsciiToTwoByteString("function a_times_t"
+                               "wo_plus_b(a, b) {return "
+                               "a * 2 + b;} a_times_two_plus_b(4, 8) + ");
+      Local<String> concat =
+          String::NewFromTwoByte(env->GetIsolate(), str).ToLocalChecked();
+      CHECK(source->StringEquals(concat));
+      i::DeleteArray(str);
+    }
+    delete testOneByteResource;
+
+    testResource = new TestResource(AsciiToTwoByteString(two_byte_extern_1));
+    right = String::NewExternalTwoByte(
+                env->GetIsolate(),
+                testResource)
+                .ToLocalChecked();
+    source = String::Concat(isolate, source, right);
+    right = v8_str(one_byte_string_2);
+    source = String::Concat(isolate, source, right);
+    delete testResource;
+
+    two_byte_source = AsciiToTwoByteString(two_byte_string_2);
+    right = String::NewFromTwoByte(env->GetIsolate(), two_byte_source)
+                .ToLocalChecked();
+    i::DeleteArray(two_byte_source);
+
+    testResource = new TestResource(AsciiToTwoByteString(two_byte_extern_2));
+    source = String::Concat(isolate, source, right);
+    right = String::NewExternalTwoByte(
+                env->GetIsolate(),
+                testResource)
+                .ToLocalChecked();
+    source = String::Concat(isolate, source, right);
+    {
+      uint16_t* str =
+          AsciiToTwoByteString("function a_times_t"
+                               "wo_plus_b(a, b) {return "
+                               "a * 2 + b;} a_times_two_plus_b(4, 8) + "
+                               "a_times_two_plus_b(4, 8) + "
+                               "a_times_two_plus_b(4, 8) + "
+                               "a_times_two_plus_b(4, 8) + "
+                               "a_times_two_plus_b(1, 2);");
+      Local<String> concat =
+          String::NewFromTwoByte(env->GetIsolate(), str).ToLocalChecked();
+      CHECK(source->StringEquals(concat));
+      i::DeleteArray(str);
+    }
+    delete testResource;
+    // FIXME: Check v8_compile()
+    // Local<Script> script = v8_compile(source);
+    // Local<Value> value = script->Run(env.local()).ToLocalChecked();
+    // CHECK(value->IsNumber());
+    // CHECK_EQ(68, value->Int32Value(env.local()).FromJust());
+  }
+}
