@@ -394,6 +394,7 @@ private:
   friend class EscapableHandleScope;
   friend class PrimitiveArray;
   friend class ValueDeserializer;
+  friend class BooleanObject;
   V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
 // end @lwnode
 };

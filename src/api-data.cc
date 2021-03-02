@@ -123,7 +123,7 @@ bool Value::IsProxy() const {
 }
 
 #define VALUE_IS_SPECIFIC_TYPE(Type, Check)                                    \
-  bool Value::Is##Type() const { LWNODE_RETURN_FALSE; }
+  bool Value::Is##Type() const { return CVAL(this)->value()->is##Type(); }
 
 VALUE_IS_SPECIFIC_TYPE(ArgumentsObject, JSArgumentsObject)
 VALUE_IS_SPECIFIC_TYPE(BigIntObject, BigIntWrapper)
@@ -131,17 +131,21 @@ VALUE_IS_SPECIFIC_TYPE(BooleanObject, BooleanWrapper)
 VALUE_IS_SPECIFIC_TYPE(NumberObject, NumberWrapper)
 VALUE_IS_SPECIFIC_TYPE(StringObject, StringWrapper)
 VALUE_IS_SPECIFIC_TYPE(SymbolObject, SymbolWrapper)
+#undef VALUE_IS_SPECIFIC_TYPE
+
+#define VALUE_IS_SPECIFIC_TYPE(Type, Check)                                    \
+  bool Value::Is##Type() const { LWNODE_RETURN_FALSE; }
+
 VALUE_IS_SPECIFIC_TYPE(Date, JSDate)
 VALUE_IS_SPECIFIC_TYPE(Map, JSMap)
 VALUE_IS_SPECIFIC_TYPE(Set, JSSet)
 VALUE_IS_SPECIFIC_TYPE(WasmModuleObject, WasmModuleObject)
 VALUE_IS_SPECIFIC_TYPE(WeakMap, JSWeakMap)
 VALUE_IS_SPECIFIC_TYPE(WeakSet, JSWeakSet)
-
 #undef VALUE_IS_SPECIFIC_TYPE
 
 bool Value::IsBoolean() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isBoolean();
 }
 
 bool Value::IsExternal() const {
@@ -228,11 +232,25 @@ MaybeLocal<BigInt> Value::ToBigInt(Local<Context> context) const {
 }
 
 bool Value::BooleanValue(Isolate* v8_isolate) const {
-  LWNODE_RETURN_FALSE;
+  Local<Boolean> val = ToBoolean(v8_isolate);
+  return val->Value();
 }
 
 Local<Boolean> Value::ToBoolean(Isolate* v8_isolate) const {
-  LWNODE_RETURN_LOCAL(Boolean);
+  API_ENTER(v8_isolate, Local<Boolean>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  auto esValue = CVAL(this)->value();
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
+        return ValueRef::create(esValue->toBoolean(esState));
+      },
+      esValue);
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Boolean>());
+
+  API_RETURN_LOCAL(Boolean, lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
@@ -1387,7 +1405,8 @@ double Number::Value() const {
 }
 
 bool Boolean::Value() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_CHECK(CVAL(this)->value()->isBoolean());
+  return CVAL(this)->value()->asBoolean();
 }
 
 int64_t Integer::Value() const {

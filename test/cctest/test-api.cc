@@ -1826,81 +1826,81 @@ THREADED_TEST(TinyInteger) {
 //   CHECK(unboxed_bigint->IntegerValue(context).IsNothing());
 // }
 
-// THREADED_TEST(BooleanObject) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> boxed_boolean = CompileRun("new Boolean(true)");
-//   CHECK(boxed_boolean->IsBooleanObject());
-//   v8::Local<Value> unboxed_boolean = CompileRun("true");
-//   CHECK(!unboxed_boolean->IsBooleanObject());
-//   v8::Local<Value> boxed_not_boolean = CompileRun("new Number(42)");
-//   CHECK(!boxed_not_boolean->IsBooleanObject());
-//   v8::Local<v8::BooleanObject> as_boxed = boxed_boolean.As<v8::BooleanObject>();
-//   CHECK(!as_boxed.IsEmpty());
-//   bool the_boolean = as_boxed->ValueOf();
-//   CHECK(the_boolean);
-//   v8::Local<v8::Value> boxed_true =
-//       v8::BooleanObject::New(env->GetIsolate(), true);
-//   v8::Local<v8::Value> boxed_false =
-//       v8::BooleanObject::New(env->GetIsolate(), false);
-//   CHECK(boxed_true->IsBooleanObject());
-//   CHECK(boxed_false->IsBooleanObject());
-//   as_boxed = boxed_true.As<v8::BooleanObject>();
-//   CHECK(as_boxed->ValueOf());
-//   as_boxed = boxed_false.As<v8::BooleanObject>();
-//   CHECK(!as_boxed->ValueOf());
-// }
+THREADED_TEST(BooleanObject) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> boxed_boolean = CompileRun("new Boolean(true)");
+  CHECK(boxed_boolean->IsBooleanObject());
+  v8::Local<Value> unboxed_boolean = CompileRun("true");
+  CHECK(!unboxed_boolean->IsBooleanObject());
+  v8::Local<Value> boxed_not_boolean = CompileRun("new Number(42)");
+  CHECK(!boxed_not_boolean->IsBooleanObject());
+  v8::Local<v8::BooleanObject> as_boxed = boxed_boolean.As<v8::BooleanObject>();
+  CHECK(!as_boxed.IsEmpty());
+  bool the_boolean = as_boxed->ValueOf();
+  CHECK(the_boolean);
+  v8::Local<v8::Value> boxed_true =
+      v8::BooleanObject::New(env->GetIsolate(), true);
+  v8::Local<v8::Value> boxed_false =
+      v8::BooleanObject::New(env->GetIsolate(), false);
+  CHECK(boxed_true->IsBooleanObject());
+  CHECK(boxed_false->IsBooleanObject());
+  as_boxed = boxed_true.As<v8::BooleanObject>();
+  CHECK(as_boxed->ValueOf());
+  as_boxed = boxed_false.As<v8::BooleanObject>();
+  CHECK(!as_boxed->ValueOf());
+}
 
 
-// THREADED_TEST(PrimitiveAndWrappedBooleans) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(PrimitiveAndWrappedBooleans) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   Local<Value> primitive_false = Boolean::New(isolate, false);
-//   CHECK(primitive_false->IsBoolean());
-//   CHECK(!primitive_false->IsBooleanObject());
-//   CHECK(!primitive_false->BooleanValue(isolate));
-//   CHECK(!primitive_false->IsTrue());
-//   CHECK(primitive_false->IsFalse());
+  Local<Value> primitive_false = Boolean::New(isolate, false);
+  CHECK(primitive_false->IsBoolean());
+  CHECK(!primitive_false->IsBooleanObject());
+  CHECK(!primitive_false->BooleanValue(isolate));
+  CHECK(!primitive_false->IsTrue());
+  CHECK(primitive_false->IsFalse());
 
-//   Local<Value> false_value = BooleanObject::New(isolate, false);
-//   CHECK(!false_value->IsBoolean());
-//   CHECK(false_value->IsBooleanObject());
-//   CHECK(false_value->BooleanValue(isolate));
-//   CHECK(!false_value->IsTrue());
-//   CHECK(!false_value->IsFalse());
+  Local<Value> false_value = BooleanObject::New(isolate, false);
+  CHECK(!false_value->IsBoolean());
+  CHECK(false_value->IsBooleanObject());
+  CHECK(false_value->BooleanValue(isolate));
+  CHECK(!false_value->IsTrue());
+  CHECK(!false_value->IsFalse());
 
-//   Local<BooleanObject> false_boolean_object = false_value.As<BooleanObject>();
-//   CHECK(!false_boolean_object->IsBoolean());
-//   CHECK(false_boolean_object->IsBooleanObject());
-//   CHECK(false_boolean_object->BooleanValue(isolate));
-//   CHECK(!false_boolean_object->ValueOf());
-//   CHECK(!false_boolean_object->IsTrue());
-//   CHECK(!false_boolean_object->IsFalse());
+  Local<BooleanObject> false_boolean_object = false_value.As<BooleanObject>();
+  CHECK(!false_boolean_object->IsBoolean());
+  CHECK(false_boolean_object->IsBooleanObject());
+  CHECK(false_boolean_object->BooleanValue(isolate));
+  CHECK(!false_boolean_object->ValueOf());
+  CHECK(!false_boolean_object->IsTrue());
+  CHECK(!false_boolean_object->IsFalse());
 
-//   Local<Value> primitive_true = Boolean::New(isolate, true);
-//   CHECK(primitive_true->IsBoolean());
-//   CHECK(!primitive_true->IsBooleanObject());
-//   CHECK(primitive_true->BooleanValue(isolate));
-//   CHECK(primitive_true->IsTrue());
-//   CHECK(!primitive_true->IsFalse());
+  Local<Value> primitive_true = Boolean::New(isolate, true);
+  CHECK(primitive_true->IsBoolean());
+  CHECK(!primitive_true->IsBooleanObject());
+  CHECK(primitive_true->BooleanValue(isolate));
+  CHECK(primitive_true->IsTrue());
+  CHECK(!primitive_true->IsFalse());
 
-//   Local<Value> true_value = BooleanObject::New(isolate, true);
-//   CHECK(!true_value->IsBoolean());
-//   CHECK(true_value->IsBooleanObject());
-//   CHECK(true_value->BooleanValue(isolate));
-//   CHECK(!true_value->IsTrue());
-//   CHECK(!true_value->IsFalse());
+  Local<Value> true_value = BooleanObject::New(isolate, true);
+  CHECK(!true_value->IsBoolean());
+  CHECK(true_value->IsBooleanObject());
+  CHECK(true_value->BooleanValue(isolate));
+  CHECK(!true_value->IsTrue());
+  CHECK(!true_value->IsFalse());
 
-//   Local<BooleanObject> true_boolean_object = true_value.As<BooleanObject>();
-//   CHECK(!true_boolean_object->IsBoolean());
-//   CHECK(true_boolean_object->IsBooleanObject());
-//   CHECK(true_boolean_object->BooleanValue(isolate));
-//   CHECK(true_boolean_object->ValueOf());
-//   CHECK(!true_boolean_object->IsTrue());
-//   CHECK(!true_boolean_object->IsFalse());
-// }
+  Local<BooleanObject> true_boolean_object = true_value.As<BooleanObject>();
+  CHECK(!true_boolean_object->IsBoolean());
+  CHECK(true_boolean_object->IsBooleanObject());
+  CHECK(true_boolean_object->BooleanValue(isolate));
+  CHECK(true_boolean_object->ValueOf());
+  CHECK(!true_boolean_object->IsTrue());
+  CHECK(!true_boolean_object->IsFalse());
+}
 
 
 THREADED_TEST(Number) {
@@ -1943,31 +1943,31 @@ THREADED_TEST(ToNumber) {
 // }
 
 
-// THREADED_TEST(Boolean) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::Boolean> t = v8::True(isolate);
-//   CHECK(t->Value());
-//   v8::Local<v8::Boolean> f = v8::False(isolate);
-//   CHECK(!f->Value());
-//   v8::Local<v8::Primitive> u = v8::Undefined(isolate);
-//   CHECK(!u->BooleanValue(isolate));
-//   v8::Local<v8::Primitive> n = v8::Null(isolate);
-//   CHECK(!n->BooleanValue(isolate));
-//   v8::Local<String> str1 = v8_str("");
-//   CHECK(!str1->BooleanValue(isolate));
-//   v8::Local<String> str2 = v8_str("x");
-//   CHECK(str2->BooleanValue(isolate));
-//   CHECK(!v8::Number::New(isolate, 0)->BooleanValue(isolate));
-//   CHECK(v8::Number::New(isolate, -1)->BooleanValue(isolate));
-//   CHECK(v8::Number::New(isolate, 1)->BooleanValue(isolate));
-//   CHECK(v8::Number::New(isolate, 42)->BooleanValue(isolate));
-//   CHECK(!v8_compile("NaN")
-//              ->Run(env.local())
-//              .ToLocalChecked()
-//              ->BooleanValue(isolate));
-// }
+THREADED_TEST(Boolean) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Boolean> t = v8::True(isolate);
+  CHECK(t->Value());
+  v8::Local<v8::Boolean> f = v8::False(isolate);
+  CHECK(!f->Value());
+  v8::Local<v8::Primitive> u = v8::Undefined(isolate);
+  CHECK(!u->BooleanValue(isolate));
+  v8::Local<v8::Primitive> n = v8::Null(isolate);
+  CHECK(!n->BooleanValue(isolate));
+  v8::Local<String> str1 = v8_str("");
+  CHECK(!str1->BooleanValue(isolate));
+  v8::Local<String> str2 = v8_str("x");
+  CHECK(str2->BooleanValue(isolate));
+  CHECK(!v8::Number::New(isolate, 0)->BooleanValue(isolate));
+  CHECK(v8::Number::New(isolate, -1)->BooleanValue(isolate));
+  CHECK(v8::Number::New(isolate, 1)->BooleanValue(isolate));
+  CHECK(v8::Number::New(isolate, 42)->BooleanValue(isolate));
+  CHECK(!v8_compile("NaN")
+             ->Run(env.local())
+             .ToLocalChecked()
+             ->BooleanValue(isolate));
+}
 
 
 // static void DummyCallHandler(const v8::FunctionCallbackInfo<v8::Value>& args) {

@@ -516,11 +516,26 @@ Local<v8::BigInt> v8::BigIntObject::ValueOf() const {
 }
 
 Local<v8::Value> v8::BooleanObject::New(Isolate* isolate, bool value) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_NO_EXCEPTION(isolate);
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, bool value) -> ValueRef* {
+        auto b = BooleanObjectRef::create(esState);
+        b->setPrimitiveValue(esState, ValueRef::create(value));
+        return b;
+      },
+      value);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Value>());
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
 
 bool v8::BooleanObject::ValueOf() const {
-  LWNODE_RETURN_FALSE;
+  auto esValue = CVAL(this)->value();
+  LWNODE_CHECK(esValue->isBooleanObject());
+  return esValue->asBooleanObject()->primitiveValue();
 }
 
 Local<v8::Value> v8::StringObject::New(Isolate* v8_isolate,
