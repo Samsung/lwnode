@@ -59,6 +59,10 @@ class ObjectRefHelper {
                                ValueRef* key,
                                ValueRef* value);
 
+  static EvalResult deleteProperty(ContextRef* context,
+                                   ObjectRef* object,
+                                   ValueRef* key);
+
   static EvalResult defineDataProperty(
       ContextRef* context,
       ObjectRef* object,
@@ -70,6 +74,10 @@ class ObjectRefHelper {
       NativeFunctionPointer functionPropertyValue,
       ValueRef* getter,
       ValueRef* setter);
+
+  static void setExtraData(ObjectRef* object,
+                           void* data,
+                           Memory::GCAllocatedMemoryFinalizer callback);
 
  private:
   static SymbolRef* s_symbolKeyForHiddenValues;

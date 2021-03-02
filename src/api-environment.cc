@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include "api.h"
+#include "api/backing-store.h"
 #include "base.h"
 
 using namespace Escargot;
@@ -152,7 +154,8 @@ Local<Context> v8::Context::New(
 
   auto lwContext = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
 
-  return Local<Context>::New(external_isolate, ValueWrap::createContext(lwContext));
+  return Local<Context>::New(external_isolate,
+                             ValueWrap::createContext(lwContext));
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -518,10 +521,12 @@ Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
     len = 0;
   }
 
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* esState, uint64_t len) -> ValueRef* {
-                                return ArrayObjectRef::create(esState, len);
-                              }, len);
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, uint64_t len) -> ValueRef* {
+        return ArrayObjectRef::create(esState, len);
+      },
+      len);
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Array>());
 
   auto arrayObject = r.result->asObject()->asArrayObject();
@@ -772,7 +777,36 @@ size_t v8::ArrayBuffer::ByteLength() const {
 }
 
 Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
-  LWNODE_RETURN_LOCAL(ArrayBuffer);
+  // @note regarding Backing Store and Array Buffer:
+  // https://docs.google.com/document/d/1sTc_jRL87Fu175Holm5SV0kajkseGl2r8ifGY76G35k/edit#
+
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  LWNODE_CHECK(byte_length > 0);
+
+  // 1. create a backing store for an array buffer which will be newly created.
+  std::unique_ptr<BackingStoreWrap> lw_backingStore =
+      BackingStoreWrap::create(lwIsolate,
+                               byte_length,
+                               SharedFlag::kNotShared,
+                               InitializedFlag::kZeroInitialized);
+
+  // 2. create an array buffer
+  EvalResult r = Evaluator::execute(
+      lwIsolate->GetCurrentContext()->get(),
+      [](ExecutionStateRef* state,
+         BackingStoreWrap* lw_backingStore) -> ValueRef* {
+        // 2.1 create an array buffer
+        auto arrayBuffer = ArrayBufferObjectRef::create(state);
+
+        // 2.2 attach the given backing store
+        lw_backingStore->attachTo(state, arrayBuffer);
+
+        return arrayBuffer;
+      },
+      lw_backingStore.release());
+
+  API_RETURN_LOCAL(ArrayBuffer, lwIsolate->toV8(), r.result);
 }
 
 Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate,
@@ -789,7 +823,14 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(
 
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
-  LWNODE_RETURN_NULLPTR;
+  API_ENTER_NO_EXCEPTION(isolate);
+  std::unique_ptr<i::BackingStoreBase> backing_store =
+      BackingStoreWrap::create(lwIsolate,
+                               byte_length,
+                               SharedFlag::kNotShared,
+                               InitializedFlag::kZeroInitialized);
+  return std::unique_ptr<v8::BackingStore>(
+      static_cast<v8::BackingStore*>(backing_store.release()));
 }
 
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
@@ -1083,8 +1124,7 @@ void Isolate::ClearKeptObjects() {
 
 v8::Local<v8::Context> Isolate::GetCurrentContext() {
   auto lwContext = IsolateWrap::fromV8(this)->GetCurrentContext();
-  return Local<Context>::New(this,
-                             ValueWrap::createContext(lwContext));
+  return Local<Context>::New(this, ValueWrap::createContext(lwContext));
 }
 
 v8::Local<v8::Context> Isolate::GetEnteredContext() {

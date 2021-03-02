@@ -280,7 +280,7 @@ void External::CheckCast(v8::Value* that) {
 }
 
 void v8::Object::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(VAL(that)->value()->asObject());
 }
 
 void v8::Function::CheckCast(Value* that) {
@@ -385,7 +385,9 @@ std::unique_ptr<v8::BackingStore> v8::BackingStore::Reallocate(
 // static
 void v8::BackingStore::EmptyDeleter(void* data,
                                     size_t length,
-                                    void* deleter_data) {}
+                                    void* deleter_data) {
+  LWNODE_RETURN_VOID;
+}
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
   LWNODE_RETURN_NULLPTR;
@@ -847,11 +849,20 @@ Local<String> v8::Object::GetConstructorName() {
 }
 
 Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
-                                          IntegrityLevel level){
-    LWNODE_RETURN_MAYBE(bool)}
+                                          IntegrityLevel level) {
+  LWNODE_RETURN_MAYBE(bool);
+}
 
-Maybe<bool> v8::Object::Delete(Local<Context> context,
-                               Local<Value> key){LWNODE_RETURN_MAYBE(bool)}
+Maybe<bool> v8::Object::Delete(Local<Context> context, Local<Value> key) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::deleteProperty(VAL(*context)->context()->get(),
+                                           VAL(this)->value()->asObject(),
+                                           VAL(*key)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
+}
 
 Maybe<bool> v8::Object::DeletePrivate(Local<Context> context,
                                       Local<Private> key) {
