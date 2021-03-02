@@ -86,6 +86,20 @@ EvalResult ObjectRefHelper::hasProperty(ContextRef* context,
       key);
 }
 
+EvalResult ObjectRefHelper::deleteProperty(ContextRef* context,
+                                           ObjectRef* object,
+                                           ValueRef* key) {
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* object,
+         ValueRef* key) -> ValueRef* {
+        return ValueRef::create(object->deleteProperty(state, key));
+      },
+      object,
+      key);
+}
+
 EvalResult ObjectRefHelper::defineDataProperty(
     ContextRef* context,
     ObjectRef* object,
@@ -262,6 +276,16 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
       object,
       key,
       value);
+}
+
+void ObjectRefHelper::setExtraData(
+    ObjectRef* object,
+    void* data,
+    Memory::GCAllocatedMemoryFinalizer callback) {
+  object->setExtraData(data);
+  if (callback) {
+    Memory::gcRegisterFinalizer(object, callback);
+  }
 }
 
 }  // namespace EscargotShim

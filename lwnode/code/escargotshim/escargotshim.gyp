@@ -38,6 +38,7 @@
         'src/libplatform/tracing/trace-object.cc',
         'src/libplatform/tracing/trace-writer.cc',
         'src/api/utils/gc.cc',
+        'src/api/backing-store.cc',
         'src/api/es-helper.cc',
         'src/api/engine.cc',
         'src/api/flags.cc',
@@ -49,7 +50,7 @@
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [
-        '-std=gnu++11',
+        '-std=gnu++14',
         '-Wno-unused-parameter',
         '-fexceptions',
       ],
