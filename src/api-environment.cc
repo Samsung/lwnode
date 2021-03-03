@@ -16,7 +16,6 @@
 
 #include <memory>
 #include "api.h"
-#include "api/backing-store.h"
 #include "base.h"
 
 using namespace Escargot;
@@ -860,10 +859,10 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
 
   API_ENTER_NO_EXCEPTION(isolate);
 
-  LWNODE_CHECK(byte_length > 0);
+  LWNODE_CHECK_MSG(byte_length > 0, "unimplemented");
 
   // 1. create a backing store for an array buffer which will be newly created.
-  std::unique_ptr<BackingStoreWrap> lw_backingStore =
+  std::unique_ptr<BackingStoreWrap> lwBackingStore =
       BackingStoreWrap::create(lwIsolate,
                                byte_length,
                                SharedFlag::kNotShared,
@@ -873,16 +872,16 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
   EvalResult r = Evaluator::execute(
       lwIsolate->GetCurrentContext()->get(),
       [](ExecutionStateRef* state,
-         BackingStoreWrap* lw_backingStore) -> ValueRef* {
+         BackingStoreWrap* lwBackingStore) -> ValueRef* {
         // 2.1 create an array buffer
         auto arrayBuffer = ArrayBufferObjectRef::create(state);
 
         // 2.2 attach the given backing store
-        lw_backingStore->attachTo(state, arrayBuffer);
+        lwBackingStore->attachTo(state, arrayBuffer);
 
         return arrayBuffer;
       },
-      lw_backingStore.release());
+      lwBackingStore.release());
 
   API_RETURN_LOCAL(ArrayBuffer, lwIsolate->toV8(), r.result);
 }

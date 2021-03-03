@@ -380,15 +380,18 @@ void v8::WasmModuleObject::CheckCast(Value* that) {
 v8::BackingStore::~BackingStore() {}
 
 void* v8::BackingStore::Data() const {
-  LWNODE_RETURN_NULLPTR;
+  auto self = BackingStoreWrap::fromV8(this);
+  return self->Data();
 }
 
 size_t v8::BackingStore::ByteLength() const {
-  LWNODE_RETURN_0;
+  auto self = BackingStoreWrap::fromV8(this);
+  return self->ByteLength();
 }
 
 bool v8::BackingStore::IsShared() const {
-  LWNODE_RETURN_FALSE;
+  auto self = BackingStoreWrap::fromV8(this);
+  return self->IsShared();
 }
 
 // static
@@ -408,7 +411,13 @@ void v8::BackingStore::EmptyDeleter(void* data,
 }
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
-  LWNODE_RETURN_NULLPTR;
+  auto holder = reinterpret_cast<BackingStoreWrapHolder*>(
+      VAL(this)->value()->asObject()->extraData());
+
+  LWNODE_DCHECK_MSG(holder != nullptr, "unimplemented");
+
+  std::shared_ptr<i::BackingStoreBase> bs_base = holder->clone();
+  return std::static_pointer_cast<v8::BackingStore>(bs_base);
 }
 
 std::shared_ptr<v8::BackingStore> v8::SharedArrayBuffer::GetBackingStore() {
