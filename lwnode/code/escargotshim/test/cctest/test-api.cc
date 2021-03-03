@@ -6134,47 +6134,47 @@ THREADED_TEST(IntegerType) {
 // }
 
 
-// THREADED_TEST(Equality) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(context->GetIsolate());
-//   // Check that equality works at all before relying on CHECK_EQ
-//   CHECK(v8_str("a")->Equals(context.local(), v8_str("a")).FromJust());
-//   CHECK(!v8_str("a")->Equals(context.local(), v8_str("b")).FromJust());
+THREADED_TEST(Equality) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(context->GetIsolate());
+  // Check that equality works at all before relying on CHECK_EQ
+  CHECK(v8_str("a")->Equals(context.local(), v8_str("a")).FromJust());
+  CHECK(!v8_str("a")->Equals(context.local(), v8_str("b")).FromJust());
 
-//   CHECK(v8_str("a")->Equals(context.local(), v8_str("a")).FromJust());
-//   CHECK(!v8_str("a")->Equals(context.local(), v8_str("b")).FromJust());
-//   CHECK(v8_num(1)->Equals(context.local(), v8_num(1)).FromJust());
-//   CHECK(v8_num(1.00)->Equals(context.local(), v8_num(1)).FromJust());
-//   CHECK(!v8_num(1)->Equals(context.local(), v8_num(2)).FromJust());
+  CHECK(v8_str("a")->Equals(context.local(), v8_str("a")).FromJust());
+  CHECK(!v8_str("a")->Equals(context.local(), v8_str("b")).FromJust());
+  CHECK(v8_num(1)->Equals(context.local(), v8_num(1)).FromJust());
+  CHECK(v8_num(1.00)->Equals(context.local(), v8_num(1)).FromJust());
+  CHECK(!v8_num(1)->Equals(context.local(), v8_num(2)).FromJust());
 
-//   // Assume String is not internalized.
-//   CHECK(v8_str("a")->StrictEquals(v8_str("a")));
-//   CHECK(!v8_str("a")->StrictEquals(v8_str("b")));
-//   CHECK(!v8_str("5")->StrictEquals(v8_num(5)));
-//   CHECK(v8_num(1)->StrictEquals(v8_num(1)));
-//   CHECK(!v8_num(1)->StrictEquals(v8_num(2)));
-//   CHECK(v8_num(0.0)->StrictEquals(v8_num(-0.0)));
-//   Local<Value> not_a_number = v8_num(std::numeric_limits<double>::quiet_NaN());
-//   CHECK(!not_a_number->StrictEquals(not_a_number));
-//   CHECK(v8::False(isolate)->StrictEquals(v8::False(isolate)));
-//   CHECK(!v8::False(isolate)->StrictEquals(v8::Undefined(isolate)));
+  // Assume String is not internalized.
+  CHECK(v8_str("a")->StrictEquals(v8_str("a")));
+  CHECK(!v8_str("a")->StrictEquals(v8_str("b")));
+  CHECK(!v8_str("5")->StrictEquals(v8_num(5)));
+  CHECK(v8_num(1)->StrictEquals(v8_num(1)));
+  CHECK(!v8_num(1)->StrictEquals(v8_num(2)));
+  CHECK(v8_num(0.0)->StrictEquals(v8_num(-0.0)));
+  Local<Value> not_a_number = v8_num(std::numeric_limits<double>::quiet_NaN());
+  CHECK(!not_a_number->StrictEquals(not_a_number));
+  CHECK(v8::False(isolate)->StrictEquals(v8::False(isolate)));
+  CHECK(!v8::False(isolate)->StrictEquals(v8::Undefined(isolate)));
 
-//   v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//   v8::Persistent<v8::Object> alias(isolate, obj);
-//   CHECK(v8::Local<v8::Object>::New(isolate, alias)->StrictEquals(obj));
-//   alias.Reset();
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  v8::Persistent<v8::Object> alias(isolate, obj);
+  CHECK(v8::Local<v8::Object>::New(isolate, alias)->StrictEquals(obj));
+  alias.Reset();
 
-//   CHECK(v8_str("a")->SameValue(v8_str("a")));
-//   CHECK(!v8_str("a")->SameValue(v8_str("b")));
-//   CHECK(!v8_str("5")->SameValue(v8_num(5)));
-//   CHECK(v8_num(1)->SameValue(v8_num(1)));
-//   CHECK(!v8_num(1)->SameValue(v8_num(2)));
-//   CHECK(!v8_num(0.0)->SameValue(v8_num(-0.0)));
-//   CHECK(not_a_number->SameValue(not_a_number));
-//   CHECK(v8::False(isolate)->SameValue(v8::False(isolate)));
-//   CHECK(!v8::False(isolate)->SameValue(v8::Undefined(isolate)));
-// }
+  CHECK(v8_str("a")->SameValue(v8_str("a")));
+  CHECK(!v8_str("a")->SameValue(v8_str("b")));
+  CHECK(!v8_str("5")->SameValue(v8_num(5)));
+  CHECK(v8_num(1)->SameValue(v8_num(1)));
+  CHECK(!v8_num(1)->SameValue(v8_num(2)));
+  CHECK(!v8_num(0.0)->SameValue(v8_num(-0.0)));
+  CHECK(not_a_number->SameValue(not_a_number));
+  CHECK(v8::False(isolate)->SameValue(v8::False(isolate)));
+  CHECK(!v8::False(isolate)->SameValue(v8::Undefined(isolate)));
+}
 
 // THREADED_TEST(TypeOf) {
 //   LocalContext context;

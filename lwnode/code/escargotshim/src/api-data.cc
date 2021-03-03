@@ -587,7 +587,7 @@ Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
       [](ExecutionStateRef* esState,
          ValueRef* self,
          ValueRef* that) -> ValueRef* {
-        bool r = self->equalsTo(esState, that);
+        bool r = self->abstractEqualsTo(esState, that);
         return ValueRef::create(r);
       },
       CVAL(this)->value(),
@@ -607,7 +607,7 @@ bool Value::StrictEquals(Local<Value> that) const {
       [](ExecutionStateRef* esState,
          ValueRef* self,
          ValueRef* that) -> ValueRef* {
-        bool r = self->abstractEqualsTo(esState, that);
+        bool r = self->equalsTo(esState, that);
         return ValueRef::create(r);
       },
       CVAL(this)->value(),
@@ -620,7 +620,25 @@ bool Value::StrictEquals(Local<Value> that) const {
 bool Value::SameValue(Local<Value> that) const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
-  return Equals(lwIsolate->toV8()->GetCurrentContext(), that).FromMaybe(false);
+  auto esThis = CVAL(this)->value();
+  auto esThat = CVAL(*that)->value();
+
+  if (esThis->isNumber()) {
+    if (!esThat->isNumber()) {
+      return false;
+    }
+    double a = esThis->asNumber();
+    double b = esThat->asNumber();
+    if (std::isnan(a) && std::isnan(b)) {
+      return true;
+    }
+    if (std::isnan(a) || std::isnan(b)) {
+      return false;
+    }
+    return a == b && std::signbit(a) == std::signbit(b);
+  }
+
+  return StrictEquals(that);
 }
 
 Local<String> Value::TypeOf(v8::Isolate* external_isolate) {
