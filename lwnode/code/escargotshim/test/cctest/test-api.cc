@@ -1738,30 +1738,30 @@ THREADED_TEST(TinyInteger) {
 // }
 
 
-// THREADED_TEST(StringObject) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> boxed_string = CompileRun("new String(\"test\")");
-//   CHECK(boxed_string->IsStringObject());
-//   v8::Local<Value> unboxed_string = CompileRun("\"test\"");
-//   CHECK(!unboxed_string->IsStringObject());
-//   v8::Local<Value> boxed_not_string = CompileRun("new Number(42)");
-//   CHECK(!boxed_not_string->IsStringObject());
-//   v8::Local<Value> not_object = CompileRun("0");
-//   CHECK(!not_object->IsStringObject());
-//   v8::Local<v8::StringObject> as_boxed = boxed_string.As<v8::StringObject>();
-//   CHECK(!as_boxed.IsEmpty());
-//   Local<v8::String> the_string = as_boxed->ValueOf();
-//   CHECK(!the_string.IsEmpty());
-//   ExpectObject("\"test\"", the_string);
-//   v8::Local<v8::Value> new_boxed_string =
-//       v8::StringObject::New(CcTest::isolate(), the_string);
-//   CHECK(new_boxed_string->IsStringObject());
-//   as_boxed = new_boxed_string.As<v8::StringObject>();
-//   the_string = as_boxed->ValueOf();
-//   CHECK(!the_string.IsEmpty());
-//   ExpectObject("\"test\"", the_string);
-// }
+THREADED_TEST(StringObject) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> boxed_string = CompileRun("new String(\"test\")");
+  CHECK(boxed_string->IsStringObject());
+  v8::Local<Value> unboxed_string = CompileRun("\"test\"");
+  CHECK(!unboxed_string->IsStringObject());
+  v8::Local<Value> boxed_not_string = CompileRun("new Number(42)");
+  CHECK(!boxed_not_string->IsStringObject());
+  v8::Local<Value> not_object = CompileRun("0");
+  CHECK(!not_object->IsStringObject());
+  v8::Local<v8::StringObject> as_boxed = boxed_string.As<v8::StringObject>();
+  CHECK(!as_boxed.IsEmpty());
+  Local<v8::String> the_string = as_boxed->ValueOf();
+  CHECK(!the_string.IsEmpty());
+  ExpectObject("\"test\"", the_string);
+  v8::Local<v8::Value> new_boxed_string =
+      v8::StringObject::New(CcTest::isolate(), the_string);
+  CHECK(new_boxed_string->IsStringObject());
+  as_boxed = new_boxed_string.As<v8::StringObject>();
+  the_string = as_boxed->ValueOf();
+  CHECK(!the_string.IsEmpty());
+  ExpectObject("\"test\"", the_string);
+}
 
 
 // TEST(StringObjectDelete) {
@@ -1775,26 +1775,26 @@ THREADED_TEST(TinyInteger) {
 // }
 
 
-// THREADED_TEST(NumberObject) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> boxed_number = CompileRun("new Number(42)");
-//   CHECK(boxed_number->IsNumberObject());
-//   v8::Local<Value> unboxed_number = CompileRun("42");
-//   CHECK(!unboxed_number->IsNumberObject());
-//   v8::Local<Value> boxed_not_number = CompileRun("new Boolean(false)");
-//   CHECK(!boxed_not_number->IsNumberObject());
-//   v8::Local<v8::NumberObject> as_boxed = boxed_number.As<v8::NumberObject>();
-//   CHECK(!as_boxed.IsEmpty());
-//   double the_number = as_boxed->ValueOf();
-//   CHECK_EQ(42.0, the_number);
-//   v8::Local<v8::Value> new_boxed_number =
-//       v8::NumberObject::New(env->GetIsolate(), 43);
-//   CHECK(new_boxed_number->IsNumberObject());
-//   as_boxed = new_boxed_number.As<v8::NumberObject>();
-//   the_number = as_boxed->ValueOf();
-//   CHECK_EQ(43.0, the_number);
-// }
+THREADED_TEST(NumberObject) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> boxed_number = CompileRun("new Number(42)");
+  CHECK(boxed_number->IsNumberObject());
+  v8::Local<Value> unboxed_number = CompileRun("42");
+  CHECK(!unboxed_number->IsNumberObject());
+  v8::Local<Value> boxed_not_number = CompileRun("new Boolean(false)");
+  CHECK(!boxed_not_number->IsNumberObject());
+  v8::Local<v8::NumberObject> as_boxed = boxed_number.As<v8::NumberObject>();
+  CHECK(!as_boxed.IsEmpty());
+  double the_number = as_boxed->ValueOf();
+  CHECK_EQ(42.0, the_number);
+  v8::Local<v8::Value> new_boxed_number =
+      v8::NumberObject::New(env->GetIsolate(), 43);
+  CHECK(new_boxed_number->IsNumberObject());
+  as_boxed = new_boxed_number.As<v8::NumberObject>();
+  the_number = as_boxed->ValueOf();
+  CHECK_EQ(43.0, the_number);
+}
 
 // THREADED_TEST(BigIntObject) {
 //   LocalContext env;

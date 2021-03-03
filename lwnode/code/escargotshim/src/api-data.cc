@@ -255,16 +255,19 @@ Local<Boolean> Value::ToBoolean(Isolate* v8_isolate) const {
 
 MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Number>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
 
   auto esValue = CVAL(this)->value();
-  if (esValue->isNumber()) {
-    return Local<Number>::New(lwIsolate->toV8(),
-                              ValueWrap::createValue(esValue));
-  }
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
+        return ValueRef::create(esValue->toNumber(esState));
+      },
+      esValue);
 
-  LWNODE_UNIMPLEMENT;
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Number>());
 
-  LWNODE_RETURN_LOCAL(Number);
+  API_RETURN_LOCAL(Number, lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Integer> Value::ToInteger(Local<Context> context) const {
@@ -615,7 +618,9 @@ bool Value::StrictEquals(Local<Value> that) const {
 }
 
 bool Value::SameValue(Local<Value> that) const {
-  LWNODE_RETURN_FALSE;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+  return Equals(lwIsolate->toV8()->GetCurrentContext(), that).FromMaybe(false);
 }
 
 Local<String> Value::TypeOf(v8::Isolate* external_isolate) {

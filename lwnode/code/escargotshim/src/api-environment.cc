@@ -499,11 +499,26 @@ Local<v8::Object> v8::Object::New(Isolate* isolate,
 }
 
 Local<v8::Value> v8::NumberObject::New(Isolate* isolate, double value) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_NO_EXCEPTION(isolate);
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, double value) -> ValueRef* {
+        auto obj = NumberObjectRef::create(esState);
+        obj->setPrimitiveValue(esState, ValueRef::create(value));
+        return obj;
+      },
+      value);
+  LWNODE_CHECK(r.isSuccessful());
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
 
 double v8::NumberObject::ValueOf() const {
-  LWNODE_RETURN_0;
+  auto esValue = CVAL(this)->value();
+  LWNODE_CHECK(esValue->isNumberObject());
+  return esValue->asNumberObject()->primitiveValue();
 }
 
 Local<v8::Value> v8::BigIntObject::New(Isolate* isolate, int64_t value) {
@@ -526,7 +541,7 @@ Local<v8::Value> v8::BooleanObject::New(Isolate* isolate, bool value) {
         return b;
       },
       value);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Value>());
+  LWNODE_CHECK(r.isSuccessful());
 
   API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
@@ -539,11 +554,29 @@ bool v8::BooleanObject::ValueOf() const {
 
 Local<v8::Value> v8::StringObject::New(Isolate* v8_isolate,
                                        Local<String> value) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_NO_EXCEPTION(v8_isolate);
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esValue = CVAL(*value)->value()->asString();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, StringRef* esValue) -> ValueRef* {
+        auto obj = StringObjectRef::create(esState);
+        obj->setPrimitiveValue(esState, esValue);
+        return obj;
+      },
+      esValue);
+  LWNODE_CHECK(r.isSuccessful());
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
 
 Local<v8::String> v8::StringObject::ValueOf() const {
-  LWNODE_RETURN_LOCAL(String);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esValue = CVAL(this)->value();
+  LWNODE_CHECK(esValue->isStringObject());
+  API_RETURN_LOCAL(
+      String, lwIsolate->toV8(), esValue->asStringObject()->primitiveValue());
 }
 
 Local<v8::Value> v8::SymbolObject::New(Isolate* isolate, Local<Symbol> value) {
