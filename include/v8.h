@@ -395,6 +395,8 @@ private:
   friend class PrimitiveArray;
   friend class ValueDeserializer;
   friend class BooleanObject;
+  friend class NumberObject;
+  friend class StringObject;
   V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
 // end @lwnode
 };
