@@ -376,17 +376,17 @@ THREADED_TEST(IsolateOfContext) {
 // }
 
 
-// THREADED_TEST(HulIgennem) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::Primitive> undef = v8::Undefined(isolate);
-//   Local<String> undef_str = undef->ToString(env.local()).ToLocalChecked();
-//   char* value = i::NewArray<char>(undef_str->Utf8Length(isolate) + 1);
-//   undef_str->WriteUtf8(isolate, value);
-//   CHECK_EQ(0, strcmp(value, "undefined"));
-//   i::DeleteArray(value);
-// }
+THREADED_TEST(HulIgennem) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Primitive> undef = v8::Undefined(isolate);
+  Local<String> undef_str = undef->ToString(env.local()).ToLocalChecked();
+  char* value = i::NewArray<char>(undef_str->Utf8Length(isolate) + 1);
+  undef_str->WriteUtf8(isolate, value);
+  CHECK_EQ(0, strcmp(value, "undefined"));
+  i::DeleteArray(value);
+}
 
 
 THREADED_TEST(Access) {
@@ -982,14 +982,14 @@ THREADED_TEST(Script) {
 // }
 
 
-// THREADED_TEST(GlobalProperties) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<v8::Object> global = env->Global();
-//   CHECK(global->Set(env.local(), v8_str("pi"), v8_num(3.1415926)).FromJust());
-//   Local<Value> pi = global->Get(env.local(), v8_str("pi")).ToLocalChecked();
-//   CHECK_EQ(3.1415926, pi->NumberValue(env.local()).FromJust());
-// }
+THREADED_TEST(GlobalProperties) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<v8::Object> global = env->Global();
+  CHECK(global->Set(env.local(), v8_str("pi"), v8_num(3.1415926)).FromJust());
+  Local<Value> pi = global->Get(env.local(), v8_str("pi")).ToLocalChecked();
+  CHECK_EQ(3.1415926, pi->NumberValue(env.local()).FromJust());
+}
 
 
 // static void handle_callback_impl(const v8::FunctionCallbackInfo<Value>& info,
@@ -1575,16 +1575,16 @@ THREADED_TEST(TinyInteger) {
 // }
 
 
-// THREADED_TEST(TinyUnsignedInteger) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Isolate* isolate = CcTest::isolate();
+THREADED_TEST(TinyUnsignedInteger) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Isolate* isolate = CcTest::isolate();
 
-//   uint32_t value = 239;
+  uint32_t value = 239;
 
-//   Local<v8::Integer> value_obj = v8::Integer::NewFromUnsigned(isolate, value);
-//   CHECK_EQ(static_cast<int64_t>(value), value_obj->Value());
-// }
+  Local<v8::Integer> value_obj = v8::Integer::NewFromUnsigned(isolate, value);
+  CHECK_EQ(static_cast<int64_t>(value), value_obj->Value());
+}
 
 
 // THREADED_TEST(BigUnsignedSmiInteger) {
@@ -1615,18 +1615,18 @@ THREADED_TEST(TinyInteger) {
 // }
 
 
-// THREADED_TEST(OutOfSignedRangeUnsignedInteger) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Isolate* isolate = CcTest::isolate();
+THREADED_TEST(OutOfSignedRangeUnsignedInteger) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Isolate* isolate = CcTest::isolate();
 
-//   uint32_t INT32_MAX_AS_UINT = (1U << 31) - 1;
-//   uint32_t value = INT32_MAX_AS_UINT + 1;
-//   CHECK(value > INT32_MAX_AS_UINT);  // No overflow.
+  uint32_t INT32_MAX_AS_UINT = (1U << 31) - 1;
+  uint32_t value = INT32_MAX_AS_UINT + 1;
+  CHECK(value > INT32_MAX_AS_UINT);  // No overflow.
 
-//   Local<v8::Integer> value_obj = v8::Integer::NewFromUnsigned(isolate, value);
-//   CHECK_EQ(static_cast<int64_t>(value), value_obj->Value());
-// }
+  Local<v8::Integer> value_obj = v8::Integer::NewFromUnsigned(isolate, value);
+  CHECK_EQ(static_cast<int64_t>(value), value_obj->Value());
+}
 
 
 // THREADED_TEST(IsNativeError) {
@@ -2595,12 +2595,12 @@ THREADED_TEST(IntegerValue) {
 // }
 
 
-// THREADED_TEST(UndefinedIsNotEnumerable) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> result = CompileRun("this.propertyIsEnumerable(undefined)");
-//   CHECK(result->IsFalse());
-// }
+THREADED_TEST(UndefinedIsNotEnumerable) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> result = CompileRun("this.propertyIsEnumerable(undefined)");
+  CHECK(result->IsFalse());
+}
 
 
 // v8::Local<Script> call_recursively_script;
@@ -4350,15 +4350,15 @@ THREADED_TEST(IntegerValue) {
 //   global2.Reset();
 // }
 
-// THREADED_TEST(HandleEqualityPrimitives) {
-//   v8::HandleScope scope(CcTest::isolate());
-//   // Local::operator== works like strict equality except for primitives.
-//   CHECK_NE(v8_str("str"), v8_str("str"));
-//   CHECK_NE(v8::Number::New(CcTest::isolate(), 0.5),
-//            v8::Number::New(CcTest::isolate(), 0.5));
-//   CHECK_EQ(v8::Number::New(CcTest::isolate(), 1),
-//            v8::Number::New(CcTest::isolate(), 1));
-// }
+THREADED_TEST(HandleEqualityPrimitives) {
+  v8::HandleScope scope(CcTest::isolate());
+  // Local::operator== works like strict equality except for primitives.
+  CHECK_NE(v8_str("str"), v8_str("str"));
+  CHECK_NE(v8::Number::New(CcTest::isolate(), 0.5),
+           v8::Number::New(CcTest::isolate(), 0.5));
+  CHECK_EQ(v8::Number::New(CcTest::isolate(), 1),
+           v8::Number::New(CcTest::isolate(), 1));
+}
 
 THREADED_TEST(LocalHandle) {
   v8::HandleScope scope(CcTest::isolate());
@@ -5348,36 +5348,36 @@ THREADED_TEST(Array) {
 //   CHECK(!obj->IsUint32());
 // }
 
-// THREADED_TEST(IntegerType) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   Local<Value> result;
+THREADED_TEST(IntegerType) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  Local<Value> result;
 
-//   // Small positive integer
-//   result = CompileRun("42;");
-//   CHECK(result->IsNumber());
-//   CHECK_EQ(42, result.As<v8::Integer>()->Value());
-//   // Small negative integer
-//   result = CompileRun("-42;");
-//   CHECK(result->IsNumber());
-//   CHECK_EQ(-42, result.As<v8::Integer>()->Value());
-//   // Positive non-int32 integer
-//   result = CompileRun("1099511627776;");
-//   CHECK(result->IsNumber());
-//   CHECK_EQ(1099511627776, result.As<v8::Integer>()->Value());
-//   // Negative non-int32 integer
-//   result = CompileRun("-1099511627776;");
-//   CHECK(result->IsNumber());
-//   CHECK_EQ(-1099511627776, result.As<v8::Integer>()->Value());
-//   // Positive non-integer
-//   result = CompileRun("3.14;");
-//   CHECK(result->IsNumber());
-//   CHECK_EQ(3, result.As<v8::Integer>()->Value());
-//   // Negative non-integer
-//   result = CompileRun("-3.14;");
-//   CHECK(result->IsNumber());
-//   CHECK_EQ(-3, result.As<v8::Integer>()->Value());
-// }
+  // Small positive integer
+  result = CompileRun("42;");
+  CHECK(result->IsNumber());
+  CHECK_EQ(42, result.As<v8::Integer>()->Value());
+  // Small negative integer
+  result = CompileRun("-42;");
+  CHECK(result->IsNumber());
+  CHECK_EQ(-42, result.As<v8::Integer>()->Value());
+  // Positive non-int32 integer
+  result = CompileRun("1099511627776;");
+  CHECK(result->IsNumber());
+  CHECK_EQ(1099511627776, result.As<v8::Integer>()->Value());
+  // Negative non-int32 integer
+  result = CompileRun("-1099511627776;");
+  CHECK(result->IsNumber());
+  CHECK_EQ(-1099511627776, result.As<v8::Integer>()->Value());
+  // Positive non-integer
+  result = CompileRun("3.14;");
+  CHECK(result->IsNumber());
+  CHECK_EQ(3, result.As<v8::Integer>()->Value());
+  // Negative non-integer
+  result = CompileRun("-3.14;");
+  CHECK(result->IsNumber());
+  CHECK_EQ(-3, result.As<v8::Integer>()->Value());
+}
 
 // static void CheckUncle(v8::Isolate* isolate, v8::TryCatch* try_catch) {
 //   CHECK(try_catch->HasCaught());
