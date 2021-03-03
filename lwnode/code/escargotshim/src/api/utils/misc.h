@@ -60,8 +60,11 @@
 #define LWNODE_DCHECK(condition) LWNODE_CHECK_MSG(condition, #condition)
 #define LWNODE_DCHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
 #define LWNODE_DCHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)
+#define LWNODE_DCHECK_MSG(condition, msg, ...)                                 \
+  LWNODE_CHECK_MSG(condition, msg, ##__VA_ARGS__)
 #else
 #define LWNODE_DCHECK(condition)
 #define LWNODE_DCHECK_NULL(x)
 #define LWNODE_DCHECK_NOT_NULL(x)
+#define LWNODE_DCHECK_MSG(condition, msg, ...)
 #endif

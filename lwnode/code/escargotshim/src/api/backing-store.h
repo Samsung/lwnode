@@ -18,6 +18,8 @@
 
 #include <EscargotPublic.h>
 #include <v8-internal.h>
+#include <v8.h>
+#include <map>
 #include <memory>
 
 namespace EscargotShim {
@@ -29,14 +31,36 @@ enum class SharedFlag : uint8_t { kNotShared, kShared };
 enum class InitializedFlag : uint8_t { kUninitialized, kZeroInitialized };
 
 class IsolateWrap;
+class BackingStoreWrap;
+
+// --- BackingStoreWrapHolder ---
+
+class BackingStoreWrapHolder : public v8::internal::BackingStoreBase {
+ public:
+  BackingStoreWrapHolder(BackingStoreWrap* backingStore = nullptr);
+  virtual ~BackingStoreWrapHolder();
+
+  std::shared_ptr<BackingStoreWrapHolder> clone();
+  BackingStoreWrap* backingStore() const { return backingStore_; }
+
+ private:
+  BackingStoreWrap* backingStore_ = nullptr;
+  static std::map<BackingStoreWrap*, u_int8_t> map_;
+};
+
+// --- BackingStoreWrap ---
 
 class BackingStoreWrap : public v8::internal::BackingStoreBase {
  public:
-  ~BackingStoreWrap();
+  BackingStoreWrap(void* data,
+                   size_t byte_length,
+                   SharedFlag shared,
+                   v8::ArrayBuffer::Allocator* allocator);
+  virtual ~BackingStoreWrap();
 
-  void* buffer() const { return buffer_; }
-  size_t byteLength() const { return byteLength_; }
-  bool isShared() const { return isShared_; }
+  void* Data() const { return data_; }
+  size_t ByteLength() const { return byteLength_; }
+  bool IsShared() const { return isShared_; }
 
   static std::unique_ptr<BackingStoreWrap> create(IsolateWrap* isolate,
                                                   size_t byte_length,
@@ -45,13 +69,23 @@ class BackingStoreWrap : public v8::internal::BackingStoreBase {
   bool attachTo(Escargot::ExecutionStateRef* state,
                 Escargot::ArrayBufferObjectRef* arrayBuffer);
 
+  static const BackingStoreWrap* fromV8(const v8::BackingStore* backing_store) {
+    return reinterpret_cast<const BackingStoreWrapHolder*>(backing_store)
+        ->backingStore();
+  }
+
+  static BackingStoreWrap* fromV8(v8::BackingStore* backing_store) {
+    return reinterpret_cast<BackingStoreWrapHolder*>(backing_store)
+        ->backingStore();
+  }
+
  private:
-  BackingStoreWrap(void* buffer, size_t byte_length, SharedFlag shared);
   void clear();
 
-  void* buffer_;
-  size_t byteLength_;
-  bool isShared_;
+  void* data_ = nullptr;
+  size_t byteLength_ = 0;
+  bool isShared_ = false;
+  v8::ArrayBuffer::Allocator* allocator_ = nullptr;
 };
 
 }  // namespace EscargotShim
