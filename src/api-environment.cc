@@ -624,7 +624,7 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
-  API_ENTER(isolate, Local<Array>());
+  API_ENTER_NO_EXCEPTION(isolate);
   auto lwContext = lwIsolate->GetCurrentContext();
   uint64_t len = length;
   if (length < 0) {
@@ -637,17 +637,15 @@ Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
         return ArrayObjectRef::create(esState, len);
       },
       len);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Array>());
+  LWNODE_CHECK(r.isSuccessful());
 
-  auto arrayObject = r.result->asObject()->asArrayObject();
-
-  API_RETURN_LOCAL(Array, isolate, arrayObject);
+  API_RETURN_LOCAL(Array, isolate, r.result);
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate,
                                 Local<Value>* elements,
                                 size_t length) {
-  API_ENTER(isolate, Local<Array>());
+  API_ENTER_NO_EXCEPTION(isolate);
   auto lwContext = lwIsolate->GetCurrentContext();
 
   auto vector = ValueVectorRef::create();
@@ -661,11 +659,9 @@ Local<v8::Array> v8::Array::New(Isolate* isolate,
         return ArrayObjectRef::create(esState, vector);
       },
       vector);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Array>());
+  LWNODE_CHECK(r.isSuccessful());
 
-  auto arrayObject = r.result->asObject()->asArrayObject();
-
-  API_RETURN_LOCAL(Array, isolate, arrayObject);
+  API_RETURN_LOCAL(Array, isolate, r.result);
 }
 
 uint32_t v8::Array::Length() const {
@@ -685,33 +681,165 @@ uint32_t v8::Array::Length() const {
 }
 
 Local<v8::Map> v8::Map::New(Isolate* isolate) {
-  LWNODE_RETURN_LOCAL(Map);
+  API_ENTER_NO_EXCEPTION(isolate);
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext, [](ExecutionStateRef* esState) -> ValueRef* {
+        return MapObjectRef::create(esState);
+      });
+  LWNODE_CHECK(r.isSuccessful());
+
+  API_RETURN_LOCAL(Map, lwIsolate->toV8(), r.result);
 }
 
 size_t v8::Map::Size() const {
-  LWNODE_RETURN_0;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
+        return ValueRef::create(esSelf->size(esState));
+      },
+      esSelf);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return r.result->asNumber();
 }
 
-void Map::Clear() {}
+void Map::Clear() {
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
+        esSelf->clear(esState);
+        return ValueRef::createNull();
+      },
+      esSelf);
+  LWNODE_CHECK(r.isSuccessful());
+}
 
 MaybeLocal<Value> Map::Get(Local<Context> context, Local<Value> key) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+  auto esKey = CVAL(*key)->value();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         MapObjectRef* esSelf,
+         ValueRef* esKey) -> ValueRef* { return esSelf->get(esState, esKey); },
+      esSelf,
+      esKey);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+
+  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Map> Map::Set(Local<Context> context,
                          Local<Value> key,
                          Local<Value> value) {
-  LWNODE_RETURN_LOCAL(Map);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Map>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+  auto esKey = CVAL(*key)->value();
+  auto esValue = CVAL(*value)->value();
+
+  EvalResult r = Evaluator::execute(esContext,
+                                    [](ExecutionStateRef* esState,
+                                       MapObjectRef* esSelf,
+                                       ValueRef* esKey,
+                                       ValueRef* esValue) -> ValueRef* {
+                                      esSelf->set(esState, esKey, esValue);
+                                      return ValueRef::createNull();
+                                    },
+                                    esSelf,
+                                    esKey,
+                                    esValue);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Map>());
+
+  API_RETURN_LOCAL(Map, lwIsolate->toV8(), esSelf);
 }
 
-Maybe<bool> Map::Has(Local<Context> context,
-                     Local<Value> key){LWNODE_RETURN_MAYBE(bool)}
+Maybe<bool> Map::Has(Local<Context> context, Local<Value> key) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+  auto esKey = CVAL(*key)->value();
 
-Maybe<bool> Map::Delete(Local<Context> context,
-                        Local<Value> key){LWNODE_RETURN_MAYBE(bool)}
+  EvalResult r =
+      Evaluator::execute(esContext,
+                         [](ExecutionStateRef* esState,
+                            MapObjectRef* esSelf,
+                            ValueRef* esKey) -> ValueRef* {
+                           return ValueRef::create(esSelf->has(esState, esKey));
+                         },
+                         esSelf,
+                         esKey);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
+}
+
+Maybe<bool> Map::Delete(Local<Context> context, Local<Value> key) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+  auto esKey = CVAL(*key)->value();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         MapObjectRef* esSelf,
+         ValueRef* esKey) -> ValueRef* {
+        return ValueRef::create(esSelf->deleteOperation(esState, esKey));
+      },
+      esSelf,
+      esKey);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
+}
 
 Local<Array> Map::AsArray() const {
-  LWNODE_RETURN_LOCAL(Array);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asMapObject();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
+        auto done = StringRef::createFromASCII("done");
+        auto value = StringRef::createFromASCII("value");
+        auto zero = ValueRef::create(0);
+        auto one = ValueRef::create(1);
+        auto vector = ValueVectorRef::create();
+
+        auto itr = esSelf->entries(esState);
+        for (auto entry = itr->next(esState);
+             entry->asObject()->get(esState, done)->isFalse();
+             entry = itr->next(esState)) {
+          auto keyValueArray =
+              entry->asObject()->get(esState, value)->asObject();
+          auto key = keyValueArray->getIndexedProperty(esState, zero);
+          auto value = keyValueArray->getIndexedProperty(esState, one);
+
+          vector->pushBack(key);
+          vector->pushBack(value);
+        }
+
+        return ArrayObjectRef::create(esState, vector);
+      },
+      esSelf);
+  LWNODE_CHECK(r.isSuccessful());
+
+  API_RETURN_LOCAL(Array, lwIsolate->toV8(), r.result);
 }
 
 Local<v8::Set> v8::Set::New(Isolate* isolate){LWNODE_RETURN_LOCAL(Set)}

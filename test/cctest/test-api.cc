@@ -1689,53 +1689,53 @@ THREADED_TEST(OutOfSignedRangeUnsignedInteger) {
 //   CHECK(bar->IsFunction());
 // }
 
-// THREADED_TEST(ArgumentsObject) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> arguments_object =
-//       CompileRun("var out = 0; (function(){ out = arguments; })(1,2,3); out;");
-//   CHECK(arguments_object->IsArgumentsObject());
-//   v8::Local<Value> array = CompileRun("[1,2,3]");
-//   CHECK(!array->IsArgumentsObject());
-//   v8::Local<Value> object = CompileRun("{a:42}");
-//   CHECK(!object->IsArgumentsObject());
-// }
+THREADED_TEST(ArgumentsObject) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> arguments_object =
+      CompileRun("var out = 0; (function(){ out = arguments; })(1,2,3); out;");
+  CHECK(arguments_object->IsArgumentsObject());
+  v8::Local<Value> array = CompileRun("[1,2,3]");
+  CHECK(!array->IsArgumentsObject());
+  v8::Local<Value> object = CompileRun("{a:42}");
+  CHECK(!object->IsArgumentsObject());
+}
 
 
-// THREADED_TEST(IsMapOrSet) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> map = CompileRun("new Map()");
-//   v8::Local<Value> set = CompileRun("new Set()");
-//   v8::Local<Value> weak_map = CompileRun("new WeakMap()");
-//   v8::Local<Value> weak_set = CompileRun("new WeakSet()");
-//   CHECK(map->IsMap());
-//   CHECK(set->IsSet());
-//   CHECK(weak_map->IsWeakMap());
-//   CHECK(weak_set->IsWeakSet());
+THREADED_TEST(IsMapOrSet) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> map = CompileRun("new Map()");
+  v8::Local<Value> set = CompileRun("new Set()");
+  v8::Local<Value> weak_map = CompileRun("new WeakMap()");
+  v8::Local<Value> weak_set = CompileRun("new WeakSet()");
+  CHECK(map->IsMap());
+  CHECK(set->IsSet());
+  CHECK(weak_map->IsWeakMap());
+  CHECK(weak_set->IsWeakSet());
 
-//   CHECK(!map->IsSet());
-//   CHECK(!map->IsWeakMap());
-//   CHECK(!map->IsWeakSet());
+  CHECK(!map->IsSet());
+  CHECK(!map->IsWeakMap());
+  CHECK(!map->IsWeakSet());
 
-//   CHECK(!set->IsMap());
-//   CHECK(!set->IsWeakMap());
-//   CHECK(!set->IsWeakSet());
+  CHECK(!set->IsMap());
+  CHECK(!set->IsWeakMap());
+  CHECK(!set->IsWeakSet());
 
-//   CHECK(!weak_map->IsMap());
-//   CHECK(!weak_map->IsSet());
-//   CHECK(!weak_map->IsWeakSet());
+  CHECK(!weak_map->IsMap());
+  CHECK(!weak_map->IsSet());
+  CHECK(!weak_map->IsWeakSet());
 
-//   CHECK(!weak_set->IsMap());
-//   CHECK(!weak_set->IsSet());
-//   CHECK(!weak_set->IsWeakMap());
+  CHECK(!weak_set->IsMap());
+  CHECK(!weak_set->IsSet());
+  CHECK(!weak_set->IsWeakMap());
 
-//   v8::Local<Value> object = CompileRun("{a:42}");
-//   CHECK(!object->IsMap());
-//   CHECK(!object->IsSet());
-//   CHECK(!object->IsWeakMap());
-//   CHECK(!object->IsWeakSet());
-// }
+  v8::Local<Value> object = CompileRun("{a:42}");
+  CHECK(!object->IsMap());
+  CHECK(!object->IsSet());
+  CHECK(!object->IsWeakMap());
+  CHECK(!object->IsWeakSet());
+}
 
 
 THREADED_TEST(StringObject) {
@@ -24677,70 +24677,70 @@ THREADED_TEST(ToArrayIndex) {
 //   }
 // }
 
-// TEST(Map) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   LocalContext env;
+TEST(Map) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  LocalContext env;
 
-//   v8::Local<v8::Map> map = v8::Map::New(isolate);
-//   CHECK(map->IsObject());
-//   CHECK(map->IsMap());
-//   CHECK(map->GetPrototype()->StrictEquals(CompileRun("Map.prototype")));
-//   CHECK_EQ(0U, map->Size());
+  v8::Local<v8::Map> map = v8::Map::New(isolate);
+  CHECK(map->IsObject());
+  CHECK(map->IsMap());
+  CHECK(map->GetPrototype()->StrictEquals(CompileRun("Map.prototype")));
+  CHECK_EQ(0U, map->Size());
 
-//   v8::Local<v8::Value> val = CompileRun("new Map([[1, 2], [3, 4]])");
-//   CHECK(val->IsMap());
-//   map = v8::Local<v8::Map>::Cast(val);
-//   CHECK_EQ(2U, map->Size());
+  v8::Local<v8::Value> val = CompileRun("new Map([[1, 2], [3, 4]])");
+  CHECK(val->IsMap());
+  map = v8::Local<v8::Map>::Cast(val);
+  CHECK_EQ(2U, map->Size());
 
-//   v8::Local<v8::Array> contents = map->AsArray();
-//   CHECK_EQ(4U, contents->Length());
-//   CHECK_EQ(
-//       1,
-//       contents->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
-//   CHECK_EQ(
-//       2,
-//       contents->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
-//   CHECK_EQ(
-//       3,
-//       contents->Get(env.local(), 2).ToLocalChecked().As<v8::Int32>()->Value());
-//   CHECK_EQ(
-//       4,
-//       contents->Get(env.local(), 3).ToLocalChecked().As<v8::Int32>()->Value());
+  v8::Local<v8::Array> contents = map->AsArray();
+  CHECK_EQ(4U, contents->Length());
+  CHECK_EQ(
+      1,
+      contents->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
+  CHECK_EQ(
+      2,
+      contents->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
+  CHECK_EQ(
+      3,
+      contents->Get(env.local(), 2).ToLocalChecked().As<v8::Int32>()->Value());
+  CHECK_EQ(
+      4,
+      contents->Get(env.local(), 3).ToLocalChecked().As<v8::Int32>()->Value());
 
-//   CHECK_EQ(2U, map->Size());
+  CHECK_EQ(2U, map->Size());
 
-//   CHECK(map->Has(env.local(), v8::Integer::New(isolate, 1)).FromJust());
-//   CHECK(map->Has(env.local(), v8::Integer::New(isolate, 3)).FromJust());
+  CHECK(map->Has(env.local(), v8::Integer::New(isolate, 1)).FromJust());
+  CHECK(map->Has(env.local(), v8::Integer::New(isolate, 3)).FromJust());
 
-//   CHECK(!map->Has(env.local(), v8::Integer::New(isolate, 2)).FromJust());
-//   CHECK(!map->Has(env.local(), map).FromJust());
+  CHECK(!map->Has(env.local(), v8::Integer::New(isolate, 2)).FromJust());
+  CHECK(!map->Has(env.local(), map).FromJust());
 
-//   CHECK_EQ(2, map->Get(env.local(), v8::Integer::New(isolate, 1))
-//                   .ToLocalChecked()
-//                   ->Int32Value(env.local())
-//                   .FromJust());
-//   CHECK_EQ(4, map->Get(env.local(), v8::Integer::New(isolate, 3))
-//                   .ToLocalChecked()
-//                   ->Int32Value(env.local())
-//                   .FromJust());
+  CHECK_EQ(2, map->Get(env.local(), v8::Integer::New(isolate, 1))
+                  .ToLocalChecked()
+                  ->Int32Value(env.local())
+                  .FromJust());
+  CHECK_EQ(4, map->Get(env.local(), v8::Integer::New(isolate, 3))
+                  .ToLocalChecked()
+                  ->Int32Value(env.local())
+                  .FromJust());
 
-//   CHECK(map->Get(env.local(), v8::Integer::New(isolate, 42))
-//             .ToLocalChecked()
-//             ->IsUndefined());
+  CHECK(map->Get(env.local(), v8::Integer::New(isolate, 42))
+            .ToLocalChecked()
+            ->IsUndefined());
 
-//   CHECK(!map->Set(env.local(), map, map).IsEmpty());
-//   CHECK_EQ(3U, map->Size());
-//   CHECK(map->Has(env.local(), map).FromJust());
+  CHECK(!map->Set(env.local(), map, map).IsEmpty());
+  CHECK_EQ(3U, map->Size());
+  CHECK(map->Has(env.local(), map).FromJust());
 
-//   CHECK(map->Delete(env.local(), map).FromJust());
-//   CHECK_EQ(2U, map->Size());
-//   CHECK(!map->Has(env.local(), map).FromJust());
-//   CHECK(!map->Delete(env.local(), map).FromJust());
+  CHECK(map->Delete(env.local(), map).FromJust());
+  CHECK_EQ(2U, map->Size());
+  CHECK(!map->Has(env.local(), map).FromJust());
+  CHECK(!map->Delete(env.local(), map).FromJust());
 
-//   map->Clear();
-//   CHECK_EQ(0U, map->Size());
-// }
+  map->Clear();
+  CHECK_EQ(0U, map->Size());
+}
 
 
 // TEST(Set) {
@@ -24814,33 +24814,33 @@ THREADED_TEST(ToArrayIndex) {
 //   }
 // }
 
-// TEST(MapDeleteThenAsArray) {
-//   // https://bugs.chromium.org/p/v8/issues/detail?id=4946
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   LocalContext env;
+TEST(MapDeleteThenAsArray) {
+  // https://bugs.chromium.org/p/v8/issues/detail?id=4946
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  LocalContext env;
 
-//   // make a Map
-//   v8::Local<v8::Value> val = CompileRun("new Map([[1, 2], [3, 4], [5, 6]])");
-//   v8::Local<v8::Map> map = v8::Local<v8::Map>::Cast(val);
-//   CHECK_EQ(3U, map->Size());
+  // make a Map
+  v8::Local<v8::Value> val = CompileRun("new Map([[1, 2], [3, 4], [5, 6]])");
+  v8::Local<v8::Map> map = v8::Local<v8::Map>::Cast(val);
+  CHECK_EQ(3U, map->Size());
 
-//   // delete the "middle" element (using AsArray to
-//   // determine which element is the "middle" element)
-//   v8::Local<v8::Array> array1 = map->AsArray();
-//   CHECK_EQ(6U, array1->Length());
-//   // Map::AsArray returns a flat array, so the second key is at index 2.
-//   v8::Local<v8::Value> key = array1->Get(env.local(), 2).ToLocalChecked();
-//   CHECK(map->Delete(env.local(), key).FromJust());
+  // delete the "middle" element (using AsArray to
+  // determine which element is the "middle" element)
+  v8::Local<v8::Array> array1 = map->AsArray();
+  CHECK_EQ(6U, array1->Length());
+  // Map::AsArray returns a flat array, so the second key is at index 2.
+  v8::Local<v8::Value> key = array1->Get(env.local(), 2).ToLocalChecked();
+  CHECK(map->Delete(env.local(), key).FromJust());
 
-//   // make sure there are no undefined values when we convert to an array again.
-//   v8::Local<v8::Array> array2 = map->AsArray();
-//   uint32_t length = array2->Length();
-//   CHECK_EQ(4U, length);
-//   for (uint32_t i = 0; i < length; i++) {
-//     CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
-//   }
-// }
+  // make sure there are no undefined values when we convert to an array again.
+  v8::Local<v8::Array> array2 = map->AsArray();
+  uint32_t length = array2->Length();
+  CHECK_EQ(4U, length);
+  for (uint32_t i = 0; i < length; i++) {
+    CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
+  }
+}
 
 // TEST(CompatibleReceiverCheckOnCachedICHandler) {
 //   v8::Isolate* isolate = CcTest::isolate();

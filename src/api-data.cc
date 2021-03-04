@@ -134,14 +134,19 @@ VALUE_IS_SPECIFIC_TYPE(SymbolObject, SymbolWrapper)
 #undef VALUE_IS_SPECIFIC_TYPE
 
 #define VALUE_IS_SPECIFIC_TYPE(Type, Check)                                    \
-  bool Value::Is##Type() const { LWNODE_RETURN_FALSE; }
+  bool Value::Is##Type() const { return CVAL(this)->value()->is##Type##Object(); }
 
 VALUE_IS_SPECIFIC_TYPE(Date, JSDate)
 VALUE_IS_SPECIFIC_TYPE(Map, JSMap)
 VALUE_IS_SPECIFIC_TYPE(Set, JSSet)
-VALUE_IS_SPECIFIC_TYPE(WasmModuleObject, WasmModuleObject)
 VALUE_IS_SPECIFIC_TYPE(WeakMap, JSWeakMap)
 VALUE_IS_SPECIFIC_TYPE(WeakSet, JSWeakSet)
+#undef VALUE_IS_SPECIFIC_TYPE
+
+#define VALUE_IS_SPECIFIC_TYPE(Type, Check)                                    \
+  bool Value::Is##Type() const { LWNODE_RETURN_FALSE; }
+
+VALUE_IS_SPECIFIC_TYPE(WasmModuleObject, WasmModuleObject)
 #undef VALUE_IS_SPECIFIC_TYPE
 
 bool Value::IsBoolean() const {
