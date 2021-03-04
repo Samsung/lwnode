@@ -123,7 +123,7 @@ void MemoryUtil::printEveryReachableGCObjects() {
               temp.totalCount);
 }
 
-void MemoryUtil::doFullGCWithoutSeeingStack() {
+void MemoryUtil::collectAllGarbage() {
   GC_register_mark_stack_func([]() {
     // do nothing for skip stack
     // assume there is no gc-object on stack

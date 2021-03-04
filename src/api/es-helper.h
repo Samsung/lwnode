@@ -83,4 +83,69 @@ class ObjectRefHelper {
   static SymbolRef* s_symbolKeyForHiddenValues;
 };
 
+class ArrayBufferHelper {
+ public:
+  enum ArrayType {
+    kExternalInt8Array = 1,
+    kExternalUint8Array,
+    kExternalInt16Array,
+    kExternalUint16Array,
+    kExternalInt32Array,
+    kExternalUint32Array,
+    kExternalFloat32Array,
+    kExternalFloat64Array,
+    kExternalUint8ClampedArray,
+    kExternalBigInt64Array,
+    kExternalBigUint64Array,
+  };
+
+  template <class T>
+  static ArrayBufferViewRef* createView(ContextRef* context,
+                                    ArrayBufferObjectRef* abo,
+                                    size_t byteOffset,
+                                    size_t arrayLength,
+                                    ArrayType type) {
+    EvalResult r = Evaluator::execute(
+        context,
+        [](ExecutionStateRef* state) -> ValueRef* { return T::create(state); });
+
+    LWNODE_CHECK(r.isSuccessful());
+
+    size_t byteSize = 0;
+
+    switch (type) {
+      case kExternalInt8Array:
+      case kExternalUint8Array:
+      case kExternalUint8ClampedArray:
+        byteSize = 1;
+        break;
+      case kExternalInt16Array:
+      case kExternalUint16Array:
+        byteSize = 2;
+        break;
+      case kExternalInt32Array:
+      case kExternalUint32Array:
+      case kExternalFloat32Array:
+        byteSize = 4;
+        break;
+      case kExternalFloat64Array:
+      case kExternalBigInt64Array:
+      case kExternalBigUint64Array:
+        byteSize = 8;
+        break;
+      default:
+        break;
+    }
+
+    LWNODE_CHECK(byteSize != 0);
+
+    auto arrayBufferView = r.result->asArrayBufferView();
+
+    arrayBufferView->setBuffer(
+        abo, byteOffset, byteSize * arrayLength, arrayLength);
+
+    return arrayBufferView;
+  }
+};
+
 }  // namespace EscargotShim

@@ -30,10 +30,11 @@ BackingStoreWrap::BackingStoreWrap(void* data,
       byteLength_(byte_length),
       isShared_(shared == SharedFlag::kShared),
       allocator_(allocator) {
-  LWNODE_DLOG_INFO("bs=%p mem=%p (length=%zuB)", this, data_, byteLength_);
+  LWNODE_DLOG_INFO("malc: bs=%p mem=%p (length=%zuB)", this, data_, byteLength_);
 }
 
 BackingStoreWrap::~BackingStoreWrap() {
+  LWNODE_DLOG_INFO("free: bs=%p mem=%p (length=%zuB)", this, data_, byteLength_);
   allocator_->Free(data_, byteLength_);
   clear();
 }
@@ -68,7 +69,7 @@ std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
 bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
                                 ArrayBufferObjectRef* arrayBuffer) {
   // attach the buffer of this backing store to the given arrary buffer
-  arrayBuffer->attachBuffer(state, this->Data(), this->ByteLength());
+  arrayBuffer->attachExternalBuffer(state, this->Data(), this->ByteLength());
 
   // since the ownership of the backing store is given to this
   // arraybuffer, it should manage destructing the backing store.
@@ -77,11 +78,10 @@ bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
   ObjectRefHelper::setExtraData(arrayBuffer, holder, [](void* self) {
     auto value = reinterpret_cast<ValueRef*>(self);
     auto holder = reinterpret_cast<BackingStoreWrapHolder*>(
-        value->asObject()->extraData());
+        value->asArrayBufferObject()->extraData());
 
     LWNODE_DCHECK_NOT_NULL(holder);
 
-    // the backing store the holder has will be deleted when no one uses it.
     delete holder;
   });
 
@@ -103,6 +103,7 @@ BackingStoreWrapHolder::BackingStoreWrapHolder(BackingStoreWrap* backingStore)
 }
 
 BackingStoreWrapHolder::~BackingStoreWrapHolder() {
+  // @check consider to simply delete backingStore_ with isExternal condition.
   auto it = BackingStoreWrapHolder::map_.find(backingStore_);
   if (it != map_.end()) {
     if (it->second == 1) {

@@ -997,7 +997,9 @@ v8::ArrayBuffer::Contents v8::ArrayBuffer::Externalize() {
 }
 
 void v8::ArrayBuffer::Externalize(
-    const std::shared_ptr<BackingStore>& backing_store) {}
+    const std::shared_ptr<BackingStore>& backing_store) {
+  LWNODE_RETURN_VOID;
+}
 
 v8::ArrayBuffer::Contents v8::ArrayBuffer::GetContents() {
   return GetContents(false);
@@ -1011,7 +1013,7 @@ v8::ArrayBuffer::Contents v8::ArrayBuffer::GetContents(bool externalize) {
 void v8::ArrayBuffer::Detach() {}
 
 size_t v8::ArrayBuffer::ByteLength() const {
-  LWNODE_RETURN_0;
+  return CVAL(this)->value()->asArrayBufferObject()->byteLength();
 }
 
 Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
@@ -1080,7 +1082,9 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
 }
 
 Local<ArrayBuffer> v8::ArrayBufferView::Buffer() {
-  LWNODE_RETURN_LOCAL(ArrayBuffer);
+  auto esArrayBufferObject = VAL(this)->value()->asArrayBufferView()->buffer();
+  API_RETURN_LOCAL(
+      ArrayBuffer, IsolateWrap::GetCurrent()->toV8(), esArrayBufferObject);
 }
 
 size_t v8::ArrayBufferView::CopyContents(void* dest, size_t byte_length) {
@@ -1088,26 +1092,43 @@ size_t v8::ArrayBufferView::CopyContents(void* dest, size_t byte_length) {
 }
 
 bool v8::ArrayBufferView::HasBuffer() const {
-  LWNODE_RETURN_FALSE;
+  ArrayBufferObjectRef* esArrayBufferObject =
+      CVAL(this)->value()->asArrayBufferView()->buffer();
+  return esArrayBufferObject != nullptr;
 }
 
 size_t v8::ArrayBufferView::ByteOffset() {
-  LWNODE_RETURN_0;
+  return CVAL(this)->value()->asArrayBufferView()->byteOffset();
 }
 
 size_t v8::ArrayBufferView::ByteLength() {
-  LWNODE_RETURN_0;
+  return CVAL(this)->value()->asArrayBufferView()->byteLength();
 }
 
 size_t v8::TypedArray::Length() {
-  LWNODE_RETURN_0;
+  return CVAL(this)->value()->asArrayBufferView()->arrayLength();
 }
 
 #define TYPED_ARRAY_NEW(Type, type, TYPE, ctype)                               \
   Local<Type##Array> Type##Array::New(                                         \
       Local<ArrayBuffer> array_buffer, size_t byte_offset, size_t length) {    \
-    LWNODE_RETURN_LOCAL(Type##Array);                                          \
+    auto lwIsolate = IsolateWrap::GetCurrent();                                \
+    auto esContext = lwIsolate->GetCurrentContext()->get();                    \
+    auto esArrayBuffer = VAL(*array_buffer)->value()->asArrayBufferObject();   \
+                                                                               \
+    auto esArrayBufferView =                                                   \
+        ArrayBufferHelper::createView<Type##ArrayObjectRef>(                   \
+            esContext,                                                         \
+            esArrayBuffer,                                                     \
+            byte_offset,                                                       \
+            length,                                                            \
+            ArrayBufferHelper::ArrayType::kExternal##Type##Array);             \
+                                                                               \
+    LWNODE_CHECK(esArrayBufferView->is##Type##ArrayObject());                  \
+                                                                               \
+    API_RETURN_LOCAL(Type##Array, lwIsolate->toV8(), esArrayBufferView);       \
   }                                                                            \
+                                                                               \
   Local<Type##Array> Type##Array::New(                                         \
       Local<SharedArrayBuffer> shared_array_buffer,                            \
       size_t byte_offset,                                                      \

@@ -127,7 +127,7 @@ class ESCARGOT_EXPORT MemoryUtil {
  public:
   static void startGCStatsTrace();
   static void endGCStatsTrace();
-  static void doFullGCWithoutSeeingStack();
+  static void collectAllGarbage();
   static void printEveryReachableGCObjects();
   static void printGCStats();
   static void printBacktrace(void *gcPtr);
