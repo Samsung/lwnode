@@ -31,8 +31,6 @@ class ContextWrap;
 
 class IsolateWrap : public gc {
  public:
-  virtual ~IsolateWrap();
-
   static IsolateWrap* New();
   void Initialize(const v8::Isolate::CreateParams& params);
   void Dispose();

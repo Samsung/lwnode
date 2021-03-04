@@ -16,6 +16,7 @@
 
 #include "isolate.h"
 #include "utils/misc.h"
+#include "utils/gc.h"
 
 using namespace Escargot;
 
@@ -26,18 +27,13 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
 IsolateWrap::IsolateWrap() {}
 
-IsolateWrap::~IsolateWrap() {}
-
 IsolateWrap* IsolateWrap::New() {
   IsolateWrap* isolate = new IsolateWrap();
   return isolate;
 }
 
 void IsolateWrap::Dispose() {
-  // @check
-  // GCVector<HandleScopeWrap*> handleScopes_;
-  // GCVector<ContextWrap*> contexts_;
-  // vmInstance_.release();
+  MemoryUtil::collectAllGarbage();
 }
 
 bool IsolateWrap::IsExecutionTerminating() {
@@ -93,8 +89,7 @@ void IsolateWrap::Enter() {
   s_currentIsolate = this;
 }
 
-IsolateWrap* IsolateWrap::fromEscargot(VMInstanceRef* vmInstance)
-{
+IsolateWrap* IsolateWrap::fromEscargot(VMInstanceRef* vmInstance) {
   LWNODE_CHECK(s_currentIsolate->vmInstance() == vmInstance);
   return s_currentIsolate;
 }

@@ -161,3 +161,38 @@ TEST(ScriptCompiler_CompileFunctionInContext) {
 
   CHECK(expected->Equals(context, result).FromJust());
 }
+
+// --- ArrayBuffer ---
+TEST(ArrayBuffer_New) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  Local<v8::ArrayBuffer> ab = v8::ArrayBuffer::New(isolate, 1024);
+  // CheckInternalFieldsAreZero(ab);
+  CHECK_EQ(1024, (int)ab->ByteLength());
+  // CcTest::CollectAllGarbage();
+
+  std::shared_ptr<v8::BackingStore> backing_store = ab->GetBackingStore();
+  CHECK_EQ(1024, (int)backing_store->ByteLength());
+
+  uint8_t* data = static_cast<uint8_t*>(backing_store->Data());
+  CHECK_NOT_NULL(data);
+  CHECK(env->Global()->Set(env.local(), v8_str("ab"), ab).FromJust());
+
+  v8::Local<v8::Value> result = CompileRun("ab.byteLength");
+  CHECK_EQ(1024, (int)result->Int32Value(env.local()).FromJust());
+
+  result = CompileRun(
+      "var u8 = new Uint8Array(ab);"
+      "u8[0] = 0xFF;"
+      "u8[1] = 0xAA;"
+      "u8.length");
+  CHECK_EQ(1024, result->Int32Value(env.local()).FromJust());
+  CHECK_EQ(0xFF, data[0]);
+  CHECK_EQ(0xAA, data[1]);
+  data[0] = 0xCC;
+  data[1] = 0x11;
+  result = CompileRun("u8[0] + u8[1]");
+  CHECK_EQ(0xDD, result->Int32Value(env.local()).FromJust());
+}

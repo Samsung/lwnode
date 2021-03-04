@@ -35,6 +35,9 @@ class BackingStoreWrap;
 
 // --- BackingStoreWrapHolder ---
 
+// BackingStoreWrap holds a buffer.
+// BackingStoreWrapHolder deallocates the backingStoreWrap held.
+
 class BackingStoreWrapHolder : public v8::internal::BackingStoreBase {
  public:
   BackingStoreWrapHolder(BackingStoreWrap* backingStore = nullptr);
@@ -45,6 +48,7 @@ class BackingStoreWrapHolder : public v8::internal::BackingStoreBase {
 
  private:
   BackingStoreWrap* backingStore_ = nullptr;
+
   static std::map<BackingStoreWrap*, u_int8_t> map_;
 };
 

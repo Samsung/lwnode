@@ -41,6 +41,7 @@
 #define CHECK_LT(lhs, rhs) EXPECT_LT(lhs, rhs)
 #define CHECK_GE(lhs, rhs) EXPECT_GE(lhs, rhs)
 #define CHECK_GT(lhs, rhs) EXPECT_GT(lhs, rhs)
+#define CHECK_NOT_NULL(x) CHECK((x) != nullptr)
 
 class CcTest {
  public:

@@ -112,7 +112,7 @@ void Engine::initialize() {
 
 void Engine::finalize() {
   Globals::finalize();
-  MemoryUtil::doFullGCWithoutSeeingStack();
+  MemoryUtil::collectAllGarbage();
 }
 
 }  // namespace EscargotShim
