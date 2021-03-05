@@ -15,8 +15,8 @@
  */
 
 #include "isolate.h"
-#include "utils/misc.h"
 #include "utils/gc.h"
+#include "utils/misc.h"
 
 using namespace Escargot;
 
@@ -116,7 +116,8 @@ void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
 }
 
 void IsolateWrap::escapeHandle(HandleWrap* value) {
-  LWNODE_CHECK(handleScopes_.size() > 1);
+  auto nHandleScopes = handleScopes_.size();
+  LWNODE_CHECK(nHandleScopes > 1);
 
   auto last = handleScopes_.rbegin();
 
@@ -155,7 +156,7 @@ void IsolateWrap::addEternal(ValueRef* value) {
 
 SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   // @check replace this container if this function is called a lot.
-  // LWNODE_CALL_TRACE();
+  LWNODE_CALL_TRACE();
 
   for (size_t i = 0; i < privateSymbols_.size(); i++) {
     if (privateSymbols_[i]->description()->equals(esString)) {
@@ -166,7 +167,8 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   auto newSymbol = SymbolRef::create(esString);
   privateSymbols_.push_back(newSymbol);
 
-  LWNODE_DLOG_INFO("private symbol: %s", esString->toStdUTF8String().c_str());
+  LWNODE_DLOG_INFO("malc: private symbol: %s",
+                   esString->toStdUTF8String().c_str());
 
   return newSymbol;
 }

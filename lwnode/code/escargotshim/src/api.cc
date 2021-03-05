@@ -177,8 +177,8 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     } else if (strEquals("--trace-gc", arg)) {
       flags |= FlagType::TraceGC;
       checked = true;
-    } else if (strEquals("--trace", arg)) {
-      flags |= FlagType::Trace;
+    } else if (strEquals("--trace-call", arg)) {
+      flags |= FlagType::TraceCall;
       checked = true;
     } else if (remove_flags && (strStartsWith(arg, "--debug") ||
                                 strStartsWith(arg, "--stack-size=") ||
@@ -278,7 +278,7 @@ i::Address* V8::CopyGlobalReference(i::Address* from) {
 }
 
 void V8::MoveGlobalReference(internal::Address** from, internal::Address** to) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CALL_TRACE();
 }
 
 void V8::MoveTracedGlobalReference(internal::Address** from,

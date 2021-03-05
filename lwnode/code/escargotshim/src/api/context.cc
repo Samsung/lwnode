@@ -52,16 +52,30 @@ IsolateWrap* ContextWrap::GetIsolate() {
   return isolate_;
 }
 
-void ContextWrap::SetEmbedderData(int index, const ValueWrap* value) {
-  if (embedderData_ == nullptr) {
-    embedderData_ = new EmbedderDataMap();
+void ContextWrap::SetEmbedderData(int index, ValueWrap* value) {
+  if (embedder_data_ == nullptr) {
+    embedder_data_ = new EmbedderDataMap();
   }
-  embedderData_->insert(std::make_pair(index, value));
+  LWNODE_DLOG_INFO("set: EmbedderData: idx %d", index);
+  embedder_data_->insert(std::make_pair(index, value));
 }
 
-const ValueWrap* ContextWrap::GetEmbedderData(int index) {
-  auto iter = embedderData_->find(index);
-  if (iter != embedderData_->end()) {
+ValueWrap* ContextWrap::GetEmbedderData(int index) {
+  auto iter = embedder_data_->find(index);
+  if (iter != embedder_data_->end()) {
+    return iter->second;
+  }
+  return nullptr;
+}
+
+void ContextWrap::SetAlignedPointerInEmbedderData(int index, void* value) {
+  LWNODE_DLOG_INFO("set: AlignedPointerInEmbedderData: idx %d", index);
+  aligned_pointer_in_embedder_data_.insert(std::make_pair(index, value));
+}
+
+void* ContextWrap::GetAlignedPointerFromEmbedderData(int index) {
+  auto iter = aligned_pointer_in_embedder_data_.find(index);
+  if (iter != aligned_pointer_in_embedder_data_.end()) {
     return iter->second;
   }
   return nullptr;

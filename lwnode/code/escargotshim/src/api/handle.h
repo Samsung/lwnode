@@ -43,8 +43,8 @@ class HandleWrap : public gc {
     NotPresent,
   };
 
-  uint8_t type() const { return type_; }
-  bool isValid() const { return (type_ < HandleWrap::Type::NotPresent); }
+  uint8_t type() const;
+  bool isValid() const;
 
  protected:
   HandleWrap() = default;
@@ -70,12 +70,7 @@ class ValueWrap : public HandleWrap {
   Escargot::ScriptRef* script() const;
 
  private:
-  ValueWrap(void* ptr, HandleWrap::Type type) {
-    LWNODE_CHECK_NOT_NULL(ptr);
-    type_ = type;
-    holder_ = ptr;
-  }
-
+  ValueWrap(void* ptr, HandleWrap::Type type);
   void* holder_ = nullptr;
 };
 

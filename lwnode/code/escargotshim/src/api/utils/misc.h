@@ -17,6 +17,7 @@
 #pragma once
 
 #include <assert.h>
+#include "flags.h"
 #include "logger.h"
 
 /* UNLIKELY */
@@ -67,4 +68,15 @@
 #define LWNODE_DCHECK_NULL(x)
 #define LWNODE_DCHECK_NOT_NULL(x)
 #define LWNODE_DCHECK_MSG(condition, msg, ...)
+#endif
+
+#if !defined(NDEBUG)
+#define LWNODE_CALL_TRACE(msg, ...)                                            \
+  if (EscargotShim::Flags::get() & EscargotShim::FlagType::TraceCall) {        \
+    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" TRACE_FMT " " msg COLOR_RESET,           \
+                    TRACE_ARGS,                                                \
+                    ##__VA_ARGS__);                                            \
+  }
+#else
+#define LWNODE_CALL_TRACE(msg, ...)
 #endif

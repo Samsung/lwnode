@@ -15,8 +15,8 @@
  */
 
 #include "engine.h"
-#include "flags.h"
 #include "utils/logger.h"
+#include "utils/misc.h"
 #include "utils/string.h"
 
 using namespace Escargot;

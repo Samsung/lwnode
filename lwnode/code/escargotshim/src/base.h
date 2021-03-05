@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "api/flags.h"
 #include "unimplemented.h"
 
 #define VAL(that) reinterpret_cast<ValueWrap*>(that)
@@ -46,13 +45,16 @@
 #endif
 
 #define API_ENTER(isolate, bailout_value)                                      \
+  LWNODE_CALL_TRACE();                                                         \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);                       \
   __TERMINATION_CHECK(lwIsolate, bailout_value)
 
 #define API_ENTER_NO_EXCEPTION(isolate)                                        \
+  LWNODE_CALL_TRACE();                                                         \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);
 
 #define API_ENTER_WITH_CONTEXT(local_context, bailout_value)                   \
+  LWNODE_CALL_TRACE();                                                         \
   IsolateWrap* lwIsolate = local_context.IsEmpty()                             \
                                ? IsolateWrap::GetCurrent()                     \
                                : VAL(*local_context)->context()->GetIsolate(); \
@@ -81,12 +83,3 @@
   V(Uint8Clamped, uint8_clamped, UINT8_CLAMPED, uint8_t)                       \
   V(BigUint64, biguint64, BIGUINT64, uint64_t)                                 \
   V(BigInt64, bigint64, BIGINT64, int64_t)
-
-#if !defined(NDEBUG)
-#define LWNODE_CALL_TRACE(msg, ...)                                            \
-  if (EscargotShim::Flags::get() & EscargotShim::FlagType::Trace) {            \
-    LWNODE_DLOG_RAW("TRACE" TRACE_FMT " " msg, TRACE_ARGS, ##__VA_ARGS__);     \
-  }
-#else
-#define LWNODE_CALL_TRACE(msg, ...)
-#endif
