@@ -22,6 +22,33 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
+// --- HandleWrap ---
+
+uint8_t HandleWrap::type() const {
+  return type_;
+}
+
+bool HandleWrap::isValid() const {
+  return (type_ < HandleWrap::Type::NotPresent);
+}
+
+// --- ValueWrap ---
+
+ValueWrap::ValueWrap(void* ptr, HandleWrap::Type type) {
+  LWNODE_CHECK_NOT_NULL(ptr);
+  type_ = type;
+  holder_ = ptr;
+}
+
+ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
+  return new ValueWrap(esValue, Type::JsValue);
+}
+
+ValueRef* ValueWrap::value() const {
+  // LWNODE_CHECK(type() == Type::JsValue);
+  return reinterpret_cast<ValueRef*>(holder_);
+}
+
 ValueWrap* ValueWrap::createContext(ContextWrap* lwContext) {
   return new ValueWrap(lwContext, Type::Context);
 };
@@ -38,15 +65,6 @@ ValueWrap* ValueWrap::createScript(ScriptRef* esScript) {
 ScriptRef* ValueWrap::script() const {
   LWNODE_CHECK(type() == Type::Script);
   return reinterpret_cast<ScriptRef*>(holder_);
-}
-
-ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
-  return new ValueWrap(esValue, Type::JsValue);
-}
-
-ValueRef* ValueWrap::value() const {
-  LWNODE_CHECK(type() == Type::JsValue);
-  return reinterpret_cast<ValueRef*>(holder_);
 }
 
 }  // namespace EscargotShim

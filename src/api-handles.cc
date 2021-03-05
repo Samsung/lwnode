@@ -144,18 +144,8 @@ v8::Local<v8::Value> Context::SlowGetEmbedderData(int index) {
   LWNODE_RETURN_LOCAL(Value);
 }
 
-// template <typename T, typename F>
-// inline T VALC(F* p) {
-//   return reinterpret_cast<const ValueWrap*>(that);
-// }
-
-// #define VALCC(that) reinterpret_cast<const ValueWrap*>(
-//                    const_cast<typename std::remove_const<F>::type*>(that))
-
 void Context::SetEmbedderData(int index, v8::Local<Value> value) {
-  auto v = VAL(*value);
-
-  VAL(this)->context()->SetEmbedderData(index, v);
+  VAL(this)->context()->SetEmbedderData(index, VAL(*value));
 }
 
 void* Context::SlowGetAlignedPointerFromEmbedderData(int index) {
@@ -163,6 +153,6 @@ void* Context::SlowGetAlignedPointerFromEmbedderData(int index) {
 }
 
 void Context::SetAlignedPointerInEmbedderData(int index, void* value) {
-  LWNODE_RETURN_VOID;
+  VAL(this)->context()->SetAlignedPointerInEmbedderData(index, value);
 }
 }  // namespace v8

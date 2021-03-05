@@ -46,6 +46,10 @@ EvalResult ObjectRefHelper::setProperty(ContextRef* context,
                                         ObjectRef* object,
                                         ValueRef* key,
                                         ValueRef* value) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+  LWNODE_DCHECK_NOT_NULL(value);
+
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
@@ -66,6 +70,9 @@ EvalResult ObjectRefHelper::setProperty(ContextRef* context,
 EvalResult ObjectRefHelper::getProperty(ContextRef* context,
                                         ObjectRef* object,
                                         ValueRef* key) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* esState,
@@ -78,6 +85,9 @@ EvalResult ObjectRefHelper::getProperty(ContextRef* context,
 EvalResult ObjectRefHelper::hasProperty(ContextRef* context,
                                         ObjectRef* object,
                                         ValueRef* key) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* state, ObjectRef* object, ValueRef* key)
@@ -89,6 +99,9 @@ EvalResult ObjectRefHelper::hasProperty(ContextRef* context,
 EvalResult ObjectRefHelper::deleteProperty(ContextRef* context,
                                            ObjectRef* object,
                                            ValueRef* key) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* state,

@@ -84,7 +84,7 @@ bool Value::IsArrayBuffer() const {
 }
 
 bool Value::IsArrayBufferView() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isArrayBufferView();
 }
 
 bool Value::IsTypedArray() const {
@@ -92,7 +92,9 @@ bool Value::IsTypedArray() const {
 }
 
 #define VALUE_IS_TYPED_ARRAY(Type, typeName, TYPE, ctype)                      \
-  bool Value::Is##Type##Array() const { LWNODE_RETURN_FALSE; }
+  bool Value::Is##Type##Array() const {                                        \
+    return CVAL(this)->value()->is##Type##ArrayObject();                       \
+  }
 
 TYPED_ARRAYS(VALUE_IS_TYPED_ARRAY)
 
@@ -134,7 +136,9 @@ VALUE_IS_SPECIFIC_TYPE(SymbolObject, SymbolWrapper)
 #undef VALUE_IS_SPECIFIC_TYPE
 
 #define VALUE_IS_SPECIFIC_TYPE(Type, Check)                                    \
-  bool Value::Is##Type() const { return CVAL(this)->value()->is##Type##Object(); }
+  bool Value::Is##Type() const {                                               \
+    return CVAL(this)->value()->is##Type##Object();                            \
+  }
 
 VALUE_IS_SPECIFIC_TYPE(Date, JSDate)
 VALUE_IS_SPECIFIC_TYPE(Map, JSMap)

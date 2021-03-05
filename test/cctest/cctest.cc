@@ -22,7 +22,7 @@ static bool disable_automatic_dispose_ = false;
 v8::Isolate::CreateParams create_params_;
 
 // internals
-#include "api/flags.h"
+#include "api/utils/flags.h"
 
 LocalContext::~LocalContext() {
   v8::HandleScope scope(isolate_);

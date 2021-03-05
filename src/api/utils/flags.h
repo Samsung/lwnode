@@ -17,7 +17,7 @@
 #pragma once
 
 #include <cstdint>
-#include "utils/compiler.h"
+#include "compiler.h"
 
 namespace EscargotShim {
 
@@ -30,7 +30,7 @@ enum FlagType : flag_t {
   DisableIdleGC = 1 << 3,
   TopLevelWait = 1 << 4,
   // lwnode
-  Trace = 1 << 5,
+  TraceCall = 1 << 5,
   TraceGC = 1 << 6,
 };
 
