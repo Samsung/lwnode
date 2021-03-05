@@ -24743,76 +24743,76 @@ TEST(Map) {
 }
 
 
-// TEST(Set) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   LocalContext env;
+TEST(Set) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  LocalContext env;
 
-//   v8::Local<v8::Set> set = v8::Set::New(isolate);
-//   CHECK(set->IsObject());
-//   CHECK(set->IsSet());
-//   CHECK(set->GetPrototype()->StrictEquals(CompileRun("Set.prototype")));
-//   CHECK_EQ(0U, set->Size());
+  v8::Local<v8::Set> set = v8::Set::New(isolate);
+  CHECK(set->IsObject());
+  CHECK(set->IsSet());
+  CHECK(set->GetPrototype()->StrictEquals(CompileRun("Set.prototype")));
+  CHECK_EQ(0U, set->Size());
 
-//   v8::Local<v8::Value> val = CompileRun("new Set([1, 2])");
-//   CHECK(val->IsSet());
-//   set = v8::Local<v8::Set>::Cast(val);
-//   CHECK_EQ(2U, set->Size());
+  v8::Local<v8::Value> val = CompileRun("new Set([1, 2])");
+  CHECK(val->IsSet());
+  set = v8::Local<v8::Set>::Cast(val);
+  CHECK_EQ(2U, set->Size());
 
-//   v8::Local<v8::Array> keys = set->AsArray();
-//   CHECK_EQ(2U, keys->Length());
-//   CHECK_EQ(1,
-//            keys->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
-//   CHECK_EQ(2,
-//            keys->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
+  v8::Local<v8::Array> keys = set->AsArray();
+  CHECK_EQ(2U, keys->Length());
+  CHECK_EQ(1,
+           keys->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
+  CHECK_EQ(2,
+           keys->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
 
-//   CHECK_EQ(2U, set->Size());
+  CHECK_EQ(2U, set->Size());
 
-//   CHECK(set->Has(env.local(), v8::Integer::New(isolate, 1)).FromJust());
-//   CHECK(set->Has(env.local(), v8::Integer::New(isolate, 2)).FromJust());
+  CHECK(set->Has(env.local(), v8::Integer::New(isolate, 1)).FromJust());
+  CHECK(set->Has(env.local(), v8::Integer::New(isolate, 2)).FromJust());
 
-//   CHECK(!set->Has(env.local(), v8::Integer::New(isolate, 3)).FromJust());
-//   CHECK(!set->Has(env.local(), set).FromJust());
+  CHECK(!set->Has(env.local(), v8::Integer::New(isolate, 3)).FromJust());
+  CHECK(!set->Has(env.local(), set).FromJust());
 
-//   CHECK(!set->Add(env.local(), set).IsEmpty());
-//   CHECK_EQ(3U, set->Size());
-//   CHECK(set->Has(env.local(), set).FromJust());
+  CHECK(!set->Add(env.local(), set).IsEmpty());
+  CHECK_EQ(3U, set->Size());
+  CHECK(set->Has(env.local(), set).FromJust());
 
-//   CHECK(set->Delete(env.local(), set).FromJust());
-//   CHECK_EQ(2U, set->Size());
-//   CHECK(!set->Has(env.local(), set).FromJust());
-//   CHECK(!set->Delete(env.local(), set).FromJust());
+  CHECK(set->Delete(env.local(), set).FromJust());
+  CHECK_EQ(2U, set->Size());
+  CHECK(!set->Has(env.local(), set).FromJust());
+  CHECK(!set->Delete(env.local(), set).FromJust());
 
-//   set->Clear();
-//   CHECK_EQ(0U, set->Size());
-// }
+  set->Clear();
+  CHECK_EQ(0U, set->Size());
+}
 
-// TEST(SetDeleteThenAsArray) {
-//   // https://bugs.chromium.org/p/v8/issues/detail?id=4946
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   LocalContext env;
+TEST(SetDeleteThenAsArray) {
+  // https://bugs.chromium.org/p/v8/issues/detail?id=4946
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  LocalContext env;
 
-//   // make a Set
-//   v8::Local<v8::Value> val = CompileRun("new Set([1, 2, 3])");
-//   v8::Local<v8::Set> set = v8::Local<v8::Set>::Cast(val);
-//   CHECK_EQ(3U, set->Size());
+  // make a Set
+  v8::Local<v8::Value> val = CompileRun("new Set([1, 2, 3])");
+  v8::Local<v8::Set> set = v8::Local<v8::Set>::Cast(val);
+  CHECK_EQ(3U, set->Size());
 
-//   // delete the "middle" element (using AsArray to
-//   // determine which element is the "middle" element)
-//   v8::Local<v8::Array> array1 = set->AsArray();
-//   CHECK_EQ(3U, array1->Length());
-//   CHECK(set->Delete(env.local(), array1->Get(env.local(), 1).ToLocalChecked())
-//             .FromJust());
+  // delete the "middle" element (using AsArray to
+  // determine which element is the "middle" element)
+  v8::Local<v8::Array> array1 = set->AsArray();
+  CHECK_EQ(3U, array1->Length());
+  CHECK(set->Delete(env.local(), array1->Get(env.local(), 1).ToLocalChecked())
+            .FromJust());
 
-//   // make sure there are no undefined values when we convert to an array again.
-//   v8::Local<v8::Array> array2 = set->AsArray();
-//   uint32_t length = array2->Length();
-//   CHECK_EQ(2U, length);
-//   for (uint32_t i = 0; i < length; i++) {
-//     CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
-//   }
-// }
+  // make sure there are no undefined values when we convert to an array again.
+  v8::Local<v8::Array> array2 = set->AsArray();
+  uint32_t length = array2->Length();
+  CHECK_EQ(2U, length);
+  for (uint32_t i = 0; i < length; i++) {
+    CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
+  }
+}
 
 TEST(MapDeleteThenAsArray) {
   // https://bugs.chromium.org/p/v8/issues/detail?id=4946
