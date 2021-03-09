@@ -48,6 +48,7 @@
         'src/api/isolate.cc',
         'src/api/context.cc',
         'src/api/global-handles.cc',
+        'src/api/function.cc',
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [

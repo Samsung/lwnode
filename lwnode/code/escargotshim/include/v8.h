@@ -11204,7 +11204,12 @@ void ReturnValue<T>::Set(const Local<S> handle) {
   if (V8_UNLIKELY(handle.IsEmpty())) {
     *value_ = GetDefaultValue();
   } else {
+// @lwnode
+#if 0
     *value_ = *reinterpret_cast<internal::Address*>(*handle);
+#endif
+    *value_ = reinterpret_cast<internal::Address>(*handle);
+// end @lwnode
   }
 }
 
@@ -11279,10 +11284,15 @@ Isolate* ReturnValue<T>::GetIsolate() const {
 
 template <typename T>
 Local<Value> ReturnValue<T>::Get() const {
+// @lwnode
+#if 0
   typedef internal::Internals I;
   if (*value_ == *I::GetRoot(GetIsolate(), I::kTheHoleValueRootIndex))
     return Local<Value>(*Undefined(GetIsolate()));
   return Local<Value>::New(GetIsolate(), reinterpret_cast<Value*>(value_));
+#endif
+  return Local<Value>::New(GetIsolate(), reinterpret_cast<Value*>(*value_));
+// end @lwnode
 }
 
 template <typename T>
@@ -11310,7 +11320,12 @@ Local<Value> FunctionCallbackInfo<T>::operator[](int i) const {
 #ifdef V8_REVERSE_JSARGS
   return Local<Value>(reinterpret_cast<Value*>(values_ + i));
 #else
+// @lwnode
+#if 0
   return Local<Value>(reinterpret_cast<Value*>(values_ - i));
+#endif
+  return Local<Value>(*reinterpret_cast<Value**>(values_ - i));
+// end @lwnode
 #endif
 }
 
