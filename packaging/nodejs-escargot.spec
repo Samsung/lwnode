@@ -19,7 +19,6 @@ Release:       1
 Group:         System/Servers
 License:       Apache 2.0
 Source:        %{name}-%{version}.tar.gz
-Source1001:    x.manifest
 
 BuildRequires: cmake
 BuildRequires: make
@@ -101,7 +100,8 @@ rm ./*.list
 /sbin/ldconfig
 
 %files
-%manifest packaging/x.manifest
+%manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/*
 %{_bindir}/*
+%license LICENSE LICENSE.Microsoft LICENSE.NodeJS
