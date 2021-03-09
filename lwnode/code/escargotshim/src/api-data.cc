@@ -284,11 +284,37 @@ MaybeLocal<Integer> Value::ToInteger(Local<Context> context) const {
 }
 
 MaybeLocal<Int32> Value::ToInt32(Local<Context> context) const {
-  LWNODE_RETURN_LOCAL(Int32);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Int32>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  auto esValue = CVAL(this)->value();
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
+        return ValueRef::create(esValue->toInt32(esState));
+      },
+      esValue);
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Int32>());
+
+  API_RETURN_LOCAL(Int32, lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Uint32> Value::ToUint32(Local<Context> context) const {
-  LWNODE_RETURN_LOCAL(Uint32);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Uint32>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  auto esValue = CVAL(this)->value();
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
+        return ValueRef::create(esValue->toUint32(esState));
+      },
+      esValue);
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Uint32>());
+
+  API_RETURN_LOCAL(Uint32, lwIsolate->toV8(), r.result);
 }
 
 i::Isolate* i::IsolateFromNeverReadOnlySpaceObject(i::Address obj) {
