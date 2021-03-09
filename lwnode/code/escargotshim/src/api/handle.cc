@@ -17,6 +17,7 @@
 #include "handle.h"
 #include "context.h"
 #include "isolate.h"
+#include "utils/misc.h"
 
 using namespace Escargot;
 
@@ -41,16 +42,20 @@ ValueWrap::ValueWrap(void* ptr, HandleWrap::Type type) {
 }
 
 ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
-  return new ValueWrap(esValue, Type::JsValue);
+  auto value = new ValueWrap(esValue, Type::JsValue);
+  LWNODE_CALL_TRACE("%p", value);
+  return value;
 }
 
 ValueRef* ValueWrap::value() const {
-  // LWNODE_CHECK(type() == Type::JsValue);
+  LWNODE_CHECK(type() == Type::JsValue);
   return reinterpret_cast<ValueRef*>(holder_);
 }
 
 ValueWrap* ValueWrap::createContext(ContextWrap* lwContext) {
-  return new ValueWrap(lwContext, Type::Context);
+  auto value = new ValueWrap(lwContext, Type::Context);
+  LWNODE_CALL_TRACE("%p", value);
+  return value;
 };
 
 ContextWrap* ValueWrap::context() const {
@@ -59,7 +64,9 @@ ContextWrap* ValueWrap::context() const {
 }
 
 ValueWrap* ValueWrap::createScript(ScriptRef* esScript) {
-  return new ValueWrap(esScript, Type::Script);
+  auto value = new ValueWrap(esScript, Type::Script);
+  LWNODE_CALL_TRACE("%p", value);
+  return value;
 };
 
 ScriptRef* ValueWrap::script() const {

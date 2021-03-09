@@ -50,6 +50,7 @@ class CcTest {
   static void disposeIsolate();
   static v8::Context::Scope* contextScope_;
   static void TearDown();
+  static void CollectAllGarbage(v8::Isolate* isolate = nullptr);
 
  private:
   static v8::Isolate* isolate_;

@@ -24,34 +24,33 @@ TEST(UnboundScript) {
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope scope(isolate);
 
-    // Create a string containing the JavaScript source code.
-    Local<String> source =
-        String::NewFromUtf8(
-            isolate, "'Hello' + ', V8!'", NewStringType::kNormal)
-            .ToLocalChecked();
+  // Create a string containing the JavaScript source code.
+  Local<String> source =
+      String::NewFromUtf8(isolate, "'Hello' + ', V8!'", NewStringType::kNormal)
+          .ToLocalChecked();
 
-    // Create a new context.
-    Local<Context> context = Context::New(isolate);
+  // Create a new context.
+  Local<Context> context = Context::New(isolate);
 
-    // Create a Source
-    ScriptCompiler::Source script_source(source);
+  // Create a Source
+  ScriptCompiler::Source script_source(source);
 
-    Local<UnboundScript> script;
-    if (!ScriptCompiler::CompileUnboundScript(isolate, &script_source)
-             .ToLocal(&script)) {
-      CHECK(false);
-    }
+  Local<UnboundScript> script;
+  if (!ScriptCompiler::CompileUnboundScript(isolate, &script_source)
+           .ToLocal(&script)) {
+    CHECK(false);
+  }
 
-    // Enter the context for compiling and running the hello world script.
-    Context::Scope context_scope(context);
+  // Enter the context for compiling and running the hello world script.
+  Context::Scope context_scope(context);
 
-    // Run the script to get the result.
-    Local<Value> result =
-        script->BindToCurrentContext()->Run(context).ToLocalChecked();
+  // Run the script to get the result.
+  Local<Value> result =
+      script->BindToCurrentContext()->Run(context).ToLocalChecked();
 
-    // Convert the result to an UTF8 string and print it.
-    String::Utf8Value utf8(isolate, result);
-    CHECK_EQ(std::string("Hello, V8!").compare(std::string(*utf8)), 0);
+  // Convert the result to an UTF8 string and print it.
+  String::Utf8Value utf8(isolate, result);
+  CHECK_EQ(std::string("Hello, V8!").compare(std::string(*utf8)), 0);
 }
 
 TEST(StringCreateNewFromOneTwoByte) {
@@ -171,7 +170,7 @@ TEST(ArrayBuffer_New) {
   Local<v8::ArrayBuffer> ab = v8::ArrayBuffer::New(isolate, 1024);
   // CheckInternalFieldsAreZero(ab);
   CHECK_EQ(1024, (int)ab->ByteLength());
-  // CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
   std::shared_ptr<v8::BackingStore> backing_store = ab->GetBackingStore();
   CHECK_EQ(1024, (int)backing_store->ByteLength());
@@ -183,11 +182,10 @@ TEST(ArrayBuffer_New) {
   v8::Local<v8::Value> result = CompileRun("ab.byteLength");
   CHECK_EQ(1024, (int)result->Int32Value(env.local()).FromJust());
 
-  result = CompileRun(
-      "var u8 = new Uint8Array(ab);"
-      "u8[0] = 0xFF;"
-      "u8[1] = 0xAA;"
-      "u8.length");
+  result = CompileRun("var u8 = new Uint8Array(ab);"
+                      "u8[0] = 0xFF;"
+                      "u8[1] = 0xAA;"
+                      "u8.length");
   CHECK_EQ(1024, result->Int32Value(env.local()).FromJust());
   CHECK_EQ(0xFF, data[0]);
   CHECK_EQ(0xAA, data[1]);
@@ -195,4 +193,21 @@ TEST(ArrayBuffer_New) {
   data[1] = 0x11;
   result = CompileRun("u8[0] + u8[1]");
   CHECK_EQ(0xDD, result->Int32Value(env.local()).FromJust());
+}
+
+TEST(ArrayBuffer_Release) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  {
+    v8::HandleScope handle_scope(isolate);
+    Local<v8::ArrayBuffer> ab = v8::ArrayBuffer::New(isolate, 1024);
+  }
+
+  CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
+
+  // todo: add check if releasing ab works using handlescope
+  // todo: verify if releasing context scopes works using context scope
 }

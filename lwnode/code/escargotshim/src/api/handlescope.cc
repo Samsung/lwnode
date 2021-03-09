@@ -17,6 +17,7 @@
 #include "handlescope.h"
 #include "handle.h"
 #include "isolate.h"
+#include "utils/misc.h"
 
 #include <algorithm>
 
@@ -27,6 +28,8 @@ HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope,
     : type_(type), scope_(scope) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
+  LWNODE_CALL_TRACE("%p", value);
+
   handles_.push_back(value);
 }
 
@@ -38,6 +41,16 @@ bool HandleScopeWrap::remove(HandleWrap* value) {
     return true;
   }
   return false;
+}
+
+void HandleScopeWrap::clear() {
+  if (Flags::isTraceCallEnabled()) {
+    for (auto it = handles_.begin(); it != handles_.end(); it++) {
+      LWNODE_CALL_TRACE("%p", *it);
+    }
+  }
+
+  handles_.clear();
 }
 
 HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,

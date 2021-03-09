@@ -32,15 +32,6 @@ using GCVectorT = Starfish::Vector<T, Allocator>;
 template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>
 class GCVector : public GCVectorT<T, Allocator>, public gc {};
 
-// typedef of GC-aware vector with atomic contents
-template <typename T,
-          typename Allocator = GCUtil::gc_malloc_atomic_allocator<T>>
-using GCAtomicVectorT = Starfish::Vector<T, Allocator>;
-
-template <typename T,
-          typename Allocator = GCUtil::gc_malloc_atomic_allocator<T>>
-class GCAtomicVector : public GCAtomicVectorT<T, Allocator>, public gc {};
-
 // typedef of GC-aware list
 template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>
 using GCListT = std::list<T, Allocator>;

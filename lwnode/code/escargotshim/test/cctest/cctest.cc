@@ -23,6 +23,7 @@ v8::Isolate::CreateParams create_params_;
 
 // internals
 #include "api/utils/flags.h"
+#include "api/utils/gc.h"
 
 LocalContext::~LocalContext() {
   v8::HandleScope scope(isolate_);
@@ -47,7 +48,7 @@ void LocalContext::Initialize(v8::Isolate* isolate,
 v8::Isolate* CcTest::isolate() {
   if (isolate_ == nullptr) {
     create_params_.array_buffer_allocator =
-      v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+        v8::ArrayBuffer::Allocator::NewDefaultAllocator();
     CcTest::isolate_ = v8::Isolate::New(create_params_);
   }
   isolate_->Enter();
@@ -77,14 +78,20 @@ void CcTest::TearDown() {
   }
 }
 
+void CcTest::CollectAllGarbage(v8::Isolate* isolate) {
+  if (isolate) {
+    printf("(!) gc per isolate isn't supported yet.");
+  }
+  MemoryUtil::collectAllGarbage();
+}
+
 static inline bool startsWith(const std::string& string,
                               const std::string& prefix) {
   return (string.size() >= prefix.size()) &&
          (string.compare(0, prefix.size(), prefix) == 0);
 }
 
-void InitializeTest::SetUp() {
-}
+void InitializeTest::SetUp() {}
 
 void InitializeTest::TearDown() {
   CcTest::disposeScope();
@@ -100,10 +107,11 @@ int main(int argc, char* argv[]) {
     if (startsWith(arg, std::string("-f="))) {
       std::string f = std::string("*") + arg.substr(strlen("-f="));
       ::testing::GTEST_FLAG(filter) = f.c_str();
-    } else if(startsWith(arg, std::string("--trace-gc"))) {
+    } else if (startsWith(arg, std::string("--trace-call"))) {
+      EscargotShim::Flags::add(EscargotShim::FlagType::TraceCall);
+    } else if (startsWith(arg, std::string("--trace-gc"))) {
       EscargotShim::Flags::add(EscargotShim::FlagType::TraceGC);
-    }
-    else {
+    } else {
       printf("unknown options: %s\n", argv[i]);
     }
   }
