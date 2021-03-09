@@ -5244,57 +5244,57 @@ THREADED_TEST(Array) {
 // }
 
 
-// THREADED_TEST(ConversionNumber) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   // Very large number.
-//   CompileRun("var obj = Math.pow(2,32) * 1237;");
-//   Local<Value> obj =
-//       env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(5312874545152.0,
-//            obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(0, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(0, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-//   // Large number.
-//   CompileRun("var obj = -1234567890123;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(-1234567890123.0,
-//            obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(-1912276171, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(2382691125, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-//   // Small positive integer.
-//   CompileRun("var obj = 42;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(42.0, obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(42, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(42, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-//   // Negative integer.
-//   CompileRun("var obj = -37;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(-37.0, obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(-37, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(4294967259, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-//   // Positive non-int32 integer.
-//   CompileRun("var obj = 0x81234567;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(2166572391.0, obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(-2128394905, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(2166572391, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-//   // Fraction.
-//   CompileRun("var obj = 42.3;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(42.3, obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(42, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(42, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-//   // Large negative fraction.
-//   CompileRun("var obj = -5726623061.75;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK_EQ(-5726623061.75,
-//            obj->ToNumber(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(-1431655765, obj->ToInt32(env.local()).ToLocalChecked()->Value());
-//   CHECK_EQ(2863311531, obj->ToUint32(env.local()).ToLocalChecked()->Value());
-// }
+THREADED_TEST(ConversionNumber) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  // Very large number.
+  CompileRun("var obj = Math.pow(2,32) * 1237;");
+  Local<Value> obj =
+      env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(5312874545152.0,
+           obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(0, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(0, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+  // Large number.
+  CompileRun("var obj = -1234567890123;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(-1234567890123.0,
+           obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(-1912276171, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(2382691125, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+  // Small positive integer.
+  CompileRun("var obj = 42;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(42.0, obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(42, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(42, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+  // Negative integer.
+  CompileRun("var obj = -37;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(-37.0, obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(-37, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(4294967259, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+  // Positive non-int32 integer.
+  CompileRun("var obj = 0x81234567;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(2166572391.0, obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(-2128394905, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(2166572391, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+  // Fraction.
+  CompileRun("var obj = 42.3;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(42.3, obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(42, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(42, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+  // Large negative fraction.
+  CompileRun("var obj = -5726623061.75;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK_EQ(-5726623061.75,
+           obj->ToNumber(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(-1431655765, obj->ToInt32(env.local()).ToLocalChecked()->Value());
+  CHECK_EQ(2863311531, obj->ToUint32(env.local()).ToLocalChecked()->Value());
+}
 
 
 // THREADED_TEST(isNumberType) {

@@ -14,6 +14,7 @@
       'cflags_cc': [
         '-Wno-unused-parameter',
         '-Wno-comment',
+        '-Wno-sign-compare',
         '-std=gnu++11',
       ],
       'include_dirs': [
