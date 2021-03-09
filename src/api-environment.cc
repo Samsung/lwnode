@@ -252,18 +252,6 @@ void v8::AccessorSignature::CheckCast(Data* that) {
   LWNODE_RETURN_VOID;
 }
 
-MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
-  LWNODE_RETURN_LOCAL(Function);
-}
-
-MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
-  LWNODE_RETURN_LOCAL(Object);
-}
-
-bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
-  LWNODE_RETURN_FALSE;
-}
-
 Local<External> v8::External::New(Isolate* isolate, void* value) {
   LWNODE_RETURN_LOCAL(External);
 }

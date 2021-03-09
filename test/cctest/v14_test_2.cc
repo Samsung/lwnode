@@ -39,3 +39,48 @@ TEST(NumberValue) {
   CHECK(uint32_obj->IsUint32());
   CHECK_EQ(uint32_val, uint32_obj->Value());
 }
+
+bool functionTemplateCallbackFlag = false;
+static void functionTemplateCallback(
+    const v8::FunctionCallbackInfo<Value>& info) {
+  functionTemplateCallbackFlag = true;
+  // CHECK_EQ(info.IsConstructCall(), false);
+  info.GetReturnValue().Set(v8_num(22));
+  CHECK_EQ(3, info.Length());
+  CHECK_EQ(12,
+           info[0]
+               ->ToInt32(info.GetIsolate()->GetCurrentContext())
+               .ToLocalChecked()
+               ->Value());
+  CHECK_EQ(24,
+           info[1]
+               ->ToInt32(info.GetIsolate()->GetCurrentContext())
+               .ToLocalChecked()
+               ->Value());
+  CHECK_EQ(36,
+           info[2]
+               ->ToInt32(info.GetIsolate()->GetCurrentContext())
+               .ToLocalChecked()
+               ->Value());
+}
+
+TEST(CallFunctionTemplate) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  Local<v8::FunctionTemplate> fun_templ =
+      v8::FunctionTemplate::New(isolate, functionTemplateCallback);
+  Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+
+  CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+  CompileRun("var funtionTemplateTest1 = obj(12, 24, 36);");
+  CHECK(functionTemplateCallbackFlag);
+  ExpectInt32("funtionTemplateTest1", 22);
+  int32_t result = env->Global()
+                       ->Get(env.local(), v8_str("funtionTemplateTest1"))
+                       .ToLocalChecked()
+                       ->Int32Value(env.local())
+                       .FromJust();
+  CHECK_EQ(result, 22);
+}

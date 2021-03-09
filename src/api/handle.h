@@ -69,6 +69,11 @@ class ValueWrap : public HandleWrap {
   static ValueWrap* createScript(Escargot::ScriptRef* esScript);
   Escargot::ScriptRef* script() const;
 
+  // FunctionTemplate
+  static ValueWrap* createFunctionTemplate(
+      Escargot::FunctionTemplateRef* esTemplate);
+  Escargot::FunctionTemplateRef* functionTemplate() const;
+
  private:
   ValueWrap(void* ptr, HandleWrap::Type type);
   void* holder_ = nullptr;

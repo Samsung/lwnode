@@ -20,6 +20,38 @@
 using namespace Escargot;
 using namespace EscargotShim;
 
+namespace {
+class TemplateData : public gc {
+ public:
+  TemplateData(v8::Isolate* isolate) : m_isolate(isolate) {}
+
+  v8::Isolate* m_isolate{nullptr};
+};
+
+class FunctionTemplateData : public TemplateData {
+ public:
+  FunctionTemplateData(v8::Isolate* isolate,
+                       v8::FunctionCallback callback,
+                       v8::Local<v8::Value> data,
+                       v8::Local<v8::Signature> signature,
+                       int length)
+      : TemplateData(isolate),
+        m_callback(callback),
+        m_callbackData(data),
+        m_signature(signature),
+        m_length(length) {}
+
+  static FunctionTemplateData* toFunctionTemplateData(void* ptr) {
+    return reinterpret_cast<FunctionTemplateData*>(ptr);
+  }
+
+  v8::FunctionCallback m_callback;
+  v8::Local<v8::Value> m_callbackData;
+  v8::Local<v8::Signature> m_signature;
+  int m_length{0};
+};
+}  // namespace
+
 namespace v8 {
 // --- T e m p l a t e ---
 
@@ -56,6 +88,37 @@ void FunctionTemplate::Inherit(v8::Local<FunctionTemplate> value) {
   LWNODE_RETURN_VOID;
 }
 
+static ValueRef* FunctionTemplateNativeFunction(
+    ExecutionStateRef* state,
+    ValueRef* thisValue,
+    size_t argc,
+    ValueRef** argv,
+    OptionalRef<ObjectRef> newTarget) {
+  Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
+      state->resolveCallee();
+  auto ptr = callee->extraData();
+  LWNODE_DCHECK_NOT_NULL(callee->extraData());
+  auto tpData =
+      FunctionTemplateData::toFunctionTemplateData(callee->extraData());
+
+  Local<Value> result;
+  if (tpData->m_callback) {
+    FunctionCallbackInfoWrap info(
+        tpData->m_isolate, thisValue, thisValue, argc, argv);
+    tpData->m_callback(info);
+    result = info.GetReturnValue().Get();
+    // TODO: error check from 'state'
+  }
+
+  if (newTarget.hasValue()) {
+    return thisValue;
+  }
+  if (!result.IsEmpty()) {
+    return VAL(*result)->value();
+  }
+  return ValueRef::createUndefined();
+}
+
 Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                               FunctionCallback callback,
                                               v8::Local<Value> data,
@@ -64,7 +127,24 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                               ConstructorBehavior behavior,
                                               SideEffectType side_effect_type,
                                               const CFunction* c_function) {
-  LWNODE_RETURN_LOCAL(FunctionTemplate);
+  API_ENTER_NO_EXCEPTION(isolate);
+  bool isConstructor = false;
+  if (behavior == ConstructorBehavior::kAllow) {
+    isConstructor = true;
+  }
+
+  auto esFunctionTemplate =
+      FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),  // name
+                                  length,         // argumentCount
+                                  false,          // isStrict
+                                  isConstructor,  // isConstruction
+                                  FunctionTemplateNativeFunction);  // fn
+
+  esFunctionTemplate->setInstanceExtraData(
+      new FunctionTemplateData(isolate, callback, data, signature, length));
+
+  return Local<FunctionTemplate>::New(
+      isolate, ValueWrap::createFunctionTemplate(esFunctionTemplate));
 }
 
 Local<FunctionTemplate> FunctionTemplate::NewWithCache(
@@ -117,6 +197,23 @@ void FunctionTemplate::ReadOnlyPrototype() {
 
 void FunctionTemplate::RemovePrototype() {
   LWNODE_RETURN_VOID;
+}
+
+MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esFunctionTemplate = CVAL(this)->functionTemplate();
+
+  API_RETURN_LOCAL(
+      Function, lwIsolate->toV8(), esFunctionTemplate->instantiate(esContext));
+}
+
+MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
+  LWNODE_RETURN_LOCAL(Object);
+}
+
+bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
+  LWNODE_RETURN_FALSE;
 }
 
 // --- O b j e c t T e m p l a t e ---

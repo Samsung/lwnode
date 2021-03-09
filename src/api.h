@@ -33,6 +33,7 @@
 #include "api/es-helper.h"
 #include "api/handle.h"
 #include "api/isolate.h"
+#include "api/function.h"
 #include "api/utils/string.h"
 
 namespace i = v8::internal;
