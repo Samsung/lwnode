@@ -118,7 +118,7 @@ void MemoryUtil::printEveryReachableGCObjects() {
       &temp);
   GC_enable();
 
-  LOG_HANDLER("<-- end of print reachable pointers %fKB (count: %ld)\n",
+  LOG_HANDLER("<-- end of print reachable pointers %fKB (count: %zu)\n",
               temp.totalRemainSize / 1024.f,
               temp.totalCount);
 }
