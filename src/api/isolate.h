@@ -19,9 +19,10 @@
 #include <EscargotPublic.h>
 #include <v8.h>
 
+#include "arraybuffer-allocator.h"
 #include "engine.h"
-#include "handlescope.h"
 #include "global-handles.h"
+#include "handlescope.h"
 #include "utils/compiler.h"
 #include "utils/gc.h"
 
@@ -54,15 +55,14 @@ class IsolateWrap : public gc {
 
   // V8 internals
   void set_array_buffer_allocator_shared(
-      std::shared_ptr<v8::ArrayBuffer::Allocator> allocator) {
-    array_buffer_allocator_shared_ = std::move(allocator);
+      std::shared_ptr<v8::ArrayBuffer::Allocator> allocator);
+  void set_array_buffer_allocator(v8::ArrayBuffer::Allocator* allocator);
+
+  v8::ArrayBuffer::Allocator* array_buffer_allocator() {
+    return arrayBufferDecorator_;
   }
-  void set_array_buffer_allocator(v8::ArrayBuffer::Allocator* allocator) {
-    array_buffer_allocator_ = allocator;
-  }
-  v8::ArrayBuffer::Allocator* array_buffer_allocator() const {
-    return array_buffer_allocator_;
-  }
+
+  ArrayBufferAllocatorDecorator* arrayBufferDecorator_ = nullptr;
 
   static IsolateWrap* GetCurrent();
 
@@ -111,9 +111,7 @@ class IsolateWrap : public gc {
 
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
-  GlobalHandles* globalHandles() {
-    return &globalHandles_;
-  }
+  GlobalHandles* globalHandles() { return &globalHandles_; }
 
  private:
   IsolateWrap();
@@ -136,6 +134,11 @@ class IsolateWrap : public gc {
   VMInstanceRef* vmInstance_ = nullptr;
 
   GlobalHandles globalHandles_;
+
+  PersistentRefHolder<IsolateWrap> release_lock_;
+
+  void lock_gc_release() { release_lock_.reset(this); }
+  void unlock_gc_release() { release_lock_.release(); }
 
   v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
   v8::MessageCallback message_callback_ = nullptr;

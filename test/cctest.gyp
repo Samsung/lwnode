@@ -7,6 +7,8 @@
       'dependencies': [
         './cctest/gtest/gtest.gyp:gtest',
         '../escargotshim.gyp:escargotshim',
+        # for using gc internals
+        '../escargot.gyp:escargot',
        ],
       'defines': [
          'GTEST_DONT_DEFINE_TEST=1',

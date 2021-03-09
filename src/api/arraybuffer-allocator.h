@@ -16,35 +16,29 @@
 
 #pragma once
 
-#include <cstdint>
-#include "compiler.h"
+#include <v8.h>
+#include "utils/gc.h"
 
 namespace EscargotShim {
 
-typedef uint16_t flag_t;
-
-enum FlagType : flag_t {
-  Empty = 0,
-  ExposeGC = 1 << 1,
-  UseStrict = 1 << 2,
-  DisableIdleGC = 1 << 3,
-  TopLevelWait = 1 << 4,
-  // lwnode
-  TraceCall = 1 << 5,
-  TraceGC = 1 << 6,
-};
-
-class LWNODE_EXPORT Flags {
+class ArrayBufferAllocatorDecorator : public v8::ArrayBuffer::Allocator,
+                                      public gc {
  public:
-  static void set(flag_t flags) { s_flags = flags; }
-  static void add(flag_t flags) { s_flags |= flags; }
-  static flag_t get() { return s_flags; };
+  void* Allocate(size_t length) override;
+  void* AllocateUninitialized(size_t length) override;
+  void* Reallocate(void* data, size_t old_length, size_t new_length) override;
+  void Free(void* data, size_t length) override;
 
-  static bool isTraceCallEnabled() { return s_flags & FlagType::TraceCall; }
-  static bool isTraceGCEnabled() { return s_flags & FlagType::TraceGC; }
+  void set_array_buffer_allocator(v8::ArrayBuffer::Allocator* allocate);
+  v8::ArrayBuffer::Allocator* array_buffer_allocator() {
+    return array_buffer_allocator_;
+  }
+  void printState();
 
  private:
-  static flag_t s_flags;
+  size_t currentMemorySize_ = 0;
+  size_t peakMemorySize_ = 0;
+  v8::ArrayBuffer::Allocator* array_buffer_allocator_ = nullptr;
 };
 
 }  // namespace EscargotShim

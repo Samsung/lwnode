@@ -37,6 +37,7 @@ class HandleScopeWrap : public gc {
 
   void add(HandleWrap* value);
   bool remove(HandleWrap* value);
+  void clear();
 
   v8::HandleScope* v8HandleScope() const { return scope_; }
 

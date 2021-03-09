@@ -30,11 +30,9 @@ BackingStoreWrap::BackingStoreWrap(void* data,
       byteLength_(byte_length),
       isShared_(shared == SharedFlag::kShared),
       allocator_(allocator) {
-  LWNODE_DLOG_INFO("malc: bs=%p mem=%p (length=%zuB)", this, data_, byteLength_);
 }
 
 BackingStoreWrap::~BackingStoreWrap() {
-  LWNODE_DLOG_INFO("free: bs=%p mem=%p (length=%zuB)", this, data_, byteLength_);
   allocator_->Free(data_, byteLength_);
   clear();
 }
