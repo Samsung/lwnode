@@ -295,9 +295,15 @@ void ObjectRefHelper::setExtraData(
     ObjectRef* object,
     void* data,
     Memory::GCAllocatedMemoryFinalizer callback) {
+  if (object->extraData()) {
+    LWNODE_DLOG_WARN("extra data already exists. it will be removed.");
+  }
+
+  // @consider manage extra data with slot id
   object->setExtraData(data);
+
   if (callback) {
-    Memory::gcRegisterFinalizer(object, callback);
+    MemoryUtil::gcRegisterFinalizer(object, callback);
   }
 }
 

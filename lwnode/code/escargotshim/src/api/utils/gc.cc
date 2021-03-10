@@ -17,13 +17,16 @@
 #include "gc.h"
 #include <EscargotPublic.h>
 #include <GCUtil.h>
+#include "flags.h"
 #include "logger.h"
 
 using namespace Escargot;
 
 #define LOG_HANDLER(msg, ...)                                                  \
   do {                                                                         \
-    LWNODE_LOG_RAW(COLOR_DIM "GC " msg COLOR_RESET, ##__VA_ARGS__);            \
+    if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
+      LWNODE_LOG_RAW(COLOR_DIM "GC " msg COLOR_RESET, ##__VA_ARGS__);          \
+    }                                                                          \
   } while (0)
 
 static std::function<bool(uint, double)> g_filter = [](uint idx, double value) {
@@ -36,7 +39,7 @@ static std::function<bool(uint, double)> g_filter = [](uint idx, double value) {
 
 #define THRESHOLD_BYTES_BACKTRACE 2048
 
-void MemoryUtil::startGCStatsTrace() {
+void MemoryUtil::gcStartStatsTrace() {
   Memory::setGCEventListener([]() {
     static size_t last_use = 0, last_heap = 0;
 
@@ -123,7 +126,8 @@ void MemoryUtil::printEveryReachableGCObjects() {
               temp.totalCount);
 }
 
-void MemoryUtil::collectAllGarbage() {
+void MemoryUtil::gcFull() {
+  LOG_HANDLER("[FULL GC]");
   GC_register_mark_stack_func([]() {
     // do nothing for skip stack
     // assume there is no gc-object on stack
@@ -136,7 +140,15 @@ void MemoryUtil::collectAllGarbage() {
   GC_gcollect();
 }
 
-void MemoryUtil::endGCStatsTrace() {
+void MemoryUtil::gc() {
+  LOG_HANDLER("[GC]");
+  GC_gcollect();
+  for (int i = 0; i < 5; ++i) {
+    GC_gcollect_and_unmap();
+  }
+}
+
+void MemoryUtil::gcEndStatsTrace() {
   Memory::setGCEventListener(nullptr);
 }
 
@@ -170,4 +182,14 @@ void MemoryUtil::prettyBytes(char* buf,
   } else {
     snprintf(buf, nBuf, "%.3f %s", c, suffix[s]);
   }
+}
+
+void MemoryUtil::gcRegisterFinalizer(Escargot::ValueRef* ptr,
+                                     GCAllocatedMemoryFinalizer callback) {
+  Escargot::Memory::gcRegisterFinalizer(ptr->asObject(), callback);
+}
+
+void MemoryUtil::gcUnregisterFinalizer(Escargot::ValueRef* ptr,
+                                       GCAllocatedMemoryFinalizer callback) {
+  Escargot::Memory::gcUnregisterFinalizer(ptr->asObject(), callback);
 }

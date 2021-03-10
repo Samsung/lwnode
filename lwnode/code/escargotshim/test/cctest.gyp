@@ -29,6 +29,7 @@
         'cctest/v14_test_2.cc',
         'cctest/v14_test_3.cc',
         'cctest/test-api.cc',
+        'cctest/test-internal.cc',
       ]
     },
   ],

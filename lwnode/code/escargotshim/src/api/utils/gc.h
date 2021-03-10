@@ -114,14 +114,26 @@ template <typename T,
 class GCUnorderedSet : public GCUnorderedSetT<T, Hasher, Predicate, Allocator>,
                        public gc {};
 
+namespace Escargot {
+class ValueRef;
+}
+
 class ESCARGOT_EXPORT MemoryUtil {
  public:
-  static void startGCStatsTrace();
-  static void endGCStatsTrace();
-  static void collectAllGarbage();
+  static void gcStartStatsTrace();
+  static void gcEndStatsTrace();
+  static void gcFull();
+  static void gc();
+
+  typedef void (*GCAllocatedMemoryFinalizer)(void* self);
+  static void gcRegisterFinalizer(Escargot::ValueRef* ptr,
+                                  GCAllocatedMemoryFinalizer callback);
+  static void gcUnregisterFinalizer(Escargot::ValueRef* ptr,
+                                    GCAllocatedMemoryFinalizer callback);
+  // print
   static void printEveryReachableGCObjects();
   static void printGCStats();
-  static void printBacktrace(void *gcPtr);
+  static void printBacktrace(void* gcPtr);
   static void prettyBytes(char* buf,
                           size_t nBuf,
                           size_t bytes,
