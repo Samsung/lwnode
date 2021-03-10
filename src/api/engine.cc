@@ -106,13 +106,13 @@ void Engine::initialize() {
 
   auto flags = Flags::get();
   if (flags & FlagType::TraceGC) {
-    MemoryUtil::startGCStatsTrace();
+    MemoryUtil::gcStartStatsTrace();
   }
 }
 
 void Engine::finalize() {
   Globals::finalize();
-  MemoryUtil::collectAllGarbage();
+  MemoryUtil::gcFull();
 }
 
 }  // namespace EscargotShim

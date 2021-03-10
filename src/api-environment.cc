@@ -61,6 +61,7 @@ void v8::V8::SetReturnAddressLocationResolver(
 }
 
 bool v8::V8::Dispose() {
+  LWNODE_CALL_TRACE();
   Engine::Dispose();
   return true;
 }

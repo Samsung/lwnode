@@ -100,6 +100,7 @@ BackingStoreWrapHolder::BackingStoreWrapHolder(BackingStoreWrap* backingStore)
   }
 }
 
+
 BackingStoreWrapHolder::~BackingStoreWrapHolder() {
   // @check consider to simply delete backingStore_ with isExternal condition.
   auto it = BackingStoreWrapHolder::map_.find(backingStore_);
@@ -107,6 +108,7 @@ BackingStoreWrapHolder::~BackingStoreWrapHolder() {
     if (it->second == 1) {
       map_.erase(it);
       delete backingStore_;
+
     } else {
       it->second--;
     }

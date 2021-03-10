@@ -18,18 +18,12 @@
 
 #include <EscargotPublic.h>
 #include <v8.h>
-#include <type_traits>
-
 #include "utils/gc.h"
-#include "utils/misc.h"
-#include "utils/optional.h"
 
 namespace EscargotShim {
 
 class ContextWrap;
 class IsolateWrap;
-
-typedef GCContainer<void*> ExtraData;
 
 class HandleWrap : public gc {
  public:

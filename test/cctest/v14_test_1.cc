@@ -15,6 +15,7 @@
  */
 
 #include "cctest.h"
+#include "internal-api.h"
 #include "v8.h"
 
 using namespace v8;
@@ -195,19 +196,24 @@ TEST(ArrayBuffer_New) {
   CHECK_EQ(0xDD, result->Int32Value(env.local()).FromJust());
 }
 
+static int s_array_buffer_release_pass;
+
 TEST(ArrayBuffer_Release) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
 
-  {
+  [&isolate]() {
     v8::HandleScope handle_scope(isolate);
     Local<v8::ArrayBuffer> ab = v8::ArrayBuffer::New(isolate, 1024);
-  }
+    s_array_buffer_release_pass = 0;
+    MemoryUtil::gcRegisterFinalizer(
+        VAL(*ab)->value(), [](void* self) { s_array_buffer_release_pass++; });
+  }();
 
-  CcTest::CollectAllGarbage();
-  CcTest::CollectAllGarbage();
+  CcTest::CollectGarbage();
 
-  // todo: add check if releasing ab works using handlescope
+  CHECK_GT(s_array_buffer_release_pass, 0);
+
   // todo: verify if releasing context scopes works using context scope
 }

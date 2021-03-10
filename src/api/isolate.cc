@@ -41,7 +41,7 @@ IsolateWrap* IsolateWrap::New() {
 
 void IsolateWrap::Dispose() {
   unlock_gc_release();
-  MemoryUtil::collectAllGarbage();
+  MemoryUtil::gcFull();
 }
 
 bool IsolateWrap::IsExecutionTerminating() {

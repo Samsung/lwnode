@@ -15,15 +15,12 @@
  */
 
 #include "cctest.h"
+#include "internal-api.h"
 
 v8::Isolate* CcTest::isolate_ = nullptr;
 v8::Context::Scope* CcTest::contextScope_ = nullptr;
 static bool disable_automatic_dispose_ = false;
 v8::Isolate::CreateParams create_params_;
-
-// internals
-#include "api/utils/flags.h"
-#include "api/utils/gc.h"
 
 LocalContext::~LocalContext() {
   v8::HandleScope scope(isolate_);
@@ -78,11 +75,15 @@ void CcTest::TearDown() {
   }
 }
 
+void CcTest::CollectGarbage() {
+  MemoryUtil::gc();
+}
+
 void CcTest::CollectAllGarbage(v8::Isolate* isolate) {
   if (isolate) {
     printf("(!) gc per isolate isn't supported yet.");
   }
-  MemoryUtil::collectAllGarbage();
+  MemoryUtil::gcFull();
 }
 
 static inline bool startsWith(const std::string& string,
@@ -105,7 +106,8 @@ int main(int argc, char* argv[]) {
     std::string arg(argv[i]);
 
     if (startsWith(arg, std::string("-f="))) {
-      std::string f = std::string("*") + arg.substr(strlen("-f="));
+      std::string f =
+          std::string("*") + arg.substr(strlen("-f=")) + std::string("*");
       ::testing::GTEST_FLAG(filter) = f.c_str();
     } else if (startsWith(arg, std::string("--trace-call"))) {
       EscargotShim::Flags::add(EscargotShim::FlagType::TraceCall);
