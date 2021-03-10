@@ -22,17 +22,27 @@ static v8::internal::Address* ToAddress(HandleWrap** ref) {
   return reinterpret_cast<v8::internal::Address*>(ref);
 }
 
-FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(v8::Isolate* isolate,
-                                                   ValueRef* holder,
-                                                   ValueRef* thisValue,
-                                                   int argc,
-                                                   ValueRef** argv)
+FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
+    v8::Isolate* isolate,
+    ValueRef* holder,
+    ValueRef* thisValue,
+    OptionalRef<ObjectRef> newTarget,
+    ValueWrap* data,
+    int argc,
+    ValueRef** argv)
     : v8::FunctionCallbackInfo<v8::Value>(
           ToAddress(m_implicitArgs),
           ToAddress(toWrapperArgs(thisValue, argc, argv)),
           argc) {
   m_implicitArgs[T::kHolderIndex] = ValueWrap::createValue(holder);
   m_implicitArgs[T::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
+  m_implicitArgs[T::kReturnValueIndex] =
+      ValueWrap::createValue(ValueRef::createUndefined());
+  m_implicitArgs[T::kNewTargetIndex] =
+      newTarget.hasValue()
+          ? ValueWrap::createValue(newTarget.get())
+          : ValueWrap::createValue(ValueRef::createUndefined());
+  m_implicitArgs[T::kDataIndex] = data;
 }
 
 HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,

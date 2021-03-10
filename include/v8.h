@@ -11336,7 +11336,12 @@ Local<Object> FunctionCallbackInfo<T>::This() const {
 #ifdef V8_REVERSE_JSARGS
   return Local<Object>(reinterpret_cast<Object*>(values_ - 1));
 #else
+// @lwnode
+#if 0
   return Local<Object>(reinterpret_cast<Object*>(values_ + 1));
+#endif
+  return Local<Object>(*reinterpret_cast<Object**>(values_ + 1));
+// end @lwnode
 #endif
 }
 
@@ -11349,13 +11354,24 @@ Local<Object> FunctionCallbackInfo<T>::Holder() const {
 
 template <typename T>
 Local<Value> FunctionCallbackInfo<T>::NewTarget() const {
+// @lwnode
+#if 0
   return Local<Value>(
       reinterpret_cast<Value*>(&implicit_args_[kNewTargetIndex]));
+#endif
+  return Local<Value>(
+      reinterpret_cast<Value*>(implicit_args_[kNewTargetIndex]));
+// end @lwnode
 }
 
 template <typename T>
 Local<Value> FunctionCallbackInfo<T>::Data() const {
+// @lwnode
+#if 0
   return Local<Value>(reinterpret_cast<Value*>(&implicit_args_[kDataIndex]));
+#endif
+  return Local<Value>(reinterpret_cast<Value*>(implicit_args_[kDataIndex]));
+// end @lwnode
 }
 
 

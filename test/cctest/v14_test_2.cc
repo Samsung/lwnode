@@ -44,7 +44,7 @@ bool functionTemplateCallbackFlag = false;
 static void functionTemplateCallback(
     const v8::FunctionCallbackInfo<Value>& info) {
   functionTemplateCallbackFlag = true;
-  // CHECK_EQ(info.IsConstructCall(), false);
+  CHECK_EQ(info.IsConstructCall(), false);
   info.GetReturnValue().Set(v8_num(22));
   CHECK_EQ(3, info.Length());
   CHECK_EQ(12,
@@ -83,4 +83,37 @@ TEST(CallFunctionTemplate) {
                        ->Int32Value(env.local())
                        .FromJust();
   CHECK_EQ(result, 22);
+}
+
+bool functionTemplateConsCallbackFlag = false;
+static void functionTemplateConsCallback(
+    const v8::FunctionCallbackInfo<Value>& info) {
+  functionTemplateConsCallbackFlag = true;
+
+  auto context = info.GetIsolate()->GetCurrentContext();
+
+  CHECK_EQ(info.Length(), 1);
+  CHECK_EQ(25, info[0]->ToInt32(context).ToLocalChecked()->Value());
+  CHECK_EQ(info.IsConstructCall(), true);
+  CHECK(info.Data()->Equals(context, v8_num(7)).FromJust());
+  Local<Object>::Cast(info.This())
+      ->Set(context, v8_str("x"), v8_num(22))
+      .FromJust();
+}
+
+TEST(CallFunctionTemplateCons) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  Local<v8::FunctionTemplate> fun_templ = v8::FunctionTemplate::New(
+      isolate, functionTemplateConsCallback, v8::Integer::New(isolate, 7));
+
+  Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+  CHECK(env->Global()->Set(env.local(), v8_str("ClassA"), fun).FromJust());
+  CompileRun("var aObject = new ClassA(25);");
+  Local<Value> v = CompileRun("aObject.x");
+  CHECK(v->IsNumber());
+  CHECK_EQ(22, static_cast<int>(v->NumberValue(env.local()).FromJust()));
+  CHECK(functionTemplateConsCallbackFlag);
 }

@@ -103,8 +103,13 @@ static ValueRef* FunctionTemplateNativeFunction(
 
   Local<Value> result;
   if (tpData->m_callback) {
-    FunctionCallbackInfoWrap info(
-        tpData->m_isolate, thisValue, thisValue, argc, argv);
+    FunctionCallbackInfoWrap info(tpData->m_isolate,
+                                  thisValue,
+                                  thisValue,
+                                  newTarget,
+                                  VAL(*tpData->m_callbackData),
+                                  argc,
+                                  argv);
     tpData->m_callback(info);
     result = info.GetReturnValue().Get();
     // TODO: error check from 'state'
