@@ -1,0 +1,36 @@
+P /.git
+P /.github
+P /.circleci
+
+- /benchmark
+- /doc
+- /deps/npm
+- /deps/zlib
+- /deps/openssl
+- /deps/gtest
+- /deps/v8/test
+- /deps/v8/testing
+- /lwnode/code/escargotshim/deps/escargot/test
+- /lwnode/code/escargotshim/deps/escargot/.git
+- /lwnode/code/escargotshim/deps/escargot/.github
+- /lwnode/code/escargotshim/deps/escargot/.gitmodules
+- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/.git
+- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/.github
+- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/.gitattributes
+
+- .git
+- .circleci
+- .gitmodules
+- .gitattributes
+- .editorconfig
+- .eslintignore
+- .eslintrc.yaml
+- .remarkrc
+
+- *.pyc
+- *.a
+- *.so
+- *.o
+- CMakeCache.txt
+- CMakeFiles
+
