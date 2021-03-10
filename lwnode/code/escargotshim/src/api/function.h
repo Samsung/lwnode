@@ -31,6 +31,8 @@ class FunctionCallbackInfoWrap : public v8::FunctionCallbackInfo<v8::Value> {
   FunctionCallbackInfoWrap(v8::Isolate* isolate,
                            ValueRef* holder,
                            ValueRef* thisValue,
+                           OptionalRef<ObjectRef> newTarget,
+                           ValueWrap* data,
                            int argc,
                            ValueRef** argv);
   ~FunctionCallbackInfoWrap();
