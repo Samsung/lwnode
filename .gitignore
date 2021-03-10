@@ -148,4 +148,4 @@ kuep_net_signer.sh
 bdwgcUsage.dat
 
 *.mk
-./cctest
+/cctest

@@ -2,8 +2,7 @@
 #define __ESCARGOTSHIM_GLOBALS__
 
 // FUNCTION_ADDR(f) gets the address of a C function f.
-#define FUNCTION_ADDR(f)                                                       \
-  (reinterpret_cast<v8::internal::Address>(reinterpret_cast<intptr_t>(f)))
+#define FUNCTION_ADDR(f) (reinterpret_cast<v8::internal::Address>(f))
 
 namespace v8 {
 

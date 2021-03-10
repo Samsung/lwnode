@@ -96,7 +96,6 @@ static ValueRef* FunctionTemplateNativeFunction(
     OptionalRef<ObjectRef> newTarget) {
   Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
       state->resolveCallee();
-  auto ptr = callee->extraData();
   LWNODE_DCHECK_NOT_NULL(callee->extraData());
   auto tpData =
       FunctionTemplateData::toFunctionTemplateData(callee->extraData());
@@ -132,6 +131,11 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                               ConstructorBehavior behavior,
                                               SideEffectType side_effect_type,
                                               const CFunction* c_function) {
+  if (c_function != nullptr ||
+      side_effect_type != SideEffectType::kHasSideEffect) {
+    LWNODE_RETURN_LOCAL(FunctionTemplate);
+  }
+
   API_ENTER_NO_EXCEPTION(isolate);
   bool isConstructor = false;
   if (behavior == ConstructorBehavior::kAllow) {
@@ -177,7 +181,17 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
                                       v8::Local<Value> data,
                                       SideEffectType side_effect_type,
                                       const CFunction* c_function) {
-  LWNODE_RETURN_VOID;
+  if (c_function != nullptr ||
+      side_effect_type != SideEffectType::kHasSideEffect) {
+    LWNODE_RETURN_VOID;
+  }
+
+  Escargot::FunctionTemplateRef* esFunctionTemplate =
+      CVAL(this)->functionTemplate();
+  auto tpData = FunctionTemplateData::toFunctionTemplateData(
+      esFunctionTemplate->instanceExtraData());
+  tpData->m_callback = callback;
+  tpData->m_callbackData = data;
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {

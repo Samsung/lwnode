@@ -992,23 +992,23 @@ THREADED_TEST(GlobalProperties) {
 }
 
 
-// static void handle_callback_impl(const v8::FunctionCallbackInfo<Value>& info,
-//                                  i::Address callback) {
-//   ApiTestFuzzer::Fuzz();
-//   CheckReturnValue(info, callback);
-//   info.GetReturnValue().Set(v8_str("bad value"));
-//   info.GetReturnValue().Set(v8_num(102));
-// }
+static void handle_callback_impl(const v8::FunctionCallbackInfo<Value>& info,
+                                 i::Address callback) {
+  // ApiTestFuzzer::Fuzz();
+  // CheckReturnValue(info, callback);
+  info.GetReturnValue().Set(v8_str("bad value"));
+  info.GetReturnValue().Set(v8_num(102));
+}
 
 
-// static void handle_callback(const v8::FunctionCallbackInfo<Value>& info) {
-//   return handle_callback_impl(info, FUNCTION_ADDR(handle_callback));
-// }
+static void handle_callback(const v8::FunctionCallbackInfo<Value>& info) {
+  return handle_callback_impl(info, FUNCTION_ADDR(handle_callback));
+}
 
 
-// static void handle_callback_2(const v8::FunctionCallbackInfo<Value>& info) {
-//   return handle_callback_impl(info, FUNCTION_ADDR(handle_callback_2));
-// }
+static void handle_callback_2(const v8::FunctionCallbackInfo<Value>& info) {
+  return handle_callback_impl(info, FUNCTION_ADDR(handle_callback_2));
+}
 
 // static void construct_callback(
 //     const v8::FunctionCallbackInfo<Value>& info) {
@@ -1036,41 +1036,41 @@ THREADED_TEST(GlobalProperties) {
 // }
 
 
-// template<typename Handler>
-// static void TestFunctionTemplateInitializer(Handler handler,
-//                                             Handler handler_2) {
-//   // Test constructor calls.
-//   {
-//     LocalContext env;
-//     v8::Isolate* isolate = env->GetIsolate();
-//     v8::HandleScope scope(isolate);
+template<typename Handler>
+static void TestFunctionTemplateInitializer(Handler handler,
+                                            Handler handler_2) {
+  // Test constructor calls.
+  {
+    LocalContext env;
+    v8::Isolate* isolate = env->GetIsolate();
+    v8::HandleScope scope(isolate);
 
-//     Local<v8::FunctionTemplate> fun_templ =
-//         v8::FunctionTemplate::New(isolate, handler);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//     Local<Script> script = v8_compile("obj()");
-//     for (int i = 0; i < 30; i++) {
-//       CHECK_EQ(102, v8_run_int32value(script));
-//     }
-//   }
-//   // Use SetCallHandler to initialize a function template, should work like
-//   // the previous one.
-//   {
-//     LocalContext env;
-//     v8::Isolate* isolate = env->GetIsolate();
-//     v8::HandleScope scope(isolate);
+    Local<v8::FunctionTemplate> fun_templ =
+        v8::FunctionTemplate::New(isolate, handler);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+    Local<Script> script = v8_compile("obj()");
+    for (int i = 0; i < 30; i++) {
+      CHECK_EQ(102, v8_run_int32value(script));
+    }
+  }
+  // Use SetCallHandler to initialize a function template, should work like
+  // the previous one.
+  {
+    LocalContext env;
+    v8::Isolate* isolate = env->GetIsolate();
+    v8::HandleScope scope(isolate);
 
-//     Local<v8::FunctionTemplate> fun_templ = v8::FunctionTemplate::New(isolate);
-//     fun_templ->SetCallHandler(handler_2);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//     Local<Script> script = v8_compile("obj()");
-//     for (int i = 0; i < 30; i++) {
-//       CHECK_EQ(102, v8_run_int32value(script));
-//     }
-//   }
-// }
+    Local<v8::FunctionTemplate> fun_templ = v8::FunctionTemplate::New(isolate);
+    fun_templ->SetCallHandler(handler_2);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+    Local<Script> script = v8_compile("obj()");
+    for (int i = 0; i < 30; i++) {
+      CHECK_EQ(102, v8_run_int32value(script));
+    }
+  }
+}
 
 
 // template<typename Constructor, typename Accessor>
@@ -1104,10 +1104,10 @@ THREADED_TEST(GlobalProperties) {
 // }
 
 
-// THREADED_PROFILED_TEST(FunctionTemplate) {
-//   TestFunctionTemplateInitializer(handle_callback, handle_callback_2);
-//   TestFunctionTemplateAccessor(construct_callback, Return239Callback);
-// }
+THREADED_PROFILED_TEST(FunctionTemplate) {
+  TestFunctionTemplateInitializer(handle_callback, handle_callback_2);
+  // TestFunctionTemplateAccessor(construct_callback, Return239Callback);
+}
 
 // static void FunctionCallbackForProxyTest(
 //     const v8::FunctionCallbackInfo<Value>& info) {
