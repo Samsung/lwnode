@@ -233,10 +233,6 @@ i::Address* Context::GetDataFromSnapshotOnce(size_t index) {
   LWNODE_RETURN_NULLPTR;
 }
 
-MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
-  LWNODE_RETURN_LOCAL(Object);
-}
-
 void v8::ObjectTemplate::CheckCast(Data* that) {
   LWNODE_RETURN_VOID;
 }
