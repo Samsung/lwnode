@@ -74,14 +74,30 @@ ScriptRef* ValueWrap::script() const {
   return reinterpret_cast<ScriptRef*>(holder_);
 }
 
+Escargot::TemplateRef* ValueWrap::tpl() const {
+  LWNODE_CHECK(type() == Type::ObjectTemplate ||
+               type() == Type::FunctionTemplate);
+  return reinterpret_cast<TemplateRef*>(holder_);
+}
+
 ValueWrap* ValueWrap::createFunctionTemplate(
     Escargot::FunctionTemplateRef* esTemplate) {
   return new ValueWrap(esTemplate, Type::FunctionTemplate);
 }
 
-Escargot::FunctionTemplateRef* ValueWrap::functionTemplate() const {
+Escargot::FunctionTemplateRef* ValueWrap::ftpl() const {
   LWNODE_CHECK(type() == Type::FunctionTemplate);
   return reinterpret_cast<FunctionTemplateRef*>(holder_);
+}
+
+ValueWrap* ValueWrap::createObjectTemplate(
+    Escargot::ObjectTemplateRef* esTemplate) {
+  return new ValueWrap(esTemplate, Type::ObjectTemplate);
+}
+
+Escargot::ObjectTemplateRef* ValueWrap::otpl() const {
+  LWNODE_CHECK(type() == Type::ObjectTemplate);
+  return reinterpret_cast<ObjectTemplateRef*>(holder_);
 }
 
 }  // namespace EscargotShim

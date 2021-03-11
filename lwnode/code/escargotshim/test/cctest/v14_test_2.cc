@@ -117,3 +117,28 @@ TEST(CallFunctionTemplateCons) {
   CHECK_EQ(22, static_cast<int>(v->NumberValue(env.local()).FromJust()));
   CHECK(functionTemplateConsCallbackFlag);
 }
+
+TEST(ObjectTemplateSimple) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::ObjectTemplate> object_template =
+      v8::ObjectTemplate::New(isolate);
+
+  Local<Data> value =
+      String::NewFromUtf8(isolate, "Hello", NewStringType::kNormal)
+          .ToLocalChecked();
+  object_template->Set(isolate, "message", value);
+
+  // create an instance
+  v8::Local<v8::Object> object =
+      object_template->NewInstance(env.local()).ToLocalChecked();
+
+  CHECK((*env)
+            ->Global()
+            ->Set(env.local(), v8_str("object_from_template"), object)
+            .FromJust());
+
+  ExpectString("object_from_template.message", "Hello");
+}

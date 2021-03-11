@@ -24,7 +24,9 @@ namespace {
 class TemplateData : public gc {
  public:
   TemplateData(v8::Isolate* isolate) : m_isolate(isolate) {}
+  v8::Isolate* isolate() { return m_isolate; }
 
+ private:
   v8::Isolate* m_isolate{nullptr};
 };
 
@@ -50,6 +52,16 @@ class FunctionTemplateData : public TemplateData {
   v8::Local<v8::Signature> m_signature;
   int m_length{0};
 };
+
+class ObjectTemplateData : public TemplateData {
+ public:
+  ObjectTemplateData(v8::Isolate* isolate) : TemplateData(isolate) {}
+
+  static ObjectTemplateData* toObjectTemplateData(void* ptr) {
+    return reinterpret_cast<ObjectTemplateData*>(ptr);
+  }
+};
+
 }  // namespace
 
 namespace v8 {
@@ -58,7 +70,36 @@ namespace v8 {
 void Template::Set(v8::Local<Name> name,
                    v8::Local<Data> value,
                    v8::PropertyAttribute attribute) {
-  LWNODE_UNIMPLEMENT;
+  bool isWritable = !(attribute & ReadOnly);
+  bool isEnumerable = !(attribute & DontEnum);
+  bool isConfigurable = !(attribute & DontDelete);
+
+  TemplateRef* esTemplate = CVAL(this)->tpl();
+
+  // Name can be either a string or symbol
+  auto esName = CVAL(*name)->value();
+  TemplatePropertyNameRef esPropertyName;
+  if (esName->isString()) {
+    esPropertyName = TemplatePropertyNameRef(esName->asString());
+  } else if (esName->isSymbol()) {
+    esPropertyName = TemplatePropertyNameRef(esName->asSymbol());
+  }
+
+  auto lwValue = CVAL(*value);
+  if (lwValue->type() == HandleWrap::Type::ObjectTemplate ||
+      lwValue->type() == HandleWrap::Type::FunctionTemplate) {
+    esTemplate->set(esPropertyName,
+                    lwValue->tpl(),
+                    isWritable,
+                    isEnumerable,
+                    isConfigurable);
+  } else {
+    esTemplate->set(esPropertyName,
+                    lwValue->value(),
+                    isWritable,
+                    isEnumerable,
+                    isConfigurable);
+  }
 }
 
 void Template::SetPrivate(v8::Local<Private> name,
@@ -102,7 +143,7 @@ static ValueRef* FunctionTemplateNativeFunction(
 
   Local<Value> result;
   if (tpData->m_callback) {
-    FunctionCallbackInfoWrap info(tpData->m_isolate,
+    FunctionCallbackInfoWrap info(tpData->isolate(),
                                   thisValue,
                                   thisValue,
                                   newTarget,
@@ -186,8 +227,8 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
     LWNODE_RETURN_VOID;
   }
 
-  Escargot::FunctionTemplateRef* esFunctionTemplate =
-      CVAL(this)->functionTemplate();
+  Escargot::FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
+
   auto tpData = FunctionTemplateData::toFunctionTemplateData(
       esFunctionTemplate->instanceExtraData());
   tpData->m_callback = callback;
@@ -221,7 +262,7 @@ void FunctionTemplate::RemovePrototype() {
 MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esFunctionTemplate = CVAL(this)->functionTemplate();
+  auto esFunctionTemplate = CVAL(this)->ftpl();
 
   API_RETURN_LOCAL(
       Function, lwIsolate->toV8(), esFunctionTemplate->instantiate(esContext));
@@ -239,7 +280,13 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
 
 Local<ObjectTemplate> ObjectTemplate::New(
     Isolate* isolate, v8::Local<FunctionTemplate> constructor) {
-  LWNODE_RETURN_LOCAL(ObjectTemplate);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  auto esObjectTemplate = ObjectTemplateRef::create();
+  esObjectTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
+
+  return Local<ObjectTemplate>::New(
+      isolate, ValueWrap::createObjectTemplate(esObjectTemplate));
 }
 
 void Template::SetNativeDataProperty(v8::Local<String> name,
@@ -348,4 +395,13 @@ bool ObjectTemplate::IsImmutableProto() {
 }
 
 void ObjectTemplate::SetImmutableProto() {}
+
+MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<v8::Object>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esObjectTemplate = CVAL(this)->otpl();
+
+  API_RETURN_LOCAL(
+      Function, lwIsolate->toV8(), esObjectTemplate->instantiate(esContext));
+}
 }  // namespace v8
