@@ -2,23 +2,23 @@ P /.git
 P /.github
 P /.circleci
 
+- /lwnode/tools
+- /lwnode/code/escargotshim/tool
+- /lwnode/code/escargotshim/sample
+- /lwnode/code/escargotshim/test
+- /out
 - /benchmark
 - /doc
 - /deps/npm
 - /deps/zlib
 - /deps/openssl
 - /deps/gtest
-- /deps/v8/test
-- /deps/v8/testing
-- /lwnode/code/escargotshim/deps/escargot/test
-- /lwnode/code/escargotshim/deps/escargot/.git
-- /lwnode/code/escargotshim/deps/escargot/.github
-- /lwnode/code/escargotshim/deps/escargot/.gitmodules
-- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/.git
-- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/.github
-- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/.gitattributes
+- /tools/node_modules
+- /tools/gyp/tools/Xcode
++ /lib/internal/test
 
 - .git
+- .github
 - .circleci
 - .gitmodules
 - .gitattributes
@@ -26,6 +26,9 @@ P /.circleci
 - .eslintignore
 - .eslintrc.yaml
 - .remarkrc
+- test
+- testing
+- jinja2
 
 - *.pyc
 - *.a
@@ -33,4 +36,3 @@ P /.circleci
 - *.o
 - CMakeCache.txt
 - CMakeFiles
-

@@ -39,7 +39,7 @@ git add -A
 echo "======================================="
 echo git commit -m "Node_Escargot_Release_$today""_$hash"
 echo "======================================="
-msg="LWE_Release_$today""_$hash"
+msg="Node_Escargot_Release_$today""_$hash"
 git commit -m "$msg"
 
 popd

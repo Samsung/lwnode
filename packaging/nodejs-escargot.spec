@@ -104,4 +104,4 @@ rm ./*.list
 %defattr(-,root,root,-)
 %{_libdir}/*
 %{_bindir}/*
-%license LICENSE LICENSE.Microsoft LICENSE.NodeJS
+%license LICENSE.Apache-2.0 LICENSE.BOEHM-GC LICENSE.BSD-3-Clause LICENSE.MIT LICENSE.NodeJS
