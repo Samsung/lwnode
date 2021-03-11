@@ -117,7 +117,16 @@ void Template::SetAccessorProperty(v8::Local<v8::Name> name,
 // --- F u n c t i o n   T e m p l a t e ---
 
 Local<ObjectTemplate> FunctionTemplate::PrototypeTemplate() {
-  LWNODE_RETURN_LOCAL(ObjectTemplate);
+  FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
+  auto tpData = FunctionTemplateData::toFunctionTemplateData(
+      esFunctionTemplate->instanceExtraData());
+
+  auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
+  esPrototypeTemplate->setInstanceExtraData(
+      new ObjectTemplateData(tpData->isolate()));
+
+  return Local<ObjectTemplate>::New(
+      tpData->isolate(), ValueWrap::createObjectTemplate(esPrototypeTemplate));
 }
 
 void FunctionTemplate::SetPrototypeProviderTemplate(
@@ -236,7 +245,16 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
-  LWNODE_RETURN_LOCAL(ObjectTemplate);
+  FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
+  auto tpData = FunctionTemplateData::toFunctionTemplateData(
+      esFunctionTemplate->instanceExtraData());
+
+  auto esInstanceTemplate = esFunctionTemplate->instanceTemplate();
+  esInstanceTemplate->setInstanceExtraData(
+      new ObjectTemplateData(tpData->isolate()));
+
+  return Local<ObjectTemplate>::New(
+      tpData->isolate(), ValueWrap::createObjectTemplate(esInstanceTemplate));
 }
 
 void FunctionTemplate::SetLength(int length) {

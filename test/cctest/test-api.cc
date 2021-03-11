@@ -1073,35 +1073,35 @@ static void TestFunctionTemplateInitializer(Handler handler,
 }
 
 
-// template<typename Constructor, typename Accessor>
-// static void TestFunctionTemplateAccessor(Constructor constructor,
-//                                          Accessor accessor) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+template<typename Constructor, typename Accessor>
+static void TestFunctionTemplateAccessor(Constructor constructor,
+                                         Accessor accessor) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   Local<v8::FunctionTemplate> fun_templ =
-//       v8::FunctionTemplate::New(isolate, constructor);
-//   fun_templ->PrototypeTemplate()->Set(
-//       v8::Symbol::GetToStringTag(isolate), v8_str("funky"),
-//       static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
-//   fun_templ->InstanceTemplate()->SetAccessor(v8_str("m"), accessor);
+  Local<v8::FunctionTemplate> fun_templ =
+      v8::FunctionTemplate::New(isolate, constructor);
+  fun_templ->PrototypeTemplate()->Set(
+      v8::Symbol::GetToStringTag(isolate), v8_str("funky"),
+      static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
+  fun_templ->InstanceTemplate()->SetAccessor(v8_str("m"), accessor);
 
-//   Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//   CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//   Local<Value> result = CompileRun("(new obj()).toString()");
-//   CHECK(v8_str("[object funky]")->Equals(env.local(), result).FromJust());
-//   CompileRun("var obj_instance = new obj();");
+  Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+  CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+  Local<Value> result = CompileRun("(new obj()).toString()");
+  CHECK(v8_str("[object funky]")->Equals(env.local(), result).FromJust());
+  CompileRun("var obj_instance = new obj();");
 
-//   Local<Script> script = v8_compile("obj_instance.x");
-//   for (int i = 0; i < 30; i++) {
-//     CHECK_EQ(1, v8_run_int32value(script));
-//   }
-//   script = v8_compile("obj_instance.m");
-//   for (int i = 0; i < 30; i++) {
-//     CHECK_EQ(239, v8_run_int32value(script));
-//   }
-// }
+  Local<Script> script = v8_compile("obj_instance.x");
+  for (int i = 0; i < 30; i++) {
+    CHECK_EQ(1, v8_run_int32value(script));
+  }
+  script = v8_compile("obj_instance.m");
+  for (int i = 0; i < 30; i++) {
+    CHECK_EQ(239, v8_run_int32value(script));
+  }
+}
 
 
 THREADED_PROFILED_TEST(FunctionTemplate) {
