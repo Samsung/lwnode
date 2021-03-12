@@ -43,4 +43,15 @@ class FunctionCallbackInfoWrap : public v8::FunctionCallbackInfo<v8::Value> {
   HandleWrap* m_implicitArgs[T::kArgsLength];
 };
 
+template <typename T>
+class PropertyCallbackInfoWrap : public v8::PropertyCallbackInfo<T> {
+ public:
+  using F = v8::PropertyCallbackInfo<T>;
+
+  PropertyCallbackInfoWrap(v8::Isolate* isolate, v8::Local<v8::Value> data);
+
+ private:
+  HandleWrap* m_implicitArgs[F::kArgsLength];
+};
+
 }  // namespace EscargotShim

@@ -1073,35 +1073,35 @@ static void TestFunctionTemplateInitializer(Handler handler,
 }
 
 
-template<typename Constructor, typename Accessor>
-static void TestFunctionTemplateAccessor(Constructor constructor,
-                                         Accessor accessor) {
-  LocalContext env;
-  v8::Isolate* isolate = env->GetIsolate();
-  v8::HandleScope scope(isolate);
+// template<typename Constructor, typename Accessor>
+// static void TestFunctionTemplateAccessor(Constructor constructor,
+//                                          Accessor accessor) {
+//   LocalContext env;
+//   v8::Isolate* isolate = env->GetIsolate();
+//   v8::HandleScope scope(isolate);
 
-  Local<v8::FunctionTemplate> fun_templ =
-      v8::FunctionTemplate::New(isolate, constructor);
-  fun_templ->PrototypeTemplate()->Set(
-      v8::Symbol::GetToStringTag(isolate), v8_str("funky"),
-      static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
-  fun_templ->InstanceTemplate()->SetAccessor(v8_str("m"), accessor);
+//   Local<v8::FunctionTemplate> fun_templ =
+//       v8::FunctionTemplate::New(isolate, constructor);
+//   fun_templ->PrototypeTemplate()->Set(
+//       v8::Symbol::GetToStringTag(isolate), v8_str("funky"),
+//       static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
+//   fun_templ->InstanceTemplate()->SetAccessor(v8_str("m"), accessor);
 
-  Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-  CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-  Local<Value> result = CompileRun("(new obj()).toString()");
-  CHECK(v8_str("[object funky]")->Equals(env.local(), result).FromJust());
-  CompileRun("var obj_instance = new obj();");
+//   Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+//   CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+//   Local<Value> result = CompileRun("(new obj()).toString()");
+//   CHECK(v8_str("[object funky]")->Equals(env.local(), result).FromJust());
+//   CompileRun("var obj_instance = new obj();");
 
-  Local<Script> script = v8_compile("obj_instance.x");
-  for (int i = 0; i < 30; i++) {
-    CHECK_EQ(1, v8_run_int32value(script));
-  }
-  script = v8_compile("obj_instance.m");
-  for (int i = 0; i < 30; i++) {
-    CHECK_EQ(239, v8_run_int32value(script));
-  }
-}
+//   Local<Script> script = v8_compile("obj_instance.x");
+//   for (int i = 0; i < 30; i++) {
+//     CHECK_EQ(1, v8_run_int32value(script));
+//   }
+//   script = v8_compile("obj_instance.m");
+//   for (int i = 0; i < 30; i++) {
+//     CHECK_EQ(239, v8_run_int32value(script));
+//   }
+// }
 
 
 THREADED_PROFILED_TEST(FunctionTemplate) {
@@ -2714,19 +2714,19 @@ THREADED_TEST(UndefinedIsNotEnumerable) {
 // }
 
 
-// THREADED_TEST(FunctionPrototype) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<v8::FunctionTemplate> Foo = v8::FunctionTemplate::New(isolate);
-//   Foo->PrototypeTemplate()->Set(v8_str("plak"), v8_num(321));
-//   LocalContext env;
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("Foo"),
-//                   Foo->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
-//   Local<Script> script = v8_compile("Foo.prototype.plak");
-//   CHECK_EQ(v8_run_int32value(script), 321);
-// }
+THREADED_TEST(FunctionPrototype) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<v8::FunctionTemplate> Foo = v8::FunctionTemplate::New(isolate);
+  Foo->PrototypeTemplate()->Set(v8_str("plak"), v8_num(321));
+  LocalContext env;
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("Foo"),
+                  Foo->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  Local<Script> script = v8_compile("Foo.prototype.plak");
+  CHECK_EQ(v8_run_int32value(script), 321);
+}
 
 // THREADED_TEST(InternalFields) {
 //   LocalContext env;
@@ -3347,19 +3347,19 @@ THREADED_TEST(UndefinedIsNotEnumerable) {
 // }
 
 
-// THREADED_TEST(SymbolTemplateProperties) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::FunctionTemplate> foo = v8::FunctionTemplate::New(isolate);
-//   v8::Local<v8::Name> name = v8::Symbol::New(isolate);
-//   CHECK(!name.IsEmpty());
-//   foo->PrototypeTemplate()->Set(name, v8::FunctionTemplate::New(isolate));
-//   v8::Local<v8::Object> new_instance =
-//       foo->InstanceTemplate()->NewInstance(env.local()).ToLocalChecked();
-//   CHECK(!new_instance.IsEmpty());
-//   CHECK(new_instance->Has(env.local(), name).FromJust());
-// }
+THREADED_TEST(SymbolTemplateProperties) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::FunctionTemplate> foo = v8::FunctionTemplate::New(isolate);
+  v8::Local<v8::Name> name = v8::Symbol::New(isolate);
+  CHECK(!name.IsEmpty());
+  foo->PrototypeTemplate()->Set(name, v8::FunctionTemplate::New(isolate));
+  v8::Local<v8::Object> new_instance =
+      foo->InstanceTemplate()->NewInstance(env.local()).ToLocalChecked();
+  CHECK(!new_instance.IsEmpty());
+  CHECK(new_instance->Has(env.local(), name).FromJust());
+}
 
 
 // THREADED_TEST(PrivatePropertiesOnProxies) {
@@ -6284,34 +6284,34 @@ THREADED_TEST(Equality) {
 // }
 
 
-// static void GetXValue(Local<Name> name,
-//                       const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   CHECK(info.Data()
-//             ->Equals(CcTest::isolate()->GetCurrentContext(), v8_str("donut"))
-//             .FromJust());
-//   CHECK(name->Equals(CcTest::isolate()->GetCurrentContext(), v8_str("x"))
-//             .FromJust());
-//   info.GetReturnValue().Set(name);
-// }
+static void GetXValue(Local<Name> name,
+                      const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  CHECK(info.Data()
+            ->Equals(CcTest::isolate()->GetCurrentContext(), v8_str("donut"))
+            .FromJust());
+  CHECK(name->Equals(CcTest::isolate()->GetCurrentContext(), v8_str("x"))
+            .FromJust());
+  info.GetReturnValue().Set(name);
+}
 
 
-// THREADED_TEST(SimplePropertyRead) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessor(v8_str("x"), GetXValue, nullptr, v8_str("donut"));
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("obj"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   Local<Script> script = v8_compile("obj.x");
-//   for (int i = 0; i < 10; i++) {
-//     Local<Value> result = script->Run(context.local()).ToLocalChecked();
-//     CHECK(result->Equals(context.local(), v8_str("x")).FromJust());
-//   }
-// }
+THREADED_TEST(SimplePropertyRead) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessor(v8_str("x"), GetXValue, nullptr, v8_str("donut"));
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("obj"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  Local<Script> script = v8_compile("obj.x");
+  for (int i = 0; i < 10; i++) {
+    Local<Value> result = script->Run(context.local()).ToLocalChecked();
+    CHECK(result->Equals(context.local(), v8_str("x")).FromJust());
+  }
+}
 
 
 // THREADED_TEST(DefinePropertyOnAPIAccessor) {
@@ -6619,41 +6619,41 @@ THREADED_TEST(Equality) {
 // }
 
 
-// v8::Persistent<Value> xValue;
+v8::Persistent<Value> xValue;
 
 
-// static void SetXValue(Local<Name> name, Local<Value> value,
-//                       const v8::PropertyCallbackInfo<void>& info) {
-//   Local<Context> context = info.GetIsolate()->GetCurrentContext();
-//   CHECK(value->Equals(context, v8_num(4)).FromJust());
-//   CHECK(info.Data()->Equals(context, v8_str("donut")).FromJust());
-//   CHECK(name->Equals(context, v8_str("x")).FromJust());
-//   CHECK(xValue.IsEmpty());
-//   xValue.Reset(info.GetIsolate(), value);
-// }
+static void SetXValue(Local<Name> name, Local<Value> value,
+                      const v8::PropertyCallbackInfo<void>& info) {
+  Local<Context> context = info.GetIsolate()->GetCurrentContext();
+  CHECK(value->Equals(context, v8_num(4)).FromJust());
+  CHECK(info.Data()->Equals(context, v8_str("donut")).FromJust());
+  CHECK(name->Equals(context, v8_str("x")).FromJust());
+  CHECK(xValue.IsEmpty());
+  xValue.Reset(info.GetIsolate(), value);
+}
 
 
-// THREADED_TEST(SimplePropertyWrite) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessor(v8_str("x"), GetXValue, SetXValue, v8_str("donut"));
-//   LocalContext context;
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("obj"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   Local<Script> script = v8_compile("obj.x = 4");
-//   for (int i = 0; i < 10; i++) {
-//     CHECK(xValue.IsEmpty());
-//     script->Run(context.local()).ToLocalChecked();
-//     CHECK(v8_num(4)
-//               ->Equals(context.local(),
-//                        Local<Value>::New(CcTest::isolate(), xValue))
-//               .FromJust());
-//     xValue.Reset();
-//   }
-// }
+THREADED_TEST(SimplePropertyWrite) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessor(v8_str("x"), GetXValue, SetXValue, v8_str("donut"));
+  LocalContext context;
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("obj"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  Local<Script> script = v8_compile("obj.x = 4");
+  for (int i = 0; i < 10; i++) {
+    CHECK(xValue.IsEmpty());
+    script->Run(context.local()).ToLocalChecked();
+    CHECK(v8_num(4)
+              ->Equals(context.local(),
+                       Local<Value>::New(CcTest::isolate(), xValue))
+              .FromJust());
+    xValue.Reset();
+  }
+}
 
 
 // THREADED_TEST(SetterOnly) {

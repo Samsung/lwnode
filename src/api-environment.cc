@@ -736,17 +736,18 @@ MaybeLocal<Map> Map::Set(Local<Context> context,
   auto esKey = CVAL(*key)->value();
   auto esValue = CVAL(*value)->value();
 
-  EvalResult r = Evaluator::execute(esContext,
-                                    [](ExecutionStateRef* esState,
-                                       MapObjectRef* esSelf,
-                                       ValueRef* esKey,
-                                       ValueRef* esValue) -> ValueRef* {
-                                      esSelf->set(esState, esKey, esValue);
-                                      return ValueRef::createNull();
-                                    },
-                                    esSelf,
-                                    esKey,
-                                    esValue);
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         MapObjectRef* esSelf,
+         ValueRef* esKey,
+         ValueRef* esValue) -> ValueRef* {
+        esSelf->set(esState, esKey, esValue);
+        return ValueRef::createNull();
+      },
+      esSelf,
+      esKey,
+      esValue);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Map>());
 
   API_RETURN_LOCAL(Map, lwIsolate->toV8(), esSelf);
@@ -758,15 +759,15 @@ Maybe<bool> Map::Has(Local<Context> context, Local<Value> key) {
   auto esSelf = CVAL(this)->value()->asMapObject();
   auto esKey = CVAL(*key)->value();
 
-  EvalResult r =
-      Evaluator::execute(esContext,
-                         [](ExecutionStateRef* esState,
-                            MapObjectRef* esSelf,
-                            ValueRef* esKey) -> ValueRef* {
-                           return ValueRef::create(esSelf->has(esState, esKey));
-                         },
-                         esSelf,
-                         esKey);
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         MapObjectRef* esSelf,
+         ValueRef* esKey) -> ValueRef* {
+        return ValueRef::create(esSelf->has(esState, esKey));
+      },
+      esSelf,
+      esKey);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(r.result->asBoolean());
@@ -877,15 +878,16 @@ MaybeLocal<Set> Set::Add(Local<Context> context, Local<Value> key) {
   auto esSelf = CVAL(this)->value()->asSetObject();
   auto esKey = CVAL(*key)->value();
 
-  EvalResult r = Evaluator::execute(esContext,
-                                    [](ExecutionStateRef* esState,
-                                       SetObjectRef* esSelf,
-                                       ValueRef* esKey) -> ValueRef* {
-                                      esSelf->add(esState, esKey);
-                                      return ValueRef::createNull();
-                                    },
-                                    esSelf,
-                                    esKey);
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         SetObjectRef* esSelf,
+         ValueRef* esKey) -> ValueRef* {
+        esSelf->add(esState, esKey);
+        return ValueRef::createNull();
+      },
+      esSelf,
+      esKey);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Set>());
 
   API_RETURN_LOCAL(Set, lwIsolate->toV8(), esSelf);
@@ -897,15 +899,15 @@ Maybe<bool> Set::Has(Local<Context> context, Local<Value> key) {
   auto esSelf = CVAL(this)->value()->asSetObject();
   auto esKey = CVAL(*key)->value();
 
-  EvalResult r =
-      Evaluator::execute(esContext,
-                         [](ExecutionStateRef* esState,
-                            SetObjectRef* esSelf,
-                            ValueRef* esKey) -> ValueRef* {
-                           return ValueRef::create(esSelf->has(esState, esKey));
-                         },
-                         esSelf,
-                         esKey);
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         SetObjectRef* esSelf,
+         ValueRef* esKey) -> ValueRef* {
+        return ValueRef::create(esSelf->has(esState, esKey));
+      },
+      esSelf,
+      esKey);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(r.result->asBoolean());

@@ -22,6 +22,7 @@ static v8::internal::Address* ToAddress(HandleWrap** ref) {
   return reinterpret_cast<v8::internal::Address*>(ref);
 }
 
+// FunctionCallbackInfoWrap
 FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
     v8::Isolate* isolate,
     ValueRef* holder,
@@ -36,13 +37,14 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
           argc) {
   m_implicitArgs[T::kHolderIndex] = ValueWrap::createValue(holder);
   m_implicitArgs[T::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
+  // m_implicitArgs[T::kReturnValueDefaultValueIndex];  // TODO
   m_implicitArgs[T::kReturnValueIndex] =
       ValueWrap::createValue(ValueRef::createUndefined());
+  m_implicitArgs[T::kDataIndex] = data;
   m_implicitArgs[T::kNewTargetIndex] =
       newTarget.hasValue()
           ? ValueWrap::createValue(newTarget.get())
           : ValueWrap::createValue(ValueRef::createUndefined());
-  m_implicitArgs[T::kDataIndex] = data;
 }
 
 HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
@@ -64,6 +66,25 @@ FunctionCallbackInfoWrap::~FunctionCallbackInfoWrap() {
   HandleWrap** values =
       reinterpret_cast<HandleWrap**>(this->values_) - this->Length() + 1;
   delete[] values;
+}
+
+// PropertyCallbackInfoWrap
+template class PropertyCallbackInfoWrap<v8::Value>;
+template class PropertyCallbackInfoWrap<void>;
+
+template <typename T>
+PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
+                                                      v8::Local<v8::Value> data)
+    : v8::PropertyCallbackInfo<T>(
+          reinterpret_cast<v8::internal::Address*>(m_implicitArgs)) {
+  // m_implicitArgs[F::kShouldThrowOnErrorIndex]; // TODO
+  // m_implicitArgs[F::kHolderIndex]; // TODO
+  m_implicitArgs[F::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
+  // m_implicitArgs[F::kReturnValueDefaultValueIndex]; // TODO
+  m_implicitArgs[F::kReturnValueIndex] =
+      ValueWrap::createValue(ValueRef::createUndefined());
+  m_implicitArgs[F::kDataIndex] = reinterpret_cast<HandleWrap*>(*data);
+  // m_implicitArgs[F::kThisIndex]; // TODO
 }
 
 }  // namespace EscargotShim
