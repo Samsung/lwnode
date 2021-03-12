@@ -25,9 +25,109 @@ using namespace Escargot;
 #define LOG_HANDLER(msg, ...)                                                  \
   do {                                                                         \
     if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
-      LWNODE_LOG_RAW(COLOR_DIM "GC " msg COLOR_RESET, ##__VA_ARGS__);          \
+      LWNODE_LOG_RAW(COLOR_DIM msg COLOR_RESET, ##__VA_ARGS__);                \
     }                                                                          \
   } while (0)
+
+#define LOG_HANDLER_RAW(msg, ...)                                              \
+  do {                                                                         \
+    if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
+      printf(msg, ##__VA_ARGS__);                                              \
+    }                                                                          \
+  } while (0)
+
+// --- GCTracer ---
+
+GCTracer MemoryUtil::tracer;
+
+#define GC_DEREF_OFFSET 1
+#define TO_FAKEPTR(gcPtr) ((void*)((size_t)gcPtr + GC_DEREF_OFFSET))
+#define TO_GCPTR(ptr) ((void*)((size_t)ptr - GC_DEREF_OFFSET))
+
+#define REGISTER_FINALIZER(obj, fn, data)                                      \
+  GC_REGISTER_FINALIZER_NO_ORDER(obj, fn, data, nullptr, nullptr)
+
+#define DEREGISTER_FINALIZER(obj)                                              \
+  GC_REGISTER_FINALIZER_NO_ORDER(obj, nullptr, nullptr, nullptr, nullptr)
+
+GCTracer::~GCTracer() {
+  reset();
+}
+
+void GCTracer::reset() {
+  for (const auto& it : registeredAddress_) {
+    DEREGISTER_FINALIZER(TO_GCPTR(it.ptr));
+  }
+  registeredAddress_.clear();
+}
+
+void GCTracer::add(void* gcPtr, std::string description) {
+  registeredAddress_.push_back(Address{TO_FAKEPTR(gcPtr), description, false});
+
+  // @todo support multiple finalizer
+  REGISTER_FINALIZER(
+      gcPtr,
+      [](void* gcPtr, void* data) {
+        auto self = reinterpret_cast<GCTracer*>(data);
+        self->setAddressDeallocatd(gcPtr);
+      },
+      this);
+}
+
+void GCTracer::add(Escargot::ObjectRef* ptr, std::string description) {
+  // @todo
+  LWNODE_CHECK_NOT_REACH_HERE();
+}
+
+void GCTracer::setAddressDeallocatd(void* gcPtr) {
+  LWNODE_CALL_TRACE("de-allocated: %p", gcPtr);
+  LWNODE_CHECK_NOT_NULL(gcPtr);
+
+  for (auto& it : registeredAddress_) {
+    if (it.ptr == TO_FAKEPTR(gcPtr)) {
+      it.deallocated = true;
+      return;
+    }
+  }
+
+  LWNODE_CHECK_NOT_REACH_HERE();
+}
+
+void GCTracer::printState() {
+  LOG_HANDLER("");
+  GC_gcollect();
+  GC_disable();
+
+  for (const auto& it : registeredAddress_) {
+    if (it.deallocated) {
+      LOG_HANDLER(COLOR_MAGENTA "deallocated: %s (%p)",
+                  it.description.c_str(),
+                  TO_GCPTR(it.ptr));
+    } else {
+      LOG_HANDLER(COLOR_YELLOW "backtrace of %s (%p):\n",
+                  it.description.c_str(),
+                  TO_GCPTR(it.ptr));
+
+      MemoryUtil::printBacktrace(TO_GCPTR(it.ptr));
+    }
+  }
+
+  GC_enable();
+  LOG_HANDLER("");
+  // GC_print_heap_usage();
+}
+
+size_t GCTracer::getAllocatedCount() {
+  size_t count = 0;
+  for (auto& it : registeredAddress_) {
+    if (it.deallocated == false) {
+      count++;
+    }
+  }
+  return count;
+}
+
+// --- MemoryUtil ---
 
 static std::function<bool(uint, double)> g_filter = [](uint idx, double value) {
   // @note bug walkaround: GC print returns an underflowed value at termination.
@@ -82,6 +182,8 @@ void MemoryUtil::printGCStats() {
 void MemoryUtil::printBacktrace(void* gcPtr) {
 #if !defined(NDEBUG)
   GC_print_backtrace(gcPtr);
+#else
+  LOG_HANDLER("%s works in debug build only", __PRETTY_FUNCTION__);
 #endif
 }
 
@@ -114,7 +216,7 @@ void MemoryUtil::printEveryReachableGCObjects() {
 #if !defined(NDEBUG)
         // details
         if (size > THRESHOLD_BYTES_BACKTRACE) {
-          GC_print_backtrace(ptr);
+          MemoryUtil::printBacktrace(ptr);
         }
 #endif
       },

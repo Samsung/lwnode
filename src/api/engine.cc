@@ -82,11 +82,14 @@ bool Engine::Initialize() {
 bool Engine::Dispose() {
   if (s_engine) {
     s_engine->finalize();
+    delete s_engine;
     s_engine = nullptr;
   }
 
   return true;
 }
+
+#define GC_FREE_SPACE_DIVISOR 24
 
 void Engine::initialize() {
 #ifndef NDEBUG
@@ -102,10 +105,10 @@ void Engine::initialize() {
 #endif
 
   Globals::initialize();
-  Memory::setGCFrequency(24);
+  Memory::setGCFrequency(GC_FREE_SPACE_DIVISOR);
 
   auto flags = Flags::get();
-  if (flags & FlagType::TraceGC) {
+  if (Flags::isTraceGCEnabled()) {
     MemoryUtil::gcStartStatsTrace();
   }
 }

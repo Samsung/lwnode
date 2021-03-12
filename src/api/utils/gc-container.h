@@ -19,72 +19,77 @@
 #include <EscargotPublic.h>
 #include <cstdarg>
 
+#include "gc.h"
 #include "misc.h"
 
-namespace EscargotShim {
-
 template <typename T>
-class GCContainer {
+class GCContainer : public gc {
  public:
   GCContainer() {}
 
   explicit GCContainer(const size_t size, ...) {
     if (size) {
-      m_buffer = (T*)Escargot::Memory::gcMalloc(sizeof(T) * size);
-      m_size = size;
+      buffer_ = (T*)Escargot::Memory::gcMalloc(sizeof(T) * size);
+      size_ = size;
       for (size_t i = 0; i < size; i++) {
-        new (&m_buffer[i]) T();
+        new (&buffer_[i]) T();
       }
 
       std::va_list args;
       va_start(args, size);
       for (size_t i = 0; i < size; ++i) {
-        m_buffer[i] = va_arg(args, T);
+        buffer_[i] = va_arg(args, T);
       }
       va_end(args);
     } else {
-      m_buffer = nullptr;
-      m_size = 0;
+      buffer_ = nullptr;
+      size_ = 0;
     }
   }
 
   GCContainer(GCContainer<T>&& other) {
-    m_size = other.size();
-    m_buffer = other.m_buffer;
-    other.m_buffer = nullptr;
-    other.m_size = 0;
+    size_ = other.size();
+    buffer_ = other.buffer_;
+    other.buffer_ = nullptr;
+    other.size_ = 0;
   }
 
   GCContainer(const GCContainer<T>& other) = delete;
   const GCContainer<T>& operator=(const GCContainer<T>& other) = delete;
 
   ~GCContainer() {
-    if (m_buffer) {
-      for (size_t i = 0; i < m_size; i++) {
-        m_buffer[i].~T();
+    LWNODE_CALL_TRACE();
+    if (buffer_) {
+      for (size_t i = 0; i < size_; i++) {
+        buffer_[i].~T();
       }
-      Escargot::Memory::gcFree(m_buffer);
+      Escargot::Memory::gcFree(buffer_);
     }
   }
 
-  size_t size() const { return m_size; }
+  size_t size() const { return size_; }
 
   T& operator[](const size_t idx) {
-    LWNODE_CHECK(m_size > idx);
-    return m_buffer[idx];
+    LWNODE_CHECK(size_ > idx);
+    return buffer_[idx];
   }
 
   const T& operator[](const size_t idx) const {
-    LWNODE_CHECK(m_size > idx);
-    return m_buffer[idx];
+    LWNODE_CHECK(size_ > idx);
+    return buffer_[idx];
+  }
+
+  void remove(const size_t idx) {
+    LWNODE_CHECK(size_ > idx);
+    buffer_[idx] = nullptr;
   }
 
   void clear() {
-    if (m_buffer) {
-      Escargot::Memory::gcFree(m_buffer);
+    if (buffer_) {
+      Escargot::Memory::gcFree(buffer_);
     }
-    m_size = 0;
-    m_buffer = nullptr;
+    size_ = 0;
+    buffer_ = nullptr;
   }
 
   void* operator new(size_t size) { return Escargot::Memory::gcMalloc(size); }
@@ -95,8 +100,6 @@ class GCContainer {
   void operator delete[](void* obj) = delete;
 
  private:
-  T* m_buffer = nullptr;
-  size_t m_size = 0;
+  T* buffer_ = nullptr;
+  size_t size_ = 0;
 };
-
-}  // namespace EscargotShim
