@@ -26,6 +26,9 @@ class TemplateData : public gc {
   TemplateData(v8::Isolate* isolate) : m_isolate(isolate) {}
   v8::Isolate* isolate() { return m_isolate; }
 
+  virtual bool isFunctionTemplateData() = 0;
+  virtual bool isObjectTemplateData() = 0;
+
  private:
   v8::Isolate* m_isolate{nullptr};
 };
@@ -43,9 +46,15 @@ class FunctionTemplateData : public TemplateData {
         m_signature(signature),
         m_length(length) {}
 
-  static FunctionTemplateData* toFunctionTemplateData(void* ptr) {
-    return reinterpret_cast<FunctionTemplateData*>(ptr);
+  static FunctionTemplateData* toTemplateData(void* ptr) {
+    LWNODE_CHECK_NOT_NULL(ptr);
+    auto data = reinterpret_cast<FunctionTemplateData*>(ptr);
+    LWNODE_CHECK(data->isFunctionTemplateData());
+    return data;
   }
+
+  bool isFunctionTemplateData() override { return true; }
+  bool isObjectTemplateData() override { return false; }
 
   v8::FunctionCallback m_callback;
   v8::Local<v8::Value> m_callbackData;
@@ -57,10 +66,104 @@ class ObjectTemplateData : public TemplateData {
  public:
   ObjectTemplateData(v8::Isolate* isolate) : TemplateData(isolate) {}
 
-  static ObjectTemplateData* toObjectTemplateData(void* ptr) {
-    return reinterpret_cast<ObjectTemplateData*>(ptr);
+  static ObjectTemplateData* toTemplateData(void* ptr) {
+    LWNODE_CHECK_NOT_NULL(ptr);
+    auto data = reinterpret_cast<ObjectTemplateData*>(ptr);
+    LWNODE_CHECK(data->isObjectTemplateData());
+    return data;
   }
+
+  bool isFunctionTemplateData() override { return false; }
+  bool isObjectTemplateData() override { return true; }
+
+  v8::Local<v8::Name> m_name;
+  v8::internal::Address m_getter{0};
+  v8::internal::Address m_setter{0};
+  v8::Local<v8::Value> m_accessorData;
 };
+
+template <typename Getter, typename Setter>
+static void TemplateSetAccessor(v8::ObjectTemplate* object_template,
+                                v8::Local<v8::Name> name,
+                                Getter getter,
+                                Setter setter,
+                                v8::Local<v8::Value> data,
+                                v8::AccessControl settings,
+                                v8::PropertyAttribute attribute,
+                                v8::Local<v8::AccessorSignature> signature,
+                                v8::SideEffectType getter_side_effect_type,
+                                v8::SideEffectType setter_side_effect_type) {
+  LWNODE_CHECK_NOT_NULL(getter);
+
+  ObjectTemplateRef* esObjectTemplate = CVAL(object_template)->otpl();
+  auto esName = CVAL(*name)->value();
+  TemplatePropertyNameRef esPropertyName;
+  if (esName->isString()) {
+    esPropertyName = TemplatePropertyNameRef(esName->asString());
+  } else if (esName->isSymbol()) {
+    esPropertyName = TemplatePropertyNameRef(esName->asSymbol());
+  }
+
+  bool isWritable = !(attribute & v8::ReadOnly);
+  bool isEnumerable = !(attribute & v8::DontEnum);
+  bool isConfigurable = !(attribute & v8::DontDelete);
+
+  auto tplData =
+      ObjectTemplateData::toTemplateData(esObjectTemplate->instanceExtraData());
+  tplData->m_name = name;
+  tplData->m_getter = reinterpret_cast<v8::internal::Address>(getter);
+  tplData->m_setter = reinterpret_cast<v8::internal::Address>(setter);
+  tplData->m_accessorData = data;
+
+  auto getterCallback =
+      [](ExecutionStateRef* esState,
+         ObjectRef* esSelf,
+         ObjectRef::NativeDataAccessorPropertyData* esData) -> ValueRef* {
+    ObjectTemplateData* tplData =
+        ObjectTemplateData::toTemplateData(esSelf->extraData());
+
+    PropertyCallbackInfoWrap<v8::Value> info(tplData->isolate(),
+                                             tplData->m_accessorData);
+
+    auto v8Getter = reinterpret_cast<const v8::AccessorNameGetterCallback>(
+        tplData->m_getter);
+    LWNODE_CHECK_NOT_NULL(v8Getter);
+    v8Getter(tplData->m_name, info);
+
+    return VAL(*info.GetReturnValue().Get())->value();
+  };
+
+  ObjectRef::NativeDataAccessorPropertySetter setterCallback = nullptr;
+  if (setter) {
+    setterCallback = [](ExecutionStateRef* esState,
+                        ObjectRef* esSelf,
+                        ObjectRef::NativeDataAccessorPropertyData* esData,
+                        ValueRef* esSetterInputData) -> bool {
+      ObjectTemplateData* tplData =
+          ObjectTemplateData::toTemplateData(esSelf->extraData());
+      v8::Local<v8::Value> v8SetValue =
+          ValueWrap::createValue(esSetterInputData)
+              ->ToLocal<v8::Value>(tplData->isolate());
+
+      PropertyCallbackInfoWrap<void> info(tplData->isolate(),
+                                          tplData->m_accessorData);
+
+      auto v8Setter = reinterpret_cast<const v8::AccessorNameSetterCallback>(
+          tplData->m_setter);
+      LWNODE_CHECK_NOT_NULL(v8Setter);
+      v8Setter(tplData->m_name, v8SetValue, info);
+
+      return true;
+    };
+  }
+
+  esObjectTemplate->setNativeDataAccessorProperty(esPropertyName,
+                                                  getterCallback,
+                                                  setterCallback,
+                                                  isWritable,
+                                                  isEnumerable,
+                                                  isConfigurable);
+}
 
 }  // namespace
 
@@ -118,15 +221,15 @@ void Template::SetAccessorProperty(v8::Local<v8::Name> name,
 
 Local<ObjectTemplate> FunctionTemplate::PrototypeTemplate() {
   FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-  auto tpData = FunctionTemplateData::toFunctionTemplateData(
+  auto tplData = FunctionTemplateData::toTemplateData(
       esFunctionTemplate->instanceExtraData());
 
   auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
   esPrototypeTemplate->setInstanceExtraData(
-      new ObjectTemplateData(tpData->isolate()));
+      new ObjectTemplateData(tplData->isolate()));
 
   return Local<ObjectTemplate>::New(
-      tpData->isolate(), ValueWrap::createObjectTemplate(esPrototypeTemplate));
+      tplData->isolate(), ValueWrap::createObjectTemplate(esPrototypeTemplate));
 }
 
 void FunctionTemplate::SetPrototypeProviderTemplate(
@@ -135,7 +238,7 @@ void FunctionTemplate::SetPrototypeProviderTemplate(
 }
 
 void FunctionTemplate::Inherit(v8::Local<FunctionTemplate> value) {
-  LWNODE_RETURN_VOID;
+  CVAL(this)->ftpl()->inherit(CVAL(*value)->ftpl());
 }
 
 static ValueRef* FunctionTemplateNativeFunction(
@@ -147,19 +250,18 @@ static ValueRef* FunctionTemplateNativeFunction(
   Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
       state->resolveCallee();
   LWNODE_DCHECK_NOT_NULL(callee->extraData());
-  auto tpData =
-      FunctionTemplateData::toFunctionTemplateData(callee->extraData());
+  auto tplData = FunctionTemplateData::toTemplateData(callee->extraData());
 
   Local<Value> result;
-  if (tpData->m_callback) {
-    FunctionCallbackInfoWrap info(tpData->isolate(),
+  if (tplData->m_callback) {
+    FunctionCallbackInfoWrap info(tplData->isolate(),
                                   thisValue,
                                   thisValue,
                                   newTarget,
-                                  VAL(*tpData->m_callbackData),
+                                  VAL(*tplData->m_callbackData),
                                   argc,
                                   argv);
-    tpData->m_callback(info);
+    tplData->m_callback(info);
     result = info.GetReturnValue().Get();
     // TODO: error check from 'state'
   }
@@ -238,23 +340,23 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
 
   Escargot::FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
 
-  auto tpData = FunctionTemplateData::toFunctionTemplateData(
+  auto tplData = FunctionTemplateData::toTemplateData(
       esFunctionTemplate->instanceExtraData());
-  tpData->m_callback = callback;
-  tpData->m_callbackData = data;
+  tplData->m_callback = callback;
+  tplData->m_callbackData = data;
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
   FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-  auto tpData = FunctionTemplateData::toFunctionTemplateData(
+  auto tplData = FunctionTemplateData::toTemplateData(
       esFunctionTemplate->instanceExtraData());
 
   auto esInstanceTemplate = esFunctionTemplate->instanceTemplate();
   esInstanceTemplate->setInstanceExtraData(
-      new ObjectTemplateData(tpData->isolate()));
+      new ObjectTemplateData(tplData->isolate()));
 
   return Local<ObjectTemplate>::New(
-      tpData->isolate(), ValueWrap::createObjectTemplate(esInstanceTemplate));
+      tplData->isolate(), ValueWrap::createObjectTemplate(esInstanceTemplate));
 }
 
 void FunctionTemplate::SetLength(int length) {
@@ -355,7 +457,16 @@ void ObjectTemplate::SetAccessor(v8::Local<String> name,
                                  v8::Local<AccessorSignature> signature,
                                  SideEffectType getter_side_effect_type,
                                  SideEffectType setter_side_effect_type) {
-  LWNODE_RETURN_VOID;
+  TemplateSetAccessor(this,
+                      name,
+                      getter,
+                      setter,
+                      data,
+                      settings,
+                      attribute,
+                      signature,
+                      getter_side_effect_type,
+                      setter_side_effect_type);
 }
 
 void ObjectTemplate::SetAccessor(v8::Local<Name> name,
@@ -367,7 +478,16 @@ void ObjectTemplate::SetAccessor(v8::Local<Name> name,
                                  v8::Local<AccessorSignature> signature,
                                  SideEffectType getter_side_effect_type,
                                  SideEffectType setter_side_effect_type) {
-  LWNODE_RETURN_VOID;
+  TemplateSetAccessor(this,
+                      name,
+                      getter,
+                      setter,
+                      data,
+                      settings,
+                      attribute,
+                      signature,
+                      getter_side_effect_type,
+                      setter_side_effect_type);
 }
 
 void ObjectTemplate::SetHandler(

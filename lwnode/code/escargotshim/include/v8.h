@@ -12053,7 +12053,12 @@ Isolate* PropertyCallbackInfo<T>::GetIsolate() const {
 
 template<typename T>
 Local<Value> PropertyCallbackInfo<T>::Data() const {
+  // @lwnode
+#if 0
   return Local<Value>(reinterpret_cast<Value*>(&args_[kDataIndex]));
+#endif
+  return Local<Value>(reinterpret_cast<Value*>(args_[kDataIndex]));
+// end @lwnode
 }
 
 

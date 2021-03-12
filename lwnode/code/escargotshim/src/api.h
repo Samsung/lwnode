@@ -38,7 +38,18 @@
 
 namespace i = v8::internal;
 
-namespace v8 {}
+namespace v8 {
+class Utils {
+ public:
+  //@lwnode
+  template <typename T>
+  static v8::Local<T> ToLocal(v8::Isolate* isolate, e::HandleWrap* ptr) {
+    return v8::Local<T>::New(isolate, reinterpret_cast<T*>(ptr));
+  }
+  // end @lwnode
+};
+
+}  // namespace v8
 
 namespace {
 
@@ -84,4 +95,5 @@ class ArrayBufferAllocator : public v8::ArrayBuffer::Allocator {
     return new_data;
   }
 };
+
 }  // namespace
