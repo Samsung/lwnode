@@ -58,14 +58,13 @@ class Platform : public PlatformRef {
   v8::ArrayBuffer::Allocator* allocator_ = nullptr;
 };
 
-class Engine : public gc {
+class Engine {
  public:
-  Engine() = default;
-
   static bool Initialize();
   static bool Dispose();
 
  private:
+  Engine() = default;
   void initialize();
   void finalize();
 };

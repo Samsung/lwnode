@@ -25,12 +25,27 @@
 #include "gc-container.h"
 #include "gc-vector.h"
 
-// typedef of GC-aware vector
-template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>
-using GCVectorT = Starfish::Vector<T, Allocator>;
+#include <string>
 
-template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>
-class GCVector : public GCVectorT<T, Allocator>, public gc {};
+// typedef of GC-aware vector
+template <typename T,
+          bool isEraseStrategyStrict = false,
+          typename Allocator = GCUtil::gc_malloc_allocator<T>>
+using GCVectorT = Starfish::Vector<T, Allocator, isEraseStrategyStrict>;
+
+#if !defined(NDEBUG)
+template <typename T,
+          bool isEraseStrategyStrict = true,
+          typename Allocator = GCUtil::gc_malloc_allocator<T>>
+class GCVector : public GCVectorT<T, isEraseStrategyStrict, Allocator>,
+                 public gc {};
+#else
+template <typename T,
+          bool isEraseStrategyStrict = false,
+          typename Allocator = GCUtil::gc_malloc_allocator<T>>
+class GCVector : public GCVectorT<T, isEraseStrategyStrict, Allocator>,
+                 public gc {};
+#endif
 
 // typedef of GC-aware list
 template <typename T, typename Allocator = GCUtil::gc_malloc_allocator<T>>
@@ -116,7 +131,29 @@ class GCUnorderedSet : public GCUnorderedSetT<T, Hasher, Predicate, Allocator>,
 
 namespace Escargot {
 class ValueRef;
-}
+class ObjectRef;
+}  // namespace Escargot
+
+class GCTracer {
+ public:
+  ~GCTracer();
+  void add(void* gcPtr, std::string description = "");
+  void add(Escargot::ObjectRef* gcPtr, std::string description = "");
+  void printState();
+  size_t getAllocatedCount();
+  void reset();
+
+ private:
+  void setAddressDeallocatd(void* gcPtr);
+
+  struct Address {
+    void* ptr = nullptr;
+    std::string description;
+    bool deallocated = false;
+  };
+
+  std::vector<Address> registeredAddress_;
+};
 
 class ESCARGOT_EXPORT MemoryUtil {
  public:
@@ -126,11 +163,12 @@ class ESCARGOT_EXPORT MemoryUtil {
   static void gc();
 
   typedef void (*GCAllocatedMemoryFinalizer)(void* self);
-  static void gcRegisterFinalizer(Escargot::ValueRef* ptr,
+  static void gcRegisterFinalizer(Escargot::ValueRef* gcPtr,
                                   GCAllocatedMemoryFinalizer callback);
-  static void gcUnregisterFinalizer(Escargot::ValueRef* ptr,
+  static void gcUnregisterFinalizer(Escargot::ValueRef* gcPtr,
                                     GCAllocatedMemoryFinalizer callback);
   // print
+  static void printRegisteredGCObjects();
   static void printEveryReachableGCObjects();
   static void printGCStats();
   static void printBacktrace(void* gcPtr);
@@ -138,4 +176,5 @@ class ESCARGOT_EXPORT MemoryUtil {
                           size_t nBuf,
                           size_t bytes,
                           std::function<bool(uint, double)> filter = nullptr);
+  static GCTracer tracer;
 };

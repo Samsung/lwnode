@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+#if !defined(NDEBUG)
+
 #include "cctest.h"
 
 #include <EscargotPublic.h>
 #include "api/handlescope.h"
 #include "internal-api.h"
+
+#include "api/utils/gc-container.h"
 
 using namespace Escargot;
 
@@ -38,28 +42,9 @@ class Count {
   int count_ = 0;
 };
 
-class ObjectBasic : public gc {
- public:
-  virtual ~ObjectBasic() { LWNODE_CALL_TRACE(); }
-  ObjectBasic(Count* pCount) : pCount_(pCount) {
-    if (pCount_) {
-      pCount_->add();
-    }
+struct ObjectBasic : public gc {};
 
-    Memory::gcRegisterFinalizer(this, [](void* self) {
-      auto object = reinterpret_cast<ObjectBasic*>(self);
-      auto pCount = object->pCount();
-      if (pCount) {
-        pCount->sub();
-        LWNODE_CALL_TRACE("%d", pCount->get());
-      }
-    });
-  }
-  Count* pCount() const { return pCount_; }
-  Count* pCount_ = nullptr;
-};
-
-class HandleScope : public gc {
+struct HandleScope : public gc {
  public:
   void add(ObjectBasic* value) {
     LWNODE_CALL_TRACE("%p", value);
@@ -85,116 +70,147 @@ class HandleScope : public gc {
     handles_.clear();
   }
 
+  ObjectBasic* get(size_t idx) {
+    LWNODE_CHECK(idx < handles_.size());
+    return handles_[idx];
+  }
+
  private:
-  GCVector<ObjectBasic*> handles_;
+  GCVector<ObjectBasic*, true> handles_;
 };
 
 struct Object : public gc {
-  Object(Count* pCount = nullptr) : pCount_(pCount) {
-    if (pCount_) {
-      pCount_->add();
-    }
-
-    Memory::gcRegisterFinalizer(this, [](void* self) {
-      auto object = reinterpret_cast<Object*>(self);
-      auto pCount = object->pCount();
-      if (pCount) {
-        pCount->sub();
-        LWNODE_CALL_TRACE("%d", pCount->get());
-      }
-    });
-  }
-
-  Count* pCount() const { return pCount_; }
-
-  GCVector<Escargot::ValueRef*> eternals_;
-  GCVector<HandleScope*> handleScopes_;
-  Count* pCount_ = nullptr;
+  GCVector<HandleScope*, true> handleScopes_;
 };
 
 // --- Test Start ---
 
-Count s_count;
+static GCTracer g_tracer;
 
 TEST(internal_GCObject1) {
-  s_count.reset();
+  g_tracer.reset();
 
-  []() { Object* object = new Object(&s_count); }();
+  []() {
+    Object* object = new Object();
+    g_tracer.add(object);
+  }();
 
   CcTest::CollectGarbage();
 
-  CHECK_EQ(s_count.get(), 0);
+  CHECK_EQ(g_tracer.getAllocatedCount(), 0);
 }
 
 TEST(internal_GCObject2) {
-  s_count.reset();
+  g_tracer.reset();
 
   []() {
-    CHECK_EQ(s_count.get(), 0);
     auto scope = new HandleScope();
-    scope->add(new ObjectBasic(&s_count));
-    scope->add(new ObjectBasic(&s_count));
 
-    CHECK_EQ(s_count.get(), 2);
+    scope->add(new ObjectBasic());
+    scope->add(new ObjectBasic());
 
-    // @check remove this
-    scope->clear();
+    g_tracer.add(scope->get(0));
+    g_tracer.add(scope->get(1));
 
-    // @check
-    // CcTest::CollectGarbage();
-    // CHECK_EQ(s_count.get(), 0);
+    CHECK_EQ(g_tracer.getAllocatedCount(), 2);
   }();
 
   CcTest::CollectGarbage();
-  CHECK_EQ(s_count.get(), 0);
+  CHECK_EQ(g_tracer.getAllocatedCount(), 0);
 }
 
 TEST(internal_GCObject3) {
-  s_count.reset();
+  g_tracer.reset();
 
   []() {
-    CHECK_EQ(s_count.get(), 0);
-    auto object = new Object(&s_count);
+    auto object = new Object();
 
     object->handleScopes_.push_back(new HandleScope());
-    object->handleScopes_.back()->add(new ObjectBasic(&s_count));
+    object->handleScopes_.push_back(new HandleScope());
 
-    CHECK_EQ(s_count.get(), 2);
+    object->handleScopes_.back()->add(new ObjectBasic());
 
-    // @check remove this
-    object->handleScopes_.back()->clear();
+    g_tracer.add(object->handleScopes_.back());
+    g_tracer.add(object->handleScopes_.back()->get(0));
+
+    CHECK_EQ(g_tracer.getAllocatedCount(), 2);
+
+    if (EscargotShim::Flags::isTraceGCEnabled()) {
+      g_tracer.printState();
+    }
+  }();
+
+  CcTest::CollectGarbage();
+
+  if (EscargotShim::Flags::isTraceGCEnabled()) {
+    g_tracer.printState();
+  }
+
+  CHECK_LE(g_tracer.getAllocatedCount(), 1);
+}
+
+TEST(internal_GCObject4) {
+  g_tracer.reset();
+
+  Escargot::PersistentRefHolder<Object> holder;
+
+  [&holder]() {
+    auto object = new Object();
+    holder.reset(object);
+
+    object->handleScopes_.push_back(new HandleScope());
+    object->handleScopes_.push_back(new HandleScope());
+
+    object->handleScopes_.back()->add(new ObjectBasic());
+
+    g_tracer.add(object, "object");
+    g_tracer.add(object->handleScopes_.back(), "scope");
+    g_tracer.add(object->handleScopes_.back()->get(0), "baseobject");
+
+    CHECK_EQ(g_tracer.getAllocatedCount(), 3);
+
     object->handleScopes_.pop_back();
-
-    // @check
-    // CcTest::CollectGarbage();
-    // CHECK_EQ(s_count.get(), 1);
   }();
 
-  CcTest::CollectAllGarbage();
-  // @check
-  // CcTest::CollectGarbage();
-  CHECK_EQ(s_count.get(), 0);
+  CcTest::CollectGarbage();
+
+  if (EscargotShim::Flags::isTraceGCEnabled()) {
+    g_tracer.printState();
+  }
+
+  CHECK_EQ(g_tracer.getAllocatedCount(), 1);
+
+  holder.release();
+
+  CcTest::CollectGarbage();
+
+  CHECK_LE(g_tracer.getAllocatedCount(), 1);
 }
 
-TEST(internal_GCVector) {
-  s_count.reset();
+TEST(internal_GCContainer) {
+  g_tracer.reset();
 
-  []() {
-    GCVector<ObjectBasic*> vector;
-    vector.push_back(new ObjectBasic(&s_count));
-    vector.push_back(new ObjectBasic(&s_count));
+  Escargot::PersistentRefHolder<GCContainer<ObjectBasic*>> holder;
 
-    CHECK_EQ(s_count.get(), 2);
+  [&holder]() {
+    auto obj = new ObjectBasic();
+    GCContainer<ObjectBasic*>* vector = new GCContainer<ObjectBasic*>(1, obj);
 
-    // @check
-    // vector.pop_back();
-    // CcTest::CollectGarbage();
-    // CHECK_EQ(s_count.get(), 0);
+    holder.reset(vector);
+
+    g_tracer.add(vector, "vector");
+    g_tracer.add(obj, "obj");
+
+    CcTest::CollectGarbage();
+
+    CHECK_EQ(g_tracer.getAllocatedCount(), 2);
   }();
 
-  // @check
-  // CcTest::CollectGarbage();
-  CcTest::CollectAllGarbage();
+  holder.release();
 
-  CHECK_EQ(s_count.get(), 0);
+  CcTest::CollectGarbage();
+
+  CHECK_LE(g_tracer.getAllocatedCount(), 1);
 }
+
+#endif

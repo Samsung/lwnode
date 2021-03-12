@@ -41,7 +41,7 @@ struct VectorAllocInfo {
   size_t m_capacity;
 };
 
-template <typename T, typename Allocator>
+template <typename T, typename Allocator, bool isEraseStrategyStrict = false>
 class Vector {
  protected:
   typedef typename Allocator::template rebind<T>::other TAllocType;
@@ -160,7 +160,11 @@ class Vector {
     } else if (newLen == 0) {
       clear();
     } else {
-      eraseImpl(start, howMuch);
+      if (isEraseStrategyStrict) {
+        eraseStrictImpl(start, howMuch);
+      } else {
+        eraseImpl(start, howMuch);
+      }
     }
   }
 
@@ -343,7 +347,42 @@ class Vector {
     construct(other.begin(), other.end());
   }
 
+  void eraseStrictImpl(size_t start, size_t sizeToErase) {
+    // @note this drops unused memory immediately
+
+    size_t end = start + sizeToErase;
+    LWNODE_CHECK(start < end);
+    LWNODE_CHECK(start >= 0);
+    LWNODE_CHECK(end <= m_size);
+
+    size_t c = end - start;
+    size_t newLen = m_size - c;
+
+    if (newLen > 0) {
+      VectorAllocInfo<T> newBuffer = allocate(newLen);
+      for (size_t i = 0; i < start; i++) {
+        new (&newBuffer.m_buffer[i]) T(m_buffer[i]);
+      }
+
+      for (size_t i = end; i < m_size; i++) {
+        new (&newBuffer.m_buffer[i - c]) T(m_buffer[i]);
+      }
+
+      for (size_t i = 0; i < m_size; i++) {
+        m_buffer[i].~T();
+      }
+
+      m_buffer = newBuffer.m_buffer;
+      m_capacity = newBuffer.m_capacity;
+      m_size = newLen;
+    } else {
+      clear();
+    }
+  }
+
   void eraseImpl(size_t start, size_t sizeToErase) {
+    // @note this drops unused memory when newLen < (m_capacity / 2)
+
     size_t end = start + sizeToErase;
     LWNODE_CHECK(start < end);
     LWNODE_CHECK(start >= 0);

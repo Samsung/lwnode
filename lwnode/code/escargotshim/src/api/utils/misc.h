@@ -56,6 +56,9 @@
 #define LWNODE_CHECK(condition) LWNODE_CHECK_MSG(condition, #condition)
 #define LWNODE_CHECK_NULL(x) LWNODE_CHECK((x) == nullptr)
 #define LWNODE_CHECK_NOT_NULL(x) LWNODE_CHECK((x) != nullptr)
+#define LWNODE_CHECK_NOT_REACH_HERE()                                          \
+  LWNODE_CHECK_MSG(                                                            \
+      false, "MUST NOT REACH HERE at %s (%d)\n", __FILE__, __LINE__)
 
 #if !defined(NDEBUG)
 #define LWNODE_DCHECK(condition) LWNODE_CHECK_MSG(condition, #condition)

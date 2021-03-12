@@ -27,7 +27,10 @@
       'ldflags': [ '-pthread' ],
       'configurations': {
         'Debug': {
-          'defines': ['_GLIBCXX_DEBUG', 'GC_DEBUG'],
+          'defines': [
+            '_GLIBCXX_DEBUG',
+            'GC_DEBUG',
+          ],
         },
       },
     },
