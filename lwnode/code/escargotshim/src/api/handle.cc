@@ -42,13 +42,6 @@ ValueWrap::ValueWrap(void* ptr, HandleWrap::Type type) {
   holder_ = ptr;
 }
 
-template <typename T>
-v8::Local<T> ValueWrap::ToLocal(v8::Isolate* v8Isolate) {
-  return v8::Utils::ToLocal<T>(v8Isolate, this);
-}
-
-template v8::Local<v8::Value> ValueWrap::ToLocal(v8::Isolate* v8Isolate);
-
 ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
   auto value = new ValueWrap(esValue, Type::JsValue);
   LWNODE_CALL_TRACE("%p | %p", esValue, value);

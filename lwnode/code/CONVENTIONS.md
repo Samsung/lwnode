@@ -49,11 +49,11 @@
   * API level 1 : v8 apis
   * API level 2 : EscargotShim apis (Wrapped Values)
   * API level 3 : Escargot apis
-* Regarding Variable Names, 
+* Regarding Variable Names,
 * In Level 1, if there are same concepts among the API levels, it **SHOULD** use the following conventions:
   * name a value of API level 3 (Escargot Value) with `es` .
   * name a value of API level 2 (Wrapped Value) with `lw`.
-  * name v8 Value with no prefix.
+  * name v8 Value with no prefix or `v8`.
   * It **SHALL** use the above especially when using `auto` type inference.
 * In Level 3, it **NEEDS NOT** to meet the above conventions.
 
@@ -69,7 +69,7 @@
 
 * In the level 1, `ValueWrap` **SHALL** be used for type convertion between v8 and lwnode apis.
 
-  
+
 
 ## Type conversion between lwnode world and v8 world
 
@@ -86,7 +86,7 @@ auto esString = StringRef::createFromUTF8(...);
 auto lwValue = ValueWrap::createValue(string);
 // auto value = new ValueWrap(string); // deprecated
 
-// Others 
+// Others
 // e.g) Escargot::Script
 auto lwValue = ValueWrap::createScript(...);
 ```
@@ -114,8 +114,6 @@ VAL(*source->source_string)->value()->asString();
 VAL(this)->context()->Enter();
 ```
 
-
-
 ### Return
 
 * Retrun a `ValueWrap` using a `Local`
@@ -123,17 +121,8 @@ VAL(this)->context()->Enter();
 ```c++
 auto esString = StringRef::createFromUTF8(...);
 
-// Usage 1:   
-return Local<String>::New(isolate, ValueWrap::createValue(esString));
-
-// Usage 2:
-API_RETURN_LOCAL(String, isolate, esString);
-
-#define API_RETURN_LOCAL(type, v8_isolate, esValue)                      \
-  return Local<type>::New(v8_isolate, ValueWrap::createValue(esValue));
+return Utils::NewLocal<String>(isolate, esString);
 ```
-
-
 
 ### Exception Handling
 

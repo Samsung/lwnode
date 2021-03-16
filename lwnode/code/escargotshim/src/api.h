@@ -31,20 +31,60 @@
 #include "api/backing-store.h"
 #include "api/context.h"
 #include "api/es-helper.h"
+#include "api/function.h"
 #include "api/handle.h"
 #include "api/isolate.h"
-#include "api/function.h"
 #include "api/utils/string.h"
 
 namespace i = v8::internal;
 
+namespace Escargot {
+  class ValueRef;
+  class ScriptRef;
+  class FunctionTemplateRef;
+  class ObjectTemplateRef;
+}
+
 namespace v8 {
 class Utils {
  public:
-  //@lwnode
+  // @lwnode
+  static v8::Local<v8::Context> NewLocal(Isolate* isolate,
+                                         EscargotShim::ContextWrap* ptr) {
+    return v8::Local<v8::Context>::New(
+        isolate,
+        reinterpret_cast<v8::Context*>(
+            EscargotShim::ValueWrap::createContext(ptr)));
+  }
+
   template <typename T>
-  static v8::Local<T> ToLocal(v8::Isolate* isolate, e::HandleWrap* ptr) {
-    return v8::Local<T>::New(isolate, reinterpret_cast<T*>(ptr));
+  static v8::Local<T> NewLocal(Isolate* isolate, Escargot::ValueRef* ptr) {
+    return v8::Local<T>::New(
+        isolate,
+        reinterpret_cast<T*>(EscargotShim::ValueWrap::createValue(ptr)));
+  }
+
+  template <typename T>
+  static v8::Local<T> NewLocal(Isolate* isolate, Escargot::ScriptRef* ptr) {
+    return v8::Local<T>::New(
+        isolate,
+        reinterpret_cast<T*>(EscargotShim::ValueWrap::createScript(ptr)));
+  }
+
+  static v8::Local<v8::ObjectTemplate> NewLocal(
+      Isolate* isolate, Escargot::ObjectTemplateRef* ptr) {
+    return v8::Local<v8::ObjectTemplate>::New(
+        isolate,
+        reinterpret_cast<v8::ObjectTemplate*>(
+            EscargotShim::ValueWrap::createObjectTemplate(ptr)));
+  }
+
+  static v8::Local<v8::FunctionTemplate> NewLocal(
+      Isolate* isolate, Escargot::FunctionTemplateRef* ptr) {
+    return v8::Local<v8::FunctionTemplate>::New(
+        isolate,
+        reinterpret_cast<v8::FunctionTemplate*>(
+            EscargotShim::ValueWrap::createFunctionTemplate(ptr)));
   }
   // end @lwnode
 };

@@ -142,8 +142,7 @@ static void TemplateSetAccessor(v8::ObjectTemplate* object_template,
       ObjectTemplateData* tplData =
           ObjectTemplateData::toTemplateData(esSelf->extraData());
       v8::Local<v8::Value> v8SetValue =
-          ValueWrap::createValue(esSetterInputData)
-              ->ToLocal<v8::Value>(tplData->isolate());
+          v8::Utils::NewLocal<v8::Value>(tplData->isolate(), esSetterInputData);
 
       PropertyCallbackInfoWrap<void> info(tplData->isolate(),
                                           tplData->m_accessorData);
@@ -228,8 +227,7 @@ Local<ObjectTemplate> FunctionTemplate::PrototypeTemplate() {
   esPrototypeTemplate->setInstanceExtraData(
       new ObjectTemplateData(tplData->isolate()));
 
-  return Local<ObjectTemplate>::New(
-      tplData->isolate(), ValueWrap::createObjectTemplate(esPrototypeTemplate));
+  return Utils::NewLocal(tplData->isolate(), esPrototypeTemplate);
 }
 
 void FunctionTemplate::SetPrototypeProviderTemplate(
@@ -304,8 +302,7 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
   esFunctionTemplate->setInstanceExtraData(
       new FunctionTemplateData(isolate, callback, data, signature, length));
 
-  return Local<FunctionTemplate>::New(
-      isolate, ValueWrap::createFunctionTemplate(esFunctionTemplate));
+  return Utils::NewLocal(isolate, esFunctionTemplate);
 }
 
 Local<FunctionTemplate> FunctionTemplate::NewWithCache(
@@ -355,8 +352,7 @@ Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
   esInstanceTemplate->setInstanceExtraData(
       new ObjectTemplateData(tplData->isolate()));
 
-  return Local<ObjectTemplate>::New(
-      tplData->isolate(), ValueWrap::createObjectTemplate(esInstanceTemplate));
+  return Utils::NewLocal(tplData->isolate(), esInstanceTemplate);
 }
 
 void FunctionTemplate::SetLength(int length) {
@@ -384,8 +380,8 @@ MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esFunctionTemplate = CVAL(this)->ftpl();
 
-  API_RETURN_LOCAL(
-      Function, lwIsolate->toV8(), esFunctionTemplate->instantiate(esContext));
+  return Utils::NewLocal<Function>(lwIsolate->toV8(),
+                                   esFunctionTemplate->instantiate(esContext));
 }
 
 MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
@@ -405,8 +401,7 @@ Local<ObjectTemplate> ObjectTemplate::New(
   auto esObjectTemplate = ObjectTemplateRef::create();
   esObjectTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
 
-  return Local<ObjectTemplate>::New(
-      isolate, ValueWrap::createObjectTemplate(esObjectTemplate));
+  return Utils::NewLocal(isolate, esObjectTemplate);
 }
 
 void Template::SetNativeDataProperty(v8::Local<String> name,
@@ -539,7 +534,7 @@ MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esObjectTemplate = CVAL(this)->otpl();
 
-  API_RETURN_LOCAL(
-      Function, lwIsolate->toV8(), esObjectTemplate->instantiate(esContext));
+  return Utils::NewLocal<Function>(lwIsolate->toV8(),
+                                   esObjectTemplate->instantiate(esContext));
 }
 }  // namespace v8

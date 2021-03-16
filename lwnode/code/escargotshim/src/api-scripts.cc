@@ -68,8 +68,7 @@ Local<Script> UnboundScript::BindToCurrentContext() {
   // @note UnboundScript is already once successfully compiled.
   LWNODE_CHECK(result.isSuccessful());
 
-  return Local<Script>::New(lwIsolate->toV8(),
-                            ValueWrap::createScript(result.script.get()));
+  return Utils::NewLocal<Script>(lwIsolate->toV8(), result.script.get());
 }
 
 int UnboundScript::GetId() {
@@ -110,7 +109,7 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
-  return Local<Value>::New(lwIsolate->toV8(), ValueWrap::createValue(r.result));
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
 Local<Value> ScriptOrModule::GetResourceName() {
@@ -241,12 +240,11 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
   }
 
   // wrap the parsed script with the current isolate
-  auto lwValue = ValueWrap::createScript(result.script.get());
+  // auto lwValue = ValueWrap::createScript(result.script.get());
 
   // ExtraData extra(1, lwIsolate);
   // lwValue->setExtra(std::move(extra));
-
-  return Local<UnboundScript>::New(v8_isolate, lwValue);
+  return Utils::NewLocal<UnboundScript>(v8_isolate, result.script.get());
 }
 
 MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundScript(
@@ -340,7 +338,7 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Function>());
 
-  API_RETURN_LOCAL(Function, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Function>(lwIsolate->toV8(), r.result);
 }
 
 void ScriptCompiler::ScriptStreamingTask::Run() {}

@@ -351,54 +351,6 @@ class Local {
   explicit V8_INLINE Local(T* that) : val_(that) {}
   V8_INLINE static Local<T> New(Isolate* isolate, T* that);
   T* val_;
-
-// @lwnode
-private:
-  friend class Script;
-  friend class Module;
-  friend class String;
-  friend class Symbol;
-  friend class Array;
-  friend class ArrayBuffer;
-  friend class ArrayBufferView;
-  friend class Uint8Array;
-  friend class Int8Array;
-  friend class Uint8ClampedArray;
-  friend class Uint16Array;
-  friend class Int16Array;
-  friend class Uint32Array;
-  friend class Int32Array;
-  friend class BigInt64Array;
-  friend class BigUint64Array;
-  friend class Float32Array;
-  friend class Float64Array;
-  friend class DataView;
-  friend class Map;
-  friend class Set;
-  friend class Integer;
-  friend class Number;
-  friend class Value;
-  friend class FunctionTemplate;
-  friend class ObjectTemplate;
-  friend class Function;
-  friend class External;
-  friend class Exception;
-  friend class SharedArrayBuffer;
-  friend class Signature;
-  friend class TryCatch;
-  friend class Context;
-  friend class Isolate;
-  friend class Promise;
-  friend class UnboundScript;
-  friend class ScriptCompiler;
-  friend class EscapableHandleScope;
-  friend class PrimitiveArray;
-  friend class ValueDeserializer;
-  friend class BooleanObject;
-  friend class NumberObject;
-  friend class StringObject;
-  V8_INLINE static Local<T> New(Isolate* isolate, e::HandleWrap* that);
-// end @lwnode
 };
 
 
@@ -10851,17 +10803,6 @@ Local<T> Local<T>::New(Isolate* isolate, T* that) {
       reinterpret_cast<internal::Isolate*>(isolate), p)));
   // end @lwnode
 }
-
-// @lwnode
-template <class T>
-Local<T> Local<T>::New(Isolate* isolate, e::HandleWrap* that) {
-  if (that == nullptr) return Local<T>();
-  T* that_ptr = reinterpret_cast<T*>(that);
-  internal::Address p = reinterpret_cast<internal::Address>(that_ptr);
-  return Local<T>(reinterpret_cast<T*>(HandleScope::CreateHandle(
-      reinterpret_cast<internal::Isolate*>(isolate), p)));
-}
-// end @lwnode
 
 template<class T>
 template<class S>

@@ -23,28 +23,23 @@ using namespace EscargotShim;
 namespace v8 {
 
 Local<String> String::Empty(Isolate* isolate) {
-  return Local<String>::New(isolate,
-                            ValueWrap::createValue(StringRef::emptyString()));
+  return Utils::NewLocal<String>(isolate, StringRef::emptyString());
 }
 
 Local<Primitive> Undefined(Isolate* isolate) {
-  return Local<Primitive>::New(
-      isolate, ValueWrap::createValue(ValueRef::createUndefined()));
+  return Utils::NewLocal<Primitive>(isolate, ValueRef::createUndefined());
 }
 
 Local<Primitive> Null(Isolate* isolate) {
-  return Local<Primitive>::New(isolate,
-                               ValueWrap::createValue(ValueRef::createNull()));
+  return Utils::NewLocal<Primitive>(isolate, ValueRef::createNull());
 }
 
 Local<Boolean> True(Isolate* isolate) {
-  return Local<Boolean>::New(isolate,
-                             ValueWrap::createValue(ValueRef::create(true)));
+  return Utils::NewLocal<Boolean>(isolate, ValueRef::create(true));
 }
 
 Local<Boolean> False(Isolate* isolate) {
-  return Local<Boolean>::New(isolate,
-                             ValueWrap::createValue(ValueRef::create(false)));
+  return Utils::NewLocal<Boolean>(isolate, ValueRef::create(false));
 }
 
 }  // namespace v8
