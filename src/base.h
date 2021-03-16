@@ -67,9 +67,6 @@
     return bailout_value;                                                      \
   }
 
-#define API_RETURN_LOCAL(type, v8_isolate, esValue)                            \
-  return Local<type>::New(v8_isolate, ValueWrap::createValue(esValue));
-
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \
   V(Uint8, uint8, UINT8, uint8_t)                                              \

@@ -154,8 +154,7 @@ Local<Context> v8::Context::New(
 
   auto lwContext = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
 
-  return Local<Context>::New(external_isolate,
-                             ValueWrap::createContext(lwContext));
+  return v8::Utils::NewLocal(external_isolate, lwContext);
 }
 
 MaybeLocal<Context> v8::Context::FromSnapshot(
@@ -195,7 +194,8 @@ v8::Local<v8::Object> Context::Global() {
   auto lwContext = VAL(this)->context();
   GlobalObjectRef* esGlobalObject = lwContext->get()->globalObject();
 
-  API_RETURN_LOCAL(Object, lwContext->GetIsolate()->toV8(), esGlobalObject);
+  return Utils::NewLocal<Object>(lwContext->GetIsolate()->toV8(),
+                                 esGlobalObject);
 }
 
 void Context::DetachGlobal() {
@@ -305,7 +305,7 @@ MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
   } else {
     if (length < 0) length = strLength(data);
     StringRef* esSource = StringRef::createFromUTF8(data, length);
-    result = Local<String>::New(isolate, ValueWrap::createValue(esSource));
+    result = Utils::NewLocal<String>(isolate, esSource);
   }
 
   return result;
@@ -324,7 +324,7 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
   } else {
     if (length < 0) length = strLength(data);
     StringRef* esSource = StringRef::createFromLatin1(data, length);
-    result = Local<String>::New(isolate, ValueWrap::createValue(esSource));
+    result = Utils::NewLocal<String>(isolate, esSource);
   }
 
   return result;
@@ -344,7 +344,7 @@ MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
     if (length < 0) length = strLength(data);
     StringRef* esSource = StringRef::createFromUTF16(
         reinterpret_cast<const char16_t*>(data), length);
-    result = Local<String>::New(isolate, ValueWrap::createValue(esSource));
+    result = Utils::NewLocal<String>(isolate, esSource);
   }
 
   return result;
@@ -385,16 +385,16 @@ Local<String> v8::String::Concat(Isolate* v8_isolate,
            rightStrBufferData.buffer,
            rightStrBufferData.length);
 
-    auto esNewStr = StringRef::createFromLatin1(buf, nchars);
-    r = Local<String>::New(v8_isolate, ValueWrap::createValue(esNewStr));
+    r = Utils::NewLocal<String>(v8_isolate,
+                                StringRef::createFromLatin1(buf, nchars));
     delete[] buf;
   } else {
     char16_t* buf = new char16_t[nchars];
     copyStringToTwoByteArray(buf, esLeftStr);
     copyStringToTwoByteArray(buf + leftStrBufferData.length, esRightStr);
 
-    auto esNewStr = StringRef::createFromUTF16(buf, nchars);
-    r = Local<String>::New(v8_isolate, ValueWrap::createValue(esNewStr));
+    r = Utils::NewLocal<String>(v8_isolate,
+                                StringRef::createFromUTF16(buf, nchars));
     delete[] buf;
   }
 
@@ -411,7 +411,7 @@ MaybeLocal<String> v8::String::NewExternalTwoByte(
 
   if (resource->length() == 0) {
     resource->Dispose();
-    API_RETURN_LOCAL(String, isolate, StringRef::emptyString());
+    return Utils::NewLocal<String>(isolate, StringRef::emptyString());
   }
 
   LWNODE_CHECK_NOT_NULL(resource->data());
@@ -419,7 +419,7 @@ MaybeLocal<String> v8::String::NewExternalTwoByte(
   auto esString = StringRef::createExternalFromUTF16(
       reinterpret_cast<const char16_t*>(resource->data()), resource->length());
 
-  API_RETURN_LOCAL(String, isolate, esString);
+  return Utils::NewLocal<String>(isolate, esString);
 }
 
 MaybeLocal<String> v8::String::NewExternalOneByte(
@@ -433,7 +433,7 @@ MaybeLocal<String> v8::String::NewExternalOneByte(
   if (resource->length() == 0) {
     resource->Dispose();
 
-    API_RETURN_LOCAL(String, isolate, StringRef::emptyString());
+    return Utils::NewLocal<String>(isolate, StringRef::emptyString());
   }
 
   LWNODE_CHECK_NOT_NULL(resource->data());
@@ -441,7 +441,7 @@ MaybeLocal<String> v8::String::NewExternalOneByte(
   auto externalString = StringRef::createExternalFromLatin1(
       (const unsigned char*)(resource->data()), resource->length());
 
-  API_RETURN_LOCAL(String, isolate, externalString);
+  return Utils::NewLocal<String>(isolate, externalString);
 }
 
 bool v8::String::MakeExternal(v8::String::ExternalStringResource* resource) {
@@ -472,7 +472,7 @@ Local<v8::Object> v8::Object::New(Isolate* isolate) {
   ObjectRef* esObject =
       ObjectRefHelper::create(lwIsolate->GetCurrentContext()->get());
 
-  API_RETURN_LOCAL(Object, isolate, esObject);
+  return Utils::NewLocal<Object>(isolate, esObject);
 }
 
 Local<v8::Object> v8::Object::New(Isolate* isolate,
@@ -497,7 +497,7 @@ Local<v8::Value> v8::NumberObject::New(Isolate* isolate, double value) {
       value);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(isolate, r.result);
 }
 
 double v8::NumberObject::ValueOf() const {
@@ -528,7 +528,7 @@ Local<v8::Value> v8::BooleanObject::New(Isolate* isolate, bool value) {
       value);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(isolate, r.result);
 }
 
 bool v8::BooleanObject::ValueOf() const {
@@ -553,15 +553,15 @@ Local<v8::Value> v8::StringObject::New(Isolate* v8_isolate,
       esValue);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(v8_isolate, r.result);
 }
 
 Local<v8::String> v8::StringObject::ValueOf() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esValue = CVAL(this)->value();
   LWNODE_CHECK(esValue->isStringObject());
-  API_RETURN_LOCAL(
-      String, lwIsolate->toV8(), esValue->asStringObject()->primitiveValue());
+  return Utils::NewLocal<String>(lwIsolate->toV8(),
+                                 esValue->asStringObject()->primitiveValue());
 }
 
 Local<v8::Value> v8::SymbolObject::New(Isolate* isolate, Local<Symbol> value) {
@@ -624,7 +624,7 @@ Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
       len);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Array, isolate, r.result);
+  return Utils::NewLocal<Array>(isolate, r.result);
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate,
@@ -646,7 +646,7 @@ Local<v8::Array> v8::Array::New(Isolate* isolate,
       vector);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Array, isolate, r.result);
+  return Utils::NewLocal<Array>(isolate, r.result);
 }
 
 uint32_t v8::Array::Length() const {
@@ -675,7 +675,7 @@ Local<v8::Map> v8::Map::New(Isolate* isolate) {
       });
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Map, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Map>(isolate, r.result);
 }
 
 size_t v8::Map::Size() const {
@@ -724,7 +724,7 @@ MaybeLocal<Value> Map::Get(Local<Context> context, Local<Value> key) {
       esKey);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Map> Map::Set(Local<Context> context,
@@ -750,7 +750,7 @@ MaybeLocal<Map> Map::Set(Local<Context> context,
       esValue);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Map>());
 
-  API_RETURN_LOCAL(Map, lwIsolate->toV8(), esSelf);
+  return Utils::NewLocal<Map>(lwIsolate->toV8(), esSelf);
 }
 
 Maybe<bool> Map::Has(Local<Context> context, Local<Value> key) {
@@ -825,7 +825,7 @@ Local<Array> Map::AsArray() const {
       esSelf);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Array, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
 }
 
 Local<v8::Set> v8::Set::New(Isolate* isolate) {
@@ -838,7 +838,7 @@ Local<v8::Set> v8::Set::New(Isolate* isolate) {
       });
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Set, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Set>(isolate, r.result);
 }
 
 size_t v8::Set::Size() const {
@@ -890,7 +890,7 @@ MaybeLocal<Set> Set::Add(Local<Context> context, Local<Value> key) {
       esKey);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Set>());
 
-  API_RETURN_LOCAL(Set, lwIsolate->toV8(), esSelf);
+  return Utils::NewLocal<Set>(lwIsolate->toV8(), esSelf);
 }
 
 Maybe<bool> Set::Has(Local<Context> context, Local<Value> key) {
@@ -958,7 +958,7 @@ Local<Array> Set::AsArray() const {
       esSelf);
   LWNODE_CHECK(r.isSuccessful());
 
-  API_RETURN_LOCAL(Array, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Promise::Resolver> Promise::Resolver::New(Local<Context> context){
@@ -1146,7 +1146,7 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
       },
       lwBackingStore.release());
 
-  API_RETURN_LOCAL(ArrayBuffer, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<ArrayBuffer>(isolate, r.result);
 }
 
 Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate,
@@ -1183,8 +1183,8 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
 
 Local<ArrayBuffer> v8::ArrayBufferView::Buffer() {
   auto esArrayBufferObject = VAL(this)->value()->asArrayBufferView()->buffer();
-  API_RETURN_LOCAL(
-      ArrayBuffer, IsolateWrap::GetCurrent()->toV8(), esArrayBufferObject);
+  return Utils::NewLocal<ArrayBuffer>(IsolateWrap::GetCurrent()->toV8(),
+                                      esArrayBufferObject);
 }
 
 size_t v8::ArrayBufferView::CopyContents(void* dest, size_t byte_length) {
@@ -1226,7 +1226,7 @@ size_t v8::TypedArray::Length() {
                                                                                \
     LWNODE_CHECK(esArrayBufferView->is##Type##ArrayObject());                  \
                                                                                \
-    API_RETURN_LOCAL(Type##Array, lwIsolate->toV8(), esArrayBufferView);       \
+    return Utils::NewLocal<Type##Array>(lwIsolate->toV8(), esArrayBufferView); \
   }                                                                            \
                                                                                \
   Local<Type##Array> Type##Array::New(                                         \
@@ -1342,9 +1342,7 @@ Local<Symbol> v8::Symbol::New(Isolate* isolate, Local<String> name) {
     LWNODE_CHECK(VAL(*name)->value()->isString());
     esName = VAL(*name)->value()->asString();
   }
-  auto lwValue = ValueWrap::createValue(SymbolRef::create(esName));
-
-  return Local<Symbol>::New(isolate, lwValue);
+  return Utils::NewLocal<Symbol>(isolate, SymbolRef::create(esName));
 }
 
 Local<Symbol> v8::Symbol::For(Isolate* isolate, Local<String> name) {
@@ -1396,7 +1394,7 @@ Local<Private> v8::Private::New(Isolate* isolate, Local<String> name) {
 
   SymbolRef* esSymbol = lwIsolate->getPrivateSymbol(esName);
 
-  API_RETURN_LOCAL(Private, isolate, esSymbol);
+  return Utils::NewLocal<Private>(isolate, esSymbol);
 }
 
 Local<Private> v8::Private::ForApi(Isolate* isolate, Local<String> name) {
@@ -1405,22 +1403,19 @@ Local<Private> v8::Private::ForApi(Isolate* isolate, Local<String> name) {
   SymbolRef* esSymbol =
       lwIsolate->getPrivateSymbol(VAL(*name)->value()->asString());
 
-  API_RETURN_LOCAL(Private, isolate, esSymbol);
+  return Utils::NewLocal<Private>(isolate, esSymbol);
 }
 
 Local<Number> v8::Number::New(Isolate* isolate, double value) {
-  auto lwNumber = ValueWrap::createValue(Escargot::ValueRef::create(value));
-  return Local<Integer>::New(isolate, lwNumber);
+  return Utils::NewLocal<Number>(isolate, Escargot::ValueRef::create(value));
 }
 
 Local<Integer> v8::Integer::New(Isolate* isolate, int32_t value) {
-  auto lwInteger = ValueWrap::createValue(Escargot::ValueRef::create(value));
-  return Local<Integer>::New(isolate, lwInteger);
+  return Utils::NewLocal<Integer>(isolate, Escargot::ValueRef::create(value));
 }
 
 Local<Integer> v8::Integer::NewFromUnsigned(Isolate* isolate, uint32_t value) {
-  auto lwInteger = ValueWrap::createValue(Escargot::ValueRef::create(value));
-  return Local<Integer>::New(isolate, lwInteger);
+  return Utils::NewLocal<Integer>(isolate, Escargot::ValueRef::create(value));
 }
 
 Local<BigInt> v8::BigInt::New(Isolate* isolate, int64_t value) {
@@ -1483,7 +1478,7 @@ void Isolate::ClearKeptObjects() {
 
 v8::Local<v8::Context> Isolate::GetCurrentContext() {
   auto lwContext = IsolateWrap::fromV8(this)->GetCurrentContext();
-  return Local<Context>::New(this, ValueWrap::createContext(lwContext));
+  return Utils::NewLocal(this, lwContext);
 }
 
 v8::Local<v8::Context> Isolate::GetEnteredContext() {

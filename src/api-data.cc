@@ -212,8 +212,7 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 
   auto esValue = CVAL(this)->value();
   if (esValue->isString()) {
-    return Local<String>::New(lwIsolate->toV8(),
-                              ValueWrap::createValue(esValue));
+    return Utils::NewLocal<String>(lwIsolate->toV8(), esValue);
   }
 
   EvalResult r = Evaluator::execute(
@@ -225,7 +224,7 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<String>());
 
-  API_RETURN_LOCAL(String, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<String> Value::ToDetailString(Local<Context> context) const {
@@ -259,7 +258,7 @@ Local<Boolean> Value::ToBoolean(Isolate* v8_isolate) const {
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Boolean>());
 
-  API_RETURN_LOCAL(Boolean, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Boolean>(v8_isolate, r.result);
 }
 
 MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
@@ -276,7 +275,7 @@ MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Number>());
 
-  API_RETURN_LOCAL(Number, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Number>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Integer> Value::ToInteger(Local<Context> context) const {
@@ -297,7 +296,7 @@ MaybeLocal<Int32> Value::ToInt32(Local<Context> context) const {
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Int32>());
 
-  API_RETURN_LOCAL(Int32, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Int32>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Uint32> Value::ToUint32(Local<Context> context) const {
@@ -314,7 +313,7 @@ MaybeLocal<Uint32> Value::ToUint32(Local<Context> context) const {
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Uint32>());
 
-  API_RETURN_LOCAL(Uint32, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Uint32>(lwIsolate->toV8(), r.result);
 }
 
 i::Isolate* i::IsolateFromNeverReadOnlySpaceObject(i::Address obj) {
@@ -610,7 +609,7 @@ MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
     return MaybeLocal<Uint32>();
   }
 
-  API_RETURN_LOCAL(Uint32, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Uint32>(lwIsolate->toV8(), r.result);
 }
 
 Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
@@ -704,8 +703,7 @@ Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
                             v8::Local<Value> value) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
   return Set(context,
-             Local<Value>::New(lwIsolate->toV8(),
-                               ValueWrap::createValue(ValueRef::create(index))),
+             Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::create(index)),
              value);
 }
 
@@ -838,15 +836,14 @@ MaybeLocal<Value> v8::Object::Get(Local<v8::Context> context,
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Value> v8::Object::Get(Local<Context> context, uint32_t index) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
   return Get(
       context,
-      Local<Value>::New(lwIsolate->toV8(),
-                        ValueWrap::createValue(ValueRef::create(index))));
+      Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::create(index)));
 }
 
 MaybeLocal<Value> v8::Object::GetPrivate(Local<Context> context,
@@ -859,7 +856,7 @@ MaybeLocal<Value> v8::Object::GetPrivate(Local<Context> context,
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
 Maybe<PropertyAttribute> v8::Object::GetPropertyAttributes(
@@ -878,7 +875,7 @@ Local<Value> v8::Object::GetPrototype() {
   auto esObject =
       ObjectRefHelper::getPrototype(esContext, VAL(this)->value()->asObject());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), esObject);
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), esObject);
 }
 
 Maybe<bool> v8::Object::SetPrototype(Local<Context> context,
@@ -976,8 +973,7 @@ Maybe<bool> v8::Object::Has(Local<Context> context, uint32_t index) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
   return Has(
       context,
-      Local<Value>::New(lwIsolate->toV8(),
-                        ValueWrap::createValue(ValueRef::create(index))));
+      Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::create(index)));
 }
 
 template <typename Getter, typename Setter, typename Data>
@@ -1176,7 +1172,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
-  API_RETURN_LOCAL(Value, lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
 void Function::SetName(v8::Local<v8::String> name) {}
@@ -1434,7 +1430,7 @@ v8::String::GetExternalOneByteStringResource() const {
 Local<Value> Symbol::Description() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esDescription = CVAL(this)->value()->asSymbol()->description();
-  API_RETURN_LOCAL(String, lwIsolate->toV8(), esDescription);
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription);
 }
 
 Local<Value> Private::Name() const {

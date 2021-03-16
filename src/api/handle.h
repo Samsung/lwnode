@@ -51,9 +51,6 @@ class ValueWrap : public HandleWrap {
   const ValueWrap& operator=(const ValueWrap& src) = delete;
   const ValueWrap& operator=(ValueWrap&& src) = delete;
 
-  template <typename T>
-  v8::Local<T> ToLocal(v8::Isolate* v8Isolate);
-
   // Value
   static ValueWrap* createValue(Escargot::ValueRef* esValue);
   Escargot::ValueRef* value() const;
