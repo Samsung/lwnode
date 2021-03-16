@@ -2,9 +2,15 @@
   'includes': ['common.gypi'],
   'variables': {
     'escargot_dir%': 'deps/escargot',
-    "lib_type%": 'static_lib', # static_lib | shared_lib
-    'lib_ext%': '.a',
+    "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
     'build_asan%': '<(build_asan)',
+    'conditions': [
+      ['escargot_lib_type=="shared_lib"', {
+        'lib_ext': '.so'
+      }, {
+        'lib_ext': '.a'
+      }],
+    ],
   },
   'targets': [{
     'target_name': 'escargot',
@@ -13,15 +19,18 @@
       'output_dir': '<(SHARED_INTERMEDIATE_DIR)/escargot',
       'escargot_libs': [
         '<(output_dir)/libescargot<(lib_ext)',
-        '<(output_dir)/third_party/GCutil/libgc-lib<(lib_ext)',
-        '<(output_dir)/third_party/runtime_icu_binder/libruntime-icu-binder-static<(lib_ext)',
-        '<(output_dir)/liblibbf<(lib_ext)',
+        '<(output_dir)/third_party/GCutil/libgc-lib.a',
+        '<(output_dir)/third_party/runtime_icu_binder/libruntime-icu-binder-static.a',
+        '<(output_dir)/liblibbf.a',
       ],
     },
     'all_dependent_settings': {
       'libraries': [
         '-lpthread',
         '<@(escargot_libs)',
+        '-Wl,-rpath,<(output_dir)',
+        '-Wl,-rpath,../lib',
+        '-Wl,-rpath,.',
       ],
       'cflags': [ '-pthread' ],
       'ldflags': [ '-pthread' ],
@@ -56,7 +65,7 @@
           '-DESCARGOT_ARCH=<(target_arch)',
           '-DESCARGOT_MODE=<(build_mode)',
           '-DESCARGOT_HOST=<(build_host)',
-          '-DESCARGOT_OUTPUT=<(lib_type)',
+          '-DESCARGOT_OUTPUT=<(escargot_lib_type)',
           '-DESCARGOT_ASAN=<(build_asan)',
         ],
       },
