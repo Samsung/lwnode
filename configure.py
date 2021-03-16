@@ -98,6 +98,11 @@ lwnode_optgroup.add_option('--enable-external-builtin-scripts',
     default=False,
     help='Store builtin scripts outside of executable')
 
+lwnode_optgroup.add_option('--static-escargot',
+    action='store_true',
+    dest='static_escargot',
+    help='link to a static escargot instead of shared linking')
+
 parser.add_option_group(lwnode_optgroup)
 
 def get_lwnode_gyp_options():
@@ -111,7 +116,7 @@ def get_lwnode_gyp_options():
   if options.engine == 'escargot' :
     args += ['-Dlwnode='+ 'true']
 
-    lwnode_jsengine_path = 'lwnode/code/escargotshim';
+    lwnode_jsengine_path = 'lwnode/code/escargotshim'
     args += ['-Dlwnode_jsengine_path='+ lwnode_jsengine_path]
 
     if options.enable_external_builtin_scripts:
@@ -127,6 +132,11 @@ def get_lwnode_gyp_options():
     args += ['-Descargot_host=tizen_obs']
   else:
     args += ['-Dtarget_os=linux']
+
+  if options.static_escargot:
+    args += (['-Descargot_lib_type=static_lib'])
+  else:
+    args += (['-Descargot_lib_type=shared_lib'])
 
   options.verbose = True
   print_verbose("LWNode.js options: [" + " ".join(str(x) for x in args) + "]")

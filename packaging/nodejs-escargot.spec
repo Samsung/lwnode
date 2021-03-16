@@ -88,7 +88,7 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
 cp -fr ./out/Release/%{build_target} %{buildroot}%{_bindir}
-#cp -fr ./out/Release/libescargot.so %{buildroot}%{_libdir}
+cp -fr ./out/Release/gen/escargot/libescargot.so %{buildroot}%{_libdir}
 
 %clean
 rm ./*.list
