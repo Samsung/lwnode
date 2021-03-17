@@ -2527,41 +2527,41 @@ THREADED_TEST(IntegerValue) {
 // }
 
 
-// // Helper functions for Interceptor/Accessor interaction tests
+// Helper functions for Interceptor/Accessor interaction tests
 
-// void SimpleAccessorGetter(Local<String> name,
-//                           const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   Local<Object> self = Local<Object>::Cast(info.This());
-//   info.GetReturnValue().Set(
-//       self->Get(info.GetIsolate()->GetCurrentContext(),
-//                 String::Concat(info.GetIsolate(), v8_str("accessor_"), name))
-//           .ToLocalChecked());
-// }
+void SimpleAccessorGetter(Local<String> name,
+                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+  Local<Object> self = Local<Object>::Cast(info.This());
+  info.GetReturnValue().Set(
+      self->Get(info.GetIsolate()->GetCurrentContext(),
+                String::Concat(info.GetIsolate(), v8_str("accessor_"), name))
+          .ToLocalChecked());
+}
 
-// void SimpleAccessorSetter(Local<String> name, Local<Value> value,
-//                           const v8::PropertyCallbackInfo<void>& info) {
-//   Local<Object> self = Local<Object>::Cast(info.This());
-//   CHECK(self->Set(info.GetIsolate()->GetCurrentContext(),
-//                   String::Concat(info.GetIsolate(), v8_str("accessor_"), name),
-//                   value)
-//             .FromJust());
-// }
+void SimpleAccessorSetter(Local<String> name, Local<Value> value,
+                          const v8::PropertyCallbackInfo<void>& info) {
+  Local<Object> self = Local<Object>::Cast(info.This());
+  CHECK(self->Set(info.GetIsolate()->GetCurrentContext(),
+                  String::Concat(info.GetIsolate(), v8_str("accessor_"), name),
+                  value)
+            .FromJust());
+}
 
-// void SymbolAccessorGetter(Local<Name> name,
-//                           const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   CHECK(name->IsSymbol());
-//   Local<Symbol> sym = Local<Symbol>::Cast(name);
-//   if (sym->Description()->IsUndefined()) return;
-//   SimpleAccessorGetter(Local<String>::Cast(sym->Description()), info);
-// }
+void SymbolAccessorGetter(Local<Name> name,
+                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+  CHECK(name->IsSymbol());
+  Local<Symbol> sym = Local<Symbol>::Cast(name);
+  if (sym->Description()->IsUndefined()) return;
+  SimpleAccessorGetter(Local<String>::Cast(sym->Description()), info);
+}
 
-// void SymbolAccessorSetter(Local<Name> name, Local<Value> value,
-//                           const v8::PropertyCallbackInfo<void>& info) {
-//   CHECK(name->IsSymbol());
-//   Local<Symbol> sym = Local<Symbol>::Cast(name);
-//   if (sym->Description()->IsUndefined()) return;
-//   SimpleAccessorSetter(Local<String>::Cast(sym->Description()), value, info);
-// }
+void SymbolAccessorSetter(Local<Name> name, Local<Value> value,
+                          const v8::PropertyCallbackInfo<void>& info) {
+  CHECK(name->IsSymbol());
+  Local<Symbol> sym = Local<Symbol>::Cast(name);
+  if (sym->Description()->IsUndefined()) return;
+  SimpleAccessorSetter(Local<String>::Cast(sym->Description()), value, info);
+}
 
 // void SymbolAccessorGetterReturnsDefault(
 //     Local<Name> name, const v8::PropertyCallbackInfo<v8::Value>& info) {
@@ -3588,22 +3588,22 @@ THREADED_TEST(SymbolTemplateProperties) {
 //   CHECK(!glob_api->SameValue(glob));
 // }
 
-// static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
-//                                  const char* name) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
+                                 const char* name) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<v8::Symbol> symbol = getter(isolate);
-//   std::string script = std::string("var sym = ") + name;
-//   CompileRun(script.c_str());
-//   v8::Local<Value> value =
-//       env->Global()->Get(env.local(), v8_str("sym")).ToLocalChecked();
+  v8::Local<v8::Symbol> symbol = getter(isolate);
+  std::string script = std::string("var sym = ") + name;
+  CompileRun(script.c_str());
+  v8::Local<Value> value =
+      env->Global()->Get(env.local(), v8_str("sym")).ToLocalChecked();
 
-//   CHECK(!value.IsEmpty());
-//   CHECK(!symbol.IsEmpty());
-//   CHECK(value->SameValue(symbol));
-// }
+  CHECK(!value.IsEmpty());
+  CHECK(!symbol.IsEmpty());
+  CHECK(value->SameValue(symbol));
+}
 
 
 // THREADED_TEST(WellKnownSymbols) {
@@ -8518,11 +8518,12 @@ THREADED_TEST(Utf16) {
 }
 
 
-// static bool SameSymbol(Local<String> s1, Local<String> s2) {
-//   i::Handle<i::String> is1(v8::Utils::OpenHandle(*s1));
-//   i::Handle<i::String> is2(v8::Utils::OpenHandle(*s2));
-//   return *is1 == *is2;
-// }
+static bool SameSymbol(Local<String> s1, Local<String> s2) {
+  // i::Handle<i::String> is1(v8::Utils::OpenHandle(*s1));
+  // i::Handle<i::String> is2(v8::Utils::OpenHandle(*s2));
+  // return *is1 == *is2;
+  return s1->SameValue(s2);
+}
 
 
 // THREADED_TEST(Utf16Symbol) {
