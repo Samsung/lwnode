@@ -861,7 +861,46 @@ MaybeLocal<Value> v8::Object::GetPrivate(Local<Context> context,
 
 Maybe<PropertyAttribute> v8::Object::GetPropertyAttributes(
     Local<Context> context, Local<Value> key) {
-  LWNODE_RETURN_MAYBE(PropertyAttribute);
+  API_ENTER_WITH_CONTEXT(context, Nothing<PropertyAttribute>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asObject();
+  auto esKey = CVAL(*key)->value();
+
+  PropertyAttribute attr;
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         ObjectRef* esSelf,
+         ValueRef* esKey,
+         PropertyAttribute* attr) -> ValueRef* {
+        auto val = esSelf->getOwnPropertyDescriptor(esState, esKey);
+        bool isWritable =
+            val->asObject()
+                ->get(esState, StringRef::createFromASCII("writable"))
+                ->asBoolean();
+        bool isEnumerable =
+            val->asObject()
+                ->get(esState, StringRef::createFromASCII("enumerable"))
+                ->asBoolean();
+        bool isConfigurable =
+            val->asObject()
+                ->get(esState, StringRef::createFromASCII("configurable"))
+                ->asBoolean();
+
+        *attr = *attr | !isWritable ? PropertyAttribute::ReadOnly
+                                    : PropertyAttribute::None;
+        *attr = *attr | !isEnumerable ? PropertyAttribute::DontEnum
+                                      : PropertyAttribute::None;
+        *attr = *attr | !isConfigurable ? PropertyAttribute::DontDelete
+                                        : PropertyAttribute::None;
+        return val;
+      },
+      esSelf,
+      esKey,
+      &attr);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<PropertyAttribute>());
+
+  return Just(attr);
 }
 
 MaybeLocal<Value> v8::Object::GetOwnPropertyDescriptor(Local<Context> context,
@@ -899,7 +938,53 @@ Local<Object> v8::Object::FindInstanceInPrototypeChain(
 }
 
 MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
-  LWNODE_RETURN_LOCAL(Array);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Array>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asObject();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ObjectRef* esSelf) -> ValueRef* {
+        auto globalObject = esState->context()->globalObject()->object();
+        auto f = globalObject->getOwnProperty(
+            esState, StringRef::createFromASCII("getOwnPropertyNames"));
+        auto vector = ValueVectorRef::create();
+
+        auto done = StringRef::createFromASCII("done");
+        auto key = StringRef::createFromASCII("key");
+
+        {
+          ValueRef* argv[] = {esSelf};
+          auto props = f->call(esState, globalObject, 1, argv);
+          auto itr = props->asArrayObject()->keys(esState);
+          for (auto entry = itr->next(esState);
+               entry->asObject()->get(esState, done)->isFalse();
+               entry = itr->next(esState)) {
+            auto val = entry->asObject()->get(esState, key);
+            vector->pushBack(val);
+          }
+        }
+
+        for (OptionalRef<ObjectRef> p = esSelf->getPrototypeObject(esState);
+             p.hasValue();
+             p = p.value()->getPrototypeObject(esState)) {
+          ValueRef* argv[] = {p.value()};
+          auto props = f->call(esState, globalObject, 1, argv);
+          auto itr = props->asArrayObject()->keys(esState);
+          for (auto entry = itr->next(esState);
+               entry->asObject()->get(esState, done)->isFalse();
+               entry = itr->next(esState)) {
+            auto val = entry->asObject()->get(esState, key);
+            vector->pushBack(val);
+          }
+        }
+
+        return ArrayObjectRef::create(esState, vector);
+      },
+      esSelf);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Array>());
+
+  return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Array> v8::Object::GetPropertyNames(
@@ -912,7 +997,23 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(
 }
 
 MaybeLocal<Array> v8::Object::GetOwnPropertyNames(Local<Context> context) {
-  LWNODE_RETURN_LOCAL(Array);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Array>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asObject();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ObjectRef* esSelf) -> ValueRef* {
+        auto globalObject = esState->context()->globalObject()->object();
+        auto f = globalObject->getOwnProperty(
+            esState, StringRef::createFromASCII("getOwnPropertyNames"));
+        ValueRef* argv[] = {esSelf};
+        return f->call(esState, globalObject, 1, argv);
+      },
+      esSelf);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Array>());
+
+  return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Array> v8::Object::GetOwnPropertyNames(
