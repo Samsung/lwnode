@@ -1233,7 +1233,25 @@ MaybeLocal<Function> Function::New(Local<Context> context,
 MaybeLocal<Object> Function::NewInstance(Local<Context> context,
                                          int argc,
                                          v8::Local<v8::Value> argv[]) const {
-  LWNODE_RETURN_LOCAL(Object);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Object>());
+  auto lwContext = CVAL(*context)->context();
+
+  std::vector<ValueRef*> arguments;
+  for (int i = 0; i < argc; i++) {
+    arguments.push_back(VAL(*argv[i])->value());
+  }
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state, ObjectRef* self, size_t argc, ValueRef** argv)
+          -> ValueRef* { return self->construct(state, argc, argv); },
+      CVAL(this)->value()->asObject(),
+      arguments.size(),
+      arguments.data());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Object>());
+
+  return Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Object> Function::NewInstanceWithSideEffectType(
