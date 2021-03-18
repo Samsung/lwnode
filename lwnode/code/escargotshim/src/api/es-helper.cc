@@ -96,6 +96,23 @@ EvalResult ObjectRefHelper::hasProperty(ContextRef* context,
       key);
 }
 
+EvalResult ObjectRefHelper::hasOwnProperty(ContextRef* context,
+                                           ObjectRef* object,
+                                           ValueRef* key) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* object,
+         ValueRef* key) -> ValueRef* {
+        return ValueRef::create(object->hasOwnProperty(state, key));
+      },
+      object,
+      key);
+}
+
 EvalResult ObjectRefHelper::deleteProperty(ContextRef* context,
                                            ObjectRef* object,
                                            ValueRef* key) {

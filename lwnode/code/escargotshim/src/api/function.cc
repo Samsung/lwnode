@@ -72,10 +72,15 @@ FunctionCallbackInfoWrap::~FunctionCallbackInfoWrap() {
 // PropertyCallbackInfoWrap
 template class PropertyCallbackInfoWrap<v8::Value>;
 template class PropertyCallbackInfoWrap<void>;
+template class PropertyCallbackInfoWrap<v8::Integer>;
+template class PropertyCallbackInfoWrap<v8::Boolean>;
+template class PropertyCallbackInfoWrap<v8::Array>;
 
 template <typename T>
 PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
-                                                      v8::Local<v8::Value> data)
+                                                      ValueRef* holder,
+                                                      ValueRef* thisValue,
+                                                      ValueWrap* data)
     : v8::PropertyCallbackInfo<T>(
           reinterpret_cast<v8::internal::Address*>(m_implicitArgs)) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
@@ -84,8 +89,17 @@ PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
   m_implicitArgs[F::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
   // m_implicitArgs[F::kReturnValueDefaultValueIndex]; // TODO
   m_implicitArgs[F::kReturnValueIndex] = lwIsolate->defaultReturnValue();
-  m_implicitArgs[F::kDataIndex] = reinterpret_cast<HandleWrap*>(*data);
-  // m_implicitArgs[F::kThisIndex]; // TODO
+  m_implicitArgs[F::kDataIndex] = data;
+  m_implicitArgs[F::kThisIndex] = ValueWrap::createValue(thisValue);
+}
+
+template <typename T>
+bool PropertyCallbackInfoWrap<T>::hasReturnValue() {
+  auto lwIsolate =
+      reinterpret_cast<IsolateWrap*>(m_implicitArgs[F::kIsolateIndex]);
+
+  return m_implicitArgs[F::kReturnValueIndex] !=
+         lwIsolate->defaultReturnValue();
 }
 
 }  // namespace EscargotShim

@@ -51,6 +51,10 @@ class ObjectRefHelper {
                                 ObjectRef* object,
                                 ValueRef* key);
 
+  static EvalResult hasOwnProperty(ContextRef* context,
+                                   ObjectRef* object,
+                                   ValueRef* key);
+
   static EvalResult getPrivate(ContextRef* context,
                                ObjectRef* object,
                                ValueRef* key);
@@ -101,10 +105,10 @@ class ArrayBufferHelper {
 
   template <class T>
   static ArrayBufferViewRef* createView(ContextRef* context,
-                                    ArrayBufferObjectRef* abo,
-                                    size_t byteOffset,
-                                    size_t arrayLength,
-                                    ArrayType type) {
+                                        ArrayBufferObjectRef* abo,
+                                        size_t byteOffset,
+                                        size_t arrayLength,
+                                        ArrayType type) {
     EvalResult r = Evaluator::execute(
         context,
         [](ExecutionStateRef* state) -> ValueRef* { return T::create(state); });
