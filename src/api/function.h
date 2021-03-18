@@ -48,7 +48,12 @@ class PropertyCallbackInfoWrap : public v8::PropertyCallbackInfo<T> {
  public:
   using F = v8::PropertyCallbackInfo<T>;
 
-  PropertyCallbackInfoWrap(v8::Isolate* isolate, v8::Local<v8::Value> data);
+  PropertyCallbackInfoWrap(v8::Isolate* isolate,
+                           ValueRef* holder,
+                           ValueRef* thisValue,
+                           ValueWrap* data);
+
+  bool hasReturnValue();
 
  private:
   HandleWrap* m_implicitArgs[F::kArgsLength];

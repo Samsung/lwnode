@@ -18880,42 +18880,53 @@ THREADED_TEST(ToArrayIndex) {
 // }
 
 
-// static void Getter(v8::Local<v8::Name> property,
-//                    const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   info.GetReturnValue().Set(v8_str("42!"));
-// }
+static void Getter(v8::Local<v8::Name> property,
+                   const v8::PropertyCallbackInfo<v8::Value>& info) {
+  info.GetReturnValue().Set(v8_str("42!"));
+}
 
 
-// static void Enumerator(const v8::PropertyCallbackInfo<v8::Array>& info) {
-//   v8::Local<v8::Array> result = v8::Array::New(info.GetIsolate());
-//   result->Set(info.GetIsolate()->GetCurrentContext(), 0,
-//               v8_str("universalAnswer"))
-//       .FromJust();
-//   info.GetReturnValue().Set(result);
-// }
+static void Enumerator(const v8::PropertyCallbackInfo<v8::Array>& info) {
+  v8::Local<v8::Array> result = v8::Array::New(info.GetIsolate());
+  result->Set(info.GetIsolate()->GetCurrentContext(), 0,
+              v8_str("universalAnswer")).FromJust();
+  result->Set(info.GetIsolate()->GetCurrentContext(), 1,
+            v8_str("abc")).FromJust();
+  result->Set(info.GetIsolate()->GetCurrentContext(), 2,
+            v8_str("def")).FromJust();
+  info.GetReturnValue().Set(result);
+}
 
 
-// TEST(NamedEnumeratorAndForIn) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
-//   v8::Context::Scope context_scope(context.local());
+TEST(NamedEnumeratorAndForIn) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Context::Scope context_scope(context.local());
 
-//   v8::Local<v8::ObjectTemplate> tmpl = v8::ObjectTemplate::New(isolate);
-//   tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(
-//       Getter, nullptr, nullptr, nullptr, Enumerator));
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("o"),
-//                   tmpl->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   v8::Local<v8::Array> result = v8::Local<v8::Array>::Cast(
-//       CompileRun("var result = []; for (var k in o) result.push(k); result"));
-//   CHECK_EQ(1u, result->Length());
-//   CHECK(v8_str("universalAnswer")
-//             ->Equals(context.local(),
-//                      result->Get(context.local(), 0).ToLocalChecked())
-//             .FromJust());
-// }
+  v8::Local<v8::ObjectTemplate> tmpl = v8::ObjectTemplate::New(isolate);
+  tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(
+      Getter, nullptr, nullptr, nullptr, Enumerator));
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("o"),
+                  tmpl->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  v8::Local<v8::Array> result = v8::Local<v8::Array>::Cast(
+      CompileRun("var result = []; for (var k in o) result.push(k); result"));
+  CHECK_EQ(3u, result->Length());
+  CHECK(v8_str("universalAnswer")
+            ->Equals(context.local(),
+                     result->Get(context.local(), 0).ToLocalChecked())
+            .FromJust());
+  CHECK(v8_str("abc")
+            ->Equals(context.local(),
+                     result->Get(context.local(), 1).ToLocalChecked())
+            .FromJust());
+  CHECK(v8_str("def")
+            ->Equals(context.local(),
+                     result->Get(context.local(), 2).ToLocalChecked())
+            .FromJust());
+}
 
 
 // TEST(DefinePropertyPostDetach) {
@@ -19094,149 +19105,149 @@ THREADED_TEST(ToArrayIndex) {
 // }
 
 
-// void HasOwnPropertyIndexedPropertyGetter(
-//     uint32_t index,
-//     const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   if (index == 42) info.GetReturnValue().Set(v8_str("yes"));
-// }
+void HasOwnPropertyIndexedPropertyGetter(
+    uint32_t index,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  if (index == 42) info.GetReturnValue().Set(v8_str("yes"));
+}
 
 
-// void HasOwnPropertyNamedPropertyGetter(
-//     Local<Name> property, const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
-//           .FromJust()) {
-//     info.GetReturnValue().Set(v8_str("yes"));
-//   }
-// }
+void HasOwnPropertyNamedPropertyGetter(
+    Local<Name> property, const v8::PropertyCallbackInfo<v8::Value>& info) {
+  if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
+          .FromJust()) {
+    info.GetReturnValue().Set(v8_str("yes"));
+  }
+}
 
 
-// void HasOwnPropertyIndexedPropertyQuery(
-//     uint32_t index, const v8::PropertyCallbackInfo<v8::Integer>& info) {
-//   if (index == 42) info.GetReturnValue().Set(1);
-// }
+void HasOwnPropertyIndexedPropertyQuery(
+    uint32_t index, const v8::PropertyCallbackInfo<v8::Integer>& info) {
+  if (index == 42) info.GetReturnValue().Set(1);
+}
 
 
-// void HasOwnPropertyNamedPropertyQuery(
-//     Local<Name> property, const v8::PropertyCallbackInfo<v8::Integer>& info) {
-//   if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
-//           .FromJust()) {
-//     info.GetReturnValue().Set(1);
-//   }
-// }
+void HasOwnPropertyNamedPropertyQuery(
+    Local<Name> property, const v8::PropertyCallbackInfo<v8::Integer>& info) {
+  if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
+          .FromJust()) {
+    info.GetReturnValue().Set(1);
+  }
+}
 
 
-// void HasOwnPropertyNamedPropertyQuery2(
-//     Local<Name> property, const v8::PropertyCallbackInfo<v8::Integer>& info) {
-//   if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("bar"))
-//           .FromJust()) {
-//     info.GetReturnValue().Set(1);
-//   }
-// }
+void HasOwnPropertyNamedPropertyQuery2(
+    Local<Name> property, const v8::PropertyCallbackInfo<v8::Integer>& info) {
+  if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("bar"))
+          .FromJust()) {
+    info.GetReturnValue().Set(1);
+  }
+}
 
-// void HasOwnPropertyAccessorGetter(
-//     Local<String> property,
-//     const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   info.GetReturnValue().Set(v8_str("yes"));
-// }
+void HasOwnPropertyAccessorGetter(
+    Local<String> property,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  info.GetReturnValue().Set(v8_str("yes"));
+}
 
-// void HasOwnPropertyAccessorNameGetter(
-//     Local<Name> property, const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   info.GetReturnValue().Set(v8_str("yes"));
-// }
+void HasOwnPropertyAccessorNameGetter(
+    Local<Name> property, const v8::PropertyCallbackInfo<v8::Value>& info) {
+  info.GetReturnValue().Set(v8_str("yes"));
+}
 
-// TEST(HasOwnProperty) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   { // Check normal properties and defined getters.
-//     Local<Value> value = CompileRun(
-//         "function Foo() {"
-//         "    this.foo = 11;"
-//         "    this.__defineGetter__('baz', function() { return 1; });"
-//         "};"
-//         "function Bar() { "
-//         "    this.bar = 13;"
-//         "    this.__defineGetter__('bla', function() { return 2; });"
-//         "};"
-//         "Bar.prototype = new Foo();"
-//         "new Bar();");
-//     CHECK(value->IsObject());
-//     Local<Object> object = value->ToObject(env.local()).ToLocalChecked();
-//     CHECK(object->Has(env.local(), v8_str("foo")).FromJust());
-//     CHECK(!object->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-//     CHECK(object->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
-//     CHECK(object->Has(env.local(), v8_str("baz")).FromJust());
-//     CHECK(!object->HasOwnProperty(env.local(), v8_str("baz")).FromJust());
-//     CHECK(object->HasOwnProperty(env.local(), v8_str("bla")).FromJust());
-//   }
-//   { // Check named getter interceptors.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
-//         HasOwnPropertyNamedPropertyGetter));
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), 42).FromJust());
-//     CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
-//   }
-//   { // Check indexed getter interceptors.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
-//         HasOwnPropertyIndexedPropertyGetter));
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
-//     CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("43")).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), 43).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-//   }
-//   { // Check named query interceptors.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
-//         nullptr, nullptr, HasOwnPropertyNamedPropertyQuery));
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
-//   }
-//   { // Check indexed query interceptors.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
-//         nullptr, nullptr, HasOwnPropertyIndexedPropertyQuery));
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
-//     CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("41")).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), 41).FromJust());
-//   }
-//   { // Check callbacks.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetAccessor(v8_str("foo"), HasOwnPropertyAccessorGetter);
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
-//   }
-//   { // Check that query wins on disagreement.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
-//         HasOwnPropertyNamedPropertyGetter, nullptr,
-//         HasOwnPropertyNamedPropertyQuery2));
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     CHECK(!instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-//     CHECK(instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
-//   }
-//   {  // Check that non-internalized keys are handled correctly.
-//     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//     templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
-//         HasOwnPropertyAccessorNameGetter));
-//     Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-//     env->Global()->Set(env.local(), v8_str("obj"), instance).FromJust();
-//     const char* src =
-//         "var dyn_string = 'this string ';"
-//         "dyn_string += 'does not exist elsewhere';"
-//         "({}).hasOwnProperty.call(obj, dyn_string)";
-//     CHECK(CompileRun(src)->BooleanValue(isolate));
-//   }
-// }
+TEST(HasOwnProperty) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  // { // Check normal properties and defined getters.
+  //   Local<Value> value = CompileRun(
+  //       "function Foo() {"
+  //       "    this.foo = 11;"
+  //       "    this.__defineGetter__('baz', function() { return 1; });"
+  //       "};"
+  //       "function Bar() { "
+  //       "    this.bar = 13;"
+  //       "    this.__defineGetter__('bla', function() { return 2; });"
+  //       "};"
+  //       "Bar.prototype = new Foo();"
+  //       "new Bar();");
+  //   CHECK(value->IsObject());
+  //   Local<Object> object = value->ToObject(env.local()).ToLocalChecked();
+  //   CHECK(object->Has(env.local(), v8_str("foo")).FromJust());
+  //   CHECK(!object->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+  //   CHECK(object->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  //   CHECK(object->Has(env.local(), v8_str("baz")).FromJust());
+  //   CHECK(!object->HasOwnProperty(env.local(), v8_str("baz")).FromJust());
+  //   CHECK(object->HasOwnProperty(env.local(), v8_str("bla")).FromJust());
+  // }
+  { // Check named getter interceptors.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
+        HasOwnPropertyNamedPropertyGetter));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), 42).FromJust());
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  }
+  // { // Check indexed getter interceptors.
+  //   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  //   templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+  //       HasOwnPropertyIndexedPropertyGetter));
+  //   Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+  //   CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
+  //   CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
+  //   CHECK(!instance->HasOwnProperty(env.local(), v8_str("43")).FromJust());
+  //   CHECK(!instance->HasOwnProperty(env.local(), 43).FromJust());
+  //   CHECK(!instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+  // }
+  { // Check named query interceptors.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
+        nullptr, nullptr, HasOwnPropertyNamedPropertyQuery));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  }
+  // { // Check indexed query interceptors.
+  //   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  //   templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+  //       nullptr, nullptr, HasOwnPropertyIndexedPropertyQuery));
+  //   Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+  //   CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
+  //   CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
+  //   CHECK(!instance->HasOwnProperty(env.local(), v8_str("41")).FromJust());
+  //   CHECK(!instance->HasOwnProperty(env.local(), 41).FromJust());
+  // }
+  { // Check callbacks.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetAccessor(v8_str("foo"), HasOwnPropertyAccessorGetter);
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  }
+  { // Check that query wins on disagreement.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
+        HasOwnPropertyNamedPropertyGetter, nullptr,
+        HasOwnPropertyNamedPropertyQuery2));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  }
+  {  // Check that non-internalized keys are handled correctly.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
+        HasOwnPropertyAccessorNameGetter));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    env->Global()->Set(env.local(), v8_str("obj"), instance).FromJust();
+    const char* src =
+        "var dyn_string = 'this string ';"
+        "dyn_string += 'does not exist elsewhere';"
+        "({}).hasOwnProperty.call(obj, dyn_string)";
+    CHECK(CompileRun(src)->BooleanValue(isolate));
+  }
+}
 
 
 // TEST(IndexedInterceptorWithStringProto) {

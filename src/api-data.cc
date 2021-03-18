@@ -1179,11 +1179,25 @@ Maybe<bool> Object::SetLazyDataProperty(v8::Local<v8::Context> context,
 
 Maybe<bool> v8::Object::HasOwnProperty(Local<Context> context,
                                        Local<Name> key) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::hasOwnProperty(VAL(*context)->context()->get(),
+                                           VAL(this)->value()->asObject(),
+                                           VAL(*key)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
 }
 
 Maybe<bool> v8::Object::HasOwnProperty(Local<Context> context, uint32_t index) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::hasOwnProperty(VAL(*context)->context()->get(),
+                                           VAL(this)->value()->asObject(),
+                                           ValueRef::create(index));
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
 }
 
 Maybe<bool> v8::Object::HasRealNamedProperty(Local<Context> context,
@@ -1291,8 +1305,12 @@ MaybeLocal<Object> Function::NewInstance(Local<Context> context,
 
   auto r = Evaluator::execute(
       lwContext->get(),
-      [](ExecutionStateRef* state, ObjectRef* self, size_t argc, ValueRef** argv)
-          -> ValueRef* { return self->construct(state, argc, argv); },
+      [](ExecutionStateRef* state,
+         ObjectRef* self,
+         size_t argc,
+         ValueRef** argv) -> ValueRef* {
+        return self->construct(state, argc, argv);
+      },
       CVAL(this)->value()->asObject(),
       arguments.size(),
       arguments.data());
