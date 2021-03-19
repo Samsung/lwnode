@@ -159,6 +159,48 @@ TEST(SymbolPropertiesInternal) {
 }
 
 
+
+// Helper functions for Interceptor/Accessor interaction tests
+
+void SimpleAccessorGetter1(Local<String> name,
+                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+  Local<Object> self = Local<Object>::Cast(info.This());
+  info.GetReturnValue().Set(
+      self->Get(info.GetIsolate()->GetCurrentContext(),
+                String::Concat(info.GetIsolate(), v8_str("accessor_"), name))
+          .ToLocalChecked());
+}
+
+void SimpleAccessorSetter1(Local<String> name, Local<Value> value,
+                          const v8::PropertyCallbackInfo<void>& info) {
+  Local<Object> self = Local<Object>::Cast(info.This());
+  CHECK(self->Set(info.GetIsolate()->GetCurrentContext(),
+                  String::Concat(info.GetIsolate(), v8_str("accessor_"), name),
+                  value)
+            .FromJust());
+}
+
+void SymbolAccessorGetter1(Local<Name> name,
+                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+  CHECK(name->IsSymbol());
+  Local<Symbol> sym = Local<Symbol>::Cast(name);
+  if (sym->Description()->IsUndefined()) return;
+  SimpleAccessorGetter1(Local<String>::Cast(sym->Description()), info);
+}
+
+void SymbolAccessorSetter1(Local<Name> name, Local<Value> value,
+                          const v8::PropertyCallbackInfo<void>& info) {
+  CHECK(name->IsSymbol());
+  Local<Symbol> sym = Local<Symbol>::Cast(name);
+  if (sym->Description()->IsUndefined()) return;
+  SimpleAccessorSetter1(Local<String>::Cast(sym->Description()), value, info);
+}
+
+
+
+
+
+
 THREADED_TEST(SymbolPropertiesInternal2) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
@@ -242,15 +284,15 @@ THREADED_TEST(SymbolPropertiesInternal2) {
 
   CcTest::CollectAllGarbage();
 
-  // CHECK(obj->SetAccessor(env.local(), sym3, SymbolAccessorGetter,
-  //                        SymbolAccessorSetter)
+  // CHECK(obj->SetAccessor(env.local(), sym3, SymbolAccessorGetter1,
+  //                        SymbolAccessorSetter1)
   //           .FromJust());
-  // CHECK(obj->Get(env.local(), sym3).ToLocalChecked()->IsUndefined());
-  // CHECK(obj->Set(env.local(), sym3, v8::Integer::New(isolate, 42)).FromJust());
-  // CHECK(obj->Get(env.local(), sym3)
-  //           .ToLocalChecked()
-  //           ->Equals(env.local(), v8::Integer::New(isolate, 42))
-  //           .FromJust());
+  CHECK(obj->Get(env.local(), sym3).ToLocalChecked()->IsUndefined());
+  CHECK(obj->Set(env.local(), sym3, v8::Integer::New(isolate, 42)).FromJust());
+  CHECK(obj->Get(env.local(), sym3)
+            .ToLocalChecked()
+            ->Equals(env.local(), v8::Integer::New(isolate, 42))
+            .FromJust());
   // CHECK(obj->Get(env.local(), v8_str("accessor_sym3"))
   //           .ToLocalChecked()
   //           ->Equals(env.local(), v8::Integer::New(isolate, 42))
@@ -258,19 +300,19 @@ THREADED_TEST(SymbolPropertiesInternal2) {
 
   // CHECK(obj->SetNativeDataProperty(env.local(), sym4, SymbolAccessorGetter)
   //           .FromJust());
-  // CHECK(obj->Get(env.local(), sym4).ToLocalChecked()->IsUndefined());
-  // CHECK(obj->Set(env.local(), v8_str("accessor_native"),
-  //                v8::Integer::New(isolate, 123))
-  //           .FromJust());
+  CHECK(obj->Get(env.local(), sym4).ToLocalChecked()->IsUndefined());
+  CHECK(obj->Set(env.local(), v8_str("accessor_native"),
+                 v8::Integer::New(isolate, 123))
+            .FromJust());
   // CHECK_EQ(123, obj->Get(env.local(), sym4)
   //                   .ToLocalChecked()
   //                   ->Int32Value(env.local())
   //                   .FromJust());
-  // CHECK(obj->Set(env.local(), sym4, v8::Integer::New(isolate, 314)).FromJust());
-  // CHECK(obj->Get(env.local(), sym4)
-  //           .ToLocalChecked()
-  //           ->Equals(env.local(), v8::Integer::New(isolate, 314))
-  //           .FromJust());
+  CHECK(obj->Set(env.local(), sym4, v8::Integer::New(isolate, 314)).FromJust());
+  CHECK(obj->Get(env.local(), sym4)
+            .ToLocalChecked()
+            ->Equals(env.local(), v8::Integer::New(isolate, 314))
+            .FromJust());
   // CHECK(obj->Delete(env.local(), v8_str("accessor_native")).FromJust());
 
   // Add another property and delete it afterwards to force the object in
@@ -289,51 +331,51 @@ THREADED_TEST(SymbolPropertiesInternal2) {
                      .ToLocalChecked()
                      ->Int32Value(env.local())
                      .FromJust());
-  // CHECK_EQ(2u,
-  //          obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(2u,
+           obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 
   CHECK(obj->Has(env.local(), sym1).FromJust());
   CHECK(obj->Has(env.local(), sym2).FromJust());
-  // CHECK(obj->Has(env.local(), sym3).FromJust());
+  CHECK(obj->Has(env.local(), sym3).FromJust());
   // CHECK(obj->Has(env.local(), v8_str("accessor_sym3")).FromJust());
-  // CHECK(obj->Delete(env.local(), sym2).FromJust());
-  // CHECK(obj->Has(env.local(), sym1).FromJust());
-  // CHECK(!obj->Has(env.local(), sym2).FromJust());
-  // CHECK(obj->Has(env.local(), sym3).FromJust());
+  CHECK(obj->Delete(env.local(), sym2).FromJust());
+  CHECK(obj->Has(env.local(), sym1).FromJust());
+  CHECK(!obj->Has(env.local(), sym2).FromJust());
+  CHECK(obj->Has(env.local(), sym3).FromJust());
   // CHECK(obj->Has(env.local(), v8_str("accessor_sym3")).FromJust());
-  // CHECK_EQ(2002, obj->Get(env.local(), sym1)
-  //                    .ToLocalChecked()
-  //                    ->Int32Value(env.local())
-  //                    .FromJust());
-  // CHECK(obj->Get(env.local(), sym3)
-  //           .ToLocalChecked()
-  //           ->Equals(env.local(), v8::Integer::New(isolate, 42))
-  //           .FromJust());
+  CHECK_EQ(2002, obj->Get(env.local(), sym1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(obj->Get(env.local(), sym3)
+            .ToLocalChecked()
+            ->Equals(env.local(), v8::Integer::New(isolate, 42))
+            .FromJust());
   // CHECK(obj->Get(env.local(), v8_str("accessor_sym3"))
   //           .ToLocalChecked()
   //           ->Equals(env.local(), v8::Integer::New(isolate, 42))
   //           .FromJust());
-  // CHECK_EQ(2u,
-  //          obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(2u,
+           obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 
-  // // Symbol properties are inherited.
-  // v8::Local<v8::Object> child = v8::Object::New(isolate);
-  // CHECK(child->SetPrototype(env.local(), obj).FromJust());
-  // CHECK(child->Has(env.local(), sym1).FromJust());
-  // CHECK_EQ(2002, child->Get(env.local(), sym1)
-  //                    .ToLocalChecked()
-  //                    ->Int32Value(env.local())
-  //                    .FromJust());
-  // CHECK(obj->Get(env.local(), sym3)
-  //           .ToLocalChecked()
-  //           ->Equals(env.local(), v8::Integer::New(isolate, 42))
-  //           .FromJust());
+  // Symbol properties are inherited.
+  v8::Local<v8::Object> child = v8::Object::New(isolate);
+  CHECK(child->SetPrototype(env.local(), obj).FromJust());
+  CHECK(child->Has(env.local(), sym1).FromJust());
+  CHECK_EQ(2002, child->Get(env.local(), sym1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(obj->Get(env.local(), sym3)
+            .ToLocalChecked()
+            ->Equals(env.local(), v8::Integer::New(isolate, 42))
+            .FromJust());
   // CHECK(obj->Get(env.local(), v8_str("accessor_sym3"))
   //           .ToLocalChecked()
   //           ->Equals(env.local(), v8::Integer::New(isolate, 42))
   //           .FromJust());
-  // CHECK_EQ(0u,
-  //          child->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(0u,
+           child->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 }
 
 // from node 14's test-api.cc
