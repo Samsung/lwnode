@@ -676,12 +676,60 @@ bool Value::SameValue(Local<Value> that) const {
 }
 
 Local<String> Value::TypeOf(v8::Isolate* external_isolate) {
-  LWNODE_RETURN_LOCAL(String);
+  API_ENTER_NO_EXCEPTION(external_isolate);
+  auto esSelf = CVAL(this)->value();
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* self) -> ValueRef* {
+        std::string type;
+        if (self->isUndefined()) {
+          type = "undefined";
+        } else if (self->isFunctionObject()) {
+          type = "function";
+        } else if (self->isObject() || self->isNull()) {
+          type = "object";
+        } else if (self->isString()) {
+          type = "string";
+        } else if (self->isNumber()) {
+          type = "number";
+        } else if (self->isBoolean()) {
+          type = "boolean";
+        } else {
+          LWNODE_UNIMPLEMENT;
+          type = "unknown";
+        }
+
+        return ValueRef::create(
+            StringRef::createFromASCII(type.data(), type.length()));
+      },
+      esSelf);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
 }
 
 Maybe<bool> Value::InstanceOf(v8::Local<v8::Context> context,
-                              v8::Local<v8::Object> object){
-    LWNODE_RETURN_MAYBE(bool)}
+                              v8::Local<v8::Object> object) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esSelf = CVAL(this)->value();
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto esObject = CVAL(*object)->value()->asObject();
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         ValueRef* self,
+         ObjectRef* object) -> ValueRef* {
+        return ValueRef::create(self->instanceOf(esState, object));
+      },
+      esSelf,
+      esObject);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
+}
 
 Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
                             v8::Local<Value> key,

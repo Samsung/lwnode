@@ -3806,28 +3806,28 @@ static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
 // }
 
 
-// THREADED_TEST(GlobalHandle) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::Persistent<String> global;
-//   {
-//     v8::HandleScope scope(isolate);
-//     global.Reset(isolate, v8_str("str"));
-//   }
-//   {
-//     v8::HandleScope scope(isolate);
-//     CHECK_EQ(3, v8::Local<String>::New(isolate, global)->Length());
-//   }
-//   global.Reset();
-//   {
-//     v8::HandleScope scope(isolate);
-//     global.Reset(isolate, v8_str("str"));
-//   }
-//   {
-//     v8::HandleScope scope(isolate);
-//     CHECK_EQ(3, v8::Local<String>::New(isolate, global)->Length());
-//   }
-//   global.Reset();
-// }
+THREADED_TEST(GlobalHandle) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::Persistent<String> global;
+  {
+    v8::HandleScope scope(isolate);
+    global.Reset(isolate, v8_str("str"));
+  }
+  {
+    v8::HandleScope scope(isolate);
+    CHECK_EQ(3, v8::Local<String>::New(isolate, global)->Length());
+  }
+  global.Reset();
+  {
+    v8::HandleScope scope(isolate);
+    global.Reset(isolate, v8_str("str"));
+  }
+  {
+    v8::HandleScope scope(isolate);
+    CHECK_EQ(3, v8::Local<String>::New(isolate, global)->Length());
+  }
+  global.Reset();
+}
 
 
 // THREADED_TEST(ResettingGlobalHandle) {
@@ -6176,46 +6176,46 @@ THREADED_TEST(Equality) {
   CHECK(!v8::False(isolate)->SameValue(v8::Undefined(isolate)));
 }
 
-// THREADED_TEST(TypeOf) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(context->GetIsolate());
+THREADED_TEST(TypeOf) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(context->GetIsolate());
 
-//   Local<v8::FunctionTemplate> t1 = v8::FunctionTemplate::New(isolate);
-//   Local<v8::Function> fun = t1->GetFunction(context.local()).ToLocalChecked();
+  Local<v8::FunctionTemplate> t1 = v8::FunctionTemplate::New(isolate);
+  Local<v8::Function> fun = t1->GetFunction(context.local()).ToLocalChecked();
 
-//   CHECK(v8::Undefined(isolate)
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("undefined"))
-//             .FromJust());
-//   CHECK(v8::Null(isolate)
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("object"))
-//             .FromJust());
-//   CHECK(v8_str("str")
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("string"))
-//             .FromJust());
-//   CHECK(v8_num(0.0)
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("number"))
-//             .FromJust());
-//   CHECK(v8_num(1)
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("number"))
-//             .FromJust());
-//   CHECK(v8::Object::New(isolate)
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("object"))
-//             .FromJust());
-//   CHECK(v8::Boolean::New(isolate, true)
-//             ->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("boolean"))
-//             .FromJust());
-//   CHECK(fun->TypeOf(isolate)
-//             ->Equals(context.local(), v8_str("function"))
-//             .FromJust());
-// }
+  CHECK(v8::Undefined(isolate)
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("undefined"))
+            .FromJust());
+  CHECK(v8::Null(isolate)
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("object"))
+            .FromJust());
+  CHECK(v8_str("str")
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("string"))
+            .FromJust());
+  CHECK(v8_num(0.0)
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("number"))
+            .FromJust());
+  CHECK(v8_num(1)
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("number"))
+            .FromJust());
+  CHECK(v8::Object::New(isolate)
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("object"))
+            .FromJust());
+  CHECK(v8::Boolean::New(isolate, true)
+            ->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("boolean"))
+            .FromJust());
+  CHECK(fun->TypeOf(isolate)
+            ->Equals(context.local(), v8_str("function"))
+            .FromJust());
+}
 
 // THREADED_TEST(InstanceOf) {
 //   LocalContext env;
@@ -6788,34 +6788,34 @@ THREADED_TEST(SimplePropertyWrite) {
 // }
 
 
-// THREADED_TEST(Regress892105) {
-//   // Make sure that object and array literals created by cloning
-//   // boilerplates cannot communicate through their __proto__
-//   // field. This is rather difficult to check, but we try to add stuff
-//   // to Object.prototype and Array.prototype and create a new
-//   // environment. This should succeed.
+THREADED_TEST(Regress892105) {
+  // Make sure that object and array literals created by cloning
+  // boilerplates cannot communicate through their __proto__
+  // field. This is rather difficult to check, but we try to add stuff
+  // to Object.prototype and Array.prototype and create a new
+  // environment. This should succeed.
 
-//   v8::HandleScope scope(CcTest::isolate());
+  v8::HandleScope scope(CcTest::isolate());
 
-//   Local<String> source = v8_str(
-//       "Object.prototype.obj = 1234;"
-//       "Array.prototype.arr = 4567;"
-//       "8901");
+  Local<String> source = v8_str(
+      "Object.prototype.obj = 1234;"
+      "Array.prototype.arr = 4567;"
+      "8901");
 
-//   LocalContext env0;
-//   Local<Script> script0 = v8_compile(source);
-//   CHECK_EQ(8901.0, script0->Run(env0.local())
-//                        .ToLocalChecked()
-//                        ->NumberValue(env0.local())
-//                        .FromJust());
+  LocalContext env0;
+  Local<Script> script0 = v8_compile(source);
+  CHECK_EQ(8901.0, script0->Run(env0.local())
+                       .ToLocalChecked()
+                       ->NumberValue(env0.local())
+                       .FromJust());
 
-//   LocalContext env1;
-//   Local<Script> script1 = v8_compile(source);
-//   CHECK_EQ(8901.0, script1->Run(env1.local())
-//                        .ToLocalChecked()
-//                        ->NumberValue(env1.local())
-//                        .FromJust());
-// }
+  LocalContext env1;
+  Local<Script> script1 = v8_compile(source);
+  CHECK_EQ(8901.0, script1->Run(env1.local())
+                       .ToLocalChecked()
+                       ->NumberValue(env1.local())
+                       .FromJust());
+}
 
 // static void ReturnThis(const v8::FunctionCallbackInfo<v8::Value>& args) {
 //   args.GetReturnValue().Set(args.This());
