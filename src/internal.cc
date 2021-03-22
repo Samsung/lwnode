@@ -14,33 +14,17 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <stdint.h>
-#include "../src/unimplemented.h"
-
-namespace v8 {
-class Isolate;
-}
+#include "lwnode-internal.h"
+#include "api/isolate.h"
 
 namespace EscargotShim {
+
 namespace internal {
 
-typedef uintptr_t Address;
-
-class Internals {
- public:
-  static const int kUndefinedValueRootIndex = 0;
-  static const int kTheHoleValueRootIndex = 1;
-  static const int kNullValueRootIndex = 2;
-  static const int kTrueValueRootIndex = 3;
-  static const int kFalseValueRootIndex = 4;
-  static const int kEmptyStringRootIndex = 5;
-  static const int kDefaultReturnValueRootIndex = 6;
-  static const int kRootIndexSize = 7;
-
-  static Address* GetRoot(v8::Isolate* isolate, int index);
-};
+Address* Internals::GetRoot(v8::Isolate* isolate, int index) {
+  IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);
+  return reinterpret_cast<Address*>(lwIsolate->getGlobal(index));
+}
 
 }  // namespace internal
 }  // namespace EscargotShim

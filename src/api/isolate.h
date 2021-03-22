@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <EscargotPublic.h>
-#include <v8.h>
-
 #include "arraybuffer-allocator.h"
 #include "engine.h"
 #include "global-handles.h"
@@ -109,12 +106,23 @@ class IsolateWrap : public gc {
     message_callback_ = callback;
   }
 
+  ValueWrap* getGlobal(const int idex);
+  ValueWrap* undefined();
+  ValueWrap* hole();
+  ValueWrap* null();
+  ValueWrap* trueValue();
+  ValueWrap* falseValue();
+  ValueWrap* emptyString();
+  ValueWrap* defaultReturnValue();
+
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
   GlobalHandles* globalHandles() { return &globalHandles_; }
 
  private:
   IsolateWrap();
+
+  void InitializeGlobalSlots();
 
   GCVector<Escargot::ValueRef*> eternals_;
   GCVector<HandleScopeWrap*> handleScopes_;
@@ -146,6 +154,8 @@ class IsolateWrap : public gc {
   v8::PrepareStackTraceCallback prepare_stack_trace_callback_ = nullptr;
   v8::Isolate::AbortOnUncaughtExceptionCallback
       set_abort_on_uncaught_exception_callback_ = nullptr;
+
+  ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
 };
 
 }  // namespace EscargotShim

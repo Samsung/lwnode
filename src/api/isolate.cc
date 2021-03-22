@@ -67,6 +67,23 @@ void IsolateWrap::set_array_buffer_allocator_shared(
   array_buffer_allocator_shared_ = std::move(allocator);
 }
 
+void IsolateWrap::InitializeGlobalSlots() {
+  globalSlot_[internal::Internals::kUndefinedValueRootIndex] =
+      EscargotShim::ValueWrap::createValue(ValueRef::createUndefined());
+  globalSlot_[internal::Internals::kTheHoleValueRootIndex] =
+      EscargotShim::ValueWrap::createValue(ValueRef::createUndefined());
+  globalSlot_[internal::Internals::kNullValueRootIndex] =
+      EscargotShim::ValueWrap::createValue(ValueRef::createNull());
+  globalSlot_[internal::Internals::kTrueValueRootIndex] =
+      EscargotShim::ValueWrap::createValue(ValueRef::create(true));
+  globalSlot_[internal::Internals::kFalseValueRootIndex] =
+      EscargotShim::ValueWrap::createValue(ValueRef::create(false));
+  globalSlot_[internal::Internals::kEmptyStringRootIndex] =
+      EscargotShim::ValueWrap::createValue(StringRef::emptyString());
+  globalSlot_[internal::Internals::kDefaultReturnValueRootIndex] =
+      EscargotShim::ValueWrap::createValue(ValueRef::createUndefined());
+}
+
 void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   IsolateWrap* isolate = this;
 
@@ -96,6 +113,8 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   vmInstance_ = VMInstanceRef::create(new Platform(array_buffer_allocator()));
   vmInstance_->setOnVMInstanceDelete(
       [](VMInstanceRef* instance) { delete instance->platform(); });
+
+  InitializeGlobalSlots();
 }
 
 void IsolateWrap::Enter() {
@@ -195,6 +214,39 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
                    esString->toStdUTF8String().c_str());
 
   return newSymbol;
+}
+
+ValueWrap* IsolateWrap::getGlobal(const int index) {
+  LWNODE_CHECK(index < internal::Internals::kRootIndexSize);
+  return globalSlot_[index];
+}
+
+ValueWrap* IsolateWrap::undefined() {
+  return globalSlot_[internal::Internals::kUndefinedValueRootIndex];
+}
+
+ValueWrap* IsolateWrap::hole() {
+  return globalSlot_[internal::Internals::kTheHoleValueRootIndex];
+}
+
+ValueWrap* IsolateWrap::null() {
+  return globalSlot_[internal::Internals::kNullValueRootIndex];
+}
+
+ValueWrap* IsolateWrap::trueValue() {
+  return globalSlot_[internal::Internals::kTrueValueRootIndex];
+}
+
+ValueWrap* IsolateWrap::falseValue() {
+  return globalSlot_[internal::Internals::kFalseValueRootIndex];
+}
+
+ValueWrap* IsolateWrap::emptyString() {
+  return globalSlot_[internal::Internals::kEmptyStringRootIndex];
+}
+
+ValueWrap* IsolateWrap::defaultReturnValue() {
+  return globalSlot_[internal::Internals::kDefaultReturnValueRootIndex];
 }
 
 }  // namespace EscargotShim
