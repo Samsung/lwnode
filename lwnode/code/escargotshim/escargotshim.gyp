@@ -29,6 +29,7 @@
         'src/api-serialization.cc',
         'src/api-template.cc',
         'src/api-additionals.cc',
+        'src/internal.cc',
         'src/init/v8.cc',
         'src/execution/v8threads.cc',
         'src/libplatform/default-platform.cc',

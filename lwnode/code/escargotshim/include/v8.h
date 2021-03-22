@@ -31,8 +31,8 @@
 #include "v8config.h"     // NOLINT(build/include_directory)
 
 // @lwnode
-namespace EscargotShim{
 #include "lwnode-internal.h"
+namespace EscargotShim{
 class HandleWrap;
 }
 namespace e = EscargotShim;
@@ -11163,11 +11163,15 @@ void ReturnValue<T>::Set(double i) {
 template<typename T>
 void ReturnValue<T>::Set(int32_t i) {
   static_assert(std::is_base_of<T, Integer>::value, "type check");
+// @lwnode
+#if 0
   typedef internal::Internals I;
   if (V8_LIKELY(I::IsValidSmi(i))) {
     *value_ = I::IntToSmi(i);
     return;
   }
+#endif
+// end @lwnode
   Set(Integer::New(GetIsolate(), i));
 }
 
@@ -11186,7 +11190,12 @@ void ReturnValue<T>::Set(uint32_t i) {
 template<typename T>
 void ReturnValue<T>::Set(bool value) {
   static_assert(std::is_base_of<T, Boolean>::value, "type check");
+// @lwnode
+#if 0
   typedef internal::Internals I;
+#endif
+  typedef e::internal::Internals I;
+// end @lwnode
   int root_index;
   if (value) {
     root_index = I::kTrueValueRootIndex;
@@ -11199,21 +11208,36 @@ void ReturnValue<T>::Set(bool value) {
 template<typename T>
 void ReturnValue<T>::SetNull() {
   static_assert(std::is_base_of<T, Primitive>::value, "type check");
+// @lwnode
+#if 0
   typedef internal::Internals I;
+#endif
+  typedef e::internal::Internals I;
+// end @lwnode
   *value_ = *I::GetRoot(GetIsolate(), I::kNullValueRootIndex);
 }
 
 template<typename T>
 void ReturnValue<T>::SetUndefined() {
   static_assert(std::is_base_of<T, Primitive>::value, "type check");
+// @lwnode
+#if 0
   typedef internal::Internals I;
+#endif
+  typedef e::internal::Internals I;
+// end @lwnode
   *value_ = *I::GetRoot(GetIsolate(), I::kUndefinedValueRootIndex);
 }
 
 template<typename T>
 void ReturnValue<T>::SetEmptyString() {
   static_assert(std::is_base_of<T, String>::value, "type check");
+// @lwnode
+#if 0
   typedef internal::Internals I;
+#endif
+  typedef e::internal::Internals I;
+// end @lwnode
   *value_ = *I::GetRoot(GetIsolate(), I::kEmptyStringRootIndex);
 }
 

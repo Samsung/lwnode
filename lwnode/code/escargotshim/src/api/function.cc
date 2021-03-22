@@ -15,6 +15,7 @@
  */
 
 #include "function.h"
+#include "isolate.h"
 
 namespace EscargotShim {
 
@@ -35,16 +36,16 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
           ToAddress(m_implicitArgs),
           ToAddress(toWrapperArgs(thisValue, argc, argv)),
           argc) {
-  m_implicitArgs[T::kHolderIndex] = ValueWrap::createValue(holder);
+  auto lwIsolate = IsolateWrap::fromV8(isolate);
+
+  m_implicitArgs[T::kHolderIndex] = lwIsolate->hole();
   m_implicitArgs[T::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
   // m_implicitArgs[T::kReturnValueDefaultValueIndex];  // TODO
-  m_implicitArgs[T::kReturnValueIndex] =
-      ValueWrap::createValue(ValueRef::createUndefined());
+  m_implicitArgs[T::kReturnValueIndex] = lwIsolate->defaultReturnValue();
   m_implicitArgs[T::kDataIndex] = data;
   m_implicitArgs[T::kNewTargetIndex] =
-      newTarget.hasValue()
-          ? ValueWrap::createValue(newTarget.get())
-          : ValueWrap::createValue(ValueRef::createUndefined());
+      newTarget.hasValue() ? ValueWrap::createValue(newTarget.get())
+                           : lwIsolate->undefined();
 }
 
 HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
@@ -77,12 +78,12 @@ PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
                                                       v8::Local<v8::Value> data)
     : v8::PropertyCallbackInfo<T>(
           reinterpret_cast<v8::internal::Address*>(m_implicitArgs)) {
+  auto lwIsolate = IsolateWrap::fromV8(isolate);
   // m_implicitArgs[F::kShouldThrowOnErrorIndex]; // TODO
-  // m_implicitArgs[F::kHolderIndex]; // TODO
+  m_implicitArgs[F::kHolderIndex] = lwIsolate->hole();
   m_implicitArgs[F::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
   // m_implicitArgs[F::kReturnValueDefaultValueIndex]; // TODO
-  m_implicitArgs[F::kReturnValueIndex] =
-      ValueWrap::createValue(ValueRef::createUndefined());
+  m_implicitArgs[F::kReturnValueIndex] = lwIsolate->defaultReturnValue();
   m_implicitArgs[F::kDataIndex] = reinterpret_cast<HandleWrap*>(*data);
   // m_implicitArgs[F::kThisIndex]; // TODO
 }
