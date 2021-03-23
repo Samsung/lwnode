@@ -213,7 +213,22 @@ void Template::SetAccessorProperty(v8::Local<v8::Name> name,
                                    v8::Local<FunctionTemplate> setter,
                                    v8::PropertyAttribute attribute,
                                    v8::AccessControl access_control) {
-  LWNODE_RETURN_VOID;
+  auto esTemplate = CVAL(this)->tpl();
+  auto esName = CVAL(*name)->value()->asString();
+  FunctionTemplateRef* esGetter = nullptr;
+  if (!getter.IsEmpty()) {
+    esGetter = CVAL(*getter)->ftpl();
+  }
+  FunctionTemplateRef* esSetter = nullptr;
+  if (!setter.IsEmpty()) {
+    esSetter = CVAL(*setter)->ftpl();
+  }
+
+  esTemplate->setAccessorProperty(esName,
+                                  OptionalRef<FunctionTemplateRef>(esGetter),
+                                  OptionalRef<FunctionTemplateRef>(esSetter),
+                                  !(attribute & DontEnum),
+                                  !(attribute & DontDelete));
 }
 
 // --- F u n c t i o n   T e m p l a t e ---
