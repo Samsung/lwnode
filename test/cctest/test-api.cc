@@ -147,9 +147,9 @@ using ::v8::Value;
 // }
 
 
-// static void Returns42(const v8::FunctionCallbackInfo<v8::Value>& info) {
-//   info.GetReturnValue().Set(42);
-// }
+static void Returns42(const v8::FunctionCallbackInfo<v8::Value>& info) {
+  info.GetReturnValue().Set(42);
+}
 
 
 // Tests that call v8::V8::Dispose() cannot be threaded.
@@ -2002,76 +2002,76 @@ THREADED_TEST(Boolean) {
 // }
 
 
-// THREADED_TEST(ObjectTemplate) {
-//   LocalContext env;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<v8::FunctionTemplate> acc =
-//       v8::FunctionTemplate::New(isolate, Returns42);
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("acc"),
-//                   acc->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
+THREADED_TEST(ObjectTemplate) {
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<v8::FunctionTemplate> acc =
+      v8::FunctionTemplate::New(isolate, Returns42);
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("acc"),
+                  acc->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
 
-//   Local<v8::FunctionTemplate> fun = v8::FunctionTemplate::New(isolate);
-//   v8::Local<v8::String> class_name = v8_str("the_class_name");
-//   fun->SetClassName(class_name);
-//   Local<ObjectTemplate> templ1 = ObjectTemplate::New(isolate, fun);
-//   templ1->Set(isolate, "x", v8_num(10));
-//   templ1->Set(isolate, "y", v8_num(13));
-//   templ1->Set(v8_str("foo"), acc);
-//   Local<v8::Object> instance1 =
-//       templ1->NewInstance(env.local()).ToLocalChecked();
-//   CHECK(class_name->StrictEquals(instance1->GetConstructorName()));
-//   CHECK(env->Global()->Set(env.local(), v8_str("p"), instance1).FromJust());
-//   CHECK(CompileRun("(p.x == 10)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(p.y == 13)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(p.foo() == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(p.foo == acc)")->BooleanValue(isolate));
-//   // Ensure that foo become a data field.
-//   CompileRun("p.foo = function() {}");
-//   Local<v8::FunctionTemplate> fun2 = v8::FunctionTemplate::New(isolate);
-//   fun2->PrototypeTemplate()->Set(isolate, "nirk", v8_num(123));
-//   Local<ObjectTemplate> templ2 = fun2->InstanceTemplate();
-//   templ2->Set(isolate, "a", v8_num(12));
-//   templ2->Set(isolate, "b", templ1);
-//   templ2->Set(v8_str("bar"), acc);
-//   templ2->SetAccessorProperty(v8_str("acc"), acc);
-//   Local<v8::Object> instance2 =
-//       templ2->NewInstance(env.local()).ToLocalChecked();
-//   CHECK(env->Global()->Set(env.local(), v8_str("q"), instance2).FromJust());
-//   CHECK(CompileRun("(q.nirk == 123)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.a == 12)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.b.x == 10)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.b.y == 13)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.b.foo() == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.b.foo === acc)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.b !== p)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.acc == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.bar() == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q.bar == acc)")->BooleanValue(isolate));
+  Local<v8::FunctionTemplate> fun = v8::FunctionTemplate::New(isolate);
+  v8::Local<v8::String> class_name = v8_str("the_class_name");
+  // fun->SetClassName(class_name); // TODO
+  Local<ObjectTemplate> templ1 = ObjectTemplate::New(isolate, fun);
+  templ1->Set(isolate, "x", v8_num(10));
+  templ1->Set(isolate, "y", v8_num(13));
+  templ1->Set(v8_str("foo"), acc);
+  Local<v8::Object> instance1 =
+      templ1->NewInstance(env.local()).ToLocalChecked();
+  // CHECK(class_name->StrictEquals(instance1->GetConstructorName()));
+  CHECK(env->Global()->Set(env.local(), v8_str("p"), instance1).FromJust());
+  CHECK(CompileRun("(p.x == 10)")->BooleanValue(isolate));
+  CHECK(CompileRun("(p.y == 13)")->BooleanValue(isolate));
+  CHECK(CompileRun("(p.foo() == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(p.foo == acc)")->BooleanValue(isolate));
+  // Ensure that foo become a data field.
+  CompileRun("p.foo = function() {}");
+  Local<v8::FunctionTemplate> fun2 = v8::FunctionTemplate::New(isolate);
+  fun2->PrototypeTemplate()->Set(isolate, "nirk", v8_num(123));
+  Local<ObjectTemplate> templ2 = fun2->InstanceTemplate();
+  templ2->Set(isolate, "a", v8_num(12));
+  templ2->Set(isolate, "b", templ1);
+  templ2->Set(v8_str("bar"), acc);
+  templ2->SetAccessorProperty(v8_str("acc"), acc);
+  Local<v8::Object> instance2 =
+      templ2->NewInstance(env.local()).ToLocalChecked();
+  CHECK(env->Global()->Set(env.local(), v8_str("q"), instance2).FromJust());
+  CHECK(CompileRun("(q.nirk == 123)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.a == 12)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.b.x == 10)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.b.y == 13)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.b.foo() == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.b.foo === acc)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.b !== p)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.acc == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.bar() == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q.bar == acc)")->BooleanValue(isolate));
 
-//   instance2 = templ2->NewInstance(env.local()).ToLocalChecked();
-//   CHECK(env->Global()->Set(env.local(), v8_str("q2"), instance2).FromJust());
-//   CHECK(CompileRun("(q2.nirk == 123)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.a == 12)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.b.x == 10)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.b.y == 13)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.b.foo() == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.b.foo === acc)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.acc == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.bar() == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(q2.bar === acc)")->BooleanValue(isolate));
+  instance2 = templ2->NewInstance(env.local()).ToLocalChecked();
+  CHECK(env->Global()->Set(env.local(), v8_str("q2"), instance2).FromJust());
+  CHECK(CompileRun("(q2.nirk == 123)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.a == 12)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.b.x == 10)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.b.y == 13)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.b.foo() == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.b.foo === acc)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.acc == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.bar() == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(q2.bar === acc)")->BooleanValue(isolate));
 
-//   CHECK(CompileRun("(q.b !== q2.b)")->BooleanValue(isolate));
-//   CHECK(CompileRun("q.b.x = 17; (q2.b.x == 10)")->BooleanValue(isolate));
-//   CHECK(CompileRun("desc1 = Object.getOwnPropertyDescriptor(q, 'acc');"
-//                    "(desc1.get === acc)")
-//             ->BooleanValue(isolate));
-//   CHECK(CompileRun("desc2 = Object.getOwnPropertyDescriptor(q2, 'acc');"
-//                    "(desc2.get === acc)")
-//             ->BooleanValue(isolate));
-// }
+  CHECK(CompileRun("(q.b !== q2.b)")->BooleanValue(isolate));
+  CHECK(CompileRun("q.b.x = 17; (q2.b.x == 10)")->BooleanValue(isolate));
+  CHECK(CompileRun("desc1 = Object.getOwnPropertyDescriptor(q, 'acc');"
+                   "(desc1.get === acc)")
+            ->BooleanValue(isolate));
+  CHECK(CompileRun("desc2 = Object.getOwnPropertyDescriptor(q2, 'acc');"
+                   "(desc2.get === acc)")
+            ->BooleanValue(isolate));
+}
 
 THREADED_TEST(IntegerValue) {
   LocalContext env;
@@ -24884,49 +24884,49 @@ TEST(MapDeleteThenAsArray) {
 //       0);
 // }
 
-// THREADED_TEST(ReceiverConversionForAccessors) {
-//   LocalContext env;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<v8::FunctionTemplate> acc =
-//       v8::FunctionTemplate::New(isolate, Returns42);
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("acc"),
-//                   acc->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
+THREADED_TEST(ReceiverConversionForAccessors) {
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<v8::FunctionTemplate> acc =
+      v8::FunctionTemplate::New(isolate, Returns42);
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("acc"),
+                  acc->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
 
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessorProperty(v8_str("acc"), acc, acc);
-//   Local<v8::Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessorProperty(v8_str("acc"), acc, acc);
+  Local<v8::Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
 
-//   CHECK(env->Global()->Set(env.local(), v8_str("p"), instance).FromJust());
-//   CHECK(CompileRun("(p.acc == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(p.acc = 7) == 7")->BooleanValue(isolate));
+  CHECK(env->Global()->Set(env.local(), v8_str("p"), instance).FromJust());
+  CHECK(CompileRun("(p.acc == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(p.acc = 7) == 7")->BooleanValue(isolate));
 
-//   CHECK(!CompileRun("Number.prototype.__proto__ = p;"
-//                     "var a = 1;")
-//              .IsEmpty());
-//   CHECK(CompileRun("(a.acc == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(a.acc = 7) == 7")->BooleanValue(isolate));
+  CHECK(!CompileRun("Number.prototype.__proto__ = p;"
+                    "var a = 1;")
+             .IsEmpty());
+  CHECK(CompileRun("(a.acc == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(a.acc = 7) == 7")->BooleanValue(isolate));
 
-//   CHECK(!CompileRun("Boolean.prototype.__proto__ = p;"
-//                     "var a = true;")
-//              .IsEmpty());
-//   CHECK(CompileRun("(a.acc == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(a.acc = 7) == 7")->BooleanValue(isolate));
+  CHECK(!CompileRun("Boolean.prototype.__proto__ = p;"
+                    "var a = true;")
+             .IsEmpty());
+  CHECK(CompileRun("(a.acc == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(a.acc = 7) == 7")->BooleanValue(isolate));
 
-//   CHECK(!CompileRun("String.prototype.__proto__ = p;"
-//                     "var a = 'foo';")
-//              .IsEmpty());
-//   CHECK(CompileRun("(a.acc == 42)")->BooleanValue(isolate));
-//   CHECK(CompileRun("(a.acc = 7) == 7")->BooleanValue(isolate));
+  CHECK(!CompileRun("String.prototype.__proto__ = p;"
+                    "var a = 'foo';")
+             .IsEmpty());
+  CHECK(CompileRun("(a.acc == 42)")->BooleanValue(isolate));
+  CHECK(CompileRun("(a.acc = 7) == 7")->BooleanValue(isolate));
 
-//   CHECK(CompileRun("acc.call(1) == 42")->BooleanValue(isolate));
-//   CHECK(CompileRun("acc.call(true)==42")->BooleanValue(isolate));
-//   CHECK(CompileRun("acc.call('aa')==42")->BooleanValue(isolate));
-//   CHECK(CompileRun("acc.call(null) == 42")->BooleanValue(isolate));
-//   CHECK(CompileRun("acc.call(undefined) == 42")->BooleanValue(isolate));
-// }
+  CHECK(CompileRun("acc.call(1) == 42")->BooleanValue(isolate));
+  CHECK(CompileRun("acc.call(true)==42")->BooleanValue(isolate));
+  CHECK(CompileRun("acc.call('aa')==42")->BooleanValue(isolate));
+  CHECK(CompileRun("acc.call(null) == 42")->BooleanValue(isolate));
+  CHECK(CompileRun("acc.call(undefined) == 42")->BooleanValue(isolate));
+}
 
 // class FutexInterruptionThread : public v8::base::Thread {
 //  public:
