@@ -34,6 +34,7 @@
 #define DISABLED_TEST(Name)
 
 #define CHECK(condition) EXPECT_TRUE(condition)
+#define DCHECK(condition) EXPECT_TRUE(condition)
 #define CHECK_EQ(lhs, rhs) EXPECT_EQ(lhs, rhs)
 #define CHECK_NE(lhs, rhs) EXPECT_NE(lhs, rhs)
 #define CHECK_STR(lhs, rhs) EXPECT_STREQ(lhs, rhs)

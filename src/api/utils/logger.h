@@ -75,9 +75,11 @@
 #define LWNODE_DLOG_INFO(fmt, ...) LWNODE_LOG_INFO(fmt, ##__VA_ARGS__)
 #define LWNODE_DLOG_WARN(fmt, ...) LWNODE_LOG_WARN(fmt, ##__VA_ARGS__)
 #define LWNODE_DLOG_ERROR(fmt, ...) LWNODE_LOG_ERROR(fmt, ##__VA_ARGS__)
+#define FATAL(fmt, ...) LWNODE_LOG_ERROR(fmt, ##__VA_ARGS__)
 #else
 #define LWNODE_DLOG_RAW(fmt, ...)
 #define LWNODE_DLOG_INFO(fmt, ...)
 #define LWNODE_DLOG_WARN(fmt, ...)
 #define LWNODE_DLOG_ERROR(fmt, ...)
+#define FATAL(fmt, ...)
 #endif

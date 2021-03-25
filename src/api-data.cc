@@ -996,10 +996,12 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
         auto globalObject = esState->context()->globalObject()->object();
         auto f = globalObject->getOwnProperty(
             esState, StringRef::createFromASCII("getOwnPropertyNames"));
+        auto set = SetObjectRef::create(esState);
         auto vector = ValueVectorRef::create();
 
         auto done = StringRef::createFromASCII("done");
         auto value = StringRef::createFromASCII("value");
+        auto enumerable = StringRef::createFromASCII("enumerable");
 
         {
           ValueRef* argv[] = {esSelf};
@@ -1009,7 +1011,10 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
                entry->asObject()->get(esState, done)->isFalse();
                entry = itr->next(esState)) {
             auto val = entry->asObject()->get(esState, value);
-            vector->pushBack(val);
+            auto p = esSelf->getOwnPropertyDescriptor(esState, val);
+            if (p->asObject()->get(esState, enumerable)->asBoolean()) {
+              set->add(esState, val);
+            }
           }
         }
 
@@ -1023,8 +1028,19 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
                entry->asObject()->get(esState, done)->isFalse();
                entry = itr->next(esState)) {
             auto val = entry->asObject()->get(esState, value);
-            vector->pushBack(val);
+            auto p = argv[0]->asObject()->getOwnPropertyDescriptor(esState, val);
+            if (p->asObject()->get(esState, enumerable)->asBoolean()) {
+              set->add(esState, val);
+            }
           }
+        }
+
+        auto itr = set->values(esState);
+        for (auto entry = itr->next(esState);
+             entry->asObject()->get(esState, done)->isFalse();
+             entry = itr->next(esState)) {
+          auto val = entry->asObject()->get(esState, value);
+          vector->pushBack(val);
         }
 
         return ArrayObjectRef::create(esState, vector);
@@ -1055,8 +1071,26 @@ MaybeLocal<Array> v8::Object::GetOwnPropertyNames(Local<Context> context) {
         auto globalObject = esState->context()->globalObject()->object();
         auto f = globalObject->getOwnProperty(
             esState, StringRef::createFromASCII("getOwnPropertyNames"));
+        auto vector = ValueVectorRef::create();
+
+        auto done = StringRef::createFromASCII("done");
+        auto value = StringRef::createFromASCII("value");
+        auto enumerable = StringRef::createFromASCII("enumerable");
+
         ValueRef* argv[] = {esSelf};
-        return f->call(esState, globalObject, 1, argv);
+        auto props = f->call(esState, globalObject, 1, argv);
+        auto itr = props->asArrayObject()->values(esState);
+        for (auto entry = itr->next(esState);
+             entry->asObject()->get(esState, done)->isFalse();
+             entry = itr->next(esState)) {
+          auto val = entry->asObject()->get(esState, value);
+          auto p = esSelf->getOwnPropertyDescriptor(esState, val);
+          if (p->asObject()->get(esState, enumerable)->asBoolean()) {
+            vector->pushBack(val);
+          }
+        }
+
+        return ArrayObjectRef::create(esState, vector);
       },
       esSelf);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Array>());

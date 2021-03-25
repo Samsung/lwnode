@@ -14040,173 +14040,176 @@ THREADED_TEST(Overriding) {
 //   CHECK_EQ(1224744689038.0, date.As<v8::Date>()->ValueOf());
 // }
 
-// void CheckIsSymbolAt(v8::Isolate* isolate, v8::Local<v8::Array> properties,
-//                      unsigned index, const char* name) {
-//   v8::Local<v8::Context> context = isolate->GetCurrentContext();
-//   v8::Local<v8::Value> value =
-//       properties->Get(context, v8::Integer::New(isolate, index))
-//           .ToLocalChecked();
-//   CHECK(value->IsSymbol());
-//   v8::String::Utf8Value symbol_name(isolate,
-//                                     Local<Symbol>::Cast(value)->Description());
-//   if (strcmp(name, *symbol_name) != 0) {
-//     FATAL("properties[%u] was Symbol('%s') instead of Symbol('%s').", index,
-//           name, *symbol_name);
-//   }
-// }
+void CheckIsSymbolAt(v8::Isolate* isolate, v8::Local<v8::Array> properties,
+                     unsigned index, const char* name) {
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  v8::Local<v8::Value> value =
+      properties->Get(context, v8::Integer::New(isolate, index))
+          .ToLocalChecked();
+  CHECK(value->IsSymbol());
+  v8::String::Utf8Value symbol_name(isolate,
+                                    Local<Symbol>::Cast(value)->Description());
+  if (strcmp(name, *symbol_name) != 0) {
+    FATAL("properties[%u] was Symbol('%s') instead of Symbol('%s').", index,
+          name, *symbol_name);
+  }
+}
 
-// void CheckStringArray(v8::Isolate* isolate, v8::Local<v8::Array> properties,
-//                       unsigned length, const char* names[]) {
-//   v8::Local<v8::Context> context = isolate->GetCurrentContext();
-//   CHECK_EQ(length, properties->Length());
-//   for (unsigned i = 0; i < length; i++) {
-//     v8::Local<v8::Value> value =
-//         properties->Get(context, v8::Integer::New(isolate, i)).ToLocalChecked();
-//     if (names[i] == nullptr) {
-//       DCHECK(value->IsSymbol());
-//     } else {
-//       v8::String::Utf8Value elm(isolate, value);
-//       if (strcmp(names[i], *elm) != 0) {
-//         FATAL("properties[%u] was '%s' instead of '%s'.", i, *elm, names[i]);
-//       }
-//     }
-//   }
-// }
+void CheckStringArray(v8::Isolate* isolate, v8::Local<v8::Array> properties,
+                      unsigned length, const char* names[]) {
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  CHECK_EQ(length, properties->Length());
+  for (unsigned i = 0; i < length; i++) {
+    v8::Local<v8::Value> value =
+        properties->Get(context, v8::Integer::New(isolate, i)).ToLocalChecked();
+    if (names[i] == nullptr) {
+      DCHECK(value->IsSymbol());
+    } else {
+      v8::String::Utf8Value elm(isolate, value);
+      if (strcmp(names[i], *elm) != 0) {
+        FATAL("properties[%u] was '%s' instead of '%s'.", i, *elm, names[i]);
+      }
+    }
+  }
+}
 
-// void CheckProperties(v8::Isolate* isolate, v8::Local<v8::Value> val,
-//                      unsigned length, const char* names[]) {
-//   v8::Local<v8::Context> context = isolate->GetCurrentContext();
-//   v8::Local<v8::Object> obj = val.As<v8::Object>();
-//   v8::Local<v8::Array> props = obj->GetPropertyNames(context).ToLocalChecked();
-//   CheckStringArray(isolate, props, length, names);
-// }
-
-
-// void CheckOwnProperties(v8::Isolate* isolate, v8::Local<v8::Value> val,
-//                         unsigned elmc, const char* elmv[]) {
-//   v8::Local<v8::Context> context = isolate->GetCurrentContext();
-//   v8::Local<v8::Object> obj = val.As<v8::Object>();
-//   v8::Local<v8::Array> props =
-//       obj->GetOwnPropertyNames(context).ToLocalChecked();
-//   CHECK_EQ(elmc, props->Length());
-//   for (unsigned i = 0; i < elmc; i++) {
-//     v8::String::Utf8Value elm(
-//         isolate,
-//         props->Get(context, v8::Integer::New(isolate, i)).ToLocalChecked());
-//     CHECK_EQ(0, strcmp(elmv[i], *elm));
-//   }
-// }
+void CheckProperties(v8::Isolate* isolate, v8::Local<v8::Value> val,
+                     unsigned length, const char* names[]) {
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  v8::Local<v8::Object> obj = val.As<v8::Object>();
+  v8::Local<v8::Array> props = obj->GetPropertyNames(context).ToLocalChecked();
+  CheckStringArray(isolate, props, length, names);
+}
 
 
-// THREADED_TEST(PropertyEnumeration) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::Value> obj = CompileRun(
-//       "var result = [];"
-//       "result[0] = {};"
-//       "result[1] = {a: 1, b: 2};"
-//       "result[2] = [1, 2, 3];"
-//       "var proto = {x: 1, y: 2, z: 3};"
-//       "var x = { __proto__: proto, w: 0, z: 1 };"
-//       "result[3] = x;"
-//       "result[4] = {21350:1};"
-//       "x = Object.create(null);"
-//       "x.a = 1; x[12345678] = 1;"
-//       "result[5] = x;"
-//       "result;");
-//   v8::Local<v8::Array> elms = obj.As<v8::Array>();
-//   CHECK_EQ(6u, elms->Length());
-//   int elmc0 = 0;
-//   const char** elmv0 = nullptr;
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked(),
-//       elmc0, elmv0);
-//   CheckOwnProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked(),
-//       elmc0, elmv0);
-//   int elmc1 = 2;
-//   const char* elmv1[] = {"a", "b"};
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 1)).ToLocalChecked(),
-//       elmc1, elmv1);
-//   CheckOwnProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 1)).ToLocalChecked(),
-//       elmc1, elmv1);
-//   int elmc2 = 3;
-//   const char* elmv2[] = {"0", "1", "2"};
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 2)).ToLocalChecked(),
-//       elmc2, elmv2);
-//   CheckOwnProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 2)).ToLocalChecked(),
-//       elmc2, elmv2);
-//   int elmc3 = 4;
-//   const char* elmv3[] = {"w", "z", "x", "y"};
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 3)).ToLocalChecked(),
-//       elmc3, elmv3);
-//   int elmc4 = 2;
-//   const char* elmv4[] = {"w", "z"};
-//   CheckOwnProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 3)).ToLocalChecked(),
-//       elmc4, elmv4);
-//   // Dictionary elements.
-//   int elmc5 = 1;
-//   const char* elmv5[] = {"21350"};
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 4)).ToLocalChecked(),
-//       elmc5, elmv5);
-//   // Dictionary properties.
-//   int elmc6 = 2;
-//   const char* elmv6[] = {"12345678", "a"};
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 5)).ToLocalChecked(),
-//       elmc6, elmv6);
-// }
+void CheckOwnProperties(v8::Isolate* isolate, v8::Local<v8::Value> val,
+                        unsigned elmc, const char* elmv[]) {
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  v8::Local<v8::Object> obj = val.As<v8::Object>();
+  v8::Local<v8::Array> props =
+      obj->GetOwnPropertyNames(context).ToLocalChecked();
+  CHECK_EQ(elmc, props->Length());
+  for (unsigned i = 0; i < elmc; i++) {
+    v8::String::Utf8Value elm(
+        isolate,
+        props->Get(context, v8::Integer::New(isolate, i)).ToLocalChecked());
+    CHECK_EQ(0, strcmp(elmv[i], *elm));
+  }
+}
 
 
-// THREADED_TEST(PropertyEnumeration2) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::Value> obj = CompileRun(
-//       "var result = [];"
-//       "result[0] = {};"
-//       "result[1] = {a: 1, b: 2};"
-//       "result[2] = [1, 2, 3];"
-//       "var proto = {x: 1, y: 2, z: 3};"
-//       "var x = { __proto__: proto, w: 0, z: 1 };"
-//       "result[3] = x;"
-//       "result;");
-//   v8::Local<v8::Array> elms = obj.As<v8::Array>();
-//   CHECK_EQ(4u, elms->Length());
-//   int elmc0 = 0;
-//   const char** elmv0 = nullptr;
-//   CheckProperties(
-//       isolate,
-//       elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked(),
-//       elmc0, elmv0);
+THREADED_TEST(PropertyEnumeration) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Value> obj = CompileRun(
+      "var result = [];"
+      "result[0] = {};"
+      "result[1] = {a: 1, b: 2};"
+      "result[2] = [1, 2, 3];"
+      "var proto = {x: 1, y: 2, z: 3};"
+      "var x = { __proto__: proto, w: 0, z: 1 };"
+      "result[3] = x;"
+      "result[4] = {21350:1};"
+      "x = Object.create(null);"
+      "x.a = 1; x[12345678] = 1;"
+      "result[5] = x;"
+      "result;");
+  v8::Local<v8::Array> elms = obj.As<v8::Array>();
+  CHECK_EQ(6u, elms->Length());
 
-//   v8::Local<v8::Value> val =
-//       elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked();
-//   v8::Local<v8::Array> props =
-//       val.As<v8::Object>()->GetPropertyNames(context.local()).ToLocalChecked();
-//   CHECK_EQ(0u, props->Length());
-//   for (uint32_t i = 0; i < props->Length(); i++) {
-//     printf("p[%u]\n", i);
-//   }
-// }
+  int elmc0 = 0;
+  const char** elmv0 = nullptr;
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked(),
+      elmc0, elmv0);
+  CheckOwnProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked(),
+      elmc0, elmv0);
+  int elmc1 = 2;
+  const char* elmv1[] = {"a", "b"};
+
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 1)).ToLocalChecked(),
+      elmc1, elmv1);
+
+  CheckOwnProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 1)).ToLocalChecked(),
+      elmc1, elmv1);
+  int elmc2 = 3;
+  const char* elmv2[] = {"0", "1", "2"};
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 2)).ToLocalChecked(),
+      elmc2, elmv2);
+  CheckOwnProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 2)).ToLocalChecked(),
+      elmc2, elmv2);
+  int elmc3 = 4;
+  const char* elmv3[] = {"w", "z", "x", "y"};
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 3)).ToLocalChecked(),
+      elmc3, elmv3);
+  int elmc4 = 2;
+  const char* elmv4[] = {"w", "z"};
+  CheckOwnProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 3)).ToLocalChecked(),
+      elmc4, elmv4);
+  // Dictionary elements.
+  int elmc5 = 1;
+  const char* elmv5[] = {"21350"};
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 4)).ToLocalChecked(),
+      elmc5, elmv5);
+  // Dictionary properties.
+  int elmc6 = 2;
+  const char* elmv6[] = {"12345678", "a"};
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 5)).ToLocalChecked(),
+      elmc6, elmv6);
+}
+
+
+THREADED_TEST(PropertyEnumeration2) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Value> obj = CompileRun(
+      "var result = [];"
+      "result[0] = {};"
+      "result[1] = {a: 1, b: 2};"
+      "result[2] = [1, 2, 3];"
+      "var proto = {x: 1, y: 2, z: 3};"
+      "var x = { __proto__: proto, w: 0, z: 1 };"
+      "result[3] = x;"
+      "result;");
+  v8::Local<v8::Array> elms = obj.As<v8::Array>();
+  CHECK_EQ(4u, elms->Length());
+  int elmc0 = 0;
+  const char** elmv0 = nullptr;
+  CheckProperties(
+      isolate,
+      elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked(),
+      elmc0, elmv0);
+
+  v8::Local<v8::Value> val =
+      elms->Get(context.local(), v8::Integer::New(isolate, 0)).ToLocalChecked();
+  v8::Local<v8::Array> props =
+      val.As<v8::Object>()->GetPropertyNames(context.local()).ToLocalChecked();
+  CHECK_EQ(0u, props->Length());
+  for (uint32_t i = 0; i < props->Length(); i++) {
+    printf("p[%u]\n", i);
+  }
+}
 
 // THREADED_TEST(GetPropertyNames) {
 //   LocalContext context;
