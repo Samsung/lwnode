@@ -8734,39 +8734,39 @@ THREADED_TEST(ToArrayIndex) {
 // }
 
 
-// static void YGetter(Local<String> name,
-//                     const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(10));
-// }
+static void YGetter(Local<String> name,
+                    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  info.GetReturnValue().Set(v8_num(10));
+}
 
 
-// static void YSetter(Local<String> name,
-//                     Local<Value> value,
-//                     const v8::PropertyCallbackInfo<void>& info) {
-//   Local<Object> this_obj = Local<Object>::Cast(info.This());
-//   v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-//   if (this_obj->Has(context, name).FromJust())
-//     this_obj->Delete(context, name).FromJust();
-//   CHECK(this_obj->Set(context, name, value).FromJust());
-// }
+static void YSetter(Local<String> name,
+                    Local<Value> value,
+                    const v8::PropertyCallbackInfo<void>& info) {
+  Local<Object> this_obj = Local<Object>::Cast(info.This());
+  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+  if (this_obj->Has(context, name).FromJust())
+    this_obj->Delete(context, name).FromJust();
+  CHECK(this_obj->Set(context, name, value).FromJust());
+}
 
 
-// THREADED_TEST(DeleteAccessor) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> obj = ObjectTemplate::New(isolate);
-//   obj->SetAccessor(v8_str("y"), YGetter, YSetter);
-//   LocalContext context;
-//   v8::Local<v8::Object> holder =
-//       obj->NewInstance(context.local()).ToLocalChecked();
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("holder"), holder)
-//             .FromJust());
-//   v8::Local<Value> result =
-//       CompileRun("holder.y = 11; holder.y = 12; holder.y");
-//   CHECK_EQ(12u, result->Uint32Value(context.local()).FromJust());
-// }
+THREADED_TEST(DeleteAccessor) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> obj = ObjectTemplate::New(isolate);
+  obj->SetAccessor(v8_str("y"), YGetter, YSetter);
+  LocalContext context;
+  v8::Local<v8::Object> holder =
+      obj->NewInstance(context.local()).ToLocalChecked();
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("holder"), holder)
+            .FromJust());
+  v8::Local<Value> result =
+      CompileRun("holder.y = 11; holder.y = 12; holder.y");
+  CHECK_EQ(12u, result->Uint32Value(context.local()).FromJust());
+}
 
 
 // static int trouble_nesting = 0;
@@ -12077,80 +12077,80 @@ THREADED_TEST(ToArrayIndex) {
 // }
 
 
-// static void ParentGetter(Local<String> name,
-//                          const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(1));
-// }
+static void ParentGetter(Local<String> name,
+                         const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  info.GetReturnValue().Set(v8_num(1));
+}
 
 
-// static void ChildGetter(Local<String> name,
-//                         const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(42));
-// }
+static void ChildGetter(Local<String> name,
+                        const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  info.GetReturnValue().Set(v8_num(42));
+}
 
 
-// THREADED_TEST(Overriding) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(Overriding) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   // Parent template.
-//   Local<v8::FunctionTemplate> parent_templ = v8::FunctionTemplate::New(isolate);
-//   Local<ObjectTemplate> parent_instance_templ =
-//       parent_templ->InstanceTemplate();
-//   parent_instance_templ->SetAccessor(v8_str("f"), ParentGetter);
+  // Parent template.
+  Local<v8::FunctionTemplate> parent_templ = v8::FunctionTemplate::New(isolate);
+  Local<ObjectTemplate> parent_instance_templ =
+      parent_templ->InstanceTemplate();
+  parent_instance_templ->SetAccessor(v8_str("f"), ParentGetter);
 
-//   // Template that inherits from the parent template.
-//   Local<v8::FunctionTemplate> child_templ = v8::FunctionTemplate::New(isolate);
-//   Local<ObjectTemplate> child_instance_templ =
-//       child_templ->InstanceTemplate();
-//   child_templ->Inherit(parent_templ);
-//   // Override 'f'.  The child version of 'f' should get called for child
-//   // instances.
-//   child_instance_templ->SetAccessor(v8_str("f"), ChildGetter);
-//   // Add 'g' twice.  The 'g' added last should get called for instances.
-//   child_instance_templ->SetAccessor(v8_str("g"), ParentGetter);
-//   child_instance_templ->SetAccessor(v8_str("g"), ChildGetter);
+  // Template that inherits from the parent template.
+  Local<v8::FunctionTemplate> child_templ = v8::FunctionTemplate::New(isolate);
+  Local<ObjectTemplate> child_instance_templ =
+      child_templ->InstanceTemplate();
+  child_templ->Inherit(parent_templ);
+  // Override 'f'.  The child version of 'f' should get called for child
+  // instances.
+  child_instance_templ->SetAccessor(v8_str("f"), ChildGetter);
+  // Add 'g' twice.  The 'g' added last should get called for instances.
+  child_instance_templ->SetAccessor(v8_str("g"), ParentGetter);
+  child_instance_templ->SetAccessor(v8_str("g"), ChildGetter);
 
-//   // Add 'h' as an accessor to the proto template with ReadOnly attributes
-//   // so 'h' can be shadowed on the instance object.
-//   Local<ObjectTemplate> child_proto_templ = child_templ->PrototypeTemplate();
-//   child_proto_templ->SetAccessor(v8_str("h"), ParentGetter, nullptr,
-//                                  v8::Local<Value>(), v8::DEFAULT, v8::ReadOnly);
+  // Add 'h' as an accessor to the proto template with ReadOnly attributes
+  // so 'h' can be shadowed on the instance object.
+  Local<ObjectTemplate> child_proto_templ = child_templ->PrototypeTemplate();
+  child_proto_templ->SetAccessor(v8_str("h"), ParentGetter, nullptr,
+                                 v8::Local<Value>(), v8::DEFAULT, v8::ReadOnly);
 
-//   // Add 'i' as an accessor to the instance template with ReadOnly attributes
-//   // but the attribute does not have effect because it is duplicated with
-//   // nullptr setter.
-//   child_instance_templ->SetAccessor(v8_str("i"), ChildGetter, nullptr,
-//                                     v8::Local<Value>(), v8::DEFAULT,
-//                                     v8::ReadOnly);
+  // Add 'i' as an accessor to the instance template with ReadOnly attributes
+  // but the attribute does not have effect because it is duplicated with
+  // nullptr setter.
+  child_instance_templ->SetAccessor(v8_str("i"), ChildGetter, nullptr,
+                                    v8::Local<Value>(), v8::DEFAULT,
+                                    v8::ReadOnly);
 
-//   // Instantiate the child template.
-//   Local<v8::Object> instance = child_templ->GetFunction(context.local())
-//                                    .ToLocalChecked()
-//                                    ->NewInstance(context.local())
-//                                    .ToLocalChecked();
+  // Instantiate the child template.
+  Local<v8::Object> instance = child_templ->GetFunction(context.local())
+                                   .ToLocalChecked()
+                                   ->NewInstance(context.local())
+                                   .ToLocalChecked();
 
-//   // Check that the child function overrides the parent one.
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("o"), instance)
-//             .FromJust());
-//   Local<Value> value = v8_compile("o.f")->Run(context.local()).ToLocalChecked();
-//   // Check that the 'g' that was added last is hit.
-//   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
-//   value = v8_compile("o.g")->Run(context.local()).ToLocalChecked();
-//   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+  // Check that the child function overrides the parent one.
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("o"), instance)
+            .FromJust());
+  Local<Value> value = v8_compile("o.f")->Run(context.local()).ToLocalChecked();
+  // Check that the 'g' that was added last is hit.
+  CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+  value = v8_compile("o.g")->Run(context.local()).ToLocalChecked();
+  CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
 
-//   // Check that 'h' cannot be shadowed.
-//   value = v8_compile("o.h = 3; o.h")->Run(context.local()).ToLocalChecked();
-//   CHECK_EQ(1, value->Int32Value(context.local()).FromJust());
+  // Check that 'h' cannot be shadowed.
+  value = v8_compile("o.h = 3; o.h")->Run(context.local()).ToLocalChecked();
+  CHECK_EQ(1, value->Int32Value(context.local()).FromJust());
 
-//   // Check that 'i' cannot be shadowed or changed.
-//   value = v8_compile("o.i = 3; o.i")->Run(context.local()).ToLocalChecked();
-//   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
-// }
+  // Check that 'i' cannot be shadowed or changed.
+  value = v8_compile("o.i = 3; o.i")->Run(context.local()).ToLocalChecked();
+  CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+}
 
 
 // static void ShouldThrowOnErrorGetter(
