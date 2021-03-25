@@ -11313,8 +11313,14 @@ Local<Object> FunctionCallbackInfo<T>::This() const {
 
 template<typename T>
 Local<Object> FunctionCallbackInfo<T>::Holder() const {
+// @lwnode
+#if 0
   return Local<Object>(reinterpret_cast<Object*>(
       &implicit_args_[kHolderIndex]));
+#endif
+  return Local<Object>(reinterpret_cast<Object*>(
+      implicit_args_[kHolderIndex]));
+// end @lwnode
 }
 
 template <typename T>
@@ -12018,7 +12024,7 @@ Isolate* PropertyCallbackInfo<T>::GetIsolate() const {
 
 template<typename T>
 Local<Value> PropertyCallbackInfo<T>::Data() const {
-  // @lwnode
+// @lwnode
 #if 0
   return Local<Value>(reinterpret_cast<Value*>(&args_[kDataIndex]));
 #endif
@@ -12029,13 +12035,23 @@ Local<Value> PropertyCallbackInfo<T>::Data() const {
 
 template<typename T>
 Local<Object> PropertyCallbackInfo<T>::This() const {
+// @lwnode
+#if 0
   return Local<Object>(reinterpret_cast<Object*>(&args_[kThisIndex]));
+#endif
+  return Local<Object>(reinterpret_cast<Object*>(args_[kThisIndex]));
+// end @lwnode
 }
 
 
 template<typename T>
 Local<Object> PropertyCallbackInfo<T>::Holder() const {
+// @lwnode
+#if 0
   return Local<Object>(reinterpret_cast<Object*>(&args_[kHolderIndex]));
+#endif
+  return Local<Object>(reinterpret_cast<Object*>(args_[kHolderIndex]));
+// end @lwnode
 }
 
 
