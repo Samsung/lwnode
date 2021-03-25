@@ -999,16 +999,16 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
         auto vector = ValueVectorRef::create();
 
         auto done = StringRef::createFromASCII("done");
-        auto key = StringRef::createFromASCII("key");
+        auto value = StringRef::createFromASCII("value");
 
         {
           ValueRef* argv[] = {esSelf};
           auto props = f->call(esState, globalObject, 1, argv);
-          auto itr = props->asArrayObject()->keys(esState);
+          auto itr = props->asArrayObject()->values(esState);
           for (auto entry = itr->next(esState);
                entry->asObject()->get(esState, done)->isFalse();
                entry = itr->next(esState)) {
-            auto val = entry->asObject()->get(esState, key);
+            auto val = entry->asObject()->get(esState, value);
             vector->pushBack(val);
           }
         }
@@ -1018,11 +1018,11 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
              p = p.value()->getPrototypeObject(esState)) {
           ValueRef* argv[] = {p.value()};
           auto props = f->call(esState, globalObject, 1, argv);
-          auto itr = props->asArrayObject()->keys(esState);
+          auto itr = props->asArrayObject()->values(esState);
           for (auto entry = itr->next(esState);
                entry->asObject()->get(esState, done)->isFalse();
                entry = itr->next(esState)) {
-            auto val = entry->asObject()->get(esState, key);
+            auto val = entry->asObject()->get(esState, value);
             vector->pushBack(val);
           }
         }
