@@ -2117,13 +2117,13 @@ String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     return;
   }
 
-  auto esString = CVAL(*obj)->value()->asString();
+  auto esString = r.result->asString();
   auto bufferData = esString->stringBufferAccessData();
   std::string str;
   if (bufferData.has8BitContent) {
     length_ = bufferData.length;
   } else {
-    str = r.result->asString()->toStdUTF8String();
+    str = esString->toStdUTF8String();
     length_ = str.size();
   }
 
