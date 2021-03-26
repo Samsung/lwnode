@@ -310,18 +310,23 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
 
 void ObjectRefHelper::setExtraData(
     ObjectRef* object,
-    void* data,
+    ObjectData* data,
     Memory::GCAllocatedMemoryFinalizer callback) {
   if (object->extraData()) {
     LWNODE_DLOG_WARN("extra data already exists. it will be removed.");
   }
 
-  // @consider manage extra data with slot id
   object->setExtraData(data);
 
   if (callback) {
     MemoryUtil::gcRegisterFinalizer(object, callback);
   }
+}
+
+ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
+  void* data = object->extraData();
+  LWNODE_DCHECK_NOT_NULL(data);
+  return reinterpret_cast<ObjectData*>(data);
 }
 
 }  // namespace EscargotShim

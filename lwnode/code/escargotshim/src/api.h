@@ -31,6 +31,7 @@
 #include "api/backing-store.h"
 #include "api/context.h"
 #include "api/es-helper.h"
+#include "api/extra-data.h"
 #include "api/function.h"
 #include "api/handle.h"
 #include "api/isolate.h"

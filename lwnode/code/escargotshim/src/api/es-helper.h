@@ -25,6 +25,7 @@ namespace EscargotShim {
 
 class IsolateWrap;
 class ContextWrap;
+class ObjectData;
 
 typedef Evaluator::EvaluatorResult EvalResult;
 typedef FunctionObjectRef::NativeFunctionPointer NativeFunctionPointer;
@@ -80,8 +81,10 @@ class ObjectRefHelper {
       ValueRef* setter);
 
   static void setExtraData(ObjectRef* object,
-                           void* data,
+                           ObjectData* data,
                            Memory::GCAllocatedMemoryFinalizer callback);
+
+  static ObjectData* getExtraData(ObjectRef* object);
 
  private:
   static SymbolRef* s_symbolKeyForHiddenValues;
