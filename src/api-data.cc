@@ -448,8 +448,9 @@ void v8::BackingStore::EmptyDeleter(void* data,
 }
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
-  auto holder = reinterpret_cast<BackingStoreWrapHolder*>(
-      VAL(this)->value()->asObject()->extraData());
+  auto holder = ObjectRefHelper::getExtraData(VAL(this)->value()->asObject())
+                    ->asArrayBufferObjectData()
+                    ->backingStoreWrapHolder();
 
   LWNODE_DCHECK_MSG(holder != nullptr, "unimplemented");
 

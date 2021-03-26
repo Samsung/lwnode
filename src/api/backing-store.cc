@@ -17,6 +17,7 @@
 #include "backing-store.h"
 #include "es-helper.h"
 #include "isolate.h"
+#include "extra-data.h"
 
 using namespace Escargot;
 
@@ -29,8 +30,7 @@ BackingStoreWrap::BackingStoreWrap(void* data,
     : data_(data),
       byteLength_(byte_length),
       isShared_(shared == SharedFlag::kShared),
-      allocator_(allocator) {
-}
+      allocator_(allocator) {}
 
 BackingStoreWrap::~BackingStoreWrap() {
   allocator_->Free(data_, byteLength_);
@@ -71,12 +71,13 @@ bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
 
   // since the ownership of the backing store is given to this
   // arraybuffer, it should manage destructing the backing store.
-  auto holder = new BackingStoreWrapHolder(this);
+  auto data = new ArrayBufferObjectData();
+  data->setBackingStoreWrapHolder(new BackingStoreWrapHolder(this));
 
-  ObjectRefHelper::setExtraData(arrayBuffer, holder, [](void* self) {
+  ObjectRefHelper::setExtraData(arrayBuffer, data, [](void* self) {
     auto value = reinterpret_cast<ValueRef*>(self);
-    auto holder = reinterpret_cast<BackingStoreWrapHolder*>(
-        value->asArrayBufferObject()->extraData());
+    auto holder = ObjectRefHelper::getExtraData(value->asArrayBufferObject())
+                      ->asArrayBufferObjectData()->backingStoreWrapHolder();
 
     LWNODE_DCHECK_NOT_NULL(holder);
 
@@ -99,7 +100,6 @@ BackingStoreWrapHolder::BackingStoreWrapHolder(BackingStoreWrap* backingStore)
     it->second++;
   }
 }
-
 
 BackingStoreWrapHolder::~BackingStoreWrapHolder() {
   // @check consider to simply delete backingStore_ with isExternal condition.
