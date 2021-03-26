@@ -81,6 +81,14 @@ void* ContextWrap::GetAlignedPointerFromEmbedderData(int index) {
   return nullptr;
 }
 
+void ContextWrap::setReturnValue(Escargot::Evaluator::EvaluatorResult r) {
+  return_value_ = r;
+}
+
+Escargot::Evaluator::EvaluatorResult ContextWrap::returnValue() {
+  return return_value_;
+}
+
 }  // namespace EscargotShim
 
 // namespace EscargotShim

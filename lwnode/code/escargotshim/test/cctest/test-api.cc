@@ -5432,10 +5432,10 @@ THREADED_TEST(IntegerType) {
 // }
 
 
-// void ThrowFromC(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   args.GetIsolate()->ThrowException(v8_str("konto"));
-// }
+void ThrowFromC(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  args.GetIsolate()->ThrowException(v8_str("konto"));
+}
 
 
 // void CCatcher(const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -5941,52 +5941,52 @@ THREADED_TEST(IntegerType) {
 // }
 
 
-// THREADED_TEST(CatchExceptionFromWith) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   v8::TryCatch try_catch(context->GetIsolate());
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun("var o = {}; with (o) { throw 42; }");
-//   CHECK(try_catch.HasCaught());
-// }
+THREADED_TEST(CatchExceptionFromWith) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  v8::TryCatch try_catch(context->GetIsolate());
+  CHECK(!try_catch.HasCaught());
+  CompileRun("var o = {}; with (o) { throw 42; }");
+  CHECK(try_catch.HasCaught());
+}
 
 
-// THREADED_TEST(TryCatchAndFinallyHidingException) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   v8::TryCatch try_catch(context->GetIsolate());
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun("function f(k) { try { this[k]; } finally { return 0; } };");
-//   CompileRun("f({toString: function() { throw 42; }});");
-//   CHECK(!try_catch.HasCaught());
-// }
+THREADED_TEST(TryCatchAndFinallyHidingException) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  v8::TryCatch try_catch(context->GetIsolate());
+  CHECK(!try_catch.HasCaught());
+  CompileRun("function f(k) { try { this[k]; } finally { return 0; } };");
+  CompileRun("f({toString: function() { throw 42; }});");
+  CHECK(!try_catch.HasCaught());
+}
 
 
-// void WithTryCatch(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   v8::TryCatch try_catch(args.GetIsolate());
-// }
+void WithTryCatch(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  v8::TryCatch try_catch(args.GetIsolate());
+}
 
 
-// THREADED_TEST(TryCatchAndFinally) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("native_with_try_catch"),
-//                   v8::FunctionTemplate::New(isolate, WithTryCatch)
-//                       ->GetFunction(context.local())
-//                       .ToLocalChecked())
-//             .FromJust());
-//   v8::TryCatch try_catch(isolate);
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun(
-//       "try {\n"
-//       "  throw new Error('a');\n"
-//       "} finally {\n"
-//       "  native_with_try_catch();\n"
-//       "}\n");
-//   CHECK(try_catch.HasCaught());
-// }
+THREADED_TEST(TryCatchAndFinally) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("native_with_try_catch"),
+                  v8::FunctionTemplate::New(isolate, WithTryCatch)
+                      ->GetFunction(context.local())
+                      .ToLocalChecked())
+            .FromJust());
+  v8::TryCatch try_catch(isolate);
+  CHECK(!try_catch.HasCaught());
+  CompileRun(
+      "try {\n"
+      "  throw new Error('a');\n"
+      "} finally {\n"
+      "  native_with_try_catch();\n"
+      "}\n");
+  CHECK(try_catch.HasCaught());
+}
 
 
 // static void TryCatchNested1Helper(int depth) {

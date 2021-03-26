@@ -93,6 +93,7 @@ Local<Value> UnboundScript::GetSourceMappingURL() {
 
 MaybeLocal<Value> Script::Run(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   auto esScript = VAL(this)->script();
 
@@ -106,7 +107,7 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
         return script->execute(state);
       },
       esScript);
-
+  lwContext->setReturnValue(r);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
