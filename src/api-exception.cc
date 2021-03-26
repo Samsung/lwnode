@@ -50,7 +50,14 @@ void v8::TryCatch::operator delete[](void*, size_t) {
 }
 
 bool v8::TryCatch::HasCaught() const {
-  LWNODE_RETURN_FALSE;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  if (lwContext->returnValue().isSuccessful()) {
+    return false;
+  }
+
+  return true;
 }
 
 bool v8::TryCatch::CanContinue() const {

@@ -52,7 +52,16 @@ bool IsolateWrap::IsExecutionTerminating() {
 }
 
 void IsolateWrap::scheduleThrow(Escargot::ValueRef* result) {
-  LWNODE_UNIMPLEMENT;
+  // LWNODE_UNIMPLEMENT;
+  // TODO: There are two types of exception handling.
+  // 1. An exception raised when it should not. Usually this happens
+  // when we are using Escargot API, and caused by incorrect development
+  // of our code and/or escargot, i.e., internal error.
+  // 2. An exception raised by running external script. In this case,
+  // it is the external developer's responsibility to handle an exception
+  // using v8:tryCatch, etc. In this case, we should not do any exception
+  // handling.
+  // TODO: Fix API_HANDLE_EXCEPTION() accordingly
   hasScheduledThrow_ = true;
 }
 
