@@ -69,11 +69,36 @@ bool v8::TryCatch::HasTerminated() const {
 }
 
 v8::Local<v8::Value> v8::TryCatch::ReThrow() {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  if (lwContext->returnValue().isSuccessful()) {
+    return Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::createNull());
+  }
+
+  LWNODE_CHECK(lwContext->returnValue().error.hasValue());
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* value) -> ValueRef* {
+        esState->throwException(value);
+        return value;
+      },
+      lwContext->returnValue().error.value());
+
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.error.value());
 }
 
 v8::Local<Value> v8::TryCatch::Exception() const {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  if (lwContext->returnValue().isSuccessful()) {
+    return Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::createNull());
+  }
+
+  LWNODE_CHECK(lwContext->returnValue().error.hasValue());
+  return Utils::NewLocal<Value>(lwIsolate->toV8(),
+                                lwContext->returnValue().error.value());
 }
 
 MaybeLocal<Value> v8::TryCatch::StackTrace(Local<Context> context,

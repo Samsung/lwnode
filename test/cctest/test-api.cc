@@ -4398,17 +4398,17 @@ THREADED_TEST(LocalHandle) {
 //   data.GetParameter()->handle.Reset();
 // }
 
-// THREADED_TEST(ScriptException) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   Local<Script> script = v8_compile("throw 'panama!';");
-//   v8::TryCatch try_catch(env->GetIsolate());
-//   v8::MaybeLocal<Value> result = script->Run(env.local());
-//   CHECK(result.IsEmpty());
-//   CHECK(try_catch.HasCaught());
-//   String::Utf8Value exception_value(env->GetIsolate(), try_catch.Exception());
-//   CHECK_EQ(0, strcmp(*exception_value, "panama!"));
-// }
+THREADED_TEST(ScriptException) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  Local<Script> script = v8_compile("throw 'panama!';");
+  v8::TryCatch try_catch(env->GetIsolate());
+  v8::MaybeLocal<Value> result = script->Run(env.local());
+  CHECK(result.IsEmpty());
+  CHECK(try_catch.HasCaught());
+  String::Utf8Value exception_value(env->GetIsolate(), try_catch.Exception());
+  CHECK_EQ(0, strcmp(*exception_value, "panama!"));
+}
 
 
 // TEST(TryCatchCustomException) {
@@ -5475,17 +5475,17 @@ void ThrowFromC(const v8::FunctionCallbackInfo<v8::Value>& args) {
 // }
 
 
-// THREADED_TEST(APIThrowTryCatch) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->Set(v8_str("ThrowFromC"),
-//              v8::FunctionTemplate::New(isolate, ThrowFromC));
-//   LocalContext context(nullptr, templ);
-//   v8::TryCatch try_catch(isolate);
-//   CompileRun("ThrowFromC();");
-//   CHECK(try_catch.HasCaught());
-// }
+THREADED_TEST(APIThrowTryCatch) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->Set(v8_str("ThrowFromC"),
+             v8::FunctionTemplate::New(isolate, ThrowFromC));
+  LocalContext context(nullptr, templ);
+  v8::TryCatch try_catch(isolate);
+  CompileRun("ThrowFromC();");
+  CHECK(try_catch.HasCaught());
+}
 
 
 // // Test that a try-finally block doesn't shadow a try-catch block
@@ -5989,57 +5989,57 @@ THREADED_TEST(TryCatchAndFinally) {
 }
 
 
-// static void TryCatchNested1Helper(int depth) {
-//   if (depth > 0) {
-//     v8::TryCatch try_catch(CcTest::isolate());
-//     try_catch.SetVerbose(true);
-//     TryCatchNested1Helper(depth - 1);
-//     CHECK(try_catch.HasCaught());
-//     try_catch.ReThrow();
-//   } else {
-//     CcTest::isolate()->ThrowException(v8_str("E1"));
-//   }
-// }
+static void TryCatchNested1Helper(int depth) {
+  if (depth > 0) {
+    v8::TryCatch try_catch(CcTest::isolate());
+    try_catch.SetVerbose(true);
+    TryCatchNested1Helper(depth - 1);
+    CHECK(try_catch.HasCaught());
+    try_catch.ReThrow();
+  } else {
+    CcTest::isolate()->ThrowException(v8_str("E1"));
+  }
+}
 
 
-// static void TryCatchNested2Helper(int depth) {
-//   if (depth > 0) {
-//     v8::TryCatch try_catch(CcTest::isolate());
-//     try_catch.SetVerbose(true);
-//     TryCatchNested2Helper(depth - 1);
-//     CHECK(try_catch.HasCaught());
-//     try_catch.ReThrow();
-//   } else {
-//     CompileRun("throw 'E2';");
-//   }
-// }
+static void TryCatchNested2Helper(int depth) {
+  if (depth > 0) {
+    v8::TryCatch try_catch(CcTest::isolate());
+    try_catch.SetVerbose(true);
+    TryCatchNested2Helper(depth - 1);
+    CHECK(try_catch.HasCaught());
+    try_catch.ReThrow();
+  } else {
+    CompileRun("throw 'E2';");
+  }
+}
 
 
-// TEST(TryCatchNested) {
-//   v8::V8::Initialize();
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
+TEST(TryCatchNested) {
+  v8::V8::Initialize();
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
 
-//   {
-//     // Test nested try-catch with a native throw in the end.
-//     v8::TryCatch try_catch(context->GetIsolate());
-//     TryCatchNested1Helper(5);
-//     CHECK(try_catch.HasCaught());
-//     CHECK_EQ(0, strcmp(*v8::String::Utf8Value(context->GetIsolate(),
-//                                               try_catch.Exception()),
-//                        "E1"));
-//   }
+  {
+    // Test nested try-catch with a native throw in the end.
+    v8::TryCatch try_catch(context->GetIsolate());
+    TryCatchNested1Helper(5);
+    CHECK(try_catch.HasCaught());
+    CHECK_EQ(0, strcmp(*v8::String::Utf8Value(context->GetIsolate(),
+                                              try_catch.Exception()),
+                       "E1"));
+  }
 
-//   {
-//     // Test nested try-catch with a JavaScript throw in the end.
-//     v8::TryCatch try_catch(context->GetIsolate());
-//     TryCatchNested2Helper(5);
-//     CHECK(try_catch.HasCaught());
-//     CHECK_EQ(0, strcmp(*v8::String::Utf8Value(context->GetIsolate(),
-//                                               try_catch.Exception()),
-//                        "E2"));
-//   }
-// }
+  {
+    // Test nested try-catch with a JavaScript throw in the end.
+    v8::TryCatch try_catch(context->GetIsolate());
+    TryCatchNested2Helper(5);
+    CHECK(try_catch.HasCaught());
+    CHECK_EQ(0, strcmp(*v8::String::Utf8Value(context->GetIsolate(),
+                                              try_catch.Exception()),
+                       "E2"));
+  }
+}
 
 
 // void TryCatchMixedNestingCheck(v8::TryCatch* try_catch) {
