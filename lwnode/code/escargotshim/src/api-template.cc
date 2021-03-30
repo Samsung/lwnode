@@ -315,7 +315,23 @@ void FunctionTemplate::SetLength(int length) {
 }
 
 void FunctionTemplate::SetClassName(Local<String> name) {
-  LWNODE_RETURN_VOID;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+  FunctionTemplateRef* self = CVAL(this)->ftpl();
+  auto esName = CVAL(*name)->value()->asString();
+
+  auto r =
+      Evaluator::execute(lwContext->get(),
+                         [](ExecutionStateRef* esState,
+                            FunctionTemplateRef* esFunctionTemplate,
+                            StringRef* esName) -> ValueRef* {
+                           esFunctionTemplate->setName(AtomicStringRef::create(
+                               esState->context(), esName));
+                           return ValueRef::createNull();
+                         },
+                         self,
+                         esName);
+  LWNODE_CHECK(r.isSuccessful());
 }
 
 void FunctionTemplate::SetAcceptAnyReceiver(bool value) {
@@ -637,18 +653,18 @@ void ObjectTemplate::SetHandler(
   if (config.descriptor) {
     LWNODE_RETURN_VOID;
 
-    esHandlerData.descriptor = [](ExecutionStateRef* state,
-                                  ObjectRef* esSelf,
-                                  void* data) -> OptionalRef<ObjectRef> {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+    // esHandlerData.descriptor = [](ExecutionStateRef* state,
+    //                               ObjectRef* esSelf,
+    //                               void* data) -> OptionalRef<ObjectRef> {
+    //   auto tplData = ObjectTemplateData::toTemplateData(data);
 
-      if (!tplData->m_namedPropertyHandler.descriptor) {
-        return Escargot::OptionalRef<Escargot::ObjectRef>();
-      }
+    //   if (!tplData->m_namedPropertyHandler.descriptor) {
+    //     return Escargot::OptionalRef<Escargot::ObjectRef>();
+    //   }
 
-      // TODO
-      return Escargot::OptionalRef<Escargot::ObjectRef>();
-    };
+    //   // TODO
+    //   return Escargot::OptionalRef<Escargot::ObjectRef>();
+    // };
   }
 
   esHandlerData.data = tplData;
