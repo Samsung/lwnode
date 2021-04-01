@@ -137,11 +137,13 @@ Context::BackupIncumbentScope::~BackupIncumbentScope() {
 }
 
 uint32_t Context::GetNumberOfEmbedderDataFields() {
-  LWNODE_RETURN_0;
+  return VAL(this)->context()->GetNumberOfEmbedderDataFields();
 }
 
 v8::Local<v8::Value> Context::SlowGetEmbedderData(int index) {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = VAL(this)->context()->GetIsolate();
+  return Utils::NewLocal<Value>(lwIsolate->toV8(),
+                                VAL(this)->context()->GetEmbedderData(index));
 }
 
 void Context::SetEmbedderData(int index, v8::Local<Value> value) {
@@ -149,7 +151,7 @@ void Context::SetEmbedderData(int index, v8::Local<Value> value) {
 }
 
 void* Context::SlowGetAlignedPointerFromEmbedderData(int index) {
-  LWNODE_RETURN_NULLPTR;
+  return VAL(this)->context()->GetAlignedPointerFromEmbedderData(index);
 }
 
 void Context::SetAlignedPointerInEmbedderData(int index, void* value) {

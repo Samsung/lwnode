@@ -59,6 +59,11 @@ class Utils {
   }
 
   template <typename T>
+  static v8::Local<T> NewLocal(Isolate* isolate, EscargotShim::ValueWrap* ptr) {
+    return v8::Local<T>::New(isolate, reinterpret_cast<T*>(ptr));
+  }
+
+  template <typename T>
   static v8::Local<T> NewLocal(Isolate* isolate, Escargot::ValueRef* ptr) {
     return v8::Local<T>::New(
         isolate,

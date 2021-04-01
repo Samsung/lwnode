@@ -24,8 +24,7 @@ namespace EscargotShim {
 class IsolateWrap;
 class ValueWrap;
 
-typedef GCUnorderedMap<int, ValueWrap*> EmbedderDataMap;
-typedef std::unordered_map<int, void*> AlignedPointerInEmbedderDataMap;
+typedef GCUnorderedMap<int, void*> EmbedderDataMap;
 
 class ContextWrap : public gc {
  public:
@@ -39,6 +38,7 @@ class ContextWrap : public gc {
 
   void SetEmbedderData(int index, ValueWrap* value);
   ValueWrap* GetEmbedderData(int index);
+  uint32_t GetNumberOfEmbedderDataFields();
 
   void SetAlignedPointerInEmbedderData(int index, void* value);
   void* GetAlignedPointerFromEmbedderData(int index);
@@ -47,10 +47,11 @@ class ContextWrap : public gc {
   Escargot::Evaluator::EvaluatorResult returnValue();
 
  private:
-  EmbedderDataMap* embedder_data_;
-  AlignedPointerInEmbedderDataMap aligned_pointer_in_embedder_data_;
+  EmbedderDataMap* embedder_data_{nullptr};
 
   ContextWrap(IsolateWrap* isolate);
+  void setEmbedderData(int index, void* value);
+  void* getEmbedderData(int index);
 
   IsolateWrap* isolate_ = nullptr;
   Escargot::ContextRef* context_ = nullptr;
