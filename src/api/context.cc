@@ -16,6 +16,7 @@
 
 #include "context.h"
 #include "isolate.h"
+#include "base.h"
 
 namespace EscargotShim {
 
@@ -52,7 +53,7 @@ IsolateWrap* ContextWrap::GetIsolate() {
   return isolate_;
 }
 
-void ContextWrap::SetEmbedderData(int index, ValueWrap* value) {
+void ContextWrap::setEmbedderData(int index, void* value) {
   if (embedder_data_ == nullptr) {
     embedder_data_ = new EmbedderDataMap();
   }
@@ -60,25 +61,43 @@ void ContextWrap::SetEmbedderData(int index, ValueWrap* value) {
   embedder_data_->insert(std::make_pair(index, value));
 }
 
-ValueWrap* ContextWrap::GetEmbedderData(int index) {
+void* ContextWrap::getEmbedderData(int index) {
+  if (!embedder_data_) {
+    return nullptr;
+  }
+
   auto iter = embedder_data_->find(index);
   if (iter != embedder_data_->end()) {
-    return iter->second;
+    LWNODE_DLOG_INFO("get: EmbedderData: idx %d", index);
+    return VAL(iter->second);
   }
   return nullptr;
+}
+
+void ContextWrap::SetEmbedderData(int index, ValueWrap* value) {
+  setEmbedderData(index, reinterpret_cast<void*>(value));
+}
+
+ValueWrap* ContextWrap::GetEmbedderData(int index) {
+  return VAL(getEmbedderData(index));
+}
+
+uint32_t ContextWrap::GetNumberOfEmbedderDataFields() {
+  int maxIndex = -1;
+  for (auto itr = embedder_data_->begin(); itr != embedder_data_->end();
+       ++itr) {
+    maxIndex = std::max(maxIndex, itr->first);
+  }
+
+  return maxIndex + 1;
 }
 
 void ContextWrap::SetAlignedPointerInEmbedderData(int index, void* value) {
-  LWNODE_DLOG_INFO("set: AlignedPointerInEmbedderData: idx %d", index);
-  aligned_pointer_in_embedder_data_.insert(std::make_pair(index, value));
+  setEmbedderData(index, value);
 }
 
 void* ContextWrap::GetAlignedPointerFromEmbedderData(int index) {
-  auto iter = aligned_pointer_in_embedder_data_.find(index);
-  if (iter != aligned_pointer_in_embedder_data_.end()) {
-    return iter->second;
-  }
-  return nullptr;
+  return getEmbedderData(index);
 }
 
 void ContextWrap::setReturnValue(Escargot::Evaluator::EvaluatorResult r) {

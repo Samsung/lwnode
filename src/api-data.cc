@@ -851,7 +851,34 @@ Maybe<bool> v8::Object::DefineOwnProperty(v8::Local<v8::Context> context,
                                           v8::Local<Name> key,
                                           v8::Local<Value> value,
                                           v8::PropertyAttribute attributes) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto self = CVAL(this)->value()->asObject();
+  auto esKey = CVAL(*key)->value();
+  auto esValue = CVAL(*value)->value();
+
+  // TODO: Handle attributes
+  // FIXME: Handle Name
+  if (esKey->isSymbol()) {
+    LWNODE_DLOG_INFO("Handle when key->isSymbol()\n");
+  }
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         ObjectRef* self,
+         ValueRef* esKey,
+         ValueRef* esValue) -> ValueRef* {
+        auto o = StringObjectRef::create(esState);
+        o->setPrimitiveValue(esState, esValue);
+        return ValueRef::create(self->defineOwnProperty(esState, esKey, o));
+      },
+      self,
+      esKey,
+      esValue);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
 }
 
 Maybe<bool> v8::Object::DefineProperty(v8::Local<v8::Context> context,
