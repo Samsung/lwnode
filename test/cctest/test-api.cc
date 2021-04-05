@@ -6417,14 +6417,14 @@ THREADED_TEST(SimplePropertyRead) {
 // }
 
 
-// static v8::Local<v8::Object> GetGlobalProperty(LocalContext* context,
-//                                                char const* name) {
-//   return v8::Local<v8::Object>::Cast(
-//       (*context)
-//           ->Global()
-//           ->Get(CcTest::isolate()->GetCurrentContext(), v8_str(name))
-//           .ToLocalChecked());
-// }
+static v8::Local<v8::Object> GetGlobalProperty(LocalContext* context,
+                                               char const* name) {
+  return v8::Local<v8::Object>::Cast(
+      (*context)
+          ->Global()
+          ->Get(CcTest::isolate()->GetCurrentContext(), v8_str(name))
+          .ToLocalChecked());
+}
 
 
 // THREADED_TEST(DefineAPIAccessorOnObject) {
@@ -6579,44 +6579,44 @@ THREADED_TEST(SimplePropertyRead) {
 // }
 
 
-// static void Get239Value(Local<Name> name,
-//                         const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   CHECK(info.Data()
-//             ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("donut"))
-//             .FromJust());
-//   CHECK(name->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("239"))
-//             .FromJust());
-//   info.GetReturnValue().Set(name);
-// }
+static void Get239Value(Local<Name> name,
+                        const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  CHECK(info.Data()
+            ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("donut"))
+            .FromJust());
+  CHECK(name->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("239"))
+            .FromJust());
+  info.GetReturnValue().Set(name);
+}
 
 
-// THREADED_TEST(ElementAPIAccessor) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   LocalContext context;
+THREADED_TEST(ElementAPIAccessor) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  LocalContext context;
 
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("obj1"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   CompileRun("var obj2 = {};");
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("obj1"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  CompileRun("var obj2 = {};");
 
-//   CHECK(GetGlobalProperty(&context, "obj1")
-//             ->SetAccessor(context.local(), v8_str("239"), Get239Value, nullptr,
-//                           v8_str("donut"))
-//             .FromJust());
-//   CHECK(GetGlobalProperty(&context, "obj2")
-//             ->SetAccessor(context.local(), v8_str("239"), Get239Value, nullptr,
-//                           v8_str("donut"))
-//             .FromJust());
+  CHECK(GetGlobalProperty(&context, "obj1")
+            ->SetAccessor(context.local(), v8_str("239"), Get239Value, nullptr,
+                          v8_str("donut"))
+            .FromJust());
+  CHECK(GetGlobalProperty(&context, "obj2")
+            ->SetAccessor(context.local(), v8_str("239"), Get239Value, nullptr,
+                          v8_str("donut"))
+            .FromJust());
 
-//   ExpectString("obj1[239]", "239");
-//   ExpectString("obj2[239]", "239");
-//   ExpectString("obj1['239']", "239");
-//   ExpectString("obj2['239']", "239");
-// }
+  ExpectString("obj1[239]", "239");
+  ExpectString("obj2[239]", "239");
+  ExpectString("obj1['239']", "239");
+  ExpectString("obj2['239']", "239");
+}
 
 
 v8::Persistent<Value> xValue;
