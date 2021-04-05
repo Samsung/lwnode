@@ -157,7 +157,8 @@ EvalResult ObjectRefHelper::defineDataProperty(
 
         // check if accessors (getter or setter) are given
         if (getter != nullptr || setter != nullptr) {
-          ObjectRef::PresentAttribute attr = (ObjectRef::PresentAttribute)0;
+          ObjectRef::PresentAttribute attr =
+              ObjectRef::PresentAttribute::NotPresent;
 
           if (isEnumerable) {
             attr = (ObjectRef::PresentAttribute)(

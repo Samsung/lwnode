@@ -20,6 +20,7 @@ namespace EscargotShim {
 
 class ArrayBufferObjectData;
 class ValueWrap;
+class SetAccessorFunctionData;
 
 class ObjectData : public gc {
  public:
@@ -30,7 +31,16 @@ class ObjectData : public gc {
 
   virtual bool isArryBufferObjectData() const { return false; }
 
+  void setSetAccessorFunctionData(SetAccessorFunctionData* fnData) {
+    m_setAccessorFunctionData = fnData;
+  }
+
+  SetAccessorFunctionData* getSetAccessorFunctionData() {
+    return m_setAccessorFunctionData;
+  }
+
  private:
+  SetAccessorFunctionData* m_setAccessorFunctionData{nullptr};
 };
 
 class ArrayBufferObjectData : public ObjectData {
@@ -109,6 +119,28 @@ class ObjectTemplateData : public TemplateData {
   v8::internal::Address m_setter{0};
   v8::Local<v8::Value> m_accessorData;
   v8::NamedPropertyHandlerConfiguration m_namedPropertyHandler;
+};
+
+class SetAccessorFunctionData : public gc {
+ public:
+  SetAccessorFunctionData(v8::Isolate* isolate,
+                          v8::Local<v8::Name> name,
+                          ObjectRef* self,
+                          v8::AccessorNameGetterCallback getter,
+                          v8::AccessorNameSetterCallback setter,
+                          ValueRef* data)
+      : m_isolate(isolate),
+        m_name(name),
+        m_self(self),
+        m_getter(getter),
+        m_setter(setter),
+        m_data(data) {}
+  v8::Isolate* m_isolate{nullptr};
+  v8::Local<v8::Name> m_name;
+  ObjectRef* m_self{nullptr};
+  v8::AccessorNameGetterCallback m_getter;
+  v8::AccessorNameSetterCallback m_setter;
+  ValueRef* m_data{nullptr};
 };
 
 }  // namespace EscargotShim
