@@ -27,6 +27,8 @@ namespace EscargotShim {
 
 class ContextWrap;
 
+typedef gc GCManagedObject;
+
 class IsolateWrap : public gc {
  public:
   static IsolateWrap* New();
@@ -76,7 +78,7 @@ class IsolateWrap : public gc {
   ContextWrap* GetCurrentContext();
 
   // Eternal
-  void addEternal(Escargot::ValueRef* value);
+  void addEternal(GCManagedObject* value);
 
   void scheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
@@ -124,7 +126,7 @@ class IsolateWrap : public gc {
 
   void InitializeGlobalSlots();
 
-  GCVector<Escargot::ValueRef*> eternals_;
+  GCVector<GCManagedObject*> eternals_;
   GCVector<HandleScopeWrap*> handleScopes_;
   GCVector<ContextWrap*> contextScopes_;
   GCVector<Escargot::SymbolRef*> privateSymbols_;

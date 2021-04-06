@@ -202,7 +202,8 @@ ContextWrap* IsolateWrap::GetCurrentContext() {
   return contextScopes_.back();
 }
 
-void IsolateWrap::addEternal(ValueRef* value) {
+void IsolateWrap::addEternal(GCManagedObject* value) {
+  LWNODE_CALL_TRACE("%p", value);
   eternals_.push_back(value);
 }
 

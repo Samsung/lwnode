@@ -295,8 +295,14 @@ Local<String> String::NewFromUtf8Literal(Isolate* isolate,
 MaybeLocal<String> String::NewFromUtf8(Isolate* isolate,
                                        const char* data,
                                        NewStringType type,
-                                       int length) { // nbytes
+                                       int length) {  // nbytes
   MaybeLocal<String> result;
+
+  if (NewStringType::kInternalized == type) {
+    // LWNODE_UNIMPLEMENT;
+    // @note this isn't supported because it leads to consuming additional
+    // memory.
+  }
 
   if (length == 0) {
     result = String::Empty(isolate);
@@ -319,6 +325,12 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
                                           int length) {
   MaybeLocal<String> result;
 
+  if (NewStringType::kInternalized == type) {
+    // LWNODE_UNIMPLEMENT;
+    // @note this isn't supported because it leads to consuming additional
+    // memory.
+  }
+
   if (length == 0) {
     result = String::Empty(isolate);
   } else if (length > v8::String::kMaxLength) {
@@ -337,6 +349,12 @@ MaybeLocal<String> String::NewFromTwoByte(Isolate* isolate,
                                           NewStringType type,
                                           int length) {
   MaybeLocal<String> result;
+
+  if (NewStringType::kInternalized == type) {
+    // LWNODE_UNIMPLEMENT;
+    // @note this isn't supported because it leads to consuming additional
+    // memory.
+  }
 
   if (length == 0) {
     result = String::Empty(isolate);
@@ -1371,15 +1389,15 @@ Local<Symbol> v8::Symbol::For(Isolate* isolate, Local<String> name) {
   auto lwContext = lwIsolate->GetCurrentContext();
   auto esName = VAL(*name)->value()->asString();
 
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* esState,
-                                 VMInstanceRef* esVmInstance,
-                                 StringRef* desc) -> ValueRef* {
-                                return SymbolRef::fromGlobalSymbolRegistry(
-                                    esVmInstance, desc);
-                              },
-                              lwIsolate->get(),
-                              esName);
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         VMInstanceRef* esVmInstance,
+         StringRef* desc) -> ValueRef* {
+        return SymbolRef::fromGlobalSymbolRegistry(esVmInstance, desc);
+      },
+      lwIsolate->get(),
+      esName);
   LWNODE_CHECK(r.isSuccessful());
 
   return Utils::NewLocal<Symbol>(isolate, r.result);
@@ -1536,12 +1554,11 @@ v8::Local<Value> Isolate::ThrowException(v8::Local<v8::Value> value) {
 
   auto r = Evaluator::execute(
       lwContext->get(),
-      [](ExecutionStateRef* esState,
-         ValueRef* value
-         ) -> ValueRef* {
+      [](ExecutionStateRef* esState, ValueRef* value) -> ValueRef* {
         esState->throwException(value);
         return value;
-      }, esValue);
+      },
+      esValue);
 
   lwContext->setReturnValue(r);
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
