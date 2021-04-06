@@ -1155,7 +1155,8 @@ Local<String> v8::Object::GetConstructorName() {
 
 Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
                                           IntegrityLevel level) {
-  LWNODE_RETURN_MAYBE(bool);
+  LWNODE_UNIMPLEMENT;
+  return Just(true);
 }
 
 Maybe<bool> v8::Object::Delete(Local<Context> context, Local<Value> key) {
