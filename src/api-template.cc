@@ -175,14 +175,9 @@ void Template::SetAccessorProperty(v8::Local<v8::Name> name,
 
 Local<ObjectTemplate> FunctionTemplate::PrototypeTemplate() {
   FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-  auto tplData = FunctionTemplateData::toTemplateData(
-      esFunctionTemplate->instanceExtraData());
 
-  auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
-  esPrototypeTemplate->setInstanceExtraData(
-      new ObjectTemplateData(tplData->isolate()));
-
-  return Utils::NewLocal(tplData->isolate(), esPrototypeTemplate);
+  return Utils::NewLocal(IsolateWrap::GetCurrent()->toV8(),
+                         esFunctionTemplate->prototypeTemplate());
 }
 
 void FunctionTemplate::SetPrototypeProviderTemplate(
@@ -203,18 +198,18 @@ static ValueRef* FunctionTemplateNativeFunction(
   Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
       state->resolveCallee();
   LWNODE_DCHECK_NOT_NULL(callee->extraData());
-  auto tplData = FunctionTemplateData::toTemplateData(callee->extraData());
+  auto fnData = FunctionData::toFunctionData(callee->extraData());
 
   Local<Value> result;
-  if (tplData->m_callback) {
-    FunctionCallbackInfoWrap info(tplData->isolate(),
+  if (fnData->callback()) {
+    FunctionCallbackInfoWrap info(fnData->isolate(),
                                   thisValue,
                                   thisValue,
                                   newTarget,
-                                  VAL(*tplData->m_callbackData),
+                                  VAL(*fnData->callbackData()),
                                   argc,
                                   argv);
-    tplData->m_callback(info);
+    fnData->callback()(info);
     result = info.GetReturnValue().Get();
     // TODO: error check from 'state'
   }
@@ -255,7 +250,14 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                   FunctionTemplateNativeFunction);  // fn
 
   esFunctionTemplate->setInstanceExtraData(
-      new FunctionTemplateData(isolate, callback, data, signature, length));
+      new FunctionData(isolate, callback, data, signature, length));
+
+  // TODO: change ObjectTemplateData to ObjectData
+  auto esInstanceTemplate = esFunctionTemplate->instanceTemplate();
+  esInstanceTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
+
+  auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
+  esPrototypeTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
@@ -291,23 +293,17 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
   }
 
   Escargot::FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-
-  auto tplData = FunctionTemplateData::toTemplateData(
-      esFunctionTemplate->instanceExtraData());
-  tplData->m_callback = callback;
-  tplData->m_callbackData = data;
+  auto fnData =
+      FunctionData::toFunctionData(esFunctionTemplate->instanceExtraData());
+  fnData->setCallback(callback);
+  fnData->setCallbackData(data);
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
   FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-  auto tplData = FunctionTemplateData::toTemplateData(
-      esFunctionTemplate->instanceExtraData());
 
-  auto esInstanceTemplate = esFunctionTemplate->instanceTemplate();
-  esInstanceTemplate->setInstanceExtraData(
-      new ObjectTemplateData(tplData->isolate()));
-
-  return Utils::NewLocal(tplData->isolate(), esInstanceTemplate);
+  return Utils::NewLocal(IsolateWrap::GetCurrent()->toV8(),
+                         esFunctionTemplate->instanceTemplate());
 }
 
 void FunctionTemplate::SetLength(int length) {
@@ -320,17 +316,17 @@ void FunctionTemplate::SetClassName(Local<String> name) {
   FunctionTemplateRef* self = CVAL(this)->ftpl();
   auto esName = CVAL(*name)->value()->asString();
 
-  auto r =
-      Evaluator::execute(lwContext->get(),
-                         [](ExecutionStateRef* esState,
-                            FunctionTemplateRef* esFunctionTemplate,
-                            StringRef* esName) -> ValueRef* {
-                           esFunctionTemplate->setName(AtomicStringRef::create(
-                               esState->context(), esName));
-                           return ValueRef::createNull();
-                         },
-                         self,
-                         esName);
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         FunctionTemplateRef* esFunctionTemplate,
+         StringRef* esName) -> ValueRef* {
+        esFunctionTemplate->setName(
+            AtomicStringRef::create(esState->context(), esName));
+        return ValueRef::createNull();
+      },
+      self,
+      esName);
   LWNODE_CHECK(r.isSuccessful());
 }
 
