@@ -30,6 +30,7 @@ class ObjectData : public gc {
   }
 
   virtual bool isArryBufferObjectData() const { return false; }
+  virtual bool isFunctionData() const { return false; }
 
   void setSetAccessorFunctionData(SetAccessorFunctionData* fnData) {
     m_setAccessorFunctionData = fnData;
@@ -41,6 +42,42 @@ class ObjectData : public gc {
 
  private:
   SetAccessorFunctionData* m_setAccessorFunctionData{nullptr};
+};
+
+class FunctionData : public ObjectData {
+ public:
+  FunctionData(v8::Isolate* isolate,
+               v8::FunctionCallback callback,
+               v8::Local<v8::Value> callbackData,
+               v8::Local<v8::Signature> signature,
+               int length)
+      : m_isolate(isolate),
+        m_callback(callback),
+        m_callbackData(callbackData),
+        m_signature(signature),
+        m_length(length) {}
+
+  bool isFunctionData() const override { return true; }
+
+  static FunctionData* toFunctionData(void* ptr) {
+    LWNODE_CHECK_NOT_NULL(ptr);
+    auto data = reinterpret_cast<FunctionData*>(ptr);
+    LWNODE_CHECK(data->isFunctionData());
+    return data;
+  }
+
+  v8::Isolate* isolate() { return m_isolate; }
+  v8::FunctionCallback callback() { return m_callback; }
+  void setCallback(v8::FunctionCallback callback) { m_callback = callback; }
+  v8::Local<v8::Value> callbackData() { return m_callbackData; }
+  void setCallbackData(v8::Local<v8::Value> data) { m_callbackData = data; }
+
+ private:
+  v8::Isolate* m_isolate{nullptr};
+  v8::FunctionCallback m_callback{nullptr};
+  v8::Local<v8::Value> m_callbackData;
+  v8::Local<v8::Signature> m_signature;
+  int m_length{0};
 };
 
 class ArrayBufferObjectData : public ObjectData {
@@ -69,35 +106,6 @@ class TemplateData : public gc {
 
  private:
   v8::Isolate* m_isolate{nullptr};
-};
-
-class FunctionTemplateData : public TemplateData {
- public:
-  FunctionTemplateData(v8::Isolate* isolate,
-                       v8::FunctionCallback callback,
-                       v8::Local<v8::Value> data,
-                       v8::Local<v8::Signature> signature,
-                       int length)
-      : TemplateData(isolate),
-        m_callback(callback),
-        m_callbackData(data),
-        m_signature(signature),
-        m_length(length) {}
-
-  static FunctionTemplateData* toTemplateData(void* ptr) {
-    LWNODE_CHECK_NOT_NULL(ptr);
-    auto data = reinterpret_cast<FunctionTemplateData*>(ptr);
-    LWNODE_CHECK(data->isFunctionTemplateData());
-    return data;
-  }
-
-  bool isFunctionTemplateData() override { return true; }
-  bool isObjectTemplateData() override { return false; }
-
-  v8::FunctionCallback m_callback;
-  v8::Local<v8::Value> m_callbackData;
-  v8::Local<v8::Signature> m_signature;
-  int m_length{0};
 };
 
 class ObjectTemplateData : public TemplateData {
