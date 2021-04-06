@@ -56,7 +56,7 @@ bool Value::IsFalse() const {
 }
 
 bool Value::IsFunction() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isCallable();
 }
 
 bool Value::IsName() const {
@@ -347,11 +347,11 @@ void External::CheckCast(v8::Value* that) {
 }
 
 void v8::Object::CheckCast(Value* that) {
-  LWNODE_CHECK(VAL(that)->value()->asObject());
+  LWNODE_CHECK(that->IsObject());
 }
 
 void v8::Function::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsFunction());
 }
 
 void v8::Boolean::CheckCast(v8::Value* that) {
@@ -363,11 +363,11 @@ void v8::Name::CheckCast(v8::Value* that) {
 }
 
 void v8::String::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsString());
 }
 
 void v8::Symbol::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsSymbol());
 }
 
 void v8::Private::CheckCast(v8::Data* that) {
@@ -375,7 +375,7 @@ void v8::Private::CheckCast(v8::Data* that) {
 }
 
 void v8::Number::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsNumber());
 }
 
 void v8::Integer::CheckCast(v8::Value* that) {
