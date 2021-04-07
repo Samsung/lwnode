@@ -35,16 +35,17 @@
 #include "api/function.h"
 #include "api/handle.h"
 #include "api/isolate.h"
+#include "api/object.h"
 #include "api/utils/string.h"
 
 namespace i = v8::internal;
 
 namespace Escargot {
-  class ValueRef;
-  class ScriptRef;
-  class FunctionTemplateRef;
-  class ObjectTemplateRef;
-}
+class ValueRef;
+class ScriptRef;
+class FunctionTemplateRef;
+class ObjectTemplateRef;
+}  // namespace Escargot
 
 namespace v8 {
 class Utils {
@@ -92,6 +93,12 @@ class Utils {
         reinterpret_cast<v8::FunctionTemplate*>(
             EscargotShim::ValueWrap::createFunctionTemplate(ptr)));
   }
+
+  template <class T>
+  static Local<T> ToLocal(EscargotShim::ValueWrap* ptr) {
+    return v8::Local<T>(reinterpret_cast<T*>(ptr));
+  }
+
   // end @lwnode
 };
 

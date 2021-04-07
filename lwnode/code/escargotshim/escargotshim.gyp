@@ -50,6 +50,7 @@
         'src/api/context.cc',
         'src/api/global-handles.cc',
         'src/api/function.cc',
+        'src/api/object.cc',
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [

@@ -1068,8 +1068,9 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
                entry->asObject()->get(esState, done)->isFalse();
                entry = itr->next(esState)) {
             auto val = entry->asObject()->get(esState, value);
-            auto p = argv[0]->asObject()->getOwnPropertyDescriptor(esState, val);
-            if (p->asObject()->get(esState, enumerable)->asBoolean()) {
+            auto property =
+                argv[0]->asObject()->getOwnPropertyDescriptor(esState, val);
+            if (property->asObject()->get(esState, enumerable)->asBoolean()) {
               set->add(esState, val);
             }
           }
@@ -1200,67 +1201,6 @@ Maybe<bool> v8::Object::Has(Local<Context> context, uint32_t index) {
       Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::create(index)));
 }
 
-template <typename Getter, typename Setter, typename Data>
-static Maybe<bool> ObjectSetAccessor(Local<Context> context,
-                                     Object* self,
-                                     Local<Name> name,
-                                     Getter getter,
-                                     Setter setter,
-                                     Data data,
-                                     AccessControl settings,
-                                     PropertyAttribute attributes,
-                                     bool is_special_data_property,
-                                     bool replace_on_access,
-                                     SideEffectType getter_side_effect_type,
-                                     SideEffectType setter_side_effect_type){
-    LWNODE_RETURN_MAYBE(bool)}
-
-ValueRef* v8AccessorNameGetterCallback(ExecutionStateRef* state,
-                                       ValueRef* thisValue,
-                                       size_t argc,
-                                       ValueRef** argv,
-                                       bool isConstructorCall) {
-  auto callee = state->resolveCallee();
-  LWNODE_CHECK(callee);
-  auto self = callee.get()->asObject();
-  LWNODE_CHECK(self);
-  auto extraData = ObjectRefHelper::getExtraData(self);
-  LWNODE_CHECK(extraData);
-  auto fnData = extraData->getSetAccessorFunctionData();
-
-  PropertyCallbackInfoWrap<Value> info(fnData->m_isolate,
-                                       fnData->m_self,
-                                       fnData->m_self,
-                                       ValueWrap::createValue(fnData->m_data));
-  fnData->m_getter(fnData->m_name, info);
-  return VAL(*info.GetReturnValue().Get())->value();
-}
-
-ValueRef* v8AccessorNameSetterCallback(ExecutionStateRef* state,
-                                       ValueRef* thisValue,
-                                       size_t argc,
-                                       ValueRef** argv,
-                                       bool isConstructorCall) {
-  auto callee = state->resolveCallee();
-  LWNODE_CHECK(callee);
-  auto self = callee.get()->asObject();
-  LWNODE_CHECK(self);
-  auto extraData = ObjectRefHelper::getExtraData(self);
-  LWNODE_CHECK(extraData);
-  auto fnData = extraData->getSetAccessorFunctionData();
-
-  PropertyCallbackInfoWrap<void> info(fnData->m_isolate,
-                                      fnData->m_self,
-                                      fnData->m_self,
-                                      ValueWrap::createValue(fnData->m_data));
-
-  ValueRef* setValue = argc > 0 ? argv[0] : ValueRef::createUndefined();
-  fnData->m_setter(fnData->m_name,
-                   Utils::NewLocal<Value>(fnData->m_isolate, setValue),
-                   info);
-  return ValueRef::createUndefined();
-}
-
 Maybe<bool> Object::SetAccessor(Local<Context> context,
                                 Local<Name> name,
                                 AccessorNameGetterCallback getter,
@@ -1271,84 +1211,16 @@ Maybe<bool> Object::SetAccessor(Local<Context> context,
                                 SideEffectType getter_side_effect_type,
                                 SideEffectType setter_side_effect_type) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esSelf = CVAL(this)->value()->asObject();
-  auto esName = CVAL(*name)->value();
-  ValueRef* esData;
 
-  Local<Value> tmp;
-  if (data.ToLocal(&tmp)) {
-    esData = CVAL(*tmp)->value();
-  } else {
-    esData = ValueRef::createUndefined();
+  Local<Value> dataLocalValue;
+  if (!data.ToLocal(&dataLocalValue)) {
+    dataLocalValue =
+        Utils::NewLocal<Value>(lwIsolate->toV8(), lwIsolate->undefined());
   }
 
-  ValueRef* esGetter = nullptr;
-  ValueRef* esSetter = nullptr;
-  auto fnData = new SetAccessorFunctionData(
-      lwIsolate->toV8(), name, esSelf, getter, setter, esData);
-
-  if (getter) {
-    auto r = Evaluator::execute(
-        esContext,
-        [](ExecutionStateRef* esState,
-           ObjectRef* esSelf,
-           SetAccessorFunctionData* fnData) -> ValueRef* {
-          NativeFunctionInfo info(AtomicStringRef::emptyAtomicString(),
-                                  v8AccessorNameGetterCallback,
-                                  0,
-                                  true,
-                                  false);
-          return FunctionObjectRef::create(esState, info);
-        },
-        esSelf,
-        fnData);
-    LWNODE_CHECK(r.isSuccessful());
-    auto f = r.result->asFunctionObject();
-    auto data = new ObjectData();
-    data->setSetAccessorFunctionData(fnData);
-    ObjectRefHelper::setExtraData(f, data, [](void* self) {});
-
-    esGetter = r.result;
-  }
-
-  if (setter) {
-    auto r = Evaluator::execute(
-        esContext,
-        [](ExecutionStateRef* esState,
-           ObjectRef* esSelf,
-           SetAccessorFunctionData* fnData) -> ValueRef* {
-          NativeFunctionInfo info(AtomicStringRef::emptyAtomicString(),
-                                  v8AccessorNameSetterCallback,
-                                  0,
-                                  true,
-                                  false);
-          return FunctionObjectRef::create(esState, info);
-        },
-        esSelf,
-        fnData);
-    LWNODE_CHECK(r.isSuccessful());
-    auto f = r.result->asFunctionObject();
-    auto data = new ObjectData();
-    data->setSetAccessorFunctionData(fnData);
-    ObjectRefHelper::setExtraData(f, data, [](void* self){});
-
-    esSetter = r.result;
-  }
-
-  auto r = ObjectRefHelper::defineDataProperty(esContext,
-                                               esSelf,
-                                               esName,
-                                               false,
-                                               !(attribute & DontEnum),
-                                               !(attribute & DontDelete),
-                                               nullptr,
-                                               nullptr,
-                                               esGetter,
-                                               esSetter);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
-
-  return Just(r.result->asBoolean());
+  return ObjectUtils::SetAccessor(
+      esSelf, lwIsolate, name, getter, setter, dataLocalValue, attribute);
 }
 
 void Object::SetAccessorProperty(Local<Name> name,
