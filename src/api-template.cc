@@ -20,92 +20,6 @@
 using namespace Escargot;
 using namespace EscargotShim;
 
-namespace {
-
-template <typename Getter, typename Setter>
-static void TemplateSetAccessor(v8::ObjectTemplate* object_template,
-                                v8::Local<v8::Name> name,
-                                Getter getter,
-                                Setter setter,
-                                v8::Local<v8::Value> data,
-                                v8::AccessControl settings,
-                                v8::PropertyAttribute attribute,
-                                v8::Local<v8::AccessorSignature> signature,
-                                v8::SideEffectType getter_side_effect_type,
-                                v8::SideEffectType setter_side_effect_type) {
-  LWNODE_CHECK_NOT_NULL(getter);
-
-  ObjectTemplateRef* esObjectTemplate = CVAL(object_template)->otpl();
-  auto esName = CVAL(*name)->value();
-  TemplatePropertyNameRef esPropertyName;
-  if (esName->isString()) {
-    esPropertyName = TemplatePropertyNameRef(esName->asString());
-  } else if (esName->isSymbol()) {
-    esPropertyName = TemplatePropertyNameRef(esName->asSymbol());
-  }
-
-  bool isWritable = !(attribute & v8::ReadOnly);
-  bool isEnumerable = !(attribute & v8::DontEnum);
-  bool isConfigurable = !(attribute & v8::DontDelete);
-
-  auto tplData =
-      ObjectTemplateData::toTemplateData(esObjectTemplate->instanceExtraData());
-  tplData->m_name = name;
-  tplData->m_getter = reinterpret_cast<v8::internal::Address>(getter);
-  tplData->m_setter = reinterpret_cast<v8::internal::Address>(setter);
-  tplData->m_accessorData = data;
-
-  auto getterCallback =
-      [](ExecutionStateRef* esState,
-         ObjectRef* esSelf,
-         ObjectRef::NativeDataAccessorPropertyData* esData) -> ValueRef* {
-    ObjectTemplateData* tplData =
-        ObjectTemplateData::toTemplateData(esSelf->extraData());
-
-    PropertyCallbackInfoWrap<v8::Value> info(
-        tplData->isolate(), esSelf, esSelf, VAL(*tplData->m_accessorData));
-
-    auto v8Getter = reinterpret_cast<const v8::AccessorNameGetterCallback>(
-        tplData->m_getter);
-    LWNODE_CHECK_NOT_NULL(v8Getter);
-    v8Getter(tplData->m_name, info);
-
-    return VAL(*info.GetReturnValue().Get())->value();
-  };
-
-  ObjectRef::NativeDataAccessorPropertySetter setterCallback = nullptr;
-  if (setter) {
-    setterCallback = [](ExecutionStateRef* esState,
-                        ObjectRef* esSelf,
-                        ObjectRef::NativeDataAccessorPropertyData* esData,
-                        ValueRef* esSetterInputData) -> bool {
-      ObjectTemplateData* tplData =
-          ObjectTemplateData::toTemplateData(esSelf->extraData());
-      v8::Local<v8::Value> v8SetValue =
-          v8::Utils::NewLocal<v8::Value>(tplData->isolate(), esSetterInputData);
-
-      PropertyCallbackInfoWrap<void> info(
-          tplData->isolate(), esSelf, esSelf, VAL(*tplData->m_accessorData));
-
-      auto v8Setter = reinterpret_cast<const v8::AccessorNameSetterCallback>(
-          tplData->m_setter);
-      LWNODE_CHECK_NOT_NULL(v8Setter);
-      v8Setter(tplData->m_name, v8SetValue, info);
-
-      return true;
-    };
-  }
-
-  esObjectTemplate->setNativeDataAccessorProperty(esPropertyName,
-                                                  getterCallback,
-                                                  setterCallback,
-                                                  isWritable,
-                                                  isEnumerable,
-                                                  isConfigurable);
-}
-
-}  // namespace
-
 namespace v8 {
 // --- T e m p l a t e ---
 
@@ -419,16 +333,13 @@ void ObjectTemplate::SetAccessor(v8::Local<String> name,
                                  v8::Local<AccessorSignature> signature,
                                  SideEffectType getter_side_effect_type,
                                  SideEffectType setter_side_effect_type) {
-  TemplateSetAccessor(this,
-                      name,
-                      getter,
-                      setter,
-                      data,
-                      settings,
-                      attribute,
-                      signature,
-                      getter_side_effect_type,
-                      setter_side_effect_type);
+  ObjectTemplateUtils::SetAccessor(CVAL(this)->otpl(),
+                                   IsolateWrap::GetCurrent(),
+                                   name,
+                                   getter,
+                                   setter,
+                                   data,
+                                   attribute);
 }
 
 void ObjectTemplate::SetAccessor(v8::Local<Name> name,
@@ -440,16 +351,13 @@ void ObjectTemplate::SetAccessor(v8::Local<Name> name,
                                  v8::Local<AccessorSignature> signature,
                                  SideEffectType getter_side_effect_type,
                                  SideEffectType setter_side_effect_type) {
-  TemplateSetAccessor(this,
-                      name,
-                      getter,
-                      setter,
-                      data,
-                      settings,
-                      attribute,
-                      signature,
-                      getter_side_effect_type,
-                      setter_side_effect_type);
+  ObjectTemplateUtils::SetAccessor(CVAL(this)->otpl(),
+                                   IsolateWrap::GetCurrent(),
+                                   name,
+                                   getter,
+                                   setter,
+                                   data,
+                                   attribute);
 }
 
 void ObjectTemplate::SetHandler(
