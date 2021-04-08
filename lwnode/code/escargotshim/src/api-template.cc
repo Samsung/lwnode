@@ -166,13 +166,6 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
   esFunctionTemplate->setInstanceExtraData(
       new FunctionData(isolate, callback, data, signature, length));
 
-  // TODO: change ObjectTemplateData to ObjectData
-  auto esInstanceTemplate = esFunctionTemplate->instanceTemplate();
-  esInstanceTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
-
-  auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
-  esPrototypeTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
-
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
 
@@ -279,10 +272,7 @@ Local<ObjectTemplate> ObjectTemplate::New(
     Isolate* isolate, v8::Local<FunctionTemplate> constructor) {
   API_ENTER_NO_EXCEPTION(isolate);
 
-  auto esObjectTemplate = ObjectTemplateRef::create();
-  esObjectTemplate->setInstanceExtraData(new ObjectTemplateData(isolate));
-
-  return Utils::NewLocal(isolate, esObjectTemplate);
+  return Utils::NewLocal(isolate, ObjectTemplateRef::create());
 }
 
 void Template::SetNativeDataProperty(v8::Local<String> name,
@@ -360,13 +350,20 @@ void ObjectTemplate::SetAccessor(v8::Local<Name> name,
                                    attribute);
 }
 
+struct HandlerConfiguration : public gc {
+  HandlerConfiguration(
+      v8::Isolate* isolate,
+      const v8::NamedPropertyHandlerConfiguration& namedPropertyHandler)
+      : m_isolate(isolate), m_namedPropertyHandler(namedPropertyHandler) {}
+  v8::Isolate* m_isolate;
+  v8::NamedPropertyHandlerConfiguration m_namedPropertyHandler;
+};
+
 void ObjectTemplate::SetHandler(
     const NamedPropertyHandlerConfiguration& config) {
   ObjectTemplateRef* esObjectTemplate = CVAL(this)->otpl();
-  auto tplData =
-      ObjectTemplateData::toTemplateData(esObjectTemplate->instanceExtraData());
-
-  tplData->m_namedPropertyHandler = config;
+  HandlerConfiguration* handlerConfiguration =
+      new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
 
   ObjectTemplateNamedPropertyHandlerData esHandlerData;
   if (config.getter) {
@@ -375,22 +372,21 @@ void ObjectTemplate::SetHandler(
                               void* data,
                               const TemplatePropertyNameRef& esPropertyName)
         -> OptionalRef<ValueRef> {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-      if (!tplData->m_namedPropertyHandler.getter) {
+      if (!handlerConfiguration->m_namedPropertyHandler.getter) {
         return Escargot::OptionalRef<Escargot::ValueRef>();
       }
 
-      Local<Name> v8PropertyName =
-          Utils::NewLocal<Name>(tplData->isolate(), esPropertyName.value());
+      Local<Name> v8PropertyName = Utils::ToLocal<Name>(esPropertyName.value());
 
       PropertyCallbackInfoWrap<v8::Value> info(
-          tplData->isolate(),
+          handlerConfiguration->m_isolate,
           esSelf,
           esSelf,
-          VAL(*tplData->m_namedPropertyHandler.data));
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
-      tplData->m_namedPropertyHandler.getter(v8PropertyName, info);
+      handlerConfiguration->m_namedPropertyHandler.getter(v8PropertyName, info);
 
       if (info.hasReturnValue()) {
         Local<Value> ret = info.GetReturnValue().Get();
@@ -407,25 +403,23 @@ void ObjectTemplate::SetHandler(
                               void* data,
                               const TemplatePropertyNameRef& esPropertyName,
                               ValueRef* esValue) -> OptionalRef<ValueRef> {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-      if (!tplData->m_namedPropertyHandler.setter) {
+      if (!handlerConfiguration->m_namedPropertyHandler.setter) {
         return Escargot::OptionalRef<Escargot::ValueRef>();
       }
 
       Local<Name> v8PropertyName =
-          Utils::NewLocal<Name>(tplData->isolate(), esPropertyName.value());
+          v8::Utils::ToLocal<Name>(esPropertyName.value());
 
       PropertyCallbackInfoWrap<v8::Value> info(
-          tplData->isolate(),
+          handlerConfiguration->m_isolate,
           esSelf,
           esSelf,
-          VAL(*tplData->m_namedPropertyHandler.data));
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
-      tplData->m_namedPropertyHandler.setter(
-          v8PropertyName,
-          Utils::NewLocal<Value>(tplData->isolate(), esValue),
-          info);
+      handlerConfiguration->m_namedPropertyHandler.setter(
+          v8PropertyName, v8::Utils::ToLocal<Value>(esValue), info);
 
       if (info.hasReturnValue()) {
         Local<Value> ret = info.GetReturnValue().Get();
@@ -442,22 +436,22 @@ void ObjectTemplate::SetHandler(
                              void* data,
                              const TemplatePropertyNameRef& esPropertyName)
         -> TemplatePropertyAttribute {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-      if (!tplData->m_namedPropertyHandler.query) {
+      if (!handlerConfiguration->m_namedPropertyHandler.query) {
         return TemplatePropertyAttribute::TemplatePropertyAttributeNotExist;
       }
 
       Local<Name> v8PropertyName =
-          Utils::NewLocal<Name>(tplData->isolate(), esPropertyName.value());
+          v8::Utils::ToLocal<Name>(esPropertyName.value());
 
       PropertyCallbackInfoWrap<Integer> info(
-          tplData->isolate(),
+          handlerConfiguration->m_isolate,
           esSelf,
           esSelf,
-          VAL(*tplData->m_namedPropertyHandler.data));
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
-      tplData->m_namedPropertyHandler.query(v8PropertyName, info);
+      handlerConfiguration->m_namedPropertyHandler.query(v8PropertyName, info);
       Local<Value> ret = info.GetReturnValue().Get();
       if (info.hasReturnValue()) {
         return TemplatePropertyAttribute::TemplatePropertyAttributeExist;
@@ -473,22 +467,23 @@ void ObjectTemplate::SetHandler(
                                void* data,
                                const TemplatePropertyNameRef& esPropertyName)
         -> OptionalRef<ValueRef> {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-      if (!tplData->m_namedPropertyHandler.deleter) {
+      if (!handlerConfiguration->m_namedPropertyHandler.deleter) {
         return Escargot::OptionalRef<Escargot::ValueRef>();
       }
 
       Local<Name> v8PropertyName =
-          Utils::NewLocal<Name>(tplData->isolate(), esPropertyName.value());
+          v8::Utils::ToLocal<Name>(esPropertyName.value());
 
       PropertyCallbackInfoWrap<v8::Boolean> info(
-          tplData->isolate(),
+          handlerConfiguration->m_isolate,
           esSelf,
           esSelf,
-          VAL(*tplData->m_namedPropertyHandler.data));
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
-      tplData->m_namedPropertyHandler.deleter(v8PropertyName, info);
+      handlerConfiguration->m_namedPropertyHandler.deleter(v8PropertyName,
+                                                           info);
 
       if (info.hasReturnValue()) {
         Local<Value> ret = info.GetReturnValue().Get();
@@ -503,19 +498,19 @@ void ObjectTemplate::SetHandler(
     esHandlerData.enumerator =
         [](ExecutionStateRef* state, ObjectRef* esSelf, void* data)
         -> TemplateNamedPropertyHandlerEnumerationCallbackResultVector {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-      if (!tplData->m_namedPropertyHandler.enumerator) {
+      if (!handlerConfiguration->m_namedPropertyHandler.enumerator) {
         return TemplateNamedPropertyHandlerEnumerationCallbackResultVector(0);
       }
 
       PropertyCallbackInfoWrap<v8::Array> info(
-          tplData->isolate(),
+          handlerConfiguration->m_isolate,
           esSelf,
           esSelf,
-          VAL(*tplData->m_namedPropertyHandler.data));
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
-      tplData->m_namedPropertyHandler.enumerator(info);
+      handlerConfiguration->m_namedPropertyHandler.enumerator(info);
 
       if (info.hasReturnValue()) {
         Local<Value> ret = info.GetReturnValue().Get();
@@ -543,9 +538,9 @@ void ObjectTemplate::SetHandler(
            void* data,
            const TemplatePropertyNameRef& esPropertyName,
            const ObjectPropertyDescriptorRef& esDesc) -> OptionalRef<ValueRef> {
-      auto tplData = ObjectTemplateData::toTemplateData(data);
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-      if (!tplData->m_namedPropertyHandler.definer) {
+      if (!handlerConfiguration->m_namedPropertyHandler.definer) {
         return Escargot::OptionalRef<Escargot::ValueRef>();
       }
 
@@ -560,9 +555,10 @@ void ObjectTemplate::SetHandler(
     // esHandlerData.descriptor = [](ExecutionStateRef* state,
     //                               ObjectRef* esSelf,
     //                               void* data) -> OptionalRef<ObjectRef> {
-    //   auto tplData = ObjectTemplateData::toTemplateData(data);
+    //   auto handlerConfiguration =
+    //   reinterpret_cast<handlerConfiguration*>(data);
 
-    //   if (!tplData->m_namedPropertyHandler.descriptor) {
+    //   if (!handlerConfiguration->m_namedPropertyHandler.descriptor) {
     //     return Escargot::OptionalRef<Escargot::ObjectRef>();
     //   }
 
@@ -571,7 +567,7 @@ void ObjectTemplate::SetHandler(
     // };
   }
 
-  esHandlerData.data = tplData;
+  esHandlerData.data = handlerConfiguration;
   esObjectTemplate->setNamedPropertyHandler(esHandlerData);
 }
 
