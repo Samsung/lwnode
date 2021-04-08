@@ -110,12 +110,14 @@ Maybe<bool> ObjectUtils::SetAccessor(ObjectRef* esObject,
                                        !(attribute & v8::DontEnum),
                                        !(attribute & v8::DontDelete));
   auto esName = CVAL(*name)->value();
-  ValueRef* esPropertyName;
+  ValueRef* esPropertyName = nullptr;
   if (esName->isString()) {
     esPropertyName = ValueRef::create(esName->asString());
   } else if (esName->isSymbol()) {
     esPropertyName = ValueRef::create(esName->asSymbol());
   }
+
+  LWNODE_CHECK_NOT_NULL(esName);
 
   auto result = Evaluator::execute(
       lwIsolate->GetCurrentContext()->get(),
