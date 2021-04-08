@@ -99,6 +99,12 @@ class Utils {
     return v8::Local<T>(reinterpret_cast<T*>(ptr));
   }
 
+  template <class T>
+  static Local<T> ToLocal(Escargot::ValueRef* ptr) {
+    return v8::Local<T>(
+        reinterpret_cast<T*>(EscargotShim::ValueWrap::createValue(ptr)));
+  }
+
   // end @lwnode
 };
 

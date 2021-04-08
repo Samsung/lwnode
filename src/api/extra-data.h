@@ -87,33 +87,4 @@ class ArrayBufferObjectData : public ObjectData {
   PersistentRefHolder<BackingStoreWrapHolder> m_backingStoreWrapHolder;
 };
 
-class TemplateData : public gc {
- public:
-  TemplateData(v8::Isolate* isolate) : m_isolate(isolate) {}
-  v8::Isolate* isolate() { return m_isolate; }
-
-  virtual bool isFunctionTemplateData() = 0;
-  virtual bool isObjectTemplateData() = 0;
-
- private:
-  v8::Isolate* m_isolate{nullptr};
-};
-
-class ObjectTemplateData : public TemplateData {
- public:
-  ObjectTemplateData(v8::Isolate* isolate) : TemplateData(isolate) {}
-
-  static ObjectTemplateData* toTemplateData(void* ptr) {
-    LWNODE_CHECK_NOT_NULL(ptr);
-    auto data = reinterpret_cast<ObjectTemplateData*>(ptr);
-    LWNODE_CHECK(data->isObjectTemplateData());
-    return data;
-  }
-
-  bool isFunctionTemplateData() override { return false; }
-  bool isObjectTemplateData() override { return true; }
-
-  v8::NamedPropertyHandlerConfiguration m_namedPropertyHandler;
-};
-
 }  // namespace EscargotShim
