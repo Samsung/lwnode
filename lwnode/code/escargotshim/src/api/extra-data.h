@@ -16,11 +16,17 @@
 
 #pragma once
 
+#include <EscargotPublic.h>
+#include "utils/gc.h"
+#include "v8.h"
+
 namespace EscargotShim {
 
 class ArrayBufferObjectData;
 class ValueWrap;
-class SetAccessorFunctionData;
+class BackingStoreWrapHolder;
+
+using namespace Escargot;
 
 class ObjectData : public gc {
  public:
@@ -32,11 +38,19 @@ class ObjectData : public gc {
   virtual bool isArryBufferObjectData() const { return false; }
   virtual bool isFunctionData() const { return false; }
 
+  // InternalFields
+  int internalFieldCount();
+  void setInternalFieldCount(int size);
+  void setInternalField(int idx, ValueWrap* lwValue);
+  ValueWrap* internalField(int idx);
+
  private:
+  GCContainer<ValueWrap*>* m_internalFields{nullptr};
 };
 
 class FunctionData : public ObjectData {
  public:
+  FunctionData() = default;
   FunctionData(v8::Isolate* isolate,
                v8::FunctionCallback callback,
                v8::Local<v8::Value> callbackData,

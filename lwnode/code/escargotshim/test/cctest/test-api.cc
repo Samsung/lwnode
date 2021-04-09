@@ -2728,23 +2728,23 @@ THREADED_TEST(FunctionPrototype) {
   CHECK_EQ(v8_run_int32value(script), 321);
 }
 
-// THREADED_TEST(InternalFields) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(InternalFields) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
-//   Local<v8::ObjectTemplate> instance_templ = templ->InstanceTemplate();
-//   instance_templ->SetInternalFieldCount(1);
-//   Local<v8::Object> obj = templ->GetFunction(env.local())
-//                               .ToLocalChecked()
-//                               ->NewInstance(env.local())
-//                               .ToLocalChecked();
-//   CHECK_EQ(1, obj->InternalFieldCount());
-//   CHECK(obj->GetInternalField(0)->IsUndefined());
-//   obj->SetInternalField(0, v8_num(17));
-//   CHECK_EQ(17, obj->GetInternalField(0)->Int32Value(env.local()).FromJust());
-// }
+  Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  Local<v8::ObjectTemplate> instance_templ = templ->InstanceTemplate();
+  instance_templ->SetInternalFieldCount(1);
+  Local<v8::Object> obj = templ->GetFunction(env.local())
+                              .ToLocalChecked()
+                              ->NewInstance(env.local())
+                              .ToLocalChecked();
+  CHECK_EQ(1, obj->InternalFieldCount());
+  CHECK(obj->GetInternalField(0)->IsUndefined());
+  obj->SetInternalField(0, v8_num(17));
+  CHECK_EQ(17, obj->GetInternalField(0)->Int32Value(env.local()).FromJust());
+}
 
 // TEST(InternalFieldsSubclassing) {
 //   LocalContext env;

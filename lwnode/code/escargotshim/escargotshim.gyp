@@ -44,6 +44,7 @@
         'src/api/backing-store.cc',
         'src/api/es-helper.cc',
         'src/api/engine.cc',
+        'src/api/extra-data.cc',
         'src/api/handle.cc',
         'src/api/handlescope.cc',
         'src/api/isolate.cc',

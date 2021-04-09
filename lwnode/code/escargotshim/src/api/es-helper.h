@@ -26,10 +26,13 @@ namespace EscargotShim {
 class IsolateWrap;
 class ContextWrap;
 class ObjectData;
+class FunctionData;
+class ValueWrap;
 
 typedef Evaluator::EvaluatorResult EvalResult;
 typedef FunctionObjectRef::NativeFunctionPointer NativeFunctionPointer;
 typedef FunctionObjectRef::NativeFunctionInfo NativeFunctionInfo;
+typedef ValueWrap InternalField;
 
 class ObjectRefHelper {
  public:
@@ -80,14 +83,38 @@ class ObjectRefHelper {
       ValueRef* getter,
       ValueRef* setter);
 
-  static void setExtraData(ObjectRef* object,
-                           ObjectData* data,
-                           Memory::GCAllocatedMemoryFinalizer callback);
-
+  static void setExtraData(
+      ObjectRef* object,
+      ObjectData* data,
+      Memory::GCAllocatedMemoryFinalizer callback = nullptr);
   static ObjectData* getExtraData(ObjectRef* object);
+  static ObjectData* createExtraDataIfNotExist(ObjectRef* object);
+
+  static void setInternalFieldCount(ObjectRef* object, int size);
+  static int getInternalFieldCount(ObjectRef* object);
+  static void setInternalField(ObjectRef* object,
+                               int idx,
+                               InternalField* lwValue);
+  static InternalField* getInternalField(ObjectRef* object, int idx);
 
  private:
   static SymbolRef* s_symbolKeyForHiddenValues;
+};
+
+class ObjectTemplateRefHelper {
+ public:
+  static void setInstanceExtraData(ObjectTemplateRef* otpl, ObjectData* data);
+  static ObjectData* getInstanceExtraData(ObjectTemplateRef* otpl);
+  static ObjectData* createInstanceExtraDataIfNotExist(ObjectTemplateRef* otpl);
+  static void setInternalFieldCount(ObjectTemplateRef* otpl, int size);
+  static int getInternalFieldCount(ObjectTemplateRef* otpl);
+};
+
+class FunctionTemplateRefHelper {
+ public:
+  static void setInstanceExtraData(FunctionTemplateRef* ftpl,
+                                   FunctionData* data);
+  static FunctionData* getInstanceExtraData(FunctionTemplateRef* ftpl);
 };
 
 class ArrayBufferHelper {
