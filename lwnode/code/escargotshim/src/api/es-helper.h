@@ -155,4 +155,10 @@ class ArrayBufferHelper {
   }
 };
 
+class EvalResultHelper {
+ public:
+  static std::string getErrorString(
+      ContextRef* context, const Evaluator::EvaluatorResult& eval_result);
+};
+
 }  // namespace EscargotShim

@@ -28,18 +28,12 @@
 
 #if !defined(NDEBUG)
 #define __DLOG_EVAL_ERROR(eval_result)                                         \
-  LWNODE_DLOG_ERROR(                                                           \
-      "%s",                                                                    \
-      eval_result.resultOrErrorToString(lwIsolate->GetCurrentContext()->get()) \
-          ->toStdUTF8String()                                                  \
-          .c_str());                                                           \
-  for (size_t i = 0; i < eval_result.stackTraceData.size(); i++) {             \
-    LWNODE_DLOG_ERROR(                                                         \
-        "%s (%d:%d)",                                                          \
-        eval_result.stackTraceData[i].src->toStdUTF8String().data(),           \
-        (int)eval_result.stackTraceData[i].loc.line,                           \
-        (int)eval_result.stackTraceData[i].loc.column);                        \
-  }
+  LWNODE_DLOG_ERROR("Evaluate");                                               \
+  LWNODE_DLOG_RAW("Execute:\n  %s\n%s",                                        \
+                  __PRETTY_FUNCTION__,                                         \
+                  EvalResultHelper::getErrorString(                            \
+                      lwIsolate->GetCurrentContext()->get(), eval_result)      \
+                      .c_str());
 #else
 #define __DLOG_EVAL_ERROR(eval_result)
 #endif
