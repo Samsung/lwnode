@@ -79,6 +79,16 @@ class GCContainer : public gc {
     return buffer_[idx];
   }
 
+  T get(const size_t idx) const {
+    LWNODE_CHECK(size_ > idx);
+    return buffer_[idx];
+  }
+
+  void set(const size_t idx, T val) {
+    LWNODE_CHECK(size_ > idx);
+    buffer_[idx] = val;
+  }
+
   void remove(const size_t idx) {
     LWNODE_CHECK(size_ > idx);
     buffer_[idx] = nullptr;

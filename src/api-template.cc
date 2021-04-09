@@ -163,7 +163,8 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                   isConstructor,  // isConstruction
                                   FunctionTemplateNativeFunction);  // fn
 
-  esFunctionTemplate->setInstanceExtraData(
+  FunctionTemplateRefHelper::setInstanceExtraData(
+      esFunctionTemplate,
       new FunctionData(isolate, callback, data, signature, length));
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
@@ -201,7 +202,7 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
 
   Escargot::FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
   auto fnData =
-      FunctionData::toFunctionData(esFunctionTemplate->instanceExtraData());
+      FunctionTemplateRefHelper::getInstanceExtraData(esFunctionTemplate);
   fnData->setCallback(callback);
   fnData->setCallbackData(data);
 }
@@ -599,10 +600,14 @@ void ObjectTemplate::SetCallAsFunctionHandler(FunctionCallback callback,
 }
 
 int ObjectTemplate::InternalFieldCount() {
-  LWNODE_RETURN_0;
+  auto esObjectTemplate = CVAL(this)->otpl();
+  return ObjectTemplateRefHelper::getInternalFieldCount(esObjectTemplate);
 }
 
-void ObjectTemplate::SetInternalFieldCount(int value) {}
+void ObjectTemplate::SetInternalFieldCount(int value) {
+  auto esObjectTemplate = CVAL(this)->otpl();
+  ObjectTemplateRefHelper::setInternalFieldCount(esObjectTemplate, value);
+}
 
 bool ObjectTemplate::IsImmutableProto() {
   LWNODE_RETURN_FALSE;

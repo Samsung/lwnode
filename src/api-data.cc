@@ -1750,14 +1750,20 @@ uint32_t Uint32::Value() const {
 }
 
 int v8::Object::InternalFieldCount() {
-  LWNODE_RETURN_0;
+  return ObjectRefHelper::getInternalFieldCount(
+      CVAL(this)->value()->asObject());
 }
 
 Local<Value> v8::Object::SlowGetInternalField(int index) {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwValue =
+      ObjectRefHelper::getInternalField(CVAL(this)->value()->asObject(), index);
+  return Utils::ToLocal<Value>(lwValue);
 }
 
-void v8::Object::SetInternalField(int index, v8::Local<Value> value) {}
+void v8::Object::SetInternalField(int index, v8::Local<Value> value) {
+  ObjectRefHelper::setInternalField(
+      CVAL(this)->value()->asObject(), index, VAL(*value));
+}
 
 void* v8::Object::SlowGetAlignedPointerFromInternalField(int index) {
   LWNODE_RETURN_NULLPTR;

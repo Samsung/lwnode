@@ -16,8 +16,8 @@
 
 #include "backing-store.h"
 #include "es-helper.h"
-#include "isolate.h"
 #include "extra-data.h"
+#include "isolate.h"
 
 using namespace Escargot;
 
@@ -77,7 +77,8 @@ bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
   ObjectRefHelper::setExtraData(arrayBuffer, data, [](void* self) {
     auto value = reinterpret_cast<ValueRef*>(self);
     auto holder = ObjectRefHelper::getExtraData(value->asArrayBufferObject())
-                      ->asArrayBufferObjectData()->backingStoreWrapHolder();
+                      ->asArrayBufferObjectData()
+                      ->backingStoreWrapHolder();
 
     LWNODE_DCHECK_NOT_NULL(holder);
 

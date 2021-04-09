@@ -16,6 +16,7 @@
 
 #include "es-helper.h"
 #include "context.h"
+#include "extra-data.h"
 #include "isolate.h"
 #include "utils/misc.h"
 
@@ -385,6 +386,89 @@ std::string EvalResultHelper::getErrorString(
   }
 
   return oss.str();
+}
+
+ObjectData* ObjectRefHelper::createExtraDataIfNotExist(ObjectRef* object) {
+  void* data = object->extraData();
+  if (data == nullptr) {
+    data = new ObjectData();
+    ObjectRefHelper::setExtraData(object, reinterpret_cast<ObjectData*>(data));
+  }
+  return reinterpret_cast<ObjectData*>(data);
+}
+
+void ObjectRefHelper::setInternalFieldCount(ObjectRef* object, int size) {
+  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  data->setInternalFieldCount(size);
+}
+
+int ObjectRefHelper::getInternalFieldCount(ObjectRef* object) {
+  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  return data->internalFieldCount();
+}
+
+void ObjectRefHelper::setInternalField(ObjectRef* object,
+                                       int idx,
+                                       InternalField* lwValue) {
+  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  data->setInternalField(idx, lwValue);
+}
+
+InternalField* ObjectRefHelper::getInternalField(ObjectRef* object, int idx) {
+  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  return data->internalField(idx);
+}
+
+void ObjectTemplateRefHelper::setInstanceExtraData(ObjectTemplateRef* otpl,
+                                                   ObjectData* data) {
+  LWNODE_CHECK_NOT_NULL(data);
+  LWNODE_CHECK_NULL(otpl->instanceExtraData());
+
+  otpl->setInstanceExtraData(data);
+}
+
+ObjectData* ObjectTemplateRefHelper::getInstanceExtraData(
+    ObjectTemplateRef* otpl) {
+  auto data = otpl->instanceExtraData();
+  LWNODE_CHECK_NOT_NULL(data);
+  return reinterpret_cast<ObjectData*>(data);
+}
+
+ObjectData* ObjectTemplateRefHelper::createInstanceExtraDataIfNotExist(
+    ObjectTemplateRef* otpl) {
+  void* data = otpl->instanceExtraData();
+  if (data == nullptr) {
+    data = new ObjectData();
+    ObjectTemplateRefHelper::setInstanceExtraData(
+        otpl, reinterpret_cast<ObjectData*>(data));
+  }
+  return reinterpret_cast<ObjectData*>(data);
+}
+
+void ObjectTemplateRefHelper::setInternalFieldCount(ObjectTemplateRef* otpl,
+                                                    int size) {
+  auto data = ObjectTemplateRefHelper::createInstanceExtraDataIfNotExist(otpl);
+  data->setInternalFieldCount(size);
+}
+
+int ObjectTemplateRefHelper::getInternalFieldCount(ObjectTemplateRef* otpl) {
+  auto data = ObjectTemplateRefHelper::createInstanceExtraDataIfNotExist(otpl);
+  return data->internalFieldCount();
+}
+
+void FunctionTemplateRefHelper::setInstanceExtraData(FunctionTemplateRef* ftpl,
+                                                     FunctionData* data) {
+  LWNODE_CHECK_NOT_NULL(data);
+  LWNODE_CHECK_NULL(ftpl->instanceExtraData());
+
+  ftpl->setInstanceExtraData(data);
+}
+
+FunctionData* FunctionTemplateRefHelper::getInstanceExtraData(
+    FunctionTemplateRef* ftpl) {
+  auto data = ftpl->instanceExtraData();
+  LWNODE_CHECK_NOT_NULL(data);
+  return reinterpret_cast<FunctionData*>(data);
 }
 
 }  // namespace EscargotShim
