@@ -19,6 +19,8 @@
 #include "isolate.h"
 #include "utils/misc.h"
 
+#include <sstream>
+
 using namespace Escargot;
 
 namespace EscargotShim {
@@ -328,6 +330,61 @@ ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
   void* data = object->extraData();
   LWNODE_DCHECK_NOT_NULL(data);
   return reinterpret_cast<ObjectData*>(data);
+}
+
+std::string EvalResultHelper::getErrorString(
+    ContextRef* context, const Evaluator::EvaluatorResult& result) {
+  const auto& traceData = result.stackTraceData;
+  const auto& reasonString =
+      result.resultOrErrorToString(context)->toStdUTF8String();
+  const std::string separator = "  ";
+
+  std::ostringstream oss;
+
+  if (traceData.size()) {
+    const auto& lastTraceData = traceData[0];
+    const auto& resourceName = lastTraceData.src->toStdUTF8String();
+    const auto& codeString = lastTraceData.sourceCode->toStdUTF8String();
+    const int errorLine = lastTraceData.loc.line;
+    const int errorColumn = lastTraceData.loc.column;
+    const int marginLine = 5;
+
+    oss << "Resource: " << std::endl;
+    oss << separator << resourceName << std::endl;
+    oss << "Reason: " << std::endl;
+    oss << separator;
+    oss << "(" << (int)lastTraceData.loc.line << ":"
+        << (int)lastTraceData.loc.column << ") ";
+    oss << reasonString << std::endl;
+
+    oss << "Source: " << std::endl;
+    std::stringstream sstream(codeString);
+    int startLine = std::max(0, errorLine - marginLine);
+    int endLine = errorLine + marginLine;
+    int curLine = 1;
+    for (std::string line; std::getline(sstream, line); ++curLine) {
+      if (startLine <= curLine) {
+        oss << separator << "L" << curLine << ": " << line;
+        if (curLine == errorLine) {
+          oss << "\t<--";
+        }
+        oss << std::endl;
+
+        if (endLine <= curLine) {
+          break;
+        }
+      }
+    }
+
+    oss << "Call Stack:" << std::endl;
+    for (size_t i = 0; i < traceData.size(); ++i) {
+      oss << separator << i << ": " << traceData[i].src->toStdUTF8String();
+      oss << "(" << (int)traceData[i].loc.line << ":"
+          << (int)traceData[i].loc.column << ")" << std::endl;
+    }
+  }
+
+  return oss.str();
 }
 
 }  // namespace EscargotShim
