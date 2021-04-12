@@ -145,9 +145,12 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                               ConstructorBehavior behavior,
                                               SideEffectType side_effect_type,
                                               const CFunction* c_function) {
-  if (c_function != nullptr ||
-      side_effect_type != SideEffectType::kHasSideEffect) {
+  if (c_function != nullptr) {
     LWNODE_RETURN_LOCAL(FunctionTemplate);
+  }
+
+  if (side_effect_type == SideEffectType::kHasSideEffect) {
+    LWNODE_ONCE(LWNODE_DLOG_WARN("@ignored/SideEffectType::kHasSideEffect"));
   }
 
   API_ENTER_NO_EXCEPTION(isolate);

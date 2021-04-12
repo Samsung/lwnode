@@ -85,14 +85,14 @@
 #endif
 
 #if !defined(NDEBUG)
-#define LWNODE_ONCE(op)                                                        \
+#define LWNODE_ONCE(operation)                                                 \
   do {                                                                         \
     static bool once##__LINE__ = false;                                        \
     if (!once##__LINE__) {                                                     \
-      op;                                                                      \
+      operation;                                                               \
       once##__LINE__ = true;                                                   \
     }                                                                          \
   } while (0)
 #else
-#define LWNODE_ONCE
+#define LWNODE_ONCE(operation)
 #endif

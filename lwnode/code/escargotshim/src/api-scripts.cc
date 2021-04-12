@@ -368,7 +368,7 @@ ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCache(
     Local<UnboundScript> unbound_script) {
 #ifndef NDEBUG
   s_track_data_size += sizeof(CachedData);
-  LWNODE_DLOG_WARN("total size of new CachedData: %zuB", s_track_data_size);
+  LWNODE_DLOG_INFO("total size of new CachedData: %zuB", s_track_data_size);
 #endif
   return new CachedData();
 }
@@ -378,7 +378,7 @@ ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCache(
     Local<UnboundModuleScript> unbound_module_script) {
 #ifndef NDEBUG
   s_track_data_size += sizeof(CachedData);
-  LWNODE_DLOG_WARN("total size of new CachedData: %zuB", s_track_data_size);
+  LWNODE_DLOG_INFO("total size of new CachedData: %zuB", s_track_data_size);
 #endif
   return new CachedData();
 }
@@ -392,7 +392,7 @@ ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCacheForFunction(
   // the above node source. Before that is confirmed, track the size.
 #ifndef NDEBUG
   s_track_data_size += sizeof(CachedData);
-  LWNODE_DLOG_WARN("total size of new CachedData: %zuB", s_track_data_size);
+  LWNODE_DLOG_INFO("total size of new CachedData: %zuB", s_track_data_size);
 #endif
   return new CachedData();
 }
