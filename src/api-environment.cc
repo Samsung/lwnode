@@ -484,7 +484,9 @@ bool v8::String::StringEquals(Local<String> that) {
 }
 
 Isolate* v8::Object::GetIsolate() {
-  LWNODE_RETURN_NULLPTR;
+  LWNODE_ONCE(LWNODE_DLOG_WARN("@ignored/multi-isolate"));
+  // NOTE: there is no API yet to acquire an Isolate this object belongs to.
+  return IsolateWrap::GetCurrent()->toV8();
 }
 
 Local<v8::Object> v8::Object::New(Isolate* isolate) {
