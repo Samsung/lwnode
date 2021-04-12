@@ -83,3 +83,16 @@
 #else
 #define LWNODE_CALL_TRACE(msg, ...)
 #endif
+
+#if !defined(NDEBUG)
+#define LWNODE_ONCE(op)                                                        \
+  do {                                                                         \
+    static bool once##__LINE__ = false;                                        \
+    if (!once##__LINE__) {                                                     \
+      op;                                                                      \
+      once##__LINE__ = true;                                                   \
+    }                                                                          \
+  } while (0)
+#else
+#define LWNODE_ONCE
+#endif
