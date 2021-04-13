@@ -864,30 +864,22 @@ Maybe<bool> v8::Object::DefineOwnProperty(v8::Local<v8::Context> context,
                                           v8::Local<Value> value,
                                           v8::PropertyAttribute attributes) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto lwContext = lwIsolate->GetCurrentContext();
-  auto self = CVAL(this)->value()->asObject();
-  auto esKey = CVAL(*key)->value();
-  auto esValue = CVAL(*value)->value();
 
-  // TODO: Handle attributes
-  // FIXME: Handle Name
-  if (esKey->isSymbol()) {
-    LWNODE_DLOG_INFO("Handle when key->isSymbol()\n");
+  if (attributes == None) {
+    return Set(context, key, value);
   }
 
-  auto r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState,
-         ObjectRef* self,
-         ValueRef* esKey,
-         ValueRef* esValue) -> ValueRef* {
-        auto o = StringObjectRef::create(esState);
-        o->setPrimitiveValue(esState, esValue);
-        return ValueRef::create(self->defineOwnProperty(esState, esKey, o));
-      },
-      self,
-      esKey,
-      esValue);
+  auto r = ObjectRefHelper::defineDataProperty(CVAL(*context)->context()->get(),
+                                               CVAL(this)->value()->asObject(),
+                                               CVAL(*key)->value(),
+                                               ((attributes & ReadOnly) == 0),
+                                               ((attributes & DontEnum) == 0),
+                                               ((attributes & DontDelete) == 0),
+                                               CVAL(*value)->value(),
+                                               nullptr,
+                                               nullptr,
+                                               nullptr);
+
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(r.result->asBoolean());

@@ -144,6 +144,8 @@ EvalResult ObjectRefHelper::defineDataProperty(
     NativeFunctionPointer functionPropertyValue,
     ValueRef* getter,
     ValueRef* setter) {
+  LWNODE_DCHECK(propertyName->isSymbol() || propertyName->isString());
+
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
@@ -160,26 +162,27 @@ EvalResult ObjectRefHelper::defineDataProperty(
 
         // check if accessors (getter or setter) are given
         if (getter != nullptr || setter != nullptr) {
-          ObjectRef::PresentAttribute attr =
+          ObjectRef::PresentAttribute attributes =
               ObjectRef::PresentAttribute::NotPresent;
 
           if (isEnumerable) {
-            attr = (ObjectRef::PresentAttribute)(
-                attr | ObjectRef::PresentAttribute::EnumerablePresent);
+            attributes = (ObjectRef::PresentAttribute)(
+                attributes | ObjectRef::PresentAttribute::EnumerablePresent);
           }
           if (isConfigurable) {
-            attr = (ObjectRef::PresentAttribute)(
-                attr | ObjectRef::PresentAttribute::ConfigurablePresent);
+            attributes = (ObjectRef::PresentAttribute)(
+                attributes | ObjectRef::PresentAttribute::ConfigurablePresent);
           }
           if (isWritable) {
-            attr = (ObjectRef::PresentAttribute)(
-                attr | ObjectRef::PresentAttribute::WritablePresent);
+            attributes = (ObjectRef::PresentAttribute)(
+                attributes | ObjectRef::PresentAttribute::WritablePresent);
           }
 
           result = object->defineAccessorProperty(
               state,
               propertyName,
-              ObjectRef::AccessorPropertyDescriptor(getter, setter, attr));
+              ObjectRef::AccessorPropertyDescriptor(
+                  getter, setter, attributes));
 
         } else {
           // else: check if a value or a native function to get a value is given
@@ -187,13 +190,14 @@ EvalResult ObjectRefHelper::defineDataProperty(
           if (value == nullptr) {
             LWNODE_DCHECK_NOT_NULL(functionPropertyValue);
 
-            auto atomicstr = AtomicStringRef::create(state->context(),
-                                                     StringRef::emptyString());
-
             value = FunctionObjectRef::createBuiltinFunction(
                 state,
                 FunctionObjectRef::NativeFunctionInfo(
-                    atomicstr, functionPropertyValue, 0, false, false));
+                    AtomicStringRef::emptyAtomicString(),
+                    functionPropertyValue,
+                    0,
+                    false,
+                    false));
           }
 
           result = object->defineDataProperty(
