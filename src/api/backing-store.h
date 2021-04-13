@@ -52,6 +52,34 @@ class BackingStoreWrapHolder : public v8::internal::BackingStoreBase {
   static std::map<BackingStoreWrap*, u_int8_t> map_;
 };
 
+// --- BufferDeleter ---
+
+class BufferDeleter {
+ public:
+  virtual ~BufferDeleter() = default;
+  virtual void Free(void* data, size_t length) = 0;
+};
+
+class ArrayBufferAllocatorDeleter : public BufferDeleter {
+ public:
+  ArrayBufferAllocatorDeleter(v8::ArrayBuffer::Allocator* allocator);
+  void Free(void* data, size_t length) override;
+
+ private:
+  v8::ArrayBuffer::Allocator* allocator_ = nullptr;
+};
+
+class ExternalBufferDeleter : public BufferDeleter {
+ public:
+  ExternalBufferDeleter(v8::BackingStore::DeleterCallback deleter,
+                        void* deleter_data);
+  void Free(void* data, size_t length) override;
+
+ private:
+  v8::BackingStore::DeleterCallback deleter_ = nullptr;
+  void* deleter_data_ = nullptr;
+};
+
 // --- BackingStoreWrap ---
 
 class BackingStoreWrap : public v8::internal::BackingStoreBase {
@@ -59,7 +87,7 @@ class BackingStoreWrap : public v8::internal::BackingStoreBase {
   BackingStoreWrap(void* data,
                    size_t byte_length,
                    SharedFlag shared,
-                   v8::ArrayBuffer::Allocator* allocator);
+                   std::unique_ptr<BufferDeleter> buffer_deleter);
   virtual ~BackingStoreWrap();
 
   void* Data() const { return data_; }
@@ -70,6 +98,13 @@ class BackingStoreWrap : public v8::internal::BackingStoreBase {
                                                   size_t byte_length,
                                                   SharedFlag shared,
                                                   InitializedFlag initialized);
+
+  static std::unique_ptr<BackingStoreWrap> create(
+      void* data,
+      size_t byte_length,
+      v8::BackingStore::DeleterCallback deleter,
+      void* deleter_data);
+
   bool attachTo(Escargot::ExecutionStateRef* state,
                 Escargot::ArrayBufferObjectRef* arrayBuffer);
 
@@ -84,12 +119,10 @@ class BackingStoreWrap : public v8::internal::BackingStoreBase {
   }
 
  private:
-  void clear();
-
   void* data_ = nullptr;
   size_t byteLength_ = 0;
   bool isShared_ = false;
-  v8::ArrayBuffer::Allocator* allocator_ = nullptr;
+  std::unique_ptr<BufferDeleter> bufferDeleter_ = nullptr;
 };
 
 }  // namespace EscargotShim

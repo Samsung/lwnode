@@ -23,24 +23,18 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-BackingStoreWrap::BackingStoreWrap(void* data,
-                                   size_t byte_length,
-                                   SharedFlag shared,
-                                   v8::ArrayBuffer::Allocator* allocator)
+BackingStoreWrap::BackingStoreWrap(
+    void* data,
+    size_t byte_length,
+    SharedFlag shared,
+    std::unique_ptr<BufferDeleter> buffer_deleter)
     : data_(data),
       byteLength_(byte_length),
       isShared_(shared == SharedFlag::kShared),
-      allocator_(allocator) {}
+      bufferDeleter_(std::move(buffer_deleter)) {}
 
 BackingStoreWrap::~BackingStoreWrap() {
-  allocator_->Free(data_, byteLength_);
-  clear();
-}
-
-void BackingStoreWrap::clear() {
-  data_ = nullptr;
-  allocator_ = nullptr;
-  byteLength_ = 0;
+  bufferDeleter_->Free(data_, byteLength_);
 }
 
 std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
@@ -61,7 +55,22 @@ std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
   }
 
   return std::make_unique<BackingStoreWrap>(
-      buffer, byteLength, shared, allocator);
+      buffer,
+      byteLength,
+      shared,
+      std::make_unique<ArrayBufferAllocatorDeleter>(allocator));
+}
+
+std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
+    void* data,
+    size_t byte_length,
+    v8::BackingStore::DeleterCallback deleter,
+    void* deleter_data) {
+  return std::make_unique<BackingStoreWrap>(
+      data,
+      byte_length,
+      SharedFlag::kNotShared,
+      std::make_unique<ExternalBufferDeleter>(deleter, deleter_data));
 }
 
 bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
@@ -86,6 +95,28 @@ bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
   });
 
   return true;
+}
+
+ArrayBufferAllocatorDeleter::ArrayBufferAllocatorDeleter(
+    v8::ArrayBuffer::Allocator* allocator) {
+  LWNODE_CHECK_NOT_NULL(allocator);
+  allocator_ = allocator;
+}
+
+void ArrayBufferAllocatorDeleter::Free(void* data, size_t length) {
+  allocator_->Free(data, length);
+}
+
+ExternalBufferDeleter::ExternalBufferDeleter(
+    v8::BackingStore::DeleterCallback deleter, void* deleter_data) {
+  LWNODE_CHECK_NOT_NULL(deleter);
+  LWNODE_CHECK_NOT_NULL(deleter_data);
+  deleter_ = deleter;
+  deleter_data_ = deleter_data;
+}
+
+void ExternalBufferDeleter::Free(void* data, size_t length) {
+  deleter_(data, length, deleter_data_);
 }
 
 // --- BackingStoreWrapHolder ---
