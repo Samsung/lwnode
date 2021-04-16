@@ -17,6 +17,7 @@
 #pragma once
 
 #include <EscargotPublic.h>
+#include <memory>
 #include "utils/gc.h"
 #include "v8.h"
 
@@ -24,7 +25,7 @@ namespace EscargotShim {
 
 class ArrayBufferObjectData;
 class ValueWrap;
-class BackingStoreWrapHolder;
+class BackingStoreWrap;
 
 using namespace Escargot;
 
@@ -87,18 +88,16 @@ class FunctionData : public ObjectData {
 
 class ArrayBufferObjectData : public ObjectData {
  public:
+  ArrayBufferObjectData(std::shared_ptr<BackingStoreWrap> backingStore) {
+    m_backingStore = backingStore;
+  }
+
   bool isArryBufferObjectData() const override { return true; }
-
-  void setBackingStoreWrapHolder(BackingStoreWrapHolder* holder) {
-    m_backingStoreWrapHolder = holder;
-  }
-
-  BackingStoreWrapHolder* backingStoreWrapHolder() {
-    return m_backingStoreWrapHolder.get();
-  }
+  void releaseBackingStore() { m_backingStore.reset(); }
+  std::shared_ptr<BackingStoreWrap> backingStore() { return m_backingStore; }
 
  private:
-  PersistentRefHolder<BackingStoreWrapHolder> m_backingStoreWrapHolder;
+  std::shared_ptr<BackingStoreWrap> m_backingStore;
 };
 
 }  // namespace EscargotShim

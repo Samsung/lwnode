@@ -37,29 +37,6 @@ BackingStoreWrap::~BackingStoreWrap() {
   bufferDeleter_->Free(data_, byteLength_);
 }
 
-std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
-    IsolateWrap* isolate,
-    size_t byteLength,
-    SharedFlag shared,
-    InitializedFlag initialized) {
-  void* buffer = nullptr;
-
-  auto allocator = isolate->array_buffer_allocator();
-
-  if (initialized == InitializedFlag::kUninitialized) {
-    buffer = allocator->AllocateUninitialized(byteLength);
-  } else if (initialized == InitializedFlag::kZeroInitialized) {
-    buffer = allocator->Allocate(byteLength);
-  } else {
-    LWNODE_DCHECK(false);
-  }
-
-  return std::make_unique<BackingStoreWrap>(
-      buffer,
-      byteLength,
-      shared,
-      std::make_unique<ArrayBufferAllocatorDeleter>(allocator));
-}
 
 std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
     void* data,
@@ -71,86 +48,6 @@ std::unique_ptr<BackingStoreWrap> BackingStoreWrap::create(
       byte_length,
       SharedFlag::kNotShared,
       std::make_unique<ExternalBufferDeleter>(deleter, deleter_data));
-}
-
-bool BackingStoreWrap::attachTo(ExecutionStateRef* state,
-                                ArrayBufferObjectRef* arrayBuffer) {
-  // attach the buffer of this backing store to the given arrary buffer
-  arrayBuffer->attachExternalBuffer(state, this->Data(), this->ByteLength());
-
-  // since the ownership of the backing store is given to this
-  // arraybuffer, it should manage destructing the backing store.
-  auto data = new ArrayBufferObjectData();
-  data->setBackingStoreWrapHolder(new BackingStoreWrapHolder(this));
-
-  ObjectRefHelper::setExtraData(arrayBuffer, data, [](void* self) {
-    auto value = reinterpret_cast<ValueRef*>(self);
-    auto holder = ObjectRefHelper::getExtraData(value->asArrayBufferObject())
-                      ->asArrayBufferObjectData()
-                      ->backingStoreWrapHolder();
-
-    LWNODE_DCHECK_NOT_NULL(holder);
-
-    delete holder;
-  });
-
-  return true;
-}
-
-ArrayBufferAllocatorDeleter::ArrayBufferAllocatorDeleter(
-    v8::ArrayBuffer::Allocator* allocator) {
-  LWNODE_CHECK_NOT_NULL(allocator);
-  allocator_ = allocator;
-}
-
-void ArrayBufferAllocatorDeleter::Free(void* data, size_t length) {
-  allocator_->Free(data, length);
-}
-
-ExternalBufferDeleter::ExternalBufferDeleter(
-    v8::BackingStore::DeleterCallback deleter, void* deleter_data) {
-  LWNODE_CHECK_NOT_NULL(deleter);
-  LWNODE_CHECK_NOT_NULL(deleter_data);
-  deleter_ = deleter;
-  deleter_data_ = deleter_data;
-}
-
-void ExternalBufferDeleter::Free(void* data, size_t length) {
-  deleter_(data, length, deleter_data_);
-}
-
-// --- BackingStoreWrapHolder ---
-
-std::map<BackingStoreWrap*, u_int8_t> BackingStoreWrapHolder::map_;
-
-BackingStoreWrapHolder::BackingStoreWrapHolder(BackingStoreWrap* backingStore)
-    : backingStore_(backingStore) {
-  auto it = BackingStoreWrapHolder::map_.find(backingStore_);
-  if (it == map_.end()) {
-    map_.insert(std::make_pair(backingStore, 1));
-  } else {
-    it->second++;
-  }
-}
-
-BackingStoreWrapHolder::~BackingStoreWrapHolder() {
-  // @check consider to simply delete backingStore_ with isExternal condition.
-  auto it = BackingStoreWrapHolder::map_.find(backingStore_);
-  if (it != map_.end()) {
-    if (it->second == 1) {
-      map_.erase(it);
-      delete backingStore_;
-
-    } else {
-      it->second--;
-    }
-  } else {
-    LWNODE_DCHECK_MSG(false, "the target backing store is already destroyed");
-  }
-}
-
-std::shared_ptr<BackingStoreWrapHolder> BackingStoreWrapHolder::clone() {
-  return std::make_shared<BackingStoreWrapHolder>(backingStore_);
 }
 
 }  // namespace EscargotShim
