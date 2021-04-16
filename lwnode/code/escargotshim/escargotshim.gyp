@@ -41,6 +41,7 @@
         'src/api/utils/flags.cc',
         'src/api/utils/gc.cc',
         'src/api/arraybuffer-allocator.cc',
+        'src/api/arraybuffer-deleter.cc',
         'src/api/backing-store.cc',
         'src/api/es-helper.cc',
         'src/api/engine.cc',

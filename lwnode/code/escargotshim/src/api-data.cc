@@ -460,14 +460,12 @@ void v8::BackingStore::EmptyDeleter(void* data,
 }
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
-  auto holder = ObjectRefHelper::getExtraData(VAL(this)->value()->asObject())
-                    ->asArrayBufferObjectData()
-                    ->backingStoreWrapHolder();
+  auto arrayBufferObjectData =
+      ObjectRefHelper::getExtraData(VAL(this)->value()->asArrayBufferObject())
+          ->asArrayBufferObjectData();
 
-  LWNODE_DCHECK_MSG(holder != nullptr, "unimplemented");
-
-  std::shared_ptr<i::BackingStoreBase> bs_base = holder->clone();
-  return std::static_pointer_cast<v8::BackingStore>(bs_base);
+  return reinterpret_shared_pointer_cast<v8::BackingStore>(
+      arrayBufferObjectData->backingStore());
 }
 
 std::shared_ptr<v8::BackingStore> v8::SharedArrayBuffer::GetBackingStore() {

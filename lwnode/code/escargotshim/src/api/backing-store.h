@@ -21,6 +21,7 @@
 #include <v8.h>
 #include <map>
 #include <memory>
+#include "arraybuffer-deleter.h"
 
 namespace EscargotShim {
 
@@ -31,56 +32,6 @@ enum class SharedFlag : uint8_t { kNotShared, kShared };
 enum class InitializedFlag : uint8_t { kUninitialized, kZeroInitialized };
 
 class IsolateWrap;
-class BackingStoreWrap;
-
-// --- BackingStoreWrapHolder ---
-
-// BackingStoreWrap holds a buffer.
-// BackingStoreWrapHolder deallocates the backingStoreWrap held.
-
-class BackingStoreWrapHolder : public v8::internal::BackingStoreBase {
- public:
-  BackingStoreWrapHolder(BackingStoreWrap* backingStore = nullptr);
-  virtual ~BackingStoreWrapHolder();
-
-  std::shared_ptr<BackingStoreWrapHolder> clone();
-  BackingStoreWrap* backingStore() const { return backingStore_; }
-
- private:
-  BackingStoreWrap* backingStore_ = nullptr;
-
-  static std::map<BackingStoreWrap*, u_int8_t> map_;
-};
-
-// --- BufferDeleter ---
-
-class BufferDeleter {
- public:
-  virtual ~BufferDeleter() = default;
-  virtual void Free(void* data, size_t length) = 0;
-};
-
-class ArrayBufferAllocatorDeleter : public BufferDeleter {
- public:
-  ArrayBufferAllocatorDeleter(v8::ArrayBuffer::Allocator* allocator);
-  void Free(void* data, size_t length) override;
-
- private:
-  v8::ArrayBuffer::Allocator* allocator_ = nullptr;
-};
-
-class ExternalBufferDeleter : public BufferDeleter {
- public:
-  ExternalBufferDeleter(v8::BackingStore::DeleterCallback deleter,
-                        void* deleter_data);
-  void Free(void* data, size_t length) override;
-
- private:
-  v8::BackingStore::DeleterCallback deleter_ = nullptr;
-  void* deleter_data_ = nullptr;
-};
-
-// --- BackingStoreWrap ---
 
 class BackingStoreWrap : public v8::internal::BackingStoreBase {
  public:
@@ -94,11 +45,6 @@ class BackingStoreWrap : public v8::internal::BackingStoreBase {
   size_t ByteLength() const { return byteLength_; }
   bool IsShared() const { return isShared_; }
 
-  static std::unique_ptr<BackingStoreWrap> create(IsolateWrap* isolate,
-                                                  size_t byte_length,
-                                                  SharedFlag shared,
-                                                  InitializedFlag initialized);
-
   static std::unique_ptr<BackingStoreWrap> create(
       void* data,
       size_t byte_length,
@@ -109,13 +55,11 @@ class BackingStoreWrap : public v8::internal::BackingStoreBase {
                 Escargot::ArrayBufferObjectRef* arrayBuffer);
 
   static const BackingStoreWrap* fromV8(const v8::BackingStore* backing_store) {
-    return reinterpret_cast<const BackingStoreWrapHolder*>(backing_store)
-        ->backingStore();
+    return reinterpret_cast<const BackingStoreWrap*>(backing_store);
   }
 
   static BackingStoreWrap* fromV8(v8::BackingStore* backing_store) {
-    return reinterpret_cast<BackingStoreWrapHolder*>(backing_store)
-        ->backingStore();
+    return reinterpret_cast<BackingStoreWrap*>(backing_store);
   }
 
  private:

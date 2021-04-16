@@ -1166,26 +1166,41 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
   LWNODE_CHECK_MSG(byte_length > 0, "unimplemented");
 
   // 1. create a backing store for an array buffer which will be newly created.
-  std::unique_ptr<BackingStoreWrap> lwBackingStore =
-      BackingStoreWrap::create(lwIsolate,
-                               byte_length,
-                               SharedFlag::kNotShared,
-                               InitializedFlag::kZeroInitialized);
+  auto allocator = lwIsolate->array_buffer_allocator();
+  auto lwBackingStore = std::make_shared<BackingStoreWrap>(
+      allocator->Allocate(byte_length),
+      byte_length,
+      SharedFlag::kNotShared,
+      std::make_unique<ArrayBufferAllocatorDeleter>(allocator));
 
   // 2. create an array buffer
   EvalResult r = Evaluator::execute(
       lwIsolate->GetCurrentContext()->get(),
       [](ExecutionStateRef* state,
-         BackingStoreWrap* lwBackingStore) -> ValueRef* {
-        // 2.1 create an array buffer
+         std::shared_ptr<BackingStoreWrap> lwBackingStore) -> ValueRef* {
         auto arrayBuffer = ArrayBufferObjectRef::create(state);
+        arrayBuffer->attachExternalBuffer(
+            state, lwBackingStore->Data(), lwBackingStore->ByteLength());
 
-        // 2.2 attach the given backing store
-        lwBackingStore->attachTo(state, arrayBuffer);
+        auto data = new ArrayBufferObjectData(std::move(lwBackingStore));
+
+        ObjectRefHelper::setExtraData(arrayBuffer, data, [](void* self) {
+          // note: this is a finalizer for arrayBuffer
+          auto value = reinterpret_cast<ValueRef*>(self);
+          auto arrayBufferObjectData =
+              ObjectRefHelper::getExtraData(value->asArrayBufferObject())
+                  ->asArrayBufferObjectData();
+
+          // note: backingStore is shared with clients as standard C++ memory
+          // ownership types. Since GC doesn't call the destructor of
+          // ArrayBufferObjectData automatically, we should de-reference the
+          // shared_ptr of the backing store when arraybuffer is GCed.
+          arrayBufferObjectData->releaseBackingStore();
+        });
 
         return arrayBuffer;
       },
-      lwBackingStore.release());
+      lwBackingStore);
 
   return Utils::NewLocal<ArrayBuffer>(isolate, r.result);
 }
@@ -1205,13 +1220,16 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
   API_ENTER_NO_EXCEPTION(isolate);
-  std::unique_ptr<i::BackingStoreBase> backing_store =
-      BackingStoreWrap::create(lwIsolate,
-                               byte_length,
-                               SharedFlag::kNotShared,
-                               InitializedFlag::kZeroInitialized);
+
+  auto allocator = lwIsolate->array_buffer_allocator();
+  auto lwBackstore = new BackingStoreWrap(
+      allocator->Allocate(byte_length),
+      byte_length,
+      SharedFlag::kNotShared,
+      std::make_unique<ArrayBufferAllocatorDeleter>(allocator));
+
   return std::unique_ptr<v8::BackingStore>(
-      static_cast<v8::BackingStore*>(backing_store.release()));
+      reinterpret_cast<v8::BackingStore*>(lwBackstore));
 }
 
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(

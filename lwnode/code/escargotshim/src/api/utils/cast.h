@@ -16,10 +16,16 @@
 
 #pragma once
 
-#include "utils/compiler.h"
-#include "utils/gc.h"
-#include "utils/logger.h"
-#include "utils/misc.h"
-#include "utils/string.h"
-#include "utils/cast.h"
-#include "utils/conversions-inl.h"
+namespace EscargotShim {
+
+// note: std::reinterpret_pointer_cast (since C++20)
+template <class T, class U>
+std::shared_ptr<T> reinterpret_shared_pointer_cast(
+    const std::shared_ptr<U>& ptr_to_convert) noexcept {
+  return std::shared_ptr<T>(
+      ptr_to_convert,
+      reinterpret_cast<typename std::shared_ptr<T>::element_type*>(
+          ptr_to_convert.get()));
+}
+
+}  // namespace EscargotShim
