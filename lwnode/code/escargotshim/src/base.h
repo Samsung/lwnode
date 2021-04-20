@@ -29,8 +29,8 @@
 #if !defined(NDEBUG)
 #define __DLOG_EVAL_ERROR(eval_result)                                         \
   LWNODE_DLOG_ERROR("Evaluate");                                               \
-  LWNODE_DLOG_RAW("Execute:\n  %s\n%s",                                        \
-                  __PRETTY_FUNCTION__,                                         \
+  LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",                                \
+                  TRACE_ARGS2,                                                 \
                   EvalResultHelper::getErrorString(                            \
                       lwIsolate->GetCurrentContext()->get(), eval_result)      \
                       .c_str());
