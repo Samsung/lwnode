@@ -18,6 +18,28 @@
 #include "utils/gc.h"
 #include "utils/misc.h"
 
+namespace v8 {
+namespace internal {
+class Isolate {
+ public:
+  static v8::TryCatch* getNextTryCatch(v8::TryCatch* try_catch_handler) {
+    return try_catch_handler->next_;
+  }
+
+  static void setTerminationOnExternalTryCatch(v8::TryCatch* try_catch_handler,
+                                               void* last_error_result) {
+    if (try_catch_handler == nullptr) {
+      return;
+    }
+    try_catch_handler->can_continue_ = false;
+    try_catch_handler->has_terminated_ = true;
+    try_catch_handler->exception_ = reinterpret_cast<void*>(last_error_result);
+  }
+};
+
+}  // namespace internal
+}  // namespace v8
+
 using namespace Escargot;
 
 namespace EscargotShim {
@@ -45,7 +67,7 @@ void IsolateWrap::Dispose() {
 }
 
 bool IsolateWrap::IsExecutionTerminating() {
-  if (hasScheduledThrow_) {
+  if (has_scheduled_throw_) {
     return true;
   }
   return false;
@@ -62,7 +84,27 @@ void IsolateWrap::scheduleThrow(Escargot::ValueRef* result) {
   // using v8:tryCatch, etc. In this case, we should not do any exception
   // handling.
   // TODO: Fix API_HANDLE_EXCEPTION() accordingly
-  hasScheduledThrow_ = true;
+  has_scheduled_throw_ = true;
+  last_error_result = result;
+}
+
+v8::TryCatch* IsolateWrap::try_catch_handler() {
+  return try_catch_handler_;
+}
+
+void IsolateWrap::registerTryCatchHandler(v8::TryCatch* that) {
+  try_catch_handler_ = that;
+}
+
+void IsolateWrap::unregisterTryCatchHandler(v8::TryCatch* that) {
+  LWNODE_DCHECK(try_catch_handler_ == that);
+  try_catch_handler_ =
+      v8::internal::Isolate::getNextTryCatch(try_catch_handler_);
+}
+
+void IsolateWrap::setTerminationOnExternalTryCatch() {
+  v8::internal::Isolate::setTerminationOnExternalTryCatch(
+      try_catch_handler(), reinterpret_cast<void*>(last_error_result));
 }
 
 void IsolateWrap::set_array_buffer_allocator(
