@@ -87,6 +87,7 @@ class ObjectRefHelper {
       ObjectRef* object,
       ObjectData* data,
       Memory::GCAllocatedMemoryFinalizer callback = nullptr);
+  static bool hasExtraData(ObjectRef* object);
   static ObjectData* getExtraData(ObjectRef* object);
   static ObjectData* createExtraDataIfNotExist(ObjectRef* object);
 

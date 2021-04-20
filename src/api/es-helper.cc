@@ -316,6 +316,13 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
       value);
 }
 
+bool ObjectRefHelper::hasExtraData(ObjectRef* object) {
+  if (object->extraData()) {
+    return true;
+  }
+  return false;
+}
+
 void ObjectRefHelper::setExtraData(
     ObjectRef* object,
     ObjectData* data,
@@ -354,7 +361,7 @@ std::string EvalResultHelper::getErrorString(
     const int errorColumn = lastTraceData.loc.column;
     const int marginLine = 5;
 
-    oss << "Resource: " << std::endl;
+    oss << "Place: " << std::endl;
     oss << separator << resourceName << std::endl;
     oss << "Reason: " << std::endl;
     oss << separator;

@@ -383,11 +383,11 @@ void v8::Integer::CheckCast(v8::Value* that) {
 }
 
 void v8::Int32::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsInt32());
 }
 
 void v8::Uint32::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsUint32());
 }
 
 void v8::BigInt::CheckCast(v8::Value* that) {
@@ -460,8 +460,20 @@ void v8::BackingStore::EmptyDeleter(void* data,
 }
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
+  auto esArrayBufferObject = VAL(this)->value()->asArrayBufferObject();
+
+  if (ObjectRefHelper::hasExtraData(esArrayBufferObject) == false) {
+    return ArrayBuffer::NewBackingStore(
+        esArrayBufferObject->rawBuffer(),
+        esArrayBufferObject->byteLength(),
+        [](void*, size_t, void*) -> void {
+          // note: this buffer is JS allocated.
+        },
+        nullptr);
+  }
+
   auto arrayBufferObjectData =
-      ObjectRefHelper::getExtraData(VAL(this)->value()->asArrayBufferObject())
+      ObjectRefHelper::getExtraData(esArrayBufferObject)
           ->asArrayBufferObjectData();
 
   return reinterpret_shared_pointer_cast<v8::BackingStore>(
@@ -477,7 +489,7 @@ void v8::ArrayBuffer::CheckCast(Value* that) {
 }
 
 void v8::ArrayBufferView::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsArrayBufferView());
 }
 
 constexpr size_t v8::TypedArray::kMaxLength;
