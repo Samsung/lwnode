@@ -34,7 +34,6 @@ void ArrayBufferAllocatorDeleter::Free(void* data, size_t length) {
 ExternalBufferDeleter::ExternalBufferDeleter(
     v8::BackingStore::DeleterCallback deleter, void* deleter_data) {
   LWNODE_CHECK_NOT_NULL(deleter);
-  LWNODE_CHECK_NOT_NULL(deleter_data);
   deleter_ = deleter;
   deleter_data_ = deleter_data;
 }
