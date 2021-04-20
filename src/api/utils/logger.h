@@ -44,6 +44,7 @@
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define TRACE_FMT " %s (%s:%d)"
 #define TRACE_ARGS __PRETTY_FUNCTION__, __FILENAME__, __LINE__
+#define TRACE_ARGS2 __FUNCTION__, __FILENAME__, __LINE__
 
 #define LWNODE_LOG_RAW(fmt, ...) fprintf(stdout, fmt "\n", ##__VA_ARGS__);
 

@@ -337,7 +337,23 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
       arguments_list.size(),
       arguments_list.data());
 
-  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Function>());
+  // note: expand API_HANDLE_EXCEPTION and add the resource name
+  if (!r.isSuccessful()) {
+    LWNODE_DLOG_ERROR("Evaluate");
+    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\nResource:\n  %s\n%s",
+                    TRACE_ARGS2,
+                    VAL(*source->resource_name)
+                        ->value()
+                        ->asString()
+                        ->toStdUTF8String()
+                        .c_str(),
+                    EvalResultHelper::getErrorString(
+                        lwIsolate->GetCurrentContext()->get(), r)
+                        .c_str());
+
+    lwIsolate->scheduleThrow(r.error.get());
+    return MaybeLocal<Function>();
+  }
 
   return Utils::NewLocal<Function>(lwIsolate->toV8(), r.result);
 }
