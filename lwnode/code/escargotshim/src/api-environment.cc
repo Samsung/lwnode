@@ -16,8 +16,8 @@
 
 #include <memory>
 #include "api.h"
-#include "base.h"
 #include "api/utils/cast.h"
+#include "base.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
@@ -2183,7 +2183,21 @@ MicrotasksScope::~MicrotasksScope() {
 }
 
 void MicrotasksScope::PerformCheckpoint(Isolate* v8_isolate) {
-  LWNODE_RETURN_VOID;
+  auto lwIsolate = IsolateWrap::fromV8(v8_isolate);
+  auto vmInstance = lwIsolate->vmInstance();
+
+  if (vmInstance->hasPendingJob() == false) {
+    return;
+  }
+
+  while (vmInstance->hasPendingJob()) {
+    auto r = vmInstance->executePendingJob();
+    if (!r.isSuccessful()) {
+      __DLOG_EVAL_ERROR(r);
+      lwIsolate->setTerminationOnExternalTryCatch();
+      return;
+    }
+  }
 }
 
 int MicrotasksScope::GetCurrentDepth(Isolate* v8_isolate) {

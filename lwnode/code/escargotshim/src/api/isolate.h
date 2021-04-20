@@ -80,6 +80,10 @@ class IsolateWrap : public gc {
   // Eternal
   void addEternal(GCManagedObject* value);
 
+  v8::TryCatch* try_catch_handler();
+  void registerTryCatchHandler(v8::TryCatch* that);
+  void unregisterTryCatchHandler(v8::TryCatch* that);
+  void setTerminationOnExternalTryCatch();
   void scheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
 
@@ -138,8 +142,9 @@ class IsolateWrap : public gc {
   // V8 CreateParams
   v8::ArrayBuffer::Allocator* array_buffer_allocator_ = nullptr;
   std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
-
-  bool hasScheduledThrow_ = false;
+  v8::TryCatch* try_catch_handler_ = nullptr;
+  Escargot::ValueRef* last_error_result = nullptr;
+  bool has_scheduled_throw_ = false;
 
   VMInstanceRef* vmInstance_ = nullptr;
 

@@ -30,7 +30,7 @@ Platform::Platform(v8::ArrayBuffer::Allocator* allocator) {
 }
 
 void Platform::markJSJobEnqueued(ContextRef* relatedContext) {
-  LWNODE_UNIMPLEMENT;
+  // @note the timing to handle pending jobs depends on clients
 }
 
 void* Platform::onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
