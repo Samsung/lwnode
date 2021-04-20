@@ -17,6 +17,7 @@
 #include <memory>
 #include "api.h"
 #include "base.h"
+#include "api/utils/cast.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
@@ -1214,7 +1215,41 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate,
 
 Local<ArrayBuffer> v8::ArrayBuffer::New(
     Isolate* isolate, std::shared_ptr<BackingStore> backing_store) {
-  LWNODE_RETURN_LOCAL(ArrayBuffer);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  auto lwBackingStore =
+      reinterpret_shared_pointer_cast<BackingStoreWrap>(backing_store);
+
+  // 2. create an array buffer
+  EvalResult r = Evaluator::execute(
+      lwIsolate->GetCurrentContext()->get(),
+      [](ExecutionStateRef* state,
+         std::shared_ptr<BackingStoreWrap> lwBackingStore) -> ValueRef* {
+        auto arrayBuffer = ArrayBufferObjectRef::create(state);
+        arrayBuffer->attachExternalBuffer(
+            state, lwBackingStore->Data(), lwBackingStore->ByteLength());
+
+        auto data = new ArrayBufferObjectData(std::move(lwBackingStore));
+
+        ObjectRefHelper::setExtraData(arrayBuffer, data, [](void* self) {
+          // note: this is a finalizer for arrayBuffer
+          auto value = reinterpret_cast<ValueRef*>(self);
+          auto arrayBufferObjectData =
+              ObjectRefHelper::getExtraData(value->asArrayBufferObject())
+                  ->asArrayBufferObjectData();
+
+          // note: backingStore is shared with clients as standard C++ memory
+          // ownership types. Since GC doesn't call the destructor of
+          // ArrayBufferObjectData automatically, we should de-reference the
+          // shared_ptr of the backing store when arraybuffer is GCed.
+          arrayBufferObjectData->releaseBackingStore();
+        });
+
+        return arrayBuffer;
+      },
+      lwBackingStore);
+
+  return Utils::NewLocal<ArrayBuffer>(isolate, r.result);
 }
 
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
@@ -1237,7 +1272,14 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     size_t byte_length,
     v8::BackingStore::DeleterCallback deleter,
     void* deleter_data) {
-  LWNODE_RETURN_NULLPTR;
+  auto lwBackstore = new BackingStoreWrap(
+      data,
+      byte_length,
+      SharedFlag::kNotShared,
+      std::make_unique<ExternalBufferDeleter>(deleter, deleter_data));
+
+  return std::unique_ptr<v8::BackingStore>(
+      reinterpret_cast<v8::BackingStore*>(lwBackstore));
 }
 
 Local<ArrayBuffer> v8::ArrayBufferView::Buffer() {
