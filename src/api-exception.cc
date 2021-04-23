@@ -24,8 +24,8 @@ namespace v8 {
 // --- E x c e p t i o n s ---
 
 v8::TryCatch::TryCatch(v8::Isolate* isolate)
-    : isolate_(nullptr),
-      next_(nullptr),
+    : isolate_(reinterpret_cast<i::Isolate*>(isolate)),
+      next_(isolate_->try_catch_handler()),
       is_verbose_(false),
       can_continue_(true),
       capture_message_(true),
@@ -116,15 +116,23 @@ v8::Local<v8::Message> v8::TryCatch::Message() const {
 
 void v8::TryCatch::Reset() {}
 
-void v8::TryCatch::ResetInternal() {}
-
-void v8::TryCatch::SetVerbose(bool value) {}
-
-bool v8::TryCatch::IsVerbose() const {
-  LWNODE_RETURN_FALSE;
+void v8::TryCatch::ResetInternal() {
+  auto hole = IsolateWrap::fromV8(isolate_)->hole();
+  exception_ = hole;
+  message_obj_ = hole;
 }
 
-void v8::TryCatch::SetCaptureMessage(bool value) {}
+void v8::TryCatch::SetVerbose(bool value) {
+  is_verbose_ = value;
+}
+
+bool v8::TryCatch::IsVerbose() const {
+  return is_verbose_;
+}
+
+void v8::TryCatch::SetCaptureMessage(bool value) {
+  capture_message_ = value;
+}
 
 // --- M e s s a g e ---
 
