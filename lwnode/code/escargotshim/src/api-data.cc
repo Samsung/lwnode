@@ -1768,10 +1768,14 @@ void v8::Object::SetInternalField(int index, v8::Local<Value> value) {
 }
 
 void* v8::Object::SlowGetAlignedPointerFromInternalField(int index) {
-  LWNODE_RETURN_NULLPTR;
+  return ObjectRefHelper::getInternalPointer(CVAL(this)->value()->asObject(),
+                                             index);
 }
 
-void v8::Object::SetAlignedPointerInInternalField(int index, void* value) {}
+void v8::Object::SetAlignedPointerInInternalField(int index, void* value) {
+  ObjectRefHelper::setInternalPointer(
+      CVAL(this)->value()->asObject(), index, value);
+}
 
 void v8::Object::SetAlignedPointerInInternalFields(int argc,
                                                    int indices[],

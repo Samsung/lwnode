@@ -427,6 +427,18 @@ void ObjectRefHelper::setInternalField(ObjectRef* object,
 
 InternalField* ObjectRefHelper::getInternalField(ObjectRef* object, int idx) {
   auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  return reinterpret_cast<InternalField*>(data->internalField(idx));
+}
+
+void ObjectRefHelper::setInternalPointer(ObjectRef* object,
+                                         int idx,
+                                         void* ptr) {
+  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  data->setInternalField(idx, ptr);
+}
+
+void* ObjectRefHelper::getInternalPointer(ObjectRef* object, int idx) {
+  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
   return data->internalField(idx);
 }
 
