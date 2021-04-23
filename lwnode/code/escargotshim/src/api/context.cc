@@ -15,8 +15,8 @@
  */
 
 #include "context.h"
-#include "isolate.h"
 #include "base.h"
+#include "isolate.h"
 
 namespace EscargotShim {
 
@@ -68,7 +68,6 @@ void* ContextWrap::getEmbedderData(int index) {
 
   auto iter = embedder_data_->find(index);
   if (iter != embedder_data_->end()) {
-    LWNODE_DLOG_INFO("get: EmbedderData: idx %d", index);
     return VAL(iter->second);
   }
   return nullptr;
