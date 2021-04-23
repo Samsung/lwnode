@@ -98,6 +98,9 @@ class ObjectRefHelper {
                                InternalField* lwValue);
   static InternalField* getInternalField(ObjectRef* object, int idx);
 
+  static void setInternalPointer(ObjectRef* object, int idx, void* ptr);
+  static void* getInternalPointer(ObjectRef* object, int idx);
+
  private:
   static SymbolRef* s_symbolKeyForHiddenValues;
 };

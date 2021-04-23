@@ -42,11 +42,11 @@ class ObjectData : public gc {
   // InternalFields
   int internalFieldCount();
   void setInternalFieldCount(int size);
-  void setInternalField(int idx, ValueWrap* lwValue);
-  ValueWrap* internalField(int idx);
+  void setInternalField(int idx, void* lwValue);
+  void* internalField(int idx);
 
  private:
-  GCContainer<ValueWrap*>* m_internalFields{nullptr};
+  GCContainer<void*>* m_internalFields{nullptr};
 };
 
 class FunctionData : public ObjectData {

@@ -38,7 +38,7 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
           argc) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
 
-  m_implicitArgs[T::kHolderIndex] = lwIsolate->hole();
+  m_implicitArgs[T::kHolderIndex] = ValueWrap::createValue(holder);
   m_implicitArgs[T::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
   // m_implicitArgs[T::kReturnValueDefaultValueIndex];  // TODO
   m_implicitArgs[T::kReturnValueIndex] = lwIsolate->defaultReturnValue();

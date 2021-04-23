@@ -41,13 +41,13 @@ void ObjectData::setInternalFieldCount(int size) {
     LWNODE_DLOG_ERROR("InternalField: The size is negative");
     return;
   }
-  m_internalFields = new GCContainer<ValueWrap*>(size);
+  m_internalFields = new GCContainer<void*>(size);
   for (int i = 0; i < size; i++) {
     m_internalFields->set(i, IsolateWrap::GetCurrent()->undefined());
   }
 }
 
-void ObjectData::setInternalField(int idx, ValueWrap* lwValue) {
+void ObjectData::setInternalField(int idx, void* lwValue) {
   // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(m_internalFields);
   if (checkOutofBounds(this, idx)) {
@@ -57,7 +57,7 @@ void ObjectData::setInternalField(int idx, ValueWrap* lwValue) {
   m_internalFields->set(idx, lwValue);
 }
 
-ValueWrap* ObjectData::internalField(int idx) {
+void* ObjectData::internalField(int idx) {
   // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(m_internalFields);
   if (checkOutofBounds(this, idx)) {
