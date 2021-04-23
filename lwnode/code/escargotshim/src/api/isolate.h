@@ -23,13 +23,33 @@
 #include "utils/compiler.h"
 #include "utils/gc.h"
 
+namespace v8 {
+namespace internal {
+class Isolate : public gc {
+ public:
+  void RegisterTryCatchHandler(v8::TryCatch* that);
+  void UnregisterTryCatchHandler(v8::TryCatch* that);
+  void SetTerminationOnExternalTryCatch();
+  void ScheduleThrow(Escargot::ValueRef* result);
+  bool IsExecutionTerminating();
+
+  TryCatch* try_catch_handler();
+
+ private:
+  v8::TryCatch* try_catch_handler_{nullptr};
+  Escargot::ValueRef* last_error_result_{nullptr};
+  bool has_scheduled_throw_{false};
+};
+}  // namespace internal
+}  // namespace v8
+
 namespace EscargotShim {
 
 class ContextWrap;
 
 typedef gc GCManagedObject;
 
-class IsolateWrap : public gc {
+class IsolateWrap final : public v8::internal::Isolate {
  public:
   static IsolateWrap* New();
   void Initialize(const v8::Isolate::CreateParams& params);
@@ -79,13 +99,6 @@ class IsolateWrap : public gc {
 
   // Eternal
   void addEternal(GCManagedObject* value);
-
-  v8::TryCatch* try_catch_handler();
-  void registerTryCatchHandler(v8::TryCatch* that);
-  void unregisterTryCatchHandler(v8::TryCatch* that);
-  void setTerminationOnExternalTryCatch();
-  void scheduleThrow(Escargot::ValueRef* result);
-  bool IsExecutionTerminating();
 
   VMInstanceRef* get() { return vmInstance_; }
   VMInstanceRef* vmInstance() { return vmInstance_; }
@@ -144,7 +157,6 @@ class IsolateWrap : public gc {
   std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
   v8::TryCatch* try_catch_handler_ = nullptr;
   Escargot::ValueRef* last_error_result = nullptr;
-  bool has_scheduled_throw_ = false;
 
   VMInstanceRef* vmInstance_ = nullptr;
 

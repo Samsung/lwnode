@@ -57,7 +57,7 @@
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \
   if (!eval_result.isSuccessful()) {                                           \
     __DLOG_EVAL_ERROR(eval_result);                                            \
-    lwIsolate->scheduleThrow(eval_result.error.get());                         \
+    lwIsolate->ScheduleThrow(eval_result.error.get());                         \
     return bailout_value;                                                      \
   }
 

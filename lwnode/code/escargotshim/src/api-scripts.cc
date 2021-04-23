@@ -351,7 +351,7 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
                         lwIsolate->GetCurrentContext()->get(), r)
                         .c_str());
 
-    lwIsolate->scheduleThrow(r.error.get());
+    lwIsolate->ScheduleThrow(r.error.get());
     return MaybeLocal<Function>();
   }
 

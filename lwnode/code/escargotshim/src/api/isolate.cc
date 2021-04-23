@@ -20,22 +20,50 @@
 
 namespace v8 {
 namespace internal {
-class Isolate {
- public:
-  static v8::TryCatch* getNextTryCatch(v8::TryCatch* try_catch_handler) {
-    return try_catch_handler->next_;
-  }
 
-  static void setTerminationOnExternalTryCatch(v8::TryCatch* try_catch_handler,
-                                               void* last_error_result) {
-    if (try_catch_handler == nullptr) {
-      return;
-    }
-    try_catch_handler->can_continue_ = false;
-    try_catch_handler->has_terminated_ = true;
-    try_catch_handler->exception_ = reinterpret_cast<void*>(last_error_result);
+void Isolate::SetTerminationOnExternalTryCatch() {
+  if (try_catch_handler_ == nullptr) {
+    return;
   }
-};
+  try_catch_handler_->can_continue_ = false;
+  try_catch_handler_->has_terminated_ = true;
+  try_catch_handler_->exception_ = reinterpret_cast<void*>(last_error_result_);
+}
+
+bool Isolate::IsExecutionTerminating() {
+  if (has_scheduled_throw_) {
+    return true;
+  }
+  return false;
+}
+
+void Isolate::ScheduleThrow(Escargot::ValueRef* result) {
+  // LWNODE_UNIMPLEMENT;
+  // TODO: There are two types of exception handling.
+  // 1. An exception raised when it should not. Usually this happens
+  // when we are using Escargot API, and caused by incorrect development
+  // of our code and/or escargot, i.e., internal error.
+  // 2. An exception raised by running external script. In this case,
+  // it is the external developer's responsibility to handle an exception
+  // using v8:tryCatch, etc. In this case, we should not do any exception
+  // handling.
+  // TODO: Fix API_HANDLE_EXCEPTION() accordingly
+  has_scheduled_throw_ = true;
+  last_error_result_ = result;
+}
+
+void Isolate::RegisterTryCatchHandler(v8::TryCatch* that) {
+  try_catch_handler_ = that;
+}
+
+void Isolate::UnregisterTryCatchHandler(v8::TryCatch* that) {
+  LWNODE_DCHECK(try_catch_handler_ == that);
+  try_catch_handler_ = try_catch_handler_->next_;
+}
+
+v8::TryCatch* Isolate::try_catch_handler() {
+  return try_catch_handler_;
+}
 
 }  // namespace internal
 }  // namespace v8
@@ -64,47 +92,6 @@ IsolateWrap* IsolateWrap::New() {
 void IsolateWrap::Dispose() {
   unlock_gc_release();
   MemoryUtil::gcFull();
-}
-
-bool IsolateWrap::IsExecutionTerminating() {
-  if (has_scheduled_throw_) {
-    return true;
-  }
-  return false;
-}
-
-void IsolateWrap::scheduleThrow(Escargot::ValueRef* result) {
-  // LWNODE_UNIMPLEMENT;
-  // TODO: There are two types of exception handling.
-  // 1. An exception raised when it should not. Usually this happens
-  // when we are using Escargot API, and caused by incorrect development
-  // of our code and/or escargot, i.e., internal error.
-  // 2. An exception raised by running external script. In this case,
-  // it is the external developer's responsibility to handle an exception
-  // using v8:tryCatch, etc. In this case, we should not do any exception
-  // handling.
-  // TODO: Fix API_HANDLE_EXCEPTION() accordingly
-  has_scheduled_throw_ = true;
-  last_error_result = result;
-}
-
-v8::TryCatch* IsolateWrap::try_catch_handler() {
-  return try_catch_handler_;
-}
-
-void IsolateWrap::registerTryCatchHandler(v8::TryCatch* that) {
-  try_catch_handler_ = that;
-}
-
-void IsolateWrap::unregisterTryCatchHandler(v8::TryCatch* that) {
-  LWNODE_DCHECK(try_catch_handler_ == that);
-  try_catch_handler_ =
-      v8::internal::Isolate::getNextTryCatch(try_catch_handler_);
-}
-
-void IsolateWrap::setTerminationOnExternalTryCatch() {
-  v8::internal::Isolate::setTerminationOnExternalTryCatch(
-      try_catch_handler(), reinterpret_cast<void*>(last_error_result));
 }
 
 void IsolateWrap::set_array_buffer_allocator(
