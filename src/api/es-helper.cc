@@ -19,6 +19,7 @@
 #include "extra-data.h"
 #include "isolate.h"
 #include "utils/misc.h"
+#include "utils/string.h"
 
 #include <sstream>
 
@@ -397,6 +398,68 @@ std::string EvalResultHelper::getErrorString(
   }
 
   return oss.str();
+}
+
+ValueRef* EvalResultHelper::compileRun(ContextRef* context,
+                                       const char* source) {
+  auto compileResult = context->scriptParser()->initializeScript(
+      StringRef::createFromUTF8(source, strLength(source)),
+      StringRef::emptyString(),
+      false);
+
+  auto evalResult = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
+        return script->execute(state);
+      },
+      compileResult.script.get());
+
+  LWNODE_CHECK(evalResult.isSuccessful());
+  return evalResult.result;
+}
+
+void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
+  static auto builtinPrint = [](ExecutionStateRef* state,
+                                ValueRef* thisValue,
+                                size_t argc,
+                                ValueRef** argv,
+                                bool isConstructCall) -> ValueRef* {
+    if (argc > 0) {
+      if (argv[0]->isSymbol()) {
+        puts(argv[0]
+                 ->asSymbol()
+                 ->symbolDescriptiveString()
+                 ->toStdUTF8String()
+                 .c_str());
+      } else {
+        puts(argv[0]->toString(state)->toStdUTF8String().c_str());
+      }
+    } else {
+      puts("undefined");
+    }
+    return ValueRef::createUndefined();
+  };
+
+  Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
+    ContextRef* context = state->context();
+
+    FunctionObjectRef::NativeFunctionInfo info(
+        AtomicStringRef::create(context, "print"),
+        builtinPrint,
+        1,
+        true,
+        false);
+
+    context->globalObject()->defineDataProperty(
+        state,
+        StringRef::createFromASCII("print"),
+        FunctionObjectRef::create(state, info),
+        true,
+        true,
+        true);
+
+    return ValueRef::createUndefined();
+  });
 }
 
 ObjectData* ObjectRefHelper::createExtraDataIfNotExist(ObjectRef* object) {

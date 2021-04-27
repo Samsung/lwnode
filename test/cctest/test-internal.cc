@@ -19,12 +19,16 @@
 #include "cctest.h"
 
 #include <EscargotPublic.h>
+#include "api/context.h"
 #include "api/handlescope.h"
+#include "api/isolate.h"
 #include "internal-api.h"
 
+#include "api/es-helper.h"
 #include "api/utils/gc-container.h"
 
 using namespace Escargot;
+using namespace EscargotShim;
 
 class Count {
  public:
@@ -211,6 +215,170 @@ TEST(internal_GCContainer) {
   CcTest::CollectGarbage();
 
   CHECK_LE(g_tracer.getAllocatedCount(), 1);
+}
+
+static int shadow_y_setter_call_count;
+static int shadow_y_getter_call_count;
+
+TEST(internal_Escargot_ShadowObject) {
+  LocalContext env;
+  auto esContext =
+      IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
+
+  EvalResultHelper::attachBuiltinPrint(esContext);
+
+  auto esFunctionTemplate = FunctionTemplateRef::create(
+      AtomicStringRef::emptyAtomicString(),
+      0,
+      false,
+      true,  // isConstruction
+      [](ExecutionStateRef* state,
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
+            state->resolveCallee();
+
+        // newTarget has value when this function called as constructor.
+        if (newTarget.hasValue()) {
+          return thisValue;
+        }
+
+        return ValueRef::createUndefined();
+      });
+
+  auto esInstanceTemplate = esFunctionTemplate->instanceTemplate();
+  auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
+
+  // SetHandler (setNamedPropertyHandler) on esInstanceTemplate
+  ObjectTemplateNamedPropertyHandlerData esNamedPropertyHandlerData;
+  esNamedPropertyHandlerData.getter =
+      [](ExecutionStateRef* state,
+         ObjectRef* esSelf,
+         void* data,
+         const TemplatePropertyNameRef& esPropertyName)
+      -> OptionalRef<ValueRef> {
+    return Escargot::OptionalRef<Escargot::ValueRef>();
+  };
+
+  esNamedPropertyHandlerData.setter =
+      [](ExecutionStateRef* state,
+         ObjectRef* esSelf,
+         void* data,
+         const TemplatePropertyNameRef& esPropertyName,
+         ValueRef* esValue) -> OptionalRef<ValueRef> {
+    return Escargot::OptionalRef<Escargot::ValueRef>();
+  };
+
+  esInstanceTemplate->setNamedPropertyHandler(esNamedPropertyHandlerData);
+
+  // Set Getter/Setter for "y" on esInstanceTemplate
+#ifdef SET_Y_AS_DATA_PROPERTY
+  auto getter =
+      [](ExecutionStateRef* state,
+         ObjectRef* self,
+         ObjectRef::NativeDataAccessorPropertyData* data) -> ValueRef* {
+    shadow_y_getter_call_count++;
+    return ValueRef::create(42);
+  };
+
+  auto setter = [](ExecutionStateRef* state,
+                   ObjectRef* self,
+                   ObjectRef::NativeDataAccessorPropertyData* data,
+                   ValueRef* setterInputData) -> bool {
+    shadow_y_setter_call_count++;
+    return true;
+  };
+
+  struct AccessorPropertyData
+      : public ObjectRef::NativeDataAccessorPropertyData {
+    AccessorPropertyData(bool isWritable,
+                         bool isEnumerable,
+                         bool isConfigurable,
+                         ObjectRef::NativeDataAccessorPropertyGetter getter,
+                         ObjectRef::NativeDataAccessorPropertySetter setter)
+        : ObjectRef::NativeDataAccessorPropertyData(
+              isWritable, isEnumerable, isConfigurable, getter, setter){};
+
+    void* operator new(size_t size) { return GC_MALLOC(size); }
+  };
+
+  auto accessorPropData =
+      new AccessorPropertyData(true, true, true, getter, setter);
+  esInstanceTemplate->setNativeDataAccessorProperty(
+      StringRef::createFromUTF8("y"), accessorPropData);
+#else
+  // SET_Y_AS_VALUE_PROPERTY
+  auto getter = FunctionTemplateRef::create(
+      AtomicStringRef::emptyAtomicString(),
+      0,
+      false,
+      false,
+      [](ExecutionStateRef* state,
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        shadow_y_getter_call_count++;
+        return ValueRef::create(42);
+      });
+
+  auto setter = FunctionTemplateRef::create(
+      AtomicStringRef::emptyAtomicString(),
+      0,
+      false,
+      false,
+      [](ExecutionStateRef* state,
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        shadow_y_setter_call_count++;
+        return ValueRef::createUndefined();
+      });
+
+  esInstanceTemplate->setAccessorProperty(
+      StringRef::createFromUTF8("y"), getter, setter, true, true);
+#endif
+
+  // instantiate (v8::FunctionTemplate::GetFunction)
+  ObjectRef* esFunction = esFunctionTemplate->instantiate(esContext);
+
+  // construct (v8::ObjectTemplate::NewInstance)
+  std::vector<ValueRef*> arguments;
+  auto r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         ObjectRef* self,
+         size_t argc,
+         ValueRef** argv) -> ValueRef* {
+        return self->construct(state, argc, argv);
+      },
+      esFunction,
+      arguments.size(),
+      arguments.data());
+
+  LWNODE_CHECK(r.isSuccessful());
+
+  auto esInstance = r.result->asObject();
+
+  // set esInstance to global.__proto__
+  ObjectRefHelper::setProperty(esContext,
+                               esContext->globalObject(),
+                               StringRef::createFromUTF8("__proto__"),
+                               esInstance);
+
+  // {"enumerable":true,"configurable":true}
+  EvalResultHelper::compileRun(
+      esContext,
+      "print(JSON.stringify(Object.getOwnPropertyDescriptor(this.__"
+      "proto__, \"y\")))");
+
+  EvalResultHelper::compileRun(esContext, "y = 43");
+  CHECK_EQ(1, shadow_y_setter_call_count);
+  CHECK_EQ(42, EvalResultHelper::compileRun(esContext, "y")->asInt32());
+  CHECK_EQ(1, shadow_y_getter_call_count);
 }
 
 #endif

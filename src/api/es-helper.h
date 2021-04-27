@@ -188,6 +188,8 @@ class ArrayBufferHelper {
 
 class EvalResultHelper {
  public:
+  static void attachBuiltinPrint(ContextRef* context);
+  static ValueRef* compileRun(ContextRef* context, const char* source);
   static std::string getErrorString(
       ContextRef* context, const Evaluator::EvaluatorResult& eval_result);
 };
