@@ -10486,91 +10486,95 @@ THREADED_TEST(DeleteAccessor) {
 // }
 
 
-// static void ShadowFunctionCallback(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   args.GetReturnValue().Set(v8_num(42));
-// }
+static void ShadowFunctionCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  args.GetReturnValue().Set(v8_num(42));
+}
 
 
-// static int shadow_y;
-// static int shadow_y_setter_call_count;
-// static int shadow_y_getter_call_count;
+static int shadow_y;
+static int shadow_y_setter_call_count;
+static int shadow_y_getter_call_count;
 
 
-// static void ShadowYSetter(Local<String>,
-//                           Local<Value>,
-//                           const v8::PropertyCallbackInfo<void>&) {
-//   shadow_y_setter_call_count++;
-//   shadow_y = 42;
-// }
+static void ShadowYSetter(Local<String>,
+                          Local<Value>,
+                          const v8::PropertyCallbackInfo<void>&) {
+  shadow_y_setter_call_count++;
+  shadow_y = 42;
+}
 
 
-// static void ShadowYGetter(Local<String> name,
-//                           const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   shadow_y_getter_call_count++;
-//   info.GetReturnValue().Set(v8_num(shadow_y));
-// }
+static void ShadowYGetter(Local<String> name,
+                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  shadow_y_getter_call_count++;
+  info.GetReturnValue().Set(v8_num(shadow_y));
+}
 
 
-// static void ShadowIndexedGet(uint32_t index,
-//                              const v8::PropertyCallbackInfo<v8::Value>&) {
-// }
+static void ShadowIndexedGet(uint32_t index,
+                             const v8::PropertyCallbackInfo<v8::Value>&) {
+}
 
 
-// static void ShadowNamedGet(Local<Name> key,
-//                            const v8::PropertyCallbackInfo<v8::Value>&) {}
+static void ShadowNamedGet(Local<Name> key,
+                           const v8::PropertyCallbackInfo<v8::Value>&) {
+                             shadow_y_getter_call_count = shadow_y_getter_call_count;
+                           }
 
-// THREADED_TEST(ShadowObject) {
-//   shadow_y = shadow_y_setter_call_count = shadow_y_getter_call_count = 0;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
+THREADED_TEST(ShadowObject) {
+  shadow_y = shadow_y_setter_call_count = shadow_y_getter_call_count = 0;
 
-//   Local<ObjectTemplate> global_template = v8::ObjectTemplate::New(isolate);
-//   LocalContext context(nullptr, global_template);
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
-//   t->InstanceTemplate()->SetHandler(
-//       v8::NamedPropertyHandlerConfiguration(ShadowNamedGet));
-//   t->InstanceTemplate()->SetHandler(
-//       v8::IndexedPropertyHandlerConfiguration(ShadowIndexedGet));
-//   Local<ObjectTemplate> proto = t->PrototypeTemplate();
-//   Local<ObjectTemplate> instance = t->InstanceTemplate();
+  Local<ObjectTemplate> global_template = v8::ObjectTemplate::New(isolate);
+  LocalContext context(nullptr, global_template);
 
-//   proto->Set(v8_str("f"),
-//              v8::FunctionTemplate::New(isolate,
-//                                        ShadowFunctionCallback,
-//                                        Local<Value>()));
-//   proto->Set(v8_str("x"), v8_num(12));
+  Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
+  t->InstanceTemplate()->SetHandler(
+      v8::NamedPropertyHandlerConfiguration(ShadowNamedGet));
+  t->InstanceTemplate()->SetHandler(
+      v8::IndexedPropertyHandlerConfiguration(ShadowIndexedGet));
 
-//   instance->SetAccessor(v8_str("y"), ShadowYGetter, ShadowYSetter);
+  Local<ObjectTemplate> proto = t->PrototypeTemplate();
+  Local<ObjectTemplate> instance = t->InstanceTemplate();
 
-//   Local<Value> o = t->GetFunction(context.local())
-//                        .ToLocalChecked()
-//                        ->NewInstance(context.local())
-//                        .ToLocalChecked();
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("__proto__"), o)
-//             .FromJust());
+  proto->Set(v8_str("f"),
+             v8::FunctionTemplate::New(isolate,
+                                       ShadowFunctionCallback,
+                                       Local<Value>()));
+  proto->Set(v8_str("x"), v8_num(12));
 
-//   Local<Value> value =
-//       CompileRun("this.propertyIsEnumerable(0)");
-//   CHECK(value->IsBoolean());
-//   CHECK(!value->BooleanValue(isolate));
+  instance->SetAccessor(v8_str("y"), ShadowYGetter, ShadowYSetter);
 
-//   value = CompileRun("x");
-//   CHECK_EQ(12, value->Int32Value(context.local()).FromJust());
+  Local<Value> o = t->GetFunction(context.local())
+                       .ToLocalChecked()
+                       ->NewInstance(context.local())
+                       .ToLocalChecked();
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("__proto__"), o)
+            .FromJust());
 
-//   value = CompileRun("f()");
-//   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+  Local<Value> value =
+      CompileRun("this.propertyIsEnumerable(0)");
+  CHECK(value->IsBoolean());
+  CHECK(!value->BooleanValue(isolate));
 
-//   CompileRun("y = 43");
-//   CHECK_EQ(1, shadow_y_setter_call_count);
-//   value = CompileRun("y");
-//   CHECK_EQ(1, shadow_y_getter_call_count);
-//   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
-// }
+  value = CompileRun("x");
+  CHECK_EQ(12, value->Int32Value(context.local()).FromJust());
+
+  value = CompileRun("f()");
+  CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+
+  // CompileRun("y = 43");
+  // CHECK_EQ(1, shadow_y_setter_call_count);
+  // value = CompileRun("y");
+  // CHECK_EQ(1, shadow_y_getter_call_count);
+  // CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+}
 
 // THREADED_TEST(ShadowObjectAndDataProperty) {
 //   // Lite mode doesn't make use of feedback vectors, which is what we
@@ -10670,98 +10674,98 @@ THREADED_TEST(DeleteAccessor) {
 //   CHECK(heap_object.IsPropertyCell());
 // }
 
-// THREADED_TEST(SetPrototype) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
+THREADED_TEST(SetPrototype) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   Local<v8::FunctionTemplate> t0 = v8::FunctionTemplate::New(isolate);
-//   t0->InstanceTemplate()->Set(v8_str("x"), v8_num(0));
-//   Local<v8::FunctionTemplate> t1 = v8::FunctionTemplate::New(isolate);
-//   t1->InstanceTemplate()->Set(v8_str("y"), v8_num(1));
-//   Local<v8::FunctionTemplate> t2 = v8::FunctionTemplate::New(isolate);
-//   t2->InstanceTemplate()->Set(v8_str("z"), v8_num(2));
-//   Local<v8::FunctionTemplate> t3 = v8::FunctionTemplate::New(isolate);
-//   t3->InstanceTemplate()->Set(v8_str("u"), v8_num(3));
+  Local<v8::FunctionTemplate> t0 = v8::FunctionTemplate::New(isolate);
+  t0->InstanceTemplate()->Set(v8_str("x"), v8_num(0));
+  Local<v8::FunctionTemplate> t1 = v8::FunctionTemplate::New(isolate);
+  t1->InstanceTemplate()->Set(v8_str("y"), v8_num(1));
+  Local<v8::FunctionTemplate> t2 = v8::FunctionTemplate::New(isolate);
+  t2->InstanceTemplate()->Set(v8_str("z"), v8_num(2));
+  Local<v8::FunctionTemplate> t3 = v8::FunctionTemplate::New(isolate);
+  t3->InstanceTemplate()->Set(v8_str("u"), v8_num(3));
 
-//   Local<v8::Object> o0 = t0->GetFunction(context.local())
-//                              .ToLocalChecked()
-//                              ->NewInstance(context.local())
-//                              .ToLocalChecked();
-//   Local<v8::Object> o1 = t1->GetFunction(context.local())
-//                              .ToLocalChecked()
-//                              ->NewInstance(context.local())
-//                              .ToLocalChecked();
-//   Local<v8::Object> o2 = t2->GetFunction(context.local())
-//                              .ToLocalChecked()
-//                              ->NewInstance(context.local())
-//                              .ToLocalChecked();
-//   Local<v8::Object> o3 = t3->GetFunction(context.local())
-//                              .ToLocalChecked()
-//                              ->NewInstance(context.local())
-//                              .ToLocalChecked();
+  Local<v8::Object> o0 = t0->GetFunction(context.local())
+                             .ToLocalChecked()
+                             ->NewInstance(context.local())
+                             .ToLocalChecked();
+  Local<v8::Object> o1 = t1->GetFunction(context.local())
+                             .ToLocalChecked()
+                             ->NewInstance(context.local())
+                             .ToLocalChecked();
+  Local<v8::Object> o2 = t2->GetFunction(context.local())
+                             .ToLocalChecked()
+                             ->NewInstance(context.local())
+                             .ToLocalChecked();
+  Local<v8::Object> o3 = t3->GetFunction(context.local())
+                             .ToLocalChecked()
+                             ->NewInstance(context.local())
+                             .ToLocalChecked();
 
-//   CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK(o0->SetPrototype(context.local(), o1).FromJust());
-//   CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(1, o0->Get(context.local(), v8_str("y"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK(o1->SetPrototype(context.local(), o2).FromJust());
-//   CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(1, o0->Get(context.local(), v8_str("y"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(2, o0->Get(context.local(), v8_str("z"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK(o2->SetPrototype(context.local(), o3).FromJust());
-//   CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(1, o0->Get(context.local(), v8_str("y"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(2, o0->Get(context.local(), v8_str("z"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
-//   CHECK_EQ(3, o0->Get(context.local(), v8_str("u"))
-//                   .ToLocalChecked()
-//                   ->Int32Value(context.local())
-//                   .FromJust());
+  CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK(o0->SetPrototype(context.local(), o1).FromJust());
+  CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(1, o0->Get(context.local(), v8_str("y"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK(o1->SetPrototype(context.local(), o2).FromJust());
+  CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(1, o0->Get(context.local(), v8_str("y"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(2, o0->Get(context.local(), v8_str("z"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK(o2->SetPrototype(context.local(), o3).FromJust());
+  CHECK_EQ(0, o0->Get(context.local(), v8_str("x"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(1, o0->Get(context.local(), v8_str("y"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(2, o0->Get(context.local(), v8_str("z"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
+  CHECK_EQ(3, o0->Get(context.local(), v8_str("u"))
+                  .ToLocalChecked()
+                  ->Int32Value(context.local())
+                  .FromJust());
 
-//   Local<Value> proto =
-//       o0->Get(context.local(), v8_str("__proto__")).ToLocalChecked();
-//   CHECK(proto->IsObject());
-//   CHECK(proto.As<v8::Object>()->Equals(context.local(), o1).FromJust());
+  Local<Value> proto =
+      o0->Get(context.local(), v8_str("__proto__")).ToLocalChecked();
+  CHECK(proto->IsObject());
+  CHECK(proto.As<v8::Object>()->Equals(context.local(), o1).FromJust());
 
-//   Local<Value> proto0 = o0->GetPrototype();
-//   CHECK(proto0->IsObject());
-//   CHECK(proto0.As<v8::Object>()->Equals(context.local(), o1).FromJust());
+  Local<Value> proto0 = o0->GetPrototype();
+  CHECK(proto0->IsObject());
+  CHECK(proto0.As<v8::Object>()->Equals(context.local(), o1).FromJust());
 
-//   Local<Value> proto1 = o1->GetPrototype();
-//   CHECK(proto1->IsObject());
-//   CHECK(proto1.As<v8::Object>()->Equals(context.local(), o2).FromJust());
+  Local<Value> proto1 = o1->GetPrototype();
+  CHECK(proto1->IsObject());
+  CHECK(proto1.As<v8::Object>()->Equals(context.local(), o2).FromJust());
 
-//   Local<Value> proto2 = o2->GetPrototype();
-//   CHECK(proto2->IsObject());
-//   CHECK(proto2.As<v8::Object>()->Equals(context.local(), o3).FromJust());
-// }
+  Local<Value> proto2 = o2->GetPrototype();
+  CHECK(proto2->IsObject());
+  CHECK(proto2.As<v8::Object>()->Equals(context.local(), o3).FromJust());
+}
 
 
 // // Getting property names of an object with a prototype chain that
