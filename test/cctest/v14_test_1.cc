@@ -217,3 +217,31 @@ TEST(ArrayBuffer_Release) {
 
   // todo: verify if releasing context scopes works using context scope
 }
+
+static std::string print_result;
+
+TEST(AddPrintFunctionUsingFunctionTemplate) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+
+  static v8::FunctionCallback callback =
+      [](const FunctionCallbackInfo<Value>& args) -> void {
+    LWNODE_CHECK(args.Length() == 1 && args[0]->IsString());
+    String::Utf8Value utf8(args.GetIsolate(), args[0]);
+    printf("%s\n", *utf8);
+    print_result = *utf8;
+  };
+
+  v8::Local<v8::Function> function =
+      v8::FunctionTemplate::New(isolate, callback)
+          ->GetFunction(context)
+          .ToLocalChecked();
+
+  v8::Local<v8::Object> target = context->Global();
+  target->Set(context, v8_str("print"), function).Check();
+
+  CompileRun("print('hello')");
+  CHECK_EQ(print_result.compare("hello"), 0);
+}
