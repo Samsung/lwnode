@@ -20,7 +20,7 @@
 #include "escargot-sample.h"
 #include "include/v8.h"
 // internals
-#include "api/flags.h"
+#include "api/utils/flags.h"
 #include "api/utils/gc.h"
 
 using namespace v8;
