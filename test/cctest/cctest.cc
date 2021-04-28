@@ -15,7 +15,10 @@
  */
 
 #include "cctest.h"
+#if defined(CCTEST_ENGINE_ESCARGOT)
 #include "internal-api.h"
+#endif
+#include "libplatform/libplatform.h"
 
 v8::Isolate* CcTest::isolate_ = nullptr;
 v8::Context::Scope* CcTest::contextScope_ = nullptr;
@@ -32,7 +35,6 @@ void LocalContext::Initialize(v8::Isolate* isolate,
                               v8::ExtensionConfiguration* extensions,
                               v8::Local<v8::ObjectTemplate> global_template,
                               v8::Local<v8::Value> global_object) {
-  isolate->Enter();
   v8::HandleScope scope(isolate);
   v8::Local<v8::Context> context =
       v8::Context::New(isolate, extensions, global_template, global_object);
@@ -48,7 +50,6 @@ v8::Isolate* CcTest::isolate() {
         v8::ArrayBuffer::Allocator::NewDefaultAllocator();
     CcTest::isolate_ = v8::Isolate::New(create_params_);
   }
-  isolate_->Enter();
   return isolate_;
 }
 
@@ -72,18 +73,23 @@ void CcTest::TearDown() {
   if (isolate_ != nullptr) {
     isolate_->Dispose();
     delete create_params_.array_buffer_allocator;
+    isolate_ = nullptr;
   }
 }
 
 void CcTest::CollectGarbage() {
+#if defined(CCTEST_ENGINE_ESCARGOT)
   MemoryUtil::gc();
+#endif
 }
 
 void CcTest::CollectAllGarbage(v8::Isolate* isolate) {
+#if defined(CCTEST_ENGINE_ESCARGOT)
   if (isolate) {
     printf("(!) gc per isolate isn't supported yet.");
   }
   MemoryUtil::gcFull();
+#endif
 }
 
 static inline bool startsWith(const std::string& string,
@@ -92,7 +98,9 @@ static inline bool startsWith(const std::string& string,
          (string.compare(0, prefix.size(), prefix) == 0);
 }
 
-void InitializeTest::SetUp() {}
+void InitializeTest::SetUp() {
+  CcTest::isolate()->Enter();
+}
 
 void InitializeTest::TearDown() {
   CcTest::disposeScope();
@@ -109,16 +117,21 @@ int main(int argc, char* argv[]) {
       std::string f =
           std::string("*") + arg.substr(strlen("-f=")) + std::string("*");
       ::testing::GTEST_FLAG(filter) = f.c_str();
+#if defined(CCTEST_ENGINE_ESCARGOT)
     } else if (startsWith(arg, std::string("--trace-call"))) {
       EscargotShim::Flags::add(EscargotShim::FlagType::TraceCall);
     } else if (startsWith(arg, std::string("--trace-gc"))) {
       EscargotShim::Flags::add(EscargotShim::FlagType::TraceGC);
+#endif
     } else {
       printf("unknown options: %s\n", argv[i]);
     }
   }
 
   ::testing::InitGoogleTest(&argc, argv);
+
+  std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
+  v8::V8::InitializePlatform(platform.get());
 
   v8::V8::Initialize();
 
