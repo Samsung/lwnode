@@ -17,6 +17,8 @@
 #pragma once
 
 #include <cstdint>
+#include <set>
+#include <string>
 #include "compiler.h"
 
 namespace EscargotShim {
@@ -40,10 +42,13 @@ class LWNODE_EXPORT Flags {
   static void add(flag_t flags) { s_flags |= flags; }
   static flag_t get() { return s_flags; };
 
-  static bool isTraceCallEnabled() { return s_flags & FlagType::TraceCall; }
+  static bool isTraceCallEnabled(std::string id = "*");
   static bool isTraceGCEnabled() { return s_flags & FlagType::TraceGC; }
 
+  static void setTraceCallId(std::string id) { s_trace_ids.insert(id); }
+
  private:
+  static std::set<std::string> s_trace_ids;
   static flag_t s_flags;
 };
 

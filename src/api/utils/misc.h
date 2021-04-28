@@ -74,14 +74,25 @@
 #endif
 
 #if !defined(NDEBUG)
-#define LWNODE_CALL_TRACE(msg, ...)                                            \
-  if (EscargotShim::Flags::isTraceCallEnabled()) {                             \
-    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" TRACE_FMT " " msg COLOR_RESET,           \
+#define LWNODE_CALL_TRACE_ID(id, prefix, msg, ...)                             \
+  if (EscargotShim::Flags::isTraceCallEnabled(id)) {                           \
+    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix TRACE_FMT " " msg COLOR_RESET,    \
                     TRACE_ARGS,                                                \
                     ##__VA_ARGS__);                                            \
   }
+#define LWNODE_CALL_TRACE(msg, ...)                                            \
+  LWNODE_CALL_TRACE_ID("1", "", msg, ##__VA_ARGS__);
+
+#define LWNODE_CALL_TRACE_2(msg, ...)                                          \
+  LWNODE_CALL_TRACE_ID("2", "\t", msg, ##__VA_ARGS__);
+
+#define LWNODE_CALL_TRACE_3(msg, ...)                                          \
+  LWNODE_CALL_TRACE_ID("3", "\t\t", msg, ##__VA_ARGS__);
 #else
+#define LWNODE_CALL_TRACE_ID(id, prefix, msg, ...)
 #define LWNODE_CALL_TRACE(msg, ...)
+#define LWNODE_CALL_TRACE_2(msg, ...)
+#define LWNODE_CALL_TRACE_3(msg, ...)
 #endif
 
 #if !defined(NDEBUG)

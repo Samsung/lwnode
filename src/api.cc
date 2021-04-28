@@ -19,6 +19,7 @@
 // found in the LICENSE file.
 
 #include "api.h"
+#include <sstream>
 #include "base.h"
 
 using namespace Escargot;
@@ -177,9 +178,19 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     } else if (strEquals("--trace-gc", arg)) {
       flags |= FlagType::TraceGC;
       checked = true;
-    } else if (strEquals("--trace-call", arg)) {
+    } else if (strStartsWith(arg, "--trace-call")) {
       flags |= FlagType::TraceCall;
       checked = true;
+
+      std::string str(arg);
+      std::string::size_type pos = str.find_first_of('=');
+      if (std::string::npos != pos) {
+        std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+          Flags::setTraceCallId(token);
+        }
+      }
     } else if (remove_flags && (strStartsWith(arg, "--debug") ||
                                 strStartsWith(arg, "--stack-size=") ||
                                 strStartsWith(arg, "--nolazy") ||

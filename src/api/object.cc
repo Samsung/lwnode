@@ -39,8 +39,11 @@ static ValueRef* accessorPropertyGetter(
 
   auto v8Getter = wrapper->m_getter;
   LWNODE_CHECK_NOT_NULL(v8Getter);
-  v8Getter(v8::Utils::ToLocal<Name>(VAL(wrapper->m_name)),
-           info);
+  LWNODE_CALL_TRACE_2(
+      "name: %s",
+      VAL(wrapper->m_name)->value()->asString()->toStdUTF8String().c_str())
+
+  v8Getter(v8::Utils::ToLocal<Name>(VAL(wrapper->m_name)), info);
 
   return VAL(*info.GetReturnValue().Get())->value();
 }
@@ -62,9 +65,7 @@ static bool accessorPropertySetter(
 
   auto v8Setter = wrapper->m_setter;
   LWNODE_CHECK_NOT_NULL(v8Setter);
-  v8Setter(v8::Utils::ToLocal<Name>(VAL(wrapper->m_name)),
-           v8SetValue,
-           info);
+  v8Setter(v8::Utils::ToLocal<Name>(VAL(wrapper->m_name)), v8SetValue, info);
 
   return true;
 }

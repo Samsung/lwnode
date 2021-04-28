@@ -15,10 +15,10 @@
  */
 
 #include "handle.h"
+#include "api.h"
 #include "context.h"
 #include "isolate.h"
 #include "utils/misc.h"
-#include "api.h"
 
 using namespace Escargot;
 
@@ -44,7 +44,7 @@ ValueWrap::ValueWrap(void* ptr, HandleWrap::Type type) {
 
 ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
   auto value = new ValueWrap(esValue, Type::JsValue);
-  LWNODE_CALL_TRACE("%p | %p", esValue, value);
+  LWNODE_CALL_TRACE_2("es:%p | %p", esValue, value);
   return value;
 }
 
@@ -55,7 +55,7 @@ ValueRef* ValueWrap::value() const {
 
 ValueWrap* ValueWrap::createContext(ContextWrap* lwContext) {
   auto value = new ValueWrap(lwContext, Type::Context);
-  LWNODE_CALL_TRACE("%p | %p", lwContext, value);
+  LWNODE_CALL_TRACE_2("es:%p | %p", lwContext, value);
   return value;
 };
 
@@ -66,7 +66,7 @@ ContextWrap* ValueWrap::context() const {
 
 ValueWrap* ValueWrap::createScript(ScriptRef* esScript) {
   auto value = new ValueWrap(esScript, Type::Script);
-  LWNODE_CALL_TRACE("%p | %p", esScript, value);
+  LWNODE_CALL_TRACE_2("es:%p | %p", esScript, value);
   return value;
 };
 
