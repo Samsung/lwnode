@@ -275,8 +275,7 @@ static ValueRef* builtinGc(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 }
 
-void Platform::didPromiseJobEnqueued(ContextRef* relatedContext,
-                                     PromiseObjectRef* obj) {
+void Platform::markJSJobEnqueued(ContextRef* relatedContext) {
   // ignore. we always check pending job after eval script
   printf("didPromiseJobEnqueued\n");
 }
@@ -576,8 +575,8 @@ bool App::evalScript(ContextRef* context,
     puts(evalResult.resultOrErrorToString(context)->toStdUTF8String().data());
   }
 
-  while (context->vmInstance()->hasPendingPromiseJob()) {
-    auto jobResult = context->vmInstance()->executePendingPromiseJob();
+  while (context->vmInstance()->hasPendingJob()) {
+    auto jobResult = context->vmInstance()->executePendingJob();
     if (shouldPrintScriptResult) {
       if (jobResult.error) {
         printf(

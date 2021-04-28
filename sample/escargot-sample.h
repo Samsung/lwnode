@@ -27,8 +27,7 @@ namespace EscargotSample {
 
 class Platform : public PlatformRef {
  public:
-  void didPromiseJobEnqueued(ContextRef* relatedContext,
-                             PromiseObjectRef* obj) override;
+  void markJSJobEnqueued(ContextRef* relatedContext) override;
   void* onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
                                             ArrayBufferObjectRef* obj,
                                             size_t sizeInByte) override;
