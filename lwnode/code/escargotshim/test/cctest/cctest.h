@@ -16,10 +16,13 @@
 
 #ifndef __ESCARGOTSHIM_CCTEST__
 #define __ESCARGOTSHIM_CCTEST__
+#include <cstddef>
+#include <stdint.h>
+#include <cstring>
 
+#include "globals.h"
 #include "gtest/gtest.h"
 #include "v8.h"
-#include "globals.h"
 
 #define TEST_CAST_NAME CCTest
 
@@ -43,6 +46,19 @@
 #define CHECK_GE(lhs, rhs) EXPECT_GE(lhs, rhs)
 #define CHECK_GT(lhs, rhs) EXPECT_GT(lhs, rhs)
 #define CHECK_NOT_NULL(x) CHECK((x) != nullptr)
+
+#ifndef FATAL
+#define FATAL(msg, ...)                                                        \
+  do {                                                                         \
+    fprintf(stderr,                                                            \
+            "Fatal error in %s on line %d: %s\n",                              \
+            __FILE__,                                                          \
+            __LINE__,                                                          \
+            msg);                                                              \
+    fflush(stderr);                                                            \
+    abort();                                                                   \
+  } while (0)
+#endif
 
 class CcTest {
  public:
@@ -74,17 +90,14 @@ static inline v8::Local<v8::String> v8_str(const char* x) {
   return v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), x).ToLocalChecked();
 }
 
-
 static inline v8::Local<v8::String> v8_str(v8::Isolate* isolate,
                                            const char* x) {
   return v8::String::NewFromUtf8(isolate, x).ToLocalChecked();
 }
 
-
 static inline v8::Local<v8::Symbol> v8_symbol(const char* name) {
   return v8::Symbol::New(v8::Isolate::GetCurrent(), v8_str(name));
 }
-
 
 static inline v8::Local<v8::Script> v8_compile(v8::Local<v8::String> x) {
   v8::Local<v8::Script> result;
@@ -112,10 +125,13 @@ static inline int32_t v8_run_int32value(v8::Local<v8::Script> script) {
 }
 
 static inline v8::Local<v8::Script> CompileWithOrigin(
-    v8::Local<v8::String> source, v8::Local<v8::String> origin_url,
+    v8::Local<v8::String> source,
+    v8::Local<v8::String> origin_url,
     v8::Local<v8::Boolean> is_shared_cross_origin) {
-  v8::ScriptOrigin origin(origin_url, v8::Local<v8::Integer>(),
-                          v8::Local<v8::Integer>(), is_shared_cross_origin);
+  v8::ScriptOrigin origin(origin_url,
+                          v8::Local<v8::Integer>(),
+                          v8::Local<v8::Integer>(),
+                          is_shared_cross_origin);
   v8::ScriptCompiler::Source script_source(source, origin);
   return v8::ScriptCompiler::Compile(
              v8::Isolate::GetCurrent()->GetCurrentContext(), &script_source)
@@ -123,16 +139,17 @@ static inline v8::Local<v8::Script> CompileWithOrigin(
 }
 
 static inline v8::Local<v8::Script> CompileWithOrigin(
-    v8::Local<v8::String> source, const char* origin_url,
+    v8::Local<v8::String> source,
+    const char* origin_url,
     bool is_shared_cross_origin) {
-  return CompileWithOrigin(source, v8_str(origin_url),
-                           v8_bool(is_shared_cross_origin));
+  return CompileWithOrigin(
+      source, v8_str(origin_url), v8_bool(is_shared_cross_origin));
 }
 
 static inline v8::Local<v8::Script> CompileWithOrigin(
     const char* source, const char* origin_url, bool is_shared_cross_origin) {
-  return CompileWithOrigin(v8_str(source), v8_str(origin_url),
-                           v8_bool(is_shared_cross_origin));
+  return CompileWithOrigin(
+      v8_str(source), v8_str(origin_url), v8_bool(is_shared_cross_origin));
 }
 
 // Helper functions that compile and run the source.
@@ -142,7 +159,6 @@ static inline v8::MaybeLocal<v8::Value> CompileRun(
       .ToLocalChecked()
       ->Run(context);
 }
-
 
 static inline v8::Local<v8::Value> CompileRunChecked(v8::Isolate* isolate,
                                                      const char* source) {
@@ -154,7 +170,6 @@ static inline v8::Local<v8::Value> CompileRunChecked(v8::Isolate* isolate,
   return script->Run(context).ToLocalChecked();
 }
 
-
 static inline v8::Local<v8::Value> CompileRun(v8::Local<v8::String> source) {
   v8::Local<v8::Value> result;
   if (v8_compile(source)
@@ -165,15 +180,14 @@ static inline v8::Local<v8::Value> CompileRun(v8::Local<v8::String> source) {
   return v8::Local<v8::Value>();
 }
 
-
 // Helper functions that compile and run the source.
 static inline v8::Local<v8::Value> CompileRun(const char* source) {
   return CompileRun(v8_str(source));
 }
 
-
 static inline v8::Local<v8::Value> CompileRun(
-    v8::Local<v8::Context> context, v8::ScriptCompiler::Source* script_source,
+    v8::Local<v8::Context> context,
+    v8::ScriptCompiler::Source* script_source,
     v8::ScriptCompiler::CompileOptions options) {
   v8::Local<v8::Value> result;
   if (v8::ScriptCompiler::Compile(context, script_source, options)
@@ -184,7 +198,6 @@ static inline v8::Local<v8::Value> CompileRun(
   }
   return v8::Local<v8::Value>();
 }
-
 
 // Helper functions that compile and run the source with given origin.
 static inline v8::Local<v8::Value> CompileRunWithOrigin(const char* source,
@@ -197,10 +210,9 @@ static inline v8::Local<v8::Value> CompileRunWithOrigin(const char* source,
                           v8::Integer::New(isolate, line_number),
                           v8::Integer::New(isolate, column_number));
   v8::ScriptCompiler::Source script_source(v8_str(source), origin);
-  return CompileRun(context, &script_source,
-                    v8::ScriptCompiler::CompileOptions());
+  return CompileRun(
+      context, &script_source, v8::ScriptCompiler::CompileOptions());
 }
-
 
 static inline v8::Local<v8::Value> CompileRunWithOrigin(
     v8::Local<v8::String> source, const char* origin_url) {
@@ -208,10 +220,9 @@ static inline v8::Local<v8::Value> CompileRunWithOrigin(
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
   v8::ScriptCompiler::Source script_source(
       source, v8::ScriptOrigin(v8_str(origin_url)));
-  return CompileRun(context, &script_source,
-                    v8::ScriptCompiler::CompileOptions());
+  return CompileRun(
+      context, &script_source, v8::ScriptCompiler::CompileOptions());
 }
-
 
 static inline v8::Local<v8::Value> CompileRunWithOrigin(
     const char* source, const char* origin_url) {
@@ -225,7 +236,6 @@ static inline void ExpectString(const char* code, const char* expected) {
   CHECK_EQ(0, strcmp(expected, *utf8));
 }
 
-
 static inline void ExpectInt32(const char* code, int expected) {
   v8::Local<v8::Value> result = CompileRun(code);
   CHECK(result->IsInt32());
@@ -234,23 +244,19 @@ static inline void ExpectInt32(const char* code, int expected) {
                .FromJust());
 }
 
-
 static inline void ExpectBoolean(const char* code, bool expected) {
   v8::Local<v8::Value> result = CompileRun(code);
   CHECK(result->IsBoolean());
   CHECK_EQ(expected, result->BooleanValue(v8::Isolate::GetCurrent()));
 }
 
-
 static inline void ExpectTrue(const char* code) {
   ExpectBoolean(code, true);
 }
 
-
 static inline void ExpectFalse(const char* code) {
   ExpectBoolean(code, false);
 }
-
 
 static inline void ExpectObject(const char* code,
                                 v8::Local<v8::Value> expected) {
@@ -258,18 +264,15 @@ static inline void ExpectObject(const char* code,
   CHECK(result->SameValue(expected));
 }
 
-
 static inline void ExpectUndefined(const char* code) {
   v8::Local<v8::Value> result = CompileRun(code);
   CHECK(result->IsUndefined());
 }
 
-
 static inline void ExpectNull(const char* code) {
   v8::Local<v8::Value> result = CompileRun(code);
   CHECK(result->IsNull());
 }
-
 
 static inline void CheckDoubleEquals(double expected, double actual) {
   const double kEpsilon = 1e-10;
@@ -315,7 +318,8 @@ class LocalContext {
   }
 
  private:
-  void Initialize(v8::Isolate* isolate, v8::ExtensionConfiguration* extensions,
+  void Initialize(v8::Isolate* isolate,
+                  v8::ExtensionConfiguration* extensions,
                   v8::Local<v8::ObjectTemplate> global_template,
                   v8::Local<v8::Value> global_object);
 
