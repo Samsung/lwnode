@@ -19,5 +19,20 @@
 namespace EscargotShim {
 
 flag_t Flags::s_flags = FlagType::Empty;
+std::set<std::string> Flags::s_trace_ids;
+
+bool Flags::isTraceCallEnabled(std::string id) {
+  if (!(s_flags & FlagType::TraceCall)) {
+    return false;
+  }
+
+  if (!s_trace_ids.empty()) {
+    if (s_trace_ids.find(id) == s_trace_ids.end()) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 }  // namespace EscargotShim

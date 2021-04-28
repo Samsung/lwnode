@@ -76,12 +76,12 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
 IsolateWrap::IsolateWrap() {
-  LWNODE_CALL_TRACE("malc: %p", this);
+  LWNODE_CALL_TRACE_2("malc: %p", this);
 
   lock_gc_release();
 
   Memory::gcRegisterFinalizer(
-      this, [](void* self) { LWNODE_CALL_TRACE("free: %p", self); });
+      this, [](void* self) { LWNODE_CALL_TRACE_2("free: %p", self); });
 }
 
 IsolateWrap* IsolateWrap::New() {
@@ -189,7 +189,7 @@ void IsolateWrap::pushHandleScope(v8::HandleScope* handleScope) {
 void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
   LWNODE_CHECK(handleScopes_.back()->v8HandleScope() == handleScope);
 
-  LWNODE_CALL_TRACE();
+  LWNODE_CALL_TRACE_2();
   handleScopes_.back()->clear();
 
   handleScopes_.pop_back();
@@ -212,13 +212,13 @@ void IsolateWrap::escapeHandle(HandleWrap* value) {
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  LWNODE_CALL_TRACE("%p", context);
+  LWNODE_CALL_TRACE_2("%p", context);
   contextScopes_.push_back(context);
 }
 
 void IsolateWrap::popContext(ContextWrap* context) {
   LWNODE_CHECK(contextScopes_.back() == context);
-  LWNODE_CALL_TRACE("%p", context);
+  LWNODE_CALL_TRACE_2("%p", context);
   contextScopes_.pop_back();
 }
 
@@ -232,13 +232,13 @@ ContextWrap* IsolateWrap::GetCurrentContext() {
 }
 
 void IsolateWrap::addEternal(GCManagedObject* value) {
-  LWNODE_CALL_TRACE("%p", value);
+  LWNODE_CALL_TRACE_2("%p", value);
   eternals_.push_back(value);
 }
 
 SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   // @check replace this container if this function is called a lot.
-  LWNODE_CALL_TRACE();
+  LWNODE_CALL_TRACE_2();
 
   for (size_t i = 0; i < privateSymbols_.size(); i++) {
     if (privateSymbols_[i]->description()->equals(esString)) {

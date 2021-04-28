@@ -80,7 +80,7 @@ void GCTracer::add(Escargot::ObjectRef* ptr, std::string description) {
 }
 
 void GCTracer::setAddressDeallocatd(void* gcPtr) {
-  LWNODE_CALL_TRACE("de-allocated: %p", gcPtr);
+  LWNODE_CALL_TRACE_3("de-allocated: %p", gcPtr);
   LWNODE_CHECK_NOT_NULL(gcPtr);
 
   for (auto& it : registeredAddress_) {
