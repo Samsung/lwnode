@@ -46,6 +46,8 @@ class ContextWrap : public gc {
   void setReturnValue(Escargot::Evaluator::EvaluatorResult r);
   Escargot::Evaluator::EvaluatorResult returnValue();
 
+  Escargot::ObjectRef* GetExtrasBindingObject();
+
  private:
   EmbedderDataMap* embedder_data_{nullptr};
 
@@ -55,6 +57,7 @@ class ContextWrap : public gc {
 
   IsolateWrap* isolate_ = nullptr;
   Escargot::ContextRef* context_ = nullptr;
+  Escargot::ObjectRef* bindingObject_ = nullptr;
   Escargot::Evaluator::EvaluatorResult return_value_;
 };
 
