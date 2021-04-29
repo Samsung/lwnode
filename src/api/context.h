@@ -43,9 +43,6 @@ class ContextWrap : public gc {
   void SetAlignedPointerInEmbedderData(int index, void* value);
   void* GetAlignedPointerFromEmbedderData(int index);
 
-  void setReturnValue(Escargot::Evaluator::EvaluatorResult r);
-  Escargot::Evaluator::EvaluatorResult returnValue();
-
   Escargot::ObjectRef* GetExtrasBindingObject();
 
  private:
@@ -58,7 +55,6 @@ class ContextWrap : public gc {
   IsolateWrap* isolate_ = nullptr;
   Escargot::ContextRef* context_ = nullptr;
   Escargot::ObjectRef* bindingObject_ = nullptr;
-  Escargot::Evaluator::EvaluatorResult return_value_;
 };
 
 }  // namespace EscargotShim

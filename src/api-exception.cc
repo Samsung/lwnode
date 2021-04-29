@@ -23,6 +23,11 @@ using namespace EscargotShim;
 namespace v8 {
 // --- E x c e p t i o n s ---
 
+// The type of 'exception_' is 'Escargot::ValueRef*.
+static inline Escargot::ValueRef* toEsValue(void* exception) {
+  return reinterpret_cast<Escargot::ValueRef*>(exception);
+}
+
 v8::TryCatch::TryCatch(v8::Isolate* isolate)
     : isolate_(reinterpret_cast<i::Isolate*>(isolate)),
       next_(isolate_->try_catch_handler()),
@@ -30,9 +35,36 @@ v8::TryCatch::TryCatch(v8::Isolate* isolate)
       can_continue_(true),
       capture_message_(true),
       rethrow_(false),
-      has_terminated_(false) {}
+      has_terminated_(false) {
+  ResetInternal();
+  isolate_->RegisterTryCatchHandler(this);
+}
 
-v8::TryCatch::~TryCatch() {}
+v8::TryCatch::~TryCatch() {
+  if (rethrow_) {
+    v8::Isolate* v8Isolate = IsolateWrap::toV8(isolate_);
+    v8::HandleScope scope(v8Isolate);
+    v8::Local<v8::Value> v8Exception =
+        v8::Local<v8::Value>::New(v8Isolate, Exception());
+    if (HasCaught() && capture_message_) {
+      // TODO
+      // If an exception was caught and rethrow_ is indicated, the saved
+      // message, script, and location need to be restored to Isolate TLS
+      // for reuse.  capture_message_ needs to be disabled so that Throw()
+      // does not create a new message.
+    }
+    isolate_->UnregisterTryCatchHandler(this);
+    reinterpret_cast<Isolate*>(isolate_)->ThrowException(v8Exception);
+  } else {
+    if (HasCaught() && isolate_->has_scheduled_exception()) {
+      // If an exception was caught but is still scheduled because no API call
+      // promoted it, then it is canceled to prevent it from being propagated.
+      // Note that this will not cancel termination exceptions.
+      isolate_->CancelScheduledExceptionFromTryCatch(this);
+    }
+    isolate_->UnregisterTryCatchHandler(this);
+  }
+}
 
 void* v8::TryCatch::operator new(size_t) {
   LWNODE_UNIMPLEMENT;
@@ -50,14 +82,7 @@ void v8::TryCatch::operator delete[](void*, size_t) {
 }
 
 bool v8::TryCatch::HasCaught() const {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
-
-  if (lwContext->returnValue().isSuccessful()) {
-    return false;
-  }
-
-  return true;
+  return !IsolateWrap::fromV8(isolate_)->isHole(toEsValue(exception_));
 }
 
 bool v8::TryCatch::CanContinue() const {
@@ -69,36 +94,20 @@ bool v8::TryCatch::HasTerminated() const {
 }
 
 v8::Local<v8::Value> v8::TryCatch::ReThrow() {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
-
-  if (lwContext->returnValue().isSuccessful()) {
-    return Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::createNull());
+  if (!HasCaught()) {
+    return v8::Local<v8::Value>();
   }
-
-  LWNODE_CHECK(lwContext->returnValue().error.hasValue());
-  auto r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState, ValueRef* value) -> ValueRef* {
-        esState->throwException(value);
-        return value;
-      },
-      lwContext->returnValue().error.value());
-
-  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.error.value());
+  rethrow_ = true;
+  return v8::Utils::ToLocal<Value>(IsolateWrap::fromV8(isolate_)->undefined());
 }
 
 v8::Local<Value> v8::TryCatch::Exception() const {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
-
-  if (lwContext->returnValue().isSuccessful()) {
-    return Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::createNull());
+  if (HasCaught()) {
+    return v8::Utils::NewLocal<Value>(IsolateWrap::toV8(isolate_),
+                                      toEsValue(exception_));
+  } else {
+    return v8::Local<Value>();
   }
-
-  LWNODE_CHECK(lwContext->returnValue().error.hasValue());
-  return Utils::NewLocal<Value>(lwIsolate->toV8(),
-                                lwContext->returnValue().error.value());
 }
 
 MaybeLocal<Value> v8::TryCatch::StackTrace(Local<Context> context,
@@ -117,9 +126,9 @@ v8::Local<v8::Message> v8::TryCatch::Message() const {
 void v8::TryCatch::Reset() {}
 
 void v8::TryCatch::ResetInternal() {
-  auto hole = IsolateWrap::fromV8(isolate_)->hole();
-  exception_ = hole;
-  message_obj_ = hole;
+  auto esHole = IsolateWrap::fromV8(isolate_)->hole()->value();
+  exception_ = esHole;
+  message_obj_ = esHole;
 }
 
 void v8::TryCatch::SetVerbose(bool value) {

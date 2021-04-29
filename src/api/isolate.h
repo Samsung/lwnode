@@ -32,13 +32,23 @@ class Isolate : public gc {
   void SetTerminationOnExternalTryCatch();
   void ScheduleThrow(Escargot::ValueRef* result);
   bool IsExecutionTerminating();
+  void CancelScheduledExceptionFromTryCatch(v8::TryCatch* that);
+  void ThrowException(Escargot::ValueRef* value);
 
   TryCatch* try_catch_handler();
 
+  Escargot::ValueRef* scheduled_exception();
+  bool has_scheduled_exception();
+  void clear_scheduled_exception();
+
+  virtual EscargotShim::ValueWrap* hole() = 0;
+  virtual bool isHole(const EscargotShim::ValueWrap* wrap) = 0;
+  virtual bool isHole(const Escargot::ValueRef* ref) = 0;
+
+ protected:
+  Escargot::ValueRef* scheduled_exception_{nullptr};
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
-  Escargot::ValueRef* last_error_result_{nullptr};
-  bool has_scheduled_throw_{false};
 };
 }  // namespace internal
 }  // namespace v8
@@ -61,6 +71,10 @@ class IsolateWrap final : public v8::internal::Isolate {
   static v8::Isolate* toV8(IsolateWrap* iso) {
     return reinterpret_cast<v8::Isolate*>(iso);
   }
+  static v8::Isolate* toV8(v8::internal::Isolate* iso) {
+    return reinterpret_cast<v8::Isolate*>(iso);
+  }
+
   static IsolateWrap* fromV8(v8::Isolate* iso) {
     return reinterpret_cast<IsolateWrap*>(iso);
   }
@@ -127,12 +141,15 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   ValueWrap* getGlobal(const int idex);
   ValueWrap* undefined();
-  ValueWrap* hole();
+  ValueWrap* hole() override;
   ValueWrap* null();
   ValueWrap* trueValue();
   ValueWrap* falseValue();
   ValueWrap* emptyString();
   ValueWrap* defaultReturnValue();
+
+  bool isHole(const ValueWrap* wrap) override;
+  bool isHole(const Escargot::ValueRef* ref) override;
 
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
