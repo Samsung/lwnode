@@ -192,6 +192,7 @@ v8::Isolate* Context::GetIsolate() {
 }
 
 v8::Local<v8::Object> Context::Global() {
+  LWNODE_CALL_TRACE();
   auto lwContext = VAL(this)->context();
   GlobalObjectRef* esGlobalObject = lwContext->get()->globalObject();
 
@@ -204,7 +205,10 @@ void Context::DetachGlobal() {
 }
 
 Local<v8::Object> Context::GetExtrasBindingObject() {
-  LWNODE_RETURN_LOCAL(Object);
+  LWNODE_CALL_TRACE();
+  auto lwContext = VAL(this)->context();
+  return Utils::NewLocal<Object>(lwContext->GetIsolate()->toV8(),
+                                 lwContext->GetExtrasBindingObject());
 }
 
 void Context::AllowCodeGenerationFromStrings(bool allow) {}

@@ -16,7 +16,10 @@
 
 #include "context.h"
 #include "base.h"
+#include "es-helper.h"
 #include "isolate.h"
+
+using namespace Escargot;
 
 namespace EscargotShim {
 
@@ -51,6 +54,33 @@ void ContextWrap::Exit() {
 
 IsolateWrap* ContextWrap::GetIsolate() {
   return isolate_;
+}
+
+ObjectRef* ContextWrap::GetExtrasBindingObject() {
+  if (bindingObject_ == nullptr) {
+    // note: https://nodejs.org/api/tracing.html#tracing_trace_events
+    // use a v8 feature, which requries functions, `isTraceCategoryEnabled` and
+    // `trace`, exposed.
+    auto nativeFunction = [](ExecutionStateRef* state,
+                             ValueRef* thisValue,
+                             size_t argc,
+                             ValueRef** argv,
+                             OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+      return ValueRef::createUndefined();
+    };
+
+    auto functionTemplate = FunctionTemplateRef::create(
+        AtomicStringRef::emptyAtomicString(), 0, false, false, nativeFunction);
+
+    auto objectTemplate = ObjectTemplateRef::create();
+    auto function = functionTemplate->instantiate(context_);
+    auto name1 = StringRef::createFromASCII("isTraceCategoryEnabled");
+    auto name2 = StringRef::createFromASCII("trace");
+    objectTemplate->set(name1, function, false, true, false);
+    objectTemplate->set(name2, function, false, true, false);
+    bindingObject_ = objectTemplate->instantiate(context_);
+  }
+  return bindingObject_;
 }
 
 void ContextWrap::setEmbedderData(int index, void* value) {
