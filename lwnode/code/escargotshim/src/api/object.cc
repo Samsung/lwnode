@@ -111,14 +111,7 @@ Maybe<bool> ObjectUtils::SetAccessor(ObjectRef* esObject,
                                        !(attribute & v8::DontEnum),
                                        !(attribute & v8::DontDelete));
   auto esName = CVAL(*name)->value();
-  ValueRef* esPropertyName = nullptr;
-  if (esName->isString()) {
-    esPropertyName = ValueRef::create(esName->asString());
-  } else if (esName->isSymbol()) {
-    esPropertyName = ValueRef::create(esName->asSymbol());
-  }
-
-  LWNODE_CHECK_NOT_NULL(esName);
+  LWNODE_CHECK(esName->isString() || esName->isSymbol());
 
   auto result = Evaluator::execute(
       lwIsolate->GetCurrentContext()->get(),
@@ -130,7 +123,7 @@ Maybe<bool> ObjectUtils::SetAccessor(ObjectRef* esObject,
             esSelf->defineNativeDataAccessorProperty(esState, esName, data));
       },
       esObject,
-      esPropertyName,
+      esName,
       accessorWrapData);
   API_HANDLE_EXCEPTION(result, lwIsolate, Nothing<bool>());
   return Just(result.result->asBoolean());
@@ -170,6 +163,8 @@ void ObjectTemplateUtils::SetAccessor(ObjectTemplateRef* esObjectTemplate,
     esPropertyName = TemplatePropertyNameRef(esName->asString());
   } else if (esName->isSymbol()) {
     esPropertyName = TemplatePropertyNameRef(esName->asSymbol());
+  } else {
+    LWNODE_CHECK(false);
   }
 
   auto accessorWrapData = new NativeDataAccessorPropertyDataWrap<T, F>(

@@ -309,7 +309,6 @@ TEST(internal_Escargot_ShadowObject) {
   esInstanceTemplate->setNativeDataAccessorProperty(
       StringRef::createFromUTF8("y"), accessorPropData);
 #else
-  // SET_Y_AS_VALUE_PROPERTY
   auto getter = FunctionTemplateRef::create(
       AtomicStringRef::emptyAtomicString(),
       0,
