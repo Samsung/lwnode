@@ -27,11 +27,12 @@ void Isolate::SetTerminationOnExternalTryCatch() {
   }
   try_catch_handler_->can_continue_ = false;
   try_catch_handler_->has_terminated_ = true;
-  try_catch_handler_->exception_ = reinterpret_cast<void*>(last_error_result_);
+  try_catch_handler_->exception_ =
+      reinterpret_cast<void*>(scheduled_exception_);
 }
 
 bool Isolate::IsExecutionTerminating() {
-  if (has_scheduled_throw_) {
+  if (has_scheduled_exception()) {
     return true;
   }
   return false;
@@ -48,8 +49,9 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* result) {
   // using v8:tryCatch, etc. In this case, we should not do any exception
   // handling.
   // TODO: Fix API_HANDLE_EXCEPTION() accordingly
-  has_scheduled_throw_ = true;
-  last_error_result_ = result;
+  scheduled_exception_ = result;
+
+  SetTerminationOnExternalTryCatch();
 }
 
 void Isolate::RegisterTryCatchHandler(v8::TryCatch* that) {
@@ -61,8 +63,30 @@ void Isolate::UnregisterTryCatchHandler(v8::TryCatch* that) {
   try_catch_handler_ = try_catch_handler_->next_;
 }
 
+void Isolate::CancelScheduledExceptionFromTryCatch(v8::TryCatch* that) {
+  LWNODE_DCHECK(has_scheduled_exception());
+  if (scheduled_exception() == that->exception_) {
+    clear_scheduled_exception();
+  } else {
+    // TODO
+    LWNODE_RETURN_VOID;
+  }
+}
+
 v8::TryCatch* Isolate::try_catch_handler() {
   return try_catch_handler_;
+}
+
+Escargot::ValueRef* Isolate::scheduled_exception() {
+  return scheduled_exception_;
+}
+
+bool Isolate::has_scheduled_exception() {
+  return !isHole(scheduled_exception_);
+}
+
+void Isolate::clear_scheduled_exception() {
+  scheduled_exception_ = hole()->value();
 }
 
 }  // namespace internal
@@ -153,6 +177,8 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
       [](VMInstanceRef* instance) { delete instance->platform(); });
 
   InitializeGlobalSlots();
+
+  scheduled_exception_ = hole()->value();
 }
 
 void IsolateWrap::Enter() {
@@ -288,4 +314,12 @@ ValueWrap* IsolateWrap::defaultReturnValue() {
   return globalSlot_[internal::Internals::kDefaultReturnValueRootIndex];
 }
 
+bool IsolateWrap::isHole(const ValueWrap* wrap) {
+  return globalSlot_[internal::Internals::kTheHoleValueRootIndex] == wrap;
+}
+
+bool IsolateWrap::isHole(const Escargot::ValueRef* ref) {
+  return globalSlot_[internal::Internals::kTheHoleValueRootIndex]->value() ==
+         ref;
+}
 }  // namespace EscargotShim

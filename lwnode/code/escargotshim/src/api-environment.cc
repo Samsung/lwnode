@@ -1626,7 +1626,8 @@ v8::Local<Value> Isolate::ThrowException(v8::Local<v8::Value> value) {
       },
       esValue);
 
-  lwContext->setReturnValue(r);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Value>());
+
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
