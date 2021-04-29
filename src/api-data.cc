@@ -879,16 +879,12 @@ Maybe<bool> v8::Object::DefineOwnProperty(v8::Local<v8::Context> context,
     return Set(context, key, value);
   }
 
-  auto r = ObjectRefHelper::defineDataProperty(CVAL(*context)->context()->get(),
-                                               CVAL(this)->value()->asObject(),
-                                               CVAL(*key)->value(),
-                                               ((attributes & ReadOnly) == 0),
-                                               ((attributes & DontEnum) == 0),
-                                               ((attributes & DontDelete) == 0),
-                                               CVAL(*value)->value(),
-                                               nullptr,
-                                               nullptr,
-                                               nullptr);
+  auto r = ObjectRefHelper::defineDataProperty(
+      CVAL(*context)->context()->get(),
+      CVAL(this)->value()->asObject(),
+      CVAL(*key)->value(),
+      ObjectRef::DataPropertyDescriptor(
+          CVAL(*value)->value(), V8Helper::toPresentAttribute(attributes)));
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
