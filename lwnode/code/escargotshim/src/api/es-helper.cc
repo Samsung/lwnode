@@ -134,17 +134,11 @@ EvalResult ObjectRefHelper::deleteProperty(ContextRef* context,
       key);
 }
 
-EvalResult ObjectRefHelper::defineDataProperty(
+EvalResult ObjectRefHelper::defineAccessorProperty(
     ContextRef* context,
     ObjectRef* object,
     ValueRef* propertyName,
-    bool isWritable,
-    bool isEnumerable,
-    bool isConfigurable,
-    ValueRef* propertyValue,
-    NativeFunctionPointer functionPropertyValue,
-    ValueRef* getter,
-    ValueRef* setter) {
+    ObjectRef::AccessorPropertyDescriptor descriptor) {
   LWNODE_DCHECK(propertyName->isSymbol() || propertyName->isString());
 
   return Evaluator::execute(
@@ -152,69 +146,34 @@ EvalResult ObjectRefHelper::defineDataProperty(
       [](ExecutionStateRef* state,
          ObjectRef* object,
          ValueRef* propertyName,
-         bool isWritable,
-         bool isEnumerable,
-         bool isConfigurable,
-         ValueRef* propertyValue,
-         NativeFunctionPointer functionPropertyValue,
-         ValueRef* getter,
-         ValueRef* setter) -> ValueRef* {
-        bool result = false;
-
-        // check if accessors (getter or setter) are given
-        if (getter != nullptr || setter != nullptr) {
-          ObjectRef::PresentAttribute attributes =
-              ObjectRef::PresentAttribute::NotPresent;
-
-          if (isEnumerable) {
-            attributes = (ObjectRef::PresentAttribute)(
-                attributes | ObjectRef::PresentAttribute::EnumerablePresent);
-          }
-          if (isConfigurable) {
-            attributes = (ObjectRef::PresentAttribute)(
-                attributes | ObjectRef::PresentAttribute::ConfigurablePresent);
-          }
-          if (isWritable) {
-            attributes = (ObjectRef::PresentAttribute)(
-                attributes | ObjectRef::PresentAttribute::WritablePresent);
-          }
-
-          result = object->defineAccessorProperty(
-              state,
-              propertyName,
-              ObjectRef::AccessorPropertyDescriptor(
-                  getter, setter, attributes));
-
-        } else {
-          // else: check if a value or a native function to get a value is given
-          ValueRef *key = propertyName, *value = propertyValue;
-          if (value == nullptr) {
-            LWNODE_DCHECK_NOT_NULL(functionPropertyValue);
-
-            value = FunctionObjectRef::createBuiltinFunction(
-                state,
-                FunctionObjectRef::NativeFunctionInfo(
-                    AtomicStringRef::emptyAtomicString(),
-                    functionPropertyValue,
-                    0,
-                    false,
-                    false));
-          }
-
-          result = object->defineDataProperty(
-              state, key, value, isWritable, isEnumerable, isConfigurable);
-        }
-        return ValueRef::create(result);
+         ObjectRef::AccessorPropertyDescriptor descriptor) -> ValueRef* {
+        return ValueRef::create(
+            object->defineAccessorProperty(state, propertyName, descriptor));
       },
       object,
       propertyName,
-      isWritable,
-      isEnumerable,
-      isConfigurable,
-      propertyValue,
-      functionPropertyValue,
-      getter,
-      setter);
+      descriptor);
+}
+
+EvalResult ObjectRefHelper::defineDataProperty(
+    ContextRef* context,
+    ObjectRef* object,
+    ValueRef* propertyName,
+    ObjectRef::DataPropertyDescriptor descriptor) {
+  LWNODE_DCHECK(propertyName->isSymbol() || propertyName->isString());
+
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* object,
+         ValueRef* propertyName,
+         ObjectRef::DataPropertyDescriptor descriptor) -> ValueRef* {
+        return ValueRef::create(
+            object->defineDataProperty(state, propertyName, descriptor));
+      },
+      object,
+      propertyName,
+      descriptor);
 }
 
 ObjectRef* ObjectRefHelper::getPrototype(ContextRef* context,
@@ -292,17 +251,14 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
           // 'PRIVATE_SYMBOL_KEY' doesn't exist. create it.
           hiddenValuesObject = ObjectRef::create(state);
 
-          LWNODE_DCHECK(defineDataProperty(context,
-                                           object,
-                                           s_symbolKeyForHiddenValues,
-                                           false,
-                                           false,
-                                           false,
-                                           hiddenValuesObject,
-                                           nullptr,
-                                           nullptr,
-                                           nullptr)
-                            .isSuccessful());
+          LWNODE_DCHECK(
+              defineDataProperty(context,
+                                 object,
+                                 s_symbolKeyForHiddenValues,
+                                 ObjectRef::DataPropertyDescriptor(
+                                     hiddenValuesObject,
+                                     ObjectRef::PresentAttribute::NotPresent))
+                  .isSuccessful());
         } else {
           hiddenValuesObject = hiddenValuesRef->asObject();
         }

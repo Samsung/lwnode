@@ -75,13 +75,13 @@ class ObjectRefHelper {
       ContextRef* context,
       ObjectRef* object,
       ValueRef* propertyName,
-      bool isWritable,
-      bool isEnumerable,
-      bool isConfigurable,
-      ValueRef* propertyValue,
-      NativeFunctionPointer functionPropertyValue,
-      ValueRef* getter,
-      ValueRef* setter);
+      ObjectRef::DataPropertyDescriptor descriptor);
+
+  static EvalResult defineAccessorProperty(
+      ContextRef* context,
+      ObjectRef* object,
+      ValueRef* propertyName,
+      ObjectRef::AccessorPropertyDescriptor descriptor);
 
   static void setExtraData(
       ObjectRef* object,
