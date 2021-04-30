@@ -148,12 +148,44 @@ Local<Context> v8::Context::New(
     v8::MaybeLocal<Value> global_object,
     DeserializeInternalFieldsCallback internal_fields_deserializer,
     v8::MicrotaskQueue* microtask_queue) {
-  if (extensions || !global_template.IsEmpty() || !global_object.IsEmpty() ||
-      microtask_queue) {
+  if (extensions || !global_object.IsEmpty() || microtask_queue) {
     LWNODE_UNIMPLEMENT;
   }
 
+  ObjectTemplateRef* esNewGlobalObjectTemplate = nullptr;
+
+  if (!global_template.IsEmpty()) {
+    ObjectTemplateRef* esGlobalTemplate =
+        VAL(*global_template.ToLocalChecked())->otpl();
+
+    if (esGlobalTemplate->has(TemplatePropertyNameRef(
+            StringRef::createFromASCII("constructor")))) {
+      LWNODE_UNIMPLEMENT;
+    }
+
+    if (!global_object.IsEmpty()) {
+      LWNODE_UNIMPLEMENT;
+    }
+
+    esNewGlobalObjectTemplate = esGlobalTemplate;
+  }
+
   auto lwContext = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
+
+  if (esNewGlobalObjectTemplate) {
+    auto esContext = lwContext->get();
+    auto esGlobalObject = esContext->globalObject();
+    auto esNewGlobalObject = esNewGlobalObjectTemplate->instantiate(esContext);
+
+    // @note using setPrototype here is a workaround. it may right to install
+    // all properties of esNewGlobalObjectTemplate or esNewGlobalObject onto
+    // esGlobalObject.
+
+    // @todo we may replace the below code once ObjectTemplatRef::installTo is
+    // implemented.
+    // e.g) esNewGlobalObjectTemplate->installTo(esContext, esGlobalObject);
+    ObjectRefHelper::setPrototype(esContext, esGlobalObject, esNewGlobalObject);
+  }
 
   return v8::Utils::NewLocal(external_isolate, lwContext);
 }
