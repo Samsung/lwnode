@@ -297,7 +297,6 @@ void ObjectRefHelper::setExtraData(
 
 ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
   void* data = object->extraData();
-  LWNODE_DCHECK_NOT_NULL(data);
   return reinterpret_cast<ObjectData*>(data);
 }
 
@@ -428,36 +427,48 @@ ObjectData* ObjectRefHelper::createExtraDataIfNotExist(ObjectRef* object) {
 }
 
 void ObjectRefHelper::setInternalFieldCount(ObjectRef* object, int size) {
-  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  auto data = createExtraDataIfNotExist(object);
+  LWNODE_DCHECK_NOT_NULL(data);
+
   data->setInternalFieldCount(size);
 }
 
 int ObjectRefHelper::getInternalFieldCount(ObjectRef* object) {
-  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  auto data = getExtraData(object);
+  if (data == nullptr) {
+    return 0;
+  }
   return data->internalFieldCount();
 }
 
 void ObjectRefHelper::setInternalField(ObjectRef* object,
                                        int idx,
                                        InternalField* lwValue) {
-  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  auto data = getExtraData(object);
+  LWNODE_CHECK_NOT_NULL(data);
   data->setInternalField(idx, lwValue);
 }
 
 InternalField* ObjectRefHelper::getInternalField(ObjectRef* object, int idx) {
-  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  auto data = getExtraData(object);
+  LWNODE_CHECK_NOT_NULL(data);
+
   return reinterpret_cast<InternalField*>(data->internalField(idx));
 }
 
 void ObjectRefHelper::setInternalPointer(ObjectRef* object,
                                          int idx,
                                          void* ptr) {
-  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  auto data = getExtraData(object);
+  LWNODE_CHECK_NOT_NULL(data);
+
   data->setInternalField(idx, ptr);
 }
 
 void* ObjectRefHelper::getInternalPointer(ObjectRef* object, int idx) {
-  auto data = ObjectRefHelper::createExtraDataIfNotExist(object);
+  auto data = getExtraData(object);
+  LWNODE_CHECK_NOT_NULL(data);
+
   return data->internalField(idx);
 }
 
@@ -472,7 +483,6 @@ void ObjectTemplateRefHelper::setInstanceExtraData(ObjectTemplateRef* otpl,
 ObjectData* ObjectTemplateRefHelper::getInstanceExtraData(
     ObjectTemplateRef* otpl) {
   auto data = otpl->instanceExtraData();
-  LWNODE_CHECK_NOT_NULL(data);
   return reinterpret_cast<ObjectData*>(data);
 }
 
@@ -489,12 +499,17 @@ ObjectData* ObjectTemplateRefHelper::createInstanceExtraDataIfNotExist(
 
 void ObjectTemplateRefHelper::setInternalFieldCount(ObjectTemplateRef* otpl,
                                                     int size) {
-  auto data = ObjectTemplateRefHelper::createInstanceExtraDataIfNotExist(otpl);
+  auto data = createInstanceExtraDataIfNotExist(otpl);
+  LWNODE_DCHECK_NOT_NULL(data);
+
   data->setInternalFieldCount(size);
 }
 
 int ObjectTemplateRefHelper::getInternalFieldCount(ObjectTemplateRef* otpl) {
-  auto data = ObjectTemplateRefHelper::createInstanceExtraDataIfNotExist(otpl);
+  auto data = getInstanceExtraData(otpl);
+  if (data == nullptr) {
+    return 0;
+  }
   return data->internalFieldCount();
 }
 
@@ -509,7 +524,6 @@ void FunctionTemplateRefHelper::setInstanceExtraData(FunctionTemplateRef* ftpl,
 FunctionData* FunctionTemplateRefHelper::getInstanceExtraData(
     FunctionTemplateRef* ftpl) {
   auto data = ftpl->instanceExtraData();
-  LWNODE_CHECK_NOT_NULL(data);
   return reinterpret_cast<FunctionData*>(data);
 }
 
