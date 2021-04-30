@@ -76,7 +76,7 @@ bool Value::IsSymbol() const {
 }
 
 bool Value::IsArray() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isArrayObject();
 }
 
 bool Value::IsArrayBuffer() const {
@@ -355,7 +355,7 @@ void v8::Function::CheckCast(Value* that) {
 }
 
 void v8::Boolean::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsBoolean());
 }
 
 void v8::Name::CheckCast(v8::Value* that) {
@@ -395,7 +395,7 @@ void v8::BigInt::CheckCast(v8::Value* that) {
 }
 
 void v8::Array::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsArray());
 }
 
 void v8::Map::CheckCast(Value* that) {
@@ -1149,7 +1149,27 @@ MaybeLocal<String> v8::Object::ObjectProtoToString(Local<Context> context) {
 }
 
 Local<String> v8::Object::GetConstructorName() {
-  LWNODE_RETURN_LOCAL(String);
+  LWNODE_CALL_TRACE();
+
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esObject = CVAL(this)->value()->asObject();
+
+  auto r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state, ObjectRef* object) -> ValueRef* {
+        auto constructor =
+            object->get(state, StringRef::createFromASCII("constructor"))
+                ->asObject();
+        auto name = constructor->get(state, StringRef::createFromASCII("name"));
+        LWNODE_CHECK(name->isString());
+        return name;
+      },
+      esObject);
+
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
 }
 
 Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
@@ -1186,7 +1206,18 @@ Maybe<bool> v8::Object::Has(Local<Context> context, Local<Value> key) {
 }
 
 Maybe<bool> v8::Object::HasPrivate(Local<Context> context, Local<Private> key) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  EvalResult r = ObjectRefHelper::getPrivate(VAL(*context)->context()->get(),
+                                             VAL(this)->value()->asObject(),
+                                             VAL(*key)->value());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  if (r.result->isUndefined()) {
+    return Just(false);
+  }
+  return Just(true);
 }
 
 Maybe<bool> v8::Object::Delete(Local<Context> context,
