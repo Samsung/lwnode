@@ -76,7 +76,8 @@
 #if !defined(NDEBUG)
 #define LWNODE_CALL_TRACE_ID(id, prefix, msg, ...)                             \
   if (EscargotShim::Flags::isTraceCallEnabled(id)) {                           \
-    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix TRACE_FMT " " msg COLOR_RESET,    \
+    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix TRACE_FMT                         \
+                              " " COLOR_RESET msg COLOR_RESET,                 \
                     TRACE_ARGS,                                                \
                     ##__VA_ARGS__);                                            \
   }
