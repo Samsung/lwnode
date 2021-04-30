@@ -7038,22 +7038,22 @@ THREADED_TEST(Regress892105) {
 // }
 
 
-// static void HandleLogDelegator(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-// }
+static void HandleLogDelegator(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+}
 
 
-// THREADED_TEST(GlobalObjectTemplate) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   Local<ObjectTemplate> global_template = ObjectTemplate::New(isolate);
-//   global_template->Set(v8_str("JSNI_Log"),
-//                        v8::FunctionTemplate::New(isolate, HandleLogDelegator));
-//   v8::Local<Context> context = Context::New(isolate, nullptr, global_template);
-//   Context::Scope context_scope(context);
-//   CompileRun("JSNI_Log('LOG')");
-// }
+THREADED_TEST(GlobalObjectTemplate) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  Local<ObjectTemplate> global_template = ObjectTemplate::New(isolate);
+  global_template->Set(v8_str("JSNI_Log"),
+                       v8::FunctionTemplate::New(isolate, HandleLogDelegator));
+  v8::Local<Context> context = Context::New(isolate, nullptr, global_template);
+  Context::Scope context_scope(context);
+  CompileRun("JSNI_Log('LOG')");
+}
 
 
 // static const char* kSimpleExtensionSource =

@@ -138,7 +138,7 @@ EvalResult ObjectRefHelper::defineAccessorProperty(
     ContextRef* context,
     ObjectRef* object,
     ValueRef* propertyName,
-    ObjectRef::AccessorPropertyDescriptor descriptor) {
+    const ObjectRef::AccessorPropertyDescriptor& descriptor) {
   LWNODE_DCHECK(propertyName->isSymbol() || propertyName->isString());
 
   return Evaluator::execute(
@@ -159,7 +159,7 @@ EvalResult ObjectRefHelper::defineDataProperty(
     ContextRef* context,
     ObjectRef* object,
     ValueRef* propertyName,
-    ObjectRef::DataPropertyDescriptor descriptor) {
+    const ObjectRef::DataPropertyDescriptor& descriptor) {
   LWNODE_DCHECK(propertyName->isSymbol() || propertyName->isString());
 
   return Evaluator::execute(
@@ -192,7 +192,7 @@ ObjectRef* ObjectRefHelper::getPrototype(ContextRef* context,
 EvalResult ObjectRefHelper::setPrototype(ContextRef* context,
                                          ObjectRef* object,
                                          ValueRef* proto) {
-  return Evaluator::execute(
+  auto r = Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
          ObjectRef* object,
@@ -201,6 +201,9 @@ EvalResult ObjectRefHelper::setPrototype(ContextRef* context,
       },
       object,
       proto);
+
+  LWNODE_CHECK(r.isSuccessful());
+  return r;
 }
 
 EvalResult ObjectRefHelper::getPrivate(ContextRef* context,
