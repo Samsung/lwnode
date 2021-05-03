@@ -129,6 +129,21 @@ void* ContextWrap::GetAlignedPointerFromEmbedderData(int index) {
   return getEmbedderData(index);
 }
 
+void ContextWrap::SetSecurityToken(ValueRef* token) {
+  security_token_ = token;
+}
+
+ValueRef* ContextWrap::GetSecurityToken() {
+  if (!security_token_) {
+    return ValueRef::createUndefined();
+  }
+  return security_token_;
+}
+
+void ContextWrap::UseDefaultSecurityToken() {
+  security_token_ = context_->globalObject();
+}
+
 }  // namespace EscargotShim
 
 // namespace EscargotShim

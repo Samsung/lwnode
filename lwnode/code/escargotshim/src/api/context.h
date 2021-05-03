@@ -45,6 +45,10 @@ class ContextWrap : public gc {
 
   Escargot::ObjectRef* GetExtrasBindingObject();
 
+  void SetSecurityToken(Escargot::ValueRef* token);
+  Escargot::ValueRef* GetSecurityToken();
+  void UseDefaultSecurityToken();
+
  private:
   EmbedderDataMap* embedder_data_{nullptr};
 
@@ -55,6 +59,7 @@ class ContextWrap : public gc {
   IsolateWrap* isolate_ = nullptr;
   Escargot::ContextRef* context_ = nullptr;
   Escargot::ObjectRef* bindingObject_ = nullptr;
+  Escargot::ValueRef* security_token_ = nullptr;
 };
 
 }  // namespace EscargotShim
