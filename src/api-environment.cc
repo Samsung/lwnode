@@ -208,15 +208,20 @@ MaybeLocal<Object> v8::Context::NewRemoteContext(
 }
 
 void v8::Context::SetSecurityToken(Local<Value> token) {
-  LWNODE_RETURN_VOID;
+  auto lwContext = VAL(this)->context();
+  auto esToken = CVAL(*token)->value();
+  lwContext->SetSecurityToken(esToken);
 }
 
 void v8::Context::UseDefaultSecurityToken() {
-  LWNODE_RETURN_VOID;
+  auto lwContext = VAL(this)->context();
+  lwContext->UseDefaultSecurityToken();
 }
 
 Local<Value> v8::Context::GetSecurityToken() {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwContext = VAL(this)->context();
+  auto esToken = lwContext->GetSecurityToken();
+  return Utils::NewLocal<Value>(lwContext->GetIsolate()->toV8(), esToken);
 }
 
 v8::Isolate* Context::GetIsolate() {
