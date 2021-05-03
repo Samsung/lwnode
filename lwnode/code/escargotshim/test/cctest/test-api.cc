@@ -1381,81 +1381,81 @@ THREADED_PROFILED_TEST(SimpleCallback) {
 // }
 
 
-// static void* expected_ptr;
-// static void callback(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   void* ptr = v8::External::Cast(*args.Data())->Value();
-//   CHECK_EQ(expected_ptr, ptr);
-//   args.GetReturnValue().Set(true);
-// }
+static void* expected_ptr;
+static void callback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  void* ptr = v8::External::Cast(*args.Data())->Value();
+  CHECK_EQ(expected_ptr, ptr);
+  args.GetReturnValue().Set(true);
+}
 
 
-// static void TestExternalPointerWrapping() {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+static void TestExternalPointerWrapping() {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<v8::Value> data = v8::External::New(isolate, expected_ptr);
+  v8::Local<v8::Value> data = v8::External::New(isolate, expected_ptr);
 
-//   v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//   CHECK(obj->Set(env.local(), v8_str("func"),
-//                  v8::FunctionTemplate::New(isolate, callback, data)
-//                      ->GetFunction(env.local())
-//                      .ToLocalChecked())
-//             .FromJust());
-//   CHECK(env->Global()->Set(env.local(), v8_str("obj"), obj).FromJust());
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  CHECK(obj->Set(env.local(), v8_str("func"),
+                 v8::FunctionTemplate::New(isolate, callback, data)
+                     ->GetFunction(env.local())
+                     .ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()->Set(env.local(), v8_str("obj"), obj).FromJust());
 
-//   CHECK(CompileRun("function foo() {\n"
-//                    "  for (var i = 0; i < 13; i++) obj.func();\n"
-//                    "}\n"
-//                    "foo(), true")
-//             ->BooleanValue(isolate));
-// }
+  CHECK(CompileRun("function foo() {\n"
+                   "  for (var i = 0; i < 13; i++) obj.func();\n"
+                   "}\n"
+                   "foo(), true")
+            ->BooleanValue(isolate));
+}
 
 
-// THREADED_TEST(ExternalWrap) {
-//   // Check heap allocated object.
-//   int* ptr = new int;
-//   expected_ptr = ptr;
-//   TestExternalPointerWrapping();
-//   delete ptr;
+THREADED_TEST(ExternalWrap) {
+  // Check heap allocated object.
+  int* ptr = new int;
+  expected_ptr = ptr;
+  TestExternalPointerWrapping();
+  delete ptr;
 
-//   // Check stack allocated object.
-//   int foo;
-//   expected_ptr = &foo;
-//   TestExternalPointerWrapping();
+  // Check stack allocated object.
+  int foo;
+  expected_ptr = &foo;
+  TestExternalPointerWrapping();
 
-//   // Check not aligned addresses.
-//   const int n = 100;
-//   char* s = new char[n];
-//   for (int i = 0; i < n; i++) {
-//     expected_ptr = s + i;
-//     TestExternalPointerWrapping();
-//   }
+  // Check not aligned addresses.
+  const int n = 100;
+  char* s = new char[n];
+  for (int i = 0; i < n; i++) {
+    expected_ptr = s + i;
+    TestExternalPointerWrapping();
+  }
 
-//   delete[] s;
+  delete[] s;
 
-//   // Check several invalid addresses.
-//   expected_ptr = reinterpret_cast<void*>(1);
-//   TestExternalPointerWrapping();
+  // Check several invalid addresses.
+  expected_ptr = reinterpret_cast<void*>(1);
+  TestExternalPointerWrapping();
 
-//   expected_ptr = reinterpret_cast<void*>(0xDEADBEEF);
-//   TestExternalPointerWrapping();
+  expected_ptr = reinterpret_cast<void*>(0xDEADBEEF);
+  TestExternalPointerWrapping();
 
-//   expected_ptr = reinterpret_cast<void*>(0xDEADBEEF + 1);
-//   TestExternalPointerWrapping();
+  expected_ptr = reinterpret_cast<void*>(0xDEADBEEF + 1);
+  TestExternalPointerWrapping();
 
-// #if defined(V8_HOST_ARCH_X64)
-//   // Check a value with a leading 1 bit in x64 Smi encoding.
-//   expected_ptr = reinterpret_cast<void*>(0x400000000);
-//   TestExternalPointerWrapping();
+#if defined(V8_HOST_ARCH_X64)
+  // Check a value with a leading 1 bit in x64 Smi encoding.
+  expected_ptr = reinterpret_cast<void*>(0x400000000);
+  TestExternalPointerWrapping();
 
-//   expected_ptr = reinterpret_cast<void*>(0xDEADBEEFDEADBEEF);
-//   TestExternalPointerWrapping();
+  expected_ptr = reinterpret_cast<void*>(0xDEADBEEFDEADBEEF);
+  TestExternalPointerWrapping();
 
-//   expected_ptr = reinterpret_cast<void*>(0xDEADBEEFDEADBEEF + 1);
-//   TestExternalPointerWrapping();
-// #endif
-// }
+  expected_ptr = reinterpret_cast<void*>(0xDEADBEEFDEADBEEF + 1);
+  TestExternalPointerWrapping();
+#endif
+}
 
 
 // THREADED_TEST(FindInstanceInPrototypeChain) {

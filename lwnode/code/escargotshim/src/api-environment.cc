@@ -292,11 +292,29 @@ void v8::AccessorSignature::CheckCast(Data* that) {
 }
 
 Local<External> v8::External::New(Isolate* isolate, void* value) {
-  LWNODE_RETURN_LOCAL(External);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esObject = ObjectRefHelper::create(esContext);
+
+  auto data = new ExternalObjectData();
+  data->setInternalFieldCount(1);
+  data->setInternalField(0, value);
+
+  ObjectRefHelper::setExtraData(esObject, data);
+
+  return Utils::NewLocal<External>(lwIsolate->toV8(), esObject);
 }
 
 void* External::Value() const {
-  LWNODE_RETURN_NULLPTR;
+  auto esObject = CVAL(this)->value()->asObject();
+
+  auto externalObjectData =
+      ObjectRefHelper::getExtraData(esObject)->asExternalObjectData();
+
+  LWNODE_DCHECK(externalObjectData->internalFieldCount() == 1);
+
+  return externalObjectData->internalField(0);
 }
 
 namespace {
