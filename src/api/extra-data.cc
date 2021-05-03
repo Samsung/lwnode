@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include "v8.h"
 #include "extra-data.h"
-#include "utils/misc.h"
+#include "base.h"
+#include "context.h"
 #include "isolate.h"
+#include "utils/misc.h"
+#include "v8.h"
 
 using namespace Escargot;
 
@@ -67,4 +69,23 @@ void* ObjectData::internalField(int idx) {
   return m_internalFields->get(idx);
 }
 
+bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
+                                  ValueRef* thisValue) {
+  if (m_signature == nullptr) {
+    return true;
+  }
+  auto esContext = state->context();
+  auto receiver = CVAL(m_signature)->ftpl()->instantiate(esContext);
+  auto r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         ValueRef* thisValue,
+         ObjectRef* receiver) -> ValueRef* {
+        return ValueRef::create(thisValue->instanceOf(esState, receiver));
+      },
+      thisValue,
+      receiver);
+  LWNODE_CHECK(r.isSuccessful());
+  return r.result->asBoolean();
+}
 }  // namespace EscargotShim
