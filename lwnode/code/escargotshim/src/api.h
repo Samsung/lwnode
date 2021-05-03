@@ -95,6 +95,12 @@ class Utils {
             EscargotShim::ValueWrap::createFunctionTemplate(ptr)));
   }
 
+  static v8::Local<v8::Signature> NewLocalSignature(
+      Isolate* isolate, EscargotShim::ValueWrap* ptr) {
+    return v8::Local<v8::Signature>::New(isolate,
+                                         reinterpret_cast<v8::Signature*>(ptr));
+  }
+
   template <class T>
   static Local<T> ToLocal(EscargotShim::ValueWrap* ptr) {
     return v8::Local<T>(reinterpret_cast<T*>(ptr));

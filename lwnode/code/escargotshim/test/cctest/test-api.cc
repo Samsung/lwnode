@@ -22302,89 +22302,89 @@ TEST(HasOwnProperty) {
 // }
 
 
-// TEST(SimpleSignatureCheck) {
-//   LocalContext context;
-//   auto isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   auto global = context->Global();
-//   auto sig_obj = FunctionTemplate::New(isolate);
-//   auto sig = v8::Signature::New(isolate, sig_obj);
-//   auto x = FunctionTemplate::New(isolate, Returns42, Local<Value>(), sig);
-//   global->Set(context.local(), v8_str("sig_obj"),
-//               sig_obj->GetFunction(context.local()).ToLocalChecked())
-//       .FromJust();
-//   global->Set(context.local(), v8_str("x"),
-//               x->GetFunction(context.local()).ToLocalChecked())
-//       .FromJust();
-//   CompileRun("var s = new sig_obj();");
-//   {
-//     TryCatch try_catch(isolate);
-//     CompileRun("x()");
-//     CHECK(try_catch.HasCaught());
-//   }
-//   {
-//     TryCatch try_catch(isolate);
-//     CompileRun("x.call(1)");
-//     CHECK(try_catch.HasCaught());
-//   }
-//   {
-//     TryCatch try_catch(isolate);
-//     auto result = CompileRun("s.x = x; s.x()");
-//     CHECK(!try_catch.HasCaught());
-//     CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
-//   }
-//   {
-//     TryCatch try_catch(isolate);
-//     auto result = CompileRun("x.call(s)");
-//     CHECK(!try_catch.HasCaught());
-//     CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
-//   }
-// }
+TEST(SimpleSignatureCheck) {
+  LocalContext context;
+  auto isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  auto global = context->Global();
+  auto sig_obj = FunctionTemplate::New(isolate);
+  auto sig = v8::Signature::New(isolate, sig_obj);
+  auto x = FunctionTemplate::New(isolate, Returns42, Local<Value>(), sig);
+  global->Set(context.local(), v8_str("sig_obj"),
+              sig_obj->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  global->Set(context.local(), v8_str("x"),
+              x->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  CompileRun("var s = new sig_obj();");
+  {
+    TryCatch try_catch(isolate);
+    CompileRun("x()");
+    CHECK(try_catch.HasCaught());
+  }
+  {
+    TryCatch try_catch(isolate);
+    CompileRun("x.call(1)");
+    CHECK(try_catch.HasCaught());
+  }
+  {
+    TryCatch try_catch(isolate);
+    auto result = CompileRun("s.x = x; s.x()");
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
+  }
+  {
+    TryCatch try_catch(isolate);
+    auto result = CompileRun("x.call(s)");
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
+  }
+}
 
 
-// TEST(ChainSignatureCheck) {
-//   LocalContext context;
-//   auto isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   auto global = context->Global();
-//   auto sig_obj = FunctionTemplate::New(isolate);
-//   auto sig = v8::Signature::New(isolate, sig_obj);
-//   for (int i = 0; i < 4; ++i) {
-//     auto temp = FunctionTemplate::New(isolate);
-//     temp->Inherit(sig_obj);
-//     sig_obj = temp;
-//   }
-//   auto x = FunctionTemplate::New(isolate, Returns42, Local<Value>(), sig);
-//   global->Set(context.local(), v8_str("sig_obj"),
-//               sig_obj->GetFunction(context.local()).ToLocalChecked())
-//       .FromJust();
-//   global->Set(context.local(), v8_str("x"),
-//               x->GetFunction(context.local()).ToLocalChecked())
-//       .FromJust();
-//   CompileRun("var s = new sig_obj();");
-//   {
-//     TryCatch try_catch(isolate);
-//     CompileRun("x()");
-//     CHECK(try_catch.HasCaught());
-//   }
-//   {
-//     TryCatch try_catch(isolate);
-//     CompileRun("x.call(1)");
-//     CHECK(try_catch.HasCaught());
-//   }
-//   {
-//     TryCatch try_catch(isolate);
-//     auto result = CompileRun("s.x = x; s.x()");
-//     CHECK(!try_catch.HasCaught());
-//     CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
-//   }
-//   {
-//     TryCatch try_catch(isolate);
-//     auto result = CompileRun("x.call(s)");
-//     CHECK(!try_catch.HasCaught());
-//     CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
-//   }
-// }
+TEST(ChainSignatureCheck) {
+  LocalContext context;
+  auto isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  auto global = context->Global();
+  auto sig_obj = FunctionTemplate::New(isolate);
+  auto sig = v8::Signature::New(isolate, sig_obj);
+  for (int i = 0; i < 4; ++i) {
+    auto temp = FunctionTemplate::New(isolate);
+    temp->Inherit(sig_obj);
+    sig_obj = temp;
+  }
+  auto x = FunctionTemplate::New(isolate, Returns42, Local<Value>(), sig);
+  global->Set(context.local(), v8_str("sig_obj"),
+              sig_obj->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  global->Set(context.local(), v8_str("x"),
+              x->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  CompileRun("var s = new sig_obj();");
+  {
+    TryCatch try_catch(isolate);
+    CompileRun("x()");
+    CHECK(try_catch.HasCaught());
+  }
+  {
+    TryCatch try_catch(isolate);
+    CompileRun("x.call(1)");
+    CHECK(try_catch.HasCaught());
+  }
+  {
+    TryCatch try_catch(isolate);
+    auto result = CompileRun("s.x = x; s.x()");
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
+  }
+  {
+    TryCatch try_catch(isolate);
+    auto result = CompileRun("x.call(s)");
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
+  }
+}
 
 
 // static const char* last_event_message;

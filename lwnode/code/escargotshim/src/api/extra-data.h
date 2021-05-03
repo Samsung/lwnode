@@ -54,8 +54,8 @@ class FunctionData : public ObjectData {
   FunctionData() = default;
   FunctionData(v8::Isolate* isolate,
                v8::FunctionCallback callback,
-               v8::Local<v8::Value> callbackData,
-               v8::Local<v8::Signature> signature,
+               v8::Value* callbackData,
+               v8::Signature* signature,
                int length)
       : m_isolate(isolate),
         m_callback(callback),
@@ -75,14 +75,16 @@ class FunctionData : public ObjectData {
   v8::Isolate* isolate() { return m_isolate; }
   v8::FunctionCallback callback() { return m_callback; }
   void setCallback(v8::FunctionCallback callback) { m_callback = callback; }
-  v8::Local<v8::Value> callbackData() { return m_callbackData; }
-  void setCallbackData(v8::Local<v8::Value> data) { m_callbackData = data; }
+  v8::Value* callbackData() { return m_callbackData; }
+  void setCallbackData(v8::Value* data) { m_callbackData = data; }
+
+  bool checkSignature(Escargot::ExecutionStateRef* state, ValueRef* thisValue);
 
  private:
   v8::Isolate* m_isolate{nullptr};
   v8::FunctionCallback m_callback{nullptr};
-  v8::Local<v8::Value> m_callbackData;
-  v8::Local<v8::Signature> m_signature;
+  v8::Value* m_callbackData{nullptr};
+  v8::Signature* m_signature{nullptr};
   int m_length{0};
 };
 

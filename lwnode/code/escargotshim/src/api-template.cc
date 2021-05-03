@@ -114,13 +114,18 @@ static ValueRef* FunctionTemplateNativeFunction(
   LWNODE_DCHECK_NOT_NULL(callee->extraData());
   auto fnData = FunctionData::toFunctionData(callee->extraData());
 
+  if (!fnData->checkSignature(state, thisValue)) {
+    IsolateWrap::GetCurrent()->ScheduleThrow(TypeErrorObjectRef::create(
+        state, StringRef::createFromASCII("Illegal invocation")));
+  }
+
   Local<Value> result;
   if (fnData->callback()) {
     FunctionCallbackInfoWrap info(fnData->isolate(),
                                   thisValue,
                                   thisValue,
                                   newTarget,
-                                  VAL(*fnData->callbackData()),
+                                  VAL(fnData->callbackData()),
                                   argc,
                                   argv);
     fnData->callback()(info);
@@ -168,7 +173,7 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
 
   FunctionTemplateRefHelper::setInstanceExtraData(
       esFunctionTemplate,
-      new FunctionData(isolate, callback, data, signature, length));
+      new FunctionData(isolate, *callback, *data, *signature, length));
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
@@ -186,7 +191,7 @@ Local<FunctionTemplate> FunctionTemplate::NewWithCache(
 
 Local<Signature> Signature::New(Isolate* isolate,
                                 Local<FunctionTemplate> receiver) {
-  LWNODE_RETURN_LOCAL(Signature);
+  return Utils::NewLocalSignature(isolate, VAL(*receiver));
 }
 
 Local<AccessorSignature> AccessorSignature::New(
@@ -207,7 +212,7 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
   auto fnData =
       FunctionTemplateRefHelper::getInstanceExtraData(esFunctionTemplate);
   fnData->setCallback(callback);
-  fnData->setCallbackData(data);
+  fnData->setCallbackData(*data);
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
