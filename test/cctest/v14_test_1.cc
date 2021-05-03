@@ -245,3 +245,22 @@ TEST(AddPrintFunctionUsingFunctionTemplate) {
   CompileRun("print('hello')");
   CHECK_EQ(print_result.compare("hello"), 0);
 }
+
+THREADED_TEST(IsExternal) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+
+  int x = 3;
+  Local<v8::External> ext = v8::External::New(isolate, &x);
+  CHECK(ext->IsExternal());
+
+  CHECK(env->Global()->Set(env.local(), v8_str("ext"), ext).FromJust());
+  Local<Value> reext_obj = CompileRun("this.ext");
+  v8::Local<v8::External> reext = reext_obj.As<v8::External>();
+  int* ptr = static_cast<int*>(reext->Value());
+  CHECK_EQ(3, x);
+  *ptr = 10;
+  CHECK_EQ(x, 10);
+}

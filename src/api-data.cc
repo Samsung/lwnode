@@ -158,7 +158,12 @@ bool Value::IsBoolean() const {
 }
 
 bool Value::IsExternal() const {
-  LWNODE_RETURN_FALSE;
+  auto esObject = CVAL(this)->value()->asObject();
+  auto data = ObjectRefHelper::getExtraData(esObject);
+  if (data->isExternalObjectData()) {
+    return true;
+  }
+  return false;
 }
 
 bool Value::IsInt32() const {
@@ -343,7 +348,7 @@ void i::Internals::CheckInitializedImpl(v8::Isolate* external_isolate) {
 }
 
 void External::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsExternal());
 }
 
 void v8::Object::CheckCast(Value* that) {

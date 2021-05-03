@@ -24,6 +24,7 @@
 namespace EscargotShim {
 
 class ArrayBufferObjectData;
+class ExternalObjectData;
 class ValueWrap;
 class BackingStoreWrap;
 
@@ -36,8 +37,14 @@ class ObjectData : public gc {
     return reinterpret_cast<ArrayBufferObjectData*>(this);
   }
 
+  ExternalObjectData* asExternalObjectData() {
+    LWNODE_CHECK(isExternalObjectData());
+    return reinterpret_cast<ExternalObjectData*>(this);
+  }
+
   virtual bool isArryBufferObjectData() const { return false; }
   virtual bool isFunctionData() const { return false; }
+  virtual bool isExternalObjectData() const { return false; }
 
   // InternalFields
   int internalFieldCount();
@@ -100,6 +107,11 @@ class ArrayBufferObjectData : public ObjectData {
 
  private:
   std::shared_ptr<BackingStoreWrap> m_backingStore;
+};
+
+class ExternalObjectData : public ObjectData {
+public:
+  bool isExternalObjectData() const override { return true; }
 };
 
 }  // namespace EscargotShim
