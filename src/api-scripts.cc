@@ -227,7 +227,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
   auto esResourceName = StringRef::emptyString();
 
   if (!source->resource_name.IsEmpty()) {
-    LWNODE_UNIMPLEMENT;
+    esResourceName = VAL(*source->resource_name)->value()->asString();
   }
 
   ContextRef* esPureContext = ContextRef::create(lwIsolate->vmInstance());
