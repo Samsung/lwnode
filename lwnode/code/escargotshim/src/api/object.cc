@@ -28,14 +28,14 @@ using AccessorNameCallbackDataWrap =
     NativeDataAccessorPropertyDataWrap<AccessorNameGetterCallback,
                                        AccessorNameSetterCallback>;
 
-static ValueRef* accessorPropertyGetter(
-    ExecutionStateRef* state,
-    ObjectRef* self,
-    ObjectRef::NativeDataAccessorPropertyData* data) {
+static ValueRef* accessorPropertyGetter(ExecutionStateRef* state,
+                                        ObjectRef* self,
+                                        ValueRef* receiver,
+                                        ObjectRef::NativeDataAccessorPropertyData* data) {
   auto wrapper = AccessorNameCallbackDataWrap::toWrap(data);
 
   PropertyCallbackInfoWrap<v8::Value> info(
-      wrapper->m_isolate, self, self, VAL(wrapper->m_data));
+      wrapper->m_isolate, self, receiver, VAL(wrapper->m_data));
 
   auto v8Getter = wrapper->m_getter;
   LWNODE_CHECK_NOT_NULL(v8Getter);
@@ -48,11 +48,11 @@ static ValueRef* accessorPropertyGetter(
   return VAL(*info.GetReturnValue().Get())->value();
 }
 
-static bool accessorPropertySetter(
-    ExecutionStateRef* state,
-    ObjectRef* self,
-    ObjectRef::NativeDataAccessorPropertyData* data,
-    ValueRef* setterInputData) {
+static bool accessorPropertySetter(ExecutionStateRef* state,
+                                   ObjectRef* self,
+                                   ValueRef* receiver,
+                                   ObjectRef::NativeDataAccessorPropertyData* data,
+                                   ValueRef* setterInputData) {
   auto wrapper = AccessorNameCallbackDataWrap::toWrap(data);
 
   HandleScope handle_scope(wrapper->m_isolate);
@@ -61,7 +61,7 @@ static bool accessorPropertySetter(
       v8::Utils::NewLocal<Value>(wrapper->m_isolate, setterInputData);
 
   PropertyCallbackInfoWrap<void> info(
-      wrapper->m_isolate, self, self, VAL(wrapper->m_data));
+      wrapper->m_isolate, self, receiver, VAL(wrapper->m_data));
 
   auto v8Setter = wrapper->m_setter;
   LWNODE_CHECK_NOT_NULL(v8Setter);
@@ -120,7 +120,7 @@ Maybe<bool> ObjectUtils::SetAccessor(ObjectRef* esObject,
          ValueRef* esName,
          AccessorNameCallbackDataWrap* data) {
         return ValueRef::create(
-            esSelf->defineNativeDataAccessorProperty(esState, esName, data));
+            esSelf->defineNativeDataAccessorProperty(esState, esName, data, true));
       },
       esObject,
       esName,
@@ -178,7 +178,7 @@ void ObjectTemplateUtils::SetAccessor(ObjectTemplateRef* esObjectTemplate,
       !(attribute & v8::DontDelete));
 
   esObjectTemplate->setNativeDataAccessorProperty(esPropertyName,
-                                                  accessorWrapData);
+                                                  accessorWrapData, true);
 }
 
 }  // namespace EscargotShim

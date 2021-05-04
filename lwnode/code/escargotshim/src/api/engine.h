@@ -34,10 +34,10 @@ class Platform : public PlatformRef {
   void markJSJobEnqueued(ContextRef* relatedContext) override;
   void* onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
                                             ArrayBufferObjectRef* obj,
-                                            size_t sizeInByte) override;
+                                            size_t sizeInByte);
   void onArrayBufferObjectDataBufferFree(ContextRef* whereObjectMade,
                                          ArrayBufferObjectRef* obj,
-                                         void* buffer) override;
+                                         void* buffer);
   LoadModuleResult onLoadModule(ContextRef* relatedContext,
                                 ScriptRef* whereRequestFrom,
                                 StringRef* moduleSrc) override;
