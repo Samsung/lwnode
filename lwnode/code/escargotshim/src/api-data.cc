@@ -384,7 +384,7 @@ void v8::Number::CheckCast(v8::Value* that) {
 }
 
 void v8::Integer::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsInt32() || that->IsUint32());
 }
 
 void v8::Int32::CheckCast(v8::Value* that) {
