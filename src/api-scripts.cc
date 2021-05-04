@@ -126,21 +126,31 @@ Local<UnboundScript> Script::GetUnboundScript() {
 
 // static
 Local<PrimitiveArray> PrimitiveArray::New(Isolate* v8_isolate, int length) {
-  LWNODE_RETURN_LOCAL(PrimitiveArray);
+  auto array = Array::New(v8_isolate, length);
+  return Utils::NewLocal<PrimitiveArray>(v8_isolate, CVAL(*array)->value());
 }
 
 int PrimitiveArray::Length() const {
-  LWNODE_RETURN_0;
+  auto v8Isolate = Isolate::GetCurrent();
+  auto array = Utils::NewLocal<Array>(v8Isolate, CVAL(this)->value());
+  return array->Length();
 }
 
 void PrimitiveArray::Set(Isolate* v8_isolate,
                          int index,
                          Local<Primitive> item) {
-  LWNODE_RETURN_VOID;
+  auto v8Context = v8_isolate->GetCurrentContext();
+  auto array = Utils::NewLocal<Array>(v8_isolate, CVAL(this)->value());
+  auto ok = array->Set(v8Context, index, item);
 }
 
 Local<Primitive> PrimitiveArray::Get(Isolate* v8_isolate, int index) {
-  LWNODE_RETURN_LOCAL(Primitive);
+  auto v8Context = v8_isolate->GetCurrentContext();
+  auto array = Utils::NewLocal<Array>(v8_isolate, CVAL(this)->value());
+  auto val = array->Get(v8Context, index);
+  auto r = val.FromMaybe(
+      Utils::NewLocal<Value>(v8_isolate, ValueRef::createUndefined()));
+  return Utils::NewLocal<Primitive>(v8_isolate, CVAL(*r)->value());
 }
 
 Module::Status Module::GetStatus() const {
