@@ -1238,31 +1238,37 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
       lwIsolate->GetCurrentContext()->get(),
       [](ExecutionStateRef* state,
          std::shared_ptr<BackingStoreWrap> lwBackingStore) -> ValueRef* {
-        auto esBackingStore =
-            BackingStoreRef::create(lwBackingStore->Data(),
-                                    lwBackingStore->ByteLength(),
-                                    nullptr,
-                                    nullptr);
-        auto arrayBuffer = ArrayBufferObjectRef::create(state);
-        arrayBuffer->attachBuffer(esBackingStore);
+        auto esBackingStore = BackingStoreRef::create(
+            lwBackingStore->Data(),
+            lwBackingStore->ByteLength(),
+            [](void* data, size_t length, void* deleterData) -> void {
+              // do nothing
+            },
+            nullptr);
 
-        auto data = new ArrayBufferObjectData(std::move(lwBackingStore));
+        auto arrayBufferObject = ArrayBufferObjectRef::create(state);
 
-        ObjectRefHelper::setExtraData(arrayBuffer, data, [](void* self) {
-          // note: this is a finalizer for arrayBuffer
-          auto value = reinterpret_cast<ValueRef*>(self);
-          auto arrayBufferObjectData =
-              ObjectRefHelper::getExtraData(value->asArrayBufferObject())
-                  ->asArrayBufferObjectData();
+        arrayBufferObject->attachBuffer(esBackingStore);
 
-          // note: backingStore is shared with clients as standard C++ memory
-          // ownership types. Since GC doesn't call the destructor of
-          // ArrayBufferObjectData automatically, we should de-reference the
-          // shared_ptr of the backing store when arraybuffer is GCed.
-          arrayBufferObjectData->releaseBackingStore();
-        });
+        auto arrayBufferObjectData =
+            new ArrayBufferObjectData(std::move(lwBackingStore));
 
-        return arrayBuffer;
+        ObjectRefHelper::setExtraData(
+            arrayBufferObject, arrayBufferObjectData, [](void* self) {
+              // note: this is a finalizer for arrayBuffer
+              auto value = reinterpret_cast<ValueRef*>(self);
+              auto arrayBufferObjectData =
+                  ObjectRefHelper::getExtraData(value->asArrayBufferObject())
+                      ->asArrayBufferObjectData();
+
+              // note: backingStore is shared with clients as standard C++
+              // memory ownership types. Since GC doesn't call the destructor of
+              // ArrayBufferObjectData automatically, we should de-reference the
+              // shared_ptr of the backing store when arraybuffer is GCed.
+              arrayBufferObjectData->releaseBackingStore();
+            });
+
+        return arrayBufferObject;
       },
       lwBackingStore);
 
@@ -1293,8 +1299,11 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(
                                     lwBackingStore->ByteLength(),
                                     nullptr,
                                     nullptr);
+
         auto arrayBuffer = ArrayBufferObjectRef::create(state);
         arrayBuffer->attachBuffer(esBackingStore);
+        // arrayBuffer->attachExternalBuffer(
+        //     state, lwBackingStore->Data(), lwBackingStore->ByteLength());
 
         auto data = new ArrayBufferObjectData(std::move(lwBackingStore));
 
