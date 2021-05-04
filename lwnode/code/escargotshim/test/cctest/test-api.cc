@@ -10569,11 +10569,11 @@ THREADED_TEST(ShadowObject) {
   value = CompileRun("f()");
   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
 
-  // CompileRun("y = 43");
-  // CHECK_EQ(1, shadow_y_setter_call_count);
-  // value = CompileRun("y");
-  // CHECK_EQ(1, shadow_y_getter_call_count);
-  // CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+  CompileRun("y = 43");
+  CHECK_EQ(1, shadow_y_setter_call_count);
+  value = CompileRun("y");
+  CHECK_EQ(1, shadow_y_getter_call_count);
+  CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
 }
 
 // THREADED_TEST(ShadowObjectAndDataProperty) {
