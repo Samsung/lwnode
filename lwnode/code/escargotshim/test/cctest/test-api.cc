@@ -25955,51 +25955,51 @@ THREADED_TEST(ReceiverConversionForAccessors) {
 //   CheckDoubleEquals(3.14, result->NumberValue(context).ToChecked());
 // }
 
-// TEST(PrimitiveArray) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   LocalContext env;
+TEST(PrimitiveArray) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  LocalContext env;
 
-//   int length = 5;
-//   Local<v8::PrimitiveArray> array(v8::PrimitiveArray::New(isolate, 5));
-//   CHECK_EQ(length, array->Length());
+  int length = 5;
+  Local<v8::PrimitiveArray> array(v8::PrimitiveArray::New(isolate, 5));
+  CHECK_EQ(length, array->Length());
 
-//   for (int i = 0; i < length; i++) {
-//     Local<v8::Primitive> item = array->Get(isolate, i);
-//     CHECK(item->IsUndefined());
-//   }
+  for (int i = 0; i < length; i++) {
+    Local<v8::Primitive> item = array->Get(isolate, i);
+    CHECK(item->IsUndefined());
+  }
 
-//   Local<v8::Symbol> symbol(v8::Symbol::New(isolate));
-//   array->Set(isolate, 0, symbol);
-//   CHECK(array->Get(isolate, 0)->IsSymbol());
+  Local<v8::Symbol> symbol(v8::Symbol::New(isolate));
+  array->Set(isolate, 0, symbol);
+  CHECK(array->Get(isolate, 0)->IsSymbol());
 
-//   Local<v8::String> string = v8::String::NewFromUtf8Literal(
-//       isolate, "test", v8::NewStringType::kInternalized);
-//   array->Set(isolate, 1, string);
-//   CHECK(array->Get(isolate, 0)->IsSymbol());
-//   CHECK(array->Get(isolate, 1)->IsString());
+  Local<v8::String> string = v8::String::NewFromUtf8Literal(
+      isolate, "test", v8::NewStringType::kInternalized);
+  array->Set(isolate, 1, string);
+  CHECK(array->Get(isolate, 0)->IsSymbol());
+  CHECK(array->Get(isolate, 1)->IsString());
 
-//   Local<v8::Number> num = v8::Number::New(env->GetIsolate(), 3.1415926);
-//   array->Set(isolate, 2, num);
-//   CHECK(array->Get(isolate, 0)->IsSymbol());
-//   CHECK(array->Get(isolate, 1)->IsString());
-//   CHECK(array->Get(isolate, 2)->IsNumber());
+  Local<v8::Number> num = v8::Number::New(env->GetIsolate(), 3.1415926);
+  array->Set(isolate, 2, num);
+  CHECK(array->Get(isolate, 0)->IsSymbol());
+  CHECK(array->Get(isolate, 1)->IsString());
+  CHECK(array->Get(isolate, 2)->IsNumber());
 
-//   v8::Local<v8::Boolean> f = v8::False(isolate);
-//   array->Set(isolate, 3, f);
-//   CHECK(array->Get(isolate, 0)->IsSymbol());
-//   CHECK(array->Get(isolate, 1)->IsString());
-//   CHECK(array->Get(isolate, 2)->IsNumber());
-//   CHECK(array->Get(isolate, 3)->IsBoolean());
+  v8::Local<v8::Boolean> f = v8::False(isolate);
+  array->Set(isolate, 3, f);
+  CHECK(array->Get(isolate, 0)->IsSymbol());
+  CHECK(array->Get(isolate, 1)->IsString());
+  CHECK(array->Get(isolate, 2)->IsNumber());
+  CHECK(array->Get(isolate, 3)->IsBoolean());
 
-//   v8::Local<v8::Primitive> n = v8::Null(isolate);
-//   array->Set(isolate, 4, n);
-//   CHECK(array->Get(isolate, 0)->IsSymbol());
-//   CHECK(array->Get(isolate, 1)->IsString());
-//   CHECK(array->Get(isolate, 2)->IsNumber());
-//   CHECK(array->Get(isolate, 3)->IsBoolean());
-//   CHECK(array->Get(isolate, 4)->IsNull());
-// }
+  v8::Local<v8::Primitive> n = v8::Null(isolate);
+  array->Set(isolate, 4, n);
+  CHECK(array->Get(isolate, 0)->IsSymbol());
+  CHECK(array->Get(isolate, 1)->IsString());
+  CHECK(array->Get(isolate, 2)->IsNumber());
+  CHECK(array->Get(isolate, 3)->IsBoolean());
+  CHECK(array->Get(isolate, 4)->IsNull());
+}
 
 // TEST(PersistentValueMap) {
 //   v8::Isolate* isolate = CcTest::isolate();
