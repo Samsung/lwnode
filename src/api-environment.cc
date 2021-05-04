@@ -1238,9 +1238,13 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
       lwIsolate->GetCurrentContext()->get(),
       [](ExecutionStateRef* state,
          std::shared_ptr<BackingStoreWrap> lwBackingStore) -> ValueRef* {
+        auto esBackingStore =
+            BackingStoreRef::create(lwBackingStore->Data(),
+                                    lwBackingStore->ByteLength(),
+                                    nullptr,
+                                    nullptr);
         auto arrayBuffer = ArrayBufferObjectRef::create(state);
-        arrayBuffer->attachExternalBuffer(
-            state, lwBackingStore->Data(), lwBackingStore->ByteLength());
+        arrayBuffer->attachBuffer(esBackingStore);
 
         auto data = new ArrayBufferObjectData(std::move(lwBackingStore));
 
@@ -1284,9 +1288,13 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(
       lwIsolate->GetCurrentContext()->get(),
       [](ExecutionStateRef* state,
          std::shared_ptr<BackingStoreWrap> lwBackingStore) -> ValueRef* {
+        auto esBackingStore =
+            BackingStoreRef::create(lwBackingStore->Data(),
+                                    lwBackingStore->ByteLength(),
+                                    nullptr,
+                                    nullptr);
         auto arrayBuffer = ArrayBufferObjectRef::create(state);
-        arrayBuffer->attachExternalBuffer(
-            state, lwBackingStore->Data(), lwBackingStore->ByteLength());
+        arrayBuffer->attachBuffer(esBackingStore);
 
         auto data = new ArrayBufferObjectData(std::move(lwBackingStore));
 
