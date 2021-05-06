@@ -22410,71 +22410,71 @@ TEST(ChainSignatureCheck) {
 //   CHECK_EQ(1, last_event_status);
 // }
 
-// TEST(PropertyDescriptor) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
+TEST(PropertyDescriptor) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   {  // empty descriptor
-//     v8::PropertyDescriptor desc;
-//     CHECK(!desc.has_value());
-//     CHECK(!desc.has_set());
-//     CHECK(!desc.has_get());
-//     CHECK(!desc.has_enumerable());
-//     CHECK(!desc.has_configurable());
-//     CHECK(!desc.has_writable());
-//   }
-//   {
-//     // data descriptor
-//     v8::PropertyDescriptor desc(v8_num(42));
-//     desc.set_enumerable(false);
-//     CHECK(desc.value() == v8_num(42));
-//     CHECK(desc.has_value());
-//     CHECK(!desc.has_set());
-//     CHECK(!desc.has_get());
-//     CHECK(desc.has_enumerable());
-//     CHECK(!desc.enumerable());
-//     CHECK(!desc.has_configurable());
-//     CHECK(!desc.has_writable());
-//   }
-//   {
-//     // data descriptor
-//     v8::PropertyDescriptor desc(v8_num(42));
-//     desc.set_configurable(true);
-//     CHECK(desc.value() == v8_num(42));
-//     CHECK(desc.has_value());
-//     CHECK(!desc.has_set());
-//     CHECK(!desc.has_get());
-//     CHECK(desc.has_configurable());
-//     CHECK(desc.configurable());
-//     CHECK(!desc.has_enumerable());
-//     CHECK(!desc.has_writable());
-//   }
-//   {
-//     // data descriptor
-//     v8::PropertyDescriptor desc(v8_num(42));
-//     desc.set_configurable(false);
-//     CHECK(desc.value() == v8_num(42));
-//     CHECK(desc.has_value());
-//     CHECK(!desc.has_set());
-//     CHECK(!desc.has_get());
-//     CHECK(desc.has_configurable());
-//     CHECK(!desc.configurable());
-//     CHECK(!desc.has_enumerable());
-//     CHECK(!desc.has_writable());
-//   }
-//   {
-//     // data descriptor
-//     v8::PropertyDescriptor desc(v8_num(42), false);
-//     CHECK(desc.value() == v8_num(42));
-//     CHECK(desc.has_value());
-//     CHECK(!desc.has_set());
-//     CHECK(!desc.has_get());
-//     CHECK(!desc.has_enumerable());
-//     CHECK(!desc.has_configurable());
-//     CHECK(desc.has_writable());
-//     CHECK(!desc.writable());
-//   }
+  {  // empty descriptor
+    v8::PropertyDescriptor desc;
+    CHECK(!desc.has_value());
+    CHECK(!desc.has_set());
+    CHECK(!desc.has_get());
+    CHECK(!desc.has_enumerable());
+    CHECK(!desc.has_configurable());
+    CHECK(!desc.has_writable());
+  }
+  {
+    // data descriptor
+    v8::PropertyDescriptor desc(v8_num(42));
+    desc.set_enumerable(false);
+    CHECK(desc.value() == v8_num(42));
+    CHECK(desc.has_value());
+    CHECK(!desc.has_set());
+    CHECK(!desc.has_get());
+    CHECK(desc.has_enumerable());
+    CHECK(!desc.enumerable());
+    CHECK(!desc.has_configurable());
+    CHECK(!desc.has_writable());
+  }
+  {
+    // data descriptor
+    v8::PropertyDescriptor desc(v8_num(42));
+    desc.set_configurable(true);
+    CHECK(desc.value() == v8_num(42));
+    CHECK(desc.has_value());
+    CHECK(!desc.has_set());
+    CHECK(!desc.has_get());
+    CHECK(desc.has_configurable());
+    CHECK(desc.configurable());
+    CHECK(!desc.has_enumerable());
+    CHECK(!desc.has_writable());
+  }
+  {
+    // data descriptor
+    v8::PropertyDescriptor desc(v8_num(42));
+    desc.set_configurable(false);
+    CHECK(desc.value() == v8_num(42));
+    CHECK(desc.has_value());
+    CHECK(!desc.has_set());
+    CHECK(!desc.has_get());
+    CHECK(desc.has_configurable());
+    CHECK(!desc.configurable());
+    CHECK(!desc.has_enumerable());
+    CHECK(!desc.has_writable());
+  }
+  {
+    // data descriptor
+    v8::PropertyDescriptor desc(v8_num(42), false);
+    CHECK(desc.value() == v8_num(42));
+    CHECK(desc.has_value());
+    CHECK(!desc.has_set());
+    CHECK(!desc.has_get());
+    CHECK(!desc.has_enumerable());
+    CHECK(!desc.has_configurable());
+    CHECK(desc.has_writable());
+    CHECK(!desc.writable());
+  }
 //   {
 //     // data descriptor
 //     v8::PropertyDescriptor desc(v8::Local<v8::Value>(), true);
@@ -22486,26 +22486,26 @@ TEST(ChainSignatureCheck) {
 //     CHECK(desc.has_writable());
 //     CHECK(desc.writable());
 //   }
-//   {
-//     // accessor descriptor
-//     CompileRun("var set = function() {return 43;};");
+  {
+    // accessor descriptor
+    CompileRun("var set = function() {return 43;};");
 
-//     v8::Local<v8::Function> set =
-//         v8::Local<v8::Function>::Cast(context->Global()
-//                                           ->Get(context.local(), v8_str("set"))
-//                                           .ToLocalChecked());
-//     v8::PropertyDescriptor desc(v8::Undefined(isolate), set);
-//     desc.set_configurable(false);
-//     CHECK(!desc.has_value());
-//     CHECK(desc.has_get());
-//     CHECK(desc.get() == v8::Undefined(isolate));
-//     CHECK(desc.has_set());
-//     CHECK(desc.set() == set);
-//     CHECK(!desc.has_enumerable());
-//     CHECK(desc.has_configurable());
-//     CHECK(!desc.configurable());
-//     CHECK(!desc.has_writable());
-//   }
+    v8::Local<v8::Function> set =
+        v8::Local<v8::Function>::Cast(context->Global()
+                                          ->Get(context.local(), v8_str("set"))
+                                          .ToLocalChecked());
+    v8::PropertyDescriptor desc(v8::Undefined(isolate), set);
+    desc.set_configurable(false);
+    CHECK(!desc.has_value());
+    CHECK(desc.has_get());
+    CHECK(desc.get() == v8::Undefined(isolate));
+    CHECK(desc.has_set());
+    CHECK(desc.set() == set);
+    CHECK(!desc.has_enumerable());
+    CHECK(desc.has_configurable());
+    CHECK(!desc.configurable());
+    CHECK(!desc.has_writable());
+  }
 //   {
 //     // accessor descriptor with Proxy
 //     CompileRun(
@@ -22543,7 +22543,7 @@ TEST(ChainSignatureCheck) {
 //     CHECK(!desc.has_configurable());
 //     CHECK(!desc.has_writable());
 //   }
-// }
+}
 
 // TEST(Promises) {
 //   LocalContext context;

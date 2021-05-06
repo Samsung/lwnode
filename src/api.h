@@ -115,6 +115,25 @@ class Utils {
   // end @lwnode
 };
 
+// @lwnode
+struct v8::PropertyDescriptor::PrivateData {
+ public:
+  PrivateData() = default;
+  PrivateData(Escargot::ObjectPropertyDescriptorRef& esDescriptor);
+  PrivateData(Escargot::ValueRef* value);
+  PrivateData(Escargot::ValueRef* value, bool writable);
+  PrivateData(Escargot::ValueRef* get, Escargot::ValueRef* set);
+  ~PrivateData();
+
+  void setDescriptor(Escargot::ObjectPropertyDescriptorRef* descriptor);
+  Escargot::ObjectPropertyDescriptorRef* descriptor() { return descriptor_; }
+
+ private:
+  bool isExternalDescriptor{false};
+  Escargot::ObjectPropertyDescriptorRef* descriptor_{nullptr};
+};
+// end @lwnode
+
 }  // namespace v8
 
 namespace {

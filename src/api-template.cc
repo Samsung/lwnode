@@ -378,6 +378,7 @@ void ObjectTemplate::SetHandler(
   if (config.getter) {
     esHandlerData.getter = [](ExecutionStateRef* state,
                               ObjectRef* esSelf,
+                              ValueRef* esReceiver,
                               void* data,
                               const TemplatePropertyNameRef& esPropertyName)
         -> OptionalRef<ValueRef> {
@@ -392,7 +393,7 @@ void ObjectTemplate::SetHandler(
       PropertyCallbackInfoWrap<v8::Value> info(
           handlerConfiguration->m_isolate,
           esSelf,
-          esSelf,
+          esReceiver,
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
       handlerConfiguration->m_namedPropertyHandler.getter(v8PropertyName, info);
@@ -409,6 +410,7 @@ void ObjectTemplate::SetHandler(
   if (config.setter) {
     esHandlerData.setter = [](ExecutionStateRef* state,
                               ObjectRef* esSelf,
+                              ValueRef* esReceiver,
                               void* data,
                               const TemplatePropertyNameRef& esPropertyName,
                               ValueRef* esValue) -> OptionalRef<ValueRef> {
@@ -424,7 +426,7 @@ void ObjectTemplate::SetHandler(
       PropertyCallbackInfoWrap<v8::Value> info(
           handlerConfiguration->m_isolate,
           esSelf,
-          esSelf,
+          esReceiver,
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
       handlerConfiguration->m_namedPropertyHandler.setter(
@@ -442,6 +444,7 @@ void ObjectTemplate::SetHandler(
   if (config.query) {
     esHandlerData.query = [](ExecutionStateRef* state,
                              ObjectRef* esSelf,
+                             ValueRef* esReceiver,
                              void* data,
                              const TemplatePropertyNameRef& esPropertyName)
         -> TemplatePropertyAttribute {
@@ -457,7 +460,7 @@ void ObjectTemplate::SetHandler(
       PropertyCallbackInfoWrap<Integer> info(
           handlerConfiguration->m_isolate,
           esSelf,
-          esSelf,
+          esReceiver,
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
       handlerConfiguration->m_namedPropertyHandler.query(v8PropertyName, info);
@@ -473,6 +476,7 @@ void ObjectTemplate::SetHandler(
   if (config.deleter) {
     esHandlerData.deleter = [](ExecutionStateRef* state,
                                ObjectRef* esSelf,
+                               ValueRef* esReceiver,
                                void* data,
                                const TemplatePropertyNameRef& esPropertyName)
         -> OptionalRef<ValueRef> {
@@ -488,7 +492,7 @@ void ObjectTemplate::SetHandler(
       PropertyCallbackInfoWrap<v8::Boolean> info(
           handlerConfiguration->m_isolate,
           esSelf,
-          esSelf,
+          esReceiver,
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
       handlerConfiguration->m_namedPropertyHandler.deleter(v8PropertyName,
@@ -504,8 +508,10 @@ void ObjectTemplate::SetHandler(
   }
 
   if (config.enumerator) {
-    esHandlerData.enumerator =
-        [](ExecutionStateRef* state, ObjectRef* esSelf, void* data)
+    esHandlerData.enumerator = [](ExecutionStateRef* state,
+                                  ObjectRef* esSelf,
+                                  ValueRef* esReceiver,
+                                  void* data)
         -> TemplateNamedPropertyHandlerEnumerationCallbackResultVector {
       auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
@@ -516,7 +522,7 @@ void ObjectTemplate::SetHandler(
       PropertyCallbackInfoWrap<v8::Array> info(
           handlerConfiguration->m_isolate,
           esSelf,
-          esSelf,
+          esReceiver,
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
       handlerConfiguration->m_namedPropertyHandler.enumerator(info);
@@ -539,11 +545,10 @@ void ObjectTemplate::SetHandler(
   }
 
   if (config.definer) {
-    LWNODE_RETURN_VOID;
-
     esHandlerData.definer =
         [](ExecutionStateRef* state,
            ObjectRef* esSelf,
+           ValueRef* esReceiver,
            void* data,
            const TemplatePropertyNameRef& esPropertyName,
            const ObjectPropertyDescriptorRef& esDesc) -> OptionalRef<ValueRef> {
@@ -553,27 +558,61 @@ void ObjectTemplate::SetHandler(
         return Escargot::OptionalRef<Escargot::ValueRef>();
       }
 
-      // TODO
+      Local<Name> v8PropertyName =
+          v8::Utils::ToLocal<Name>(esPropertyName.value());
+
+      PropertyCallbackInfoWrap<v8::Value> info(
+          handlerConfiguration->m_isolate,
+          esSelf,
+          esReceiver,
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
+
+      PropertyDescriptor desc;
+      desc.get_private()->setDescriptor(
+          const_cast<ObjectPropertyDescriptorRef*>(&esDesc));
+      handlerConfiguration->m_namedPropertyHandler.definer(
+          v8PropertyName, desc, info);
+
+      if (info.hasReturnValue()) {
+        Local<Value> ret = info.GetReturnValue().Get();
+        return Escargot::OptionalRef<Escargot::ValueRef>(CVAL(*ret)->value());
+      }
       return Escargot::OptionalRef<Escargot::ValueRef>();
     };
   }
 
   if (config.descriptor) {
-    LWNODE_RETURN_VOID;
+    esHandlerData.descriptor = [](ExecutionStateRef* state,
+                                  ObjectRef* esSelf,
+                                  ValueRef* esReceiver,
+                                  void* data,
+                                  const TemplatePropertyNameRef& esPropertyName)
+        -> OptionalRef<ValueRef> {
+      auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
-    // esHandlerData.descriptor = [](ExecutionStateRef* state,
-    //                               ObjectRef* esSelf,
-    //                               void* data) -> OptionalRef<ObjectRef> {
-    //   auto handlerConfiguration =
-    //   reinterpret_cast<handlerConfiguration*>(data);
+      if (!handlerConfiguration->m_namedPropertyHandler.descriptor) {
+        return Escargot::OptionalRef<Escargot::ValueRef>();
+      }
 
-    //   if (!handlerConfiguration->m_namedPropertyHandler.descriptor) {
-    //     return Escargot::OptionalRef<Escargot::ObjectRef>();
-    //   }
+      Local<Name> v8PropertyName =
+          v8::Utils::ToLocal<Name>(esPropertyName.value());
 
-    //   // TODO
-    //   return Escargot::OptionalRef<Escargot::ObjectRef>();
-    // };
+      PropertyCallbackInfoWrap<v8::Value> info(
+          handlerConfiguration->m_isolate,
+          esSelf,
+          esReceiver,
+          VAL(*handlerConfiguration->m_namedPropertyHandler.data));
+
+      handlerConfiguration->m_namedPropertyHandler.descriptor(v8PropertyName,
+                                                              info);
+
+      if (info.hasReturnValue()) {
+        Local<Value> ret = info.GetReturnValue().Get();
+        return Escargot::OptionalRef<Escargot::ValueRef>(CVAL(*ret)->value());
+      }
+
+      return Escargot::OptionalRef<Escargot::ValueRef>();
+    };
   }
 
   esHandlerData.data = handlerConfiguration;
