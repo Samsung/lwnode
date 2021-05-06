@@ -1365,7 +1365,8 @@ Local<v8::Object> v8::Object::Clone() {
 }
 
 Local<v8::Context> v8::Object::CreationContext() {
-  LWNODE_RETURN_LOCAL(Context);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  return v8::Utils::NewLocal(lwIsolate->toV8(), lwIsolate->GetCurrentContext());
 }
 
 int v8::Object::GetIdentityHash() {
