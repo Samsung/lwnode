@@ -67,7 +67,7 @@
   do {                                                                         \
     LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED" TRACE_FMT COLOR_RESET,            \
                    TRACE_ARGS);                                                \
-  } while (0)
+  } while (0);
 
 // conditional loggers
 

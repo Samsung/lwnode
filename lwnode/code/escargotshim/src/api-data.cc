@@ -785,93 +785,185 @@ Maybe<bool> v8::Object::Set(v8::Local<v8::Context> context,
 
 Maybe<bool> v8::Object::CreateDataProperty(v8::Local<v8::Context> context,
                                            v8::Local<Name> key,
-                                           v8::Local<Value> value){
-    LWNODE_RETURN_MAYBE(bool)}
+                                           v8::Local<Value> value) {
+  LWNODE_RETURN_MAYBE(bool);
+}
 
 Maybe<bool> v8::Object::CreateDataProperty(v8::Local<v8::Context> context,
                                            uint32_t index,
                                            v8::Local<Value> value) {
-  LWNODE_RETURN_MAYBE(bool)
+  LWNODE_RETURN_MAYBE(bool);
 }
 
-struct v8::PropertyDescriptor::PrivateData {
-  PrivateData() {}
-};
+PropertyDescriptor::PrivateData::PrivateData(Escargot::ValueRef* value) {
+  descriptor_ = new Escargot::ObjectPropertyDescriptorRef(value);
+}
 
-v8::PropertyDescriptor::PropertyDescriptor() : private_(nullptr) {}
+PropertyDescriptor::PrivateData::PrivateData(Escargot::ValueRef* value,
+                                             bool writable) {
+  descriptor_ = new Escargot::ObjectPropertyDescriptorRef(value, writable);
+}
+
+PropertyDescriptor::PrivateData::PrivateData(Escargot::ValueRef* get,
+                                             Escargot::ValueRef* set) {
+  descriptor_ = new Escargot::ObjectPropertyDescriptorRef(get, set);
+}
+
+PropertyDescriptor::PrivateData::~PrivateData() {
+  if (!isExternalDescriptor) {
+    delete descriptor_;
+    descriptor_ = nullptr;
+  }
+}
+
+void PropertyDescriptor::PrivateData::setDescriptor(
+    Escargot::ObjectPropertyDescriptorRef* descriptor) {
+  LWNODE_CHECK_NULL(descriptor_);
+  descriptor_ = descriptor;
+  isExternalDescriptor = true;
+}
+
+v8::PropertyDescriptor::PropertyDescriptor() : private_(new PrivateData()) {}
 
 // DataDescriptor
-v8::PropertyDescriptor::PropertyDescriptor(v8::Local<v8::Value> value)
-    : private_(nullptr) {
-  LWNODE_UNIMPLEMENT;
+v8::PropertyDescriptor::PropertyDescriptor(v8::Local<v8::Value> value) {
+  LWNODE_CHECK_MSG(!value.IsEmpty(), "not supported!");
+  private_ = new PrivateData(VAL(*value)->value());
 }
 
 // DataDescriptor with writable field
 v8::PropertyDescriptor::PropertyDescriptor(v8::Local<v8::Value> value,
-                                           bool writable)
-    : private_(nullptr) {
-  LWNODE_UNIMPLEMENT;
+                                           bool writable) {
+  LWNODE_CHECK_MSG(!value.IsEmpty(), "not supported!");
+  private_ = new PrivateData(VAL(*value)->value(), writable);
 }
 
 // AccessorDescriptor
 v8::PropertyDescriptor::PropertyDescriptor(v8::Local<v8::Value> get,
-                                           v8::Local<v8::Value> set)
-    : private_(nullptr) {
-  LWNODE_UNIMPLEMENT;
+                                           v8::Local<v8::Value> set) {
+  LWNODE_CHECK_MSG(!get.IsEmpty(), "not supported!");
+  LWNODE_CHECK_MSG(!set.IsEmpty(), "not supported!");
+  private_ = new PrivateData(VAL(*get)->value(), VAL(*set)->value());
 }
 
 v8::PropertyDescriptor::~PropertyDescriptor() {
   delete private_;
+  private_ = nullptr;
 }
 
 v8::Local<Value> v8::PropertyDescriptor::value() const {
-  LWNODE_RETURN_LOCAL(Value);
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return Local<Value>();
+  }
+  return Utils::NewLocal<Value>(IsolateWrap::GetCurrent()->toV8(),
+                                private_->descriptor()->value());
 }
 
 v8::Local<Value> v8::PropertyDescriptor::get() const {
-  LWNODE_RETURN_LOCAL(Value);
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return Local<Value>();
+  }
+  return Utils::NewLocal<Value>(IsolateWrap::GetCurrent()->toV8(),
+                                private_->descriptor()->getter());
 }
 
 v8::Local<Value> v8::PropertyDescriptor::set() const {
-  LWNODE_RETURN_LOCAL(Value);
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return Local<Value>();
+  }
+  return Utils::NewLocal<Value>(IsolateWrap::GetCurrent()->toV8(),
+                                private_->descriptor()->setter());
 }
 
 bool v8::PropertyDescriptor::has_value() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->hasValue();
 }
+
 bool v8::PropertyDescriptor::has_get() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->hasGetter();
 }
+
 bool v8::PropertyDescriptor::has_set() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->hasSetter();
 }
 
 bool v8::PropertyDescriptor::writable() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->isWritable();
 }
 
 bool v8::PropertyDescriptor::has_writable() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->hasWritable();
 }
 
-void v8::PropertyDescriptor::set_enumerable(bool enumerable) {}
+void v8::PropertyDescriptor::set_enumerable(bool enumerable) {
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return;
+  }
+  return private_->descriptor()->setEnumerable(enumerable);
+}
 
 bool v8::PropertyDescriptor::enumerable() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->isEnumerable();
 }
 
 bool v8::PropertyDescriptor::has_enumerable() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->hasEnumerable();
 }
 
-void v8::PropertyDescriptor::set_configurable(bool configurable) {}
+void v8::PropertyDescriptor::set_configurable(bool configurable) {
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return;
+  }
+  return private_->descriptor()->setConfigurable(configurable);
+}
 
 bool v8::PropertyDescriptor::configurable() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->isConfigurable();
 }
 
 bool v8::PropertyDescriptor::has_configurable() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_DCHECK_NOT_NULL(private_);
+  if (!private_->descriptor()) {
+    return false;
+  }
+  return private_->descriptor()->hasConfigurable();
 }
 
 Maybe<bool> v8::Object::DefineOwnProperty(v8::Local<v8::Context> context,

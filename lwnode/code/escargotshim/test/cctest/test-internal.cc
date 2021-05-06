@@ -255,19 +255,20 @@ TEST(internal_Escargot_ShadowObject) {
   ObjectTemplateNamedPropertyHandlerData esNamedPropertyHandlerData;
   esNamedPropertyHandlerData.getter =
       [](ExecutionStateRef* state,
-         ObjectRef* esSelf,
+         ObjectRef* self,
+         ValueRef* receiver,
          void* data,
-         const TemplatePropertyNameRef& esPropertyName)
-      -> OptionalRef<ValueRef> {
+         const TemplatePropertyNameRef& propertyName) -> OptionalRef<ValueRef> {
     return Escargot::OptionalRef<Escargot::ValueRef>();
   };
 
   esNamedPropertyHandlerData.setter =
       [](ExecutionStateRef* state,
-         ObjectRef* esSelf,
+         ObjectRef* self,
+         ValueRef* receiver,
          void* data,
-         const TemplatePropertyNameRef& esPropertyName,
-         ValueRef* esValue) -> OptionalRef<ValueRef> {
+         const TemplatePropertyNameRef& propertyName,
+         ValueRef* value) -> OptionalRef<ValueRef> {
     return Escargot::OptionalRef<Escargot::ValueRef>();
   };
 
