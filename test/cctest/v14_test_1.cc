@@ -31,7 +31,7 @@ TEST(UnboundScript) {
           .ToLocalChecked();
 
   // Create a new context.
-  Local<Context> context = Context::New(isolate);
+  Local<Context> context = env.local();
 
   // Create a Source
   ScriptCompiler::Source script_source(source);
