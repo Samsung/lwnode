@@ -1179,8 +1179,21 @@ Local<String> v8::Object::GetConstructorName() {
 
 Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
                                           IntegrityLevel level) {
-  LWNODE_UNIMPLEMENT;
-  return Just(true);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         ObjectRef* esSelf,
+         bool isSealed) -> ValueRef* {
+        return ValueRef::create(esSelf->setIntegrityLevel(esState, isSealed));
+      },
+      CVAL(this)->value()->asObject(),
+      level == IntegrityLevel::kSealed);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
 }
 
 Maybe<bool> v8::Object::Delete(Local<Context> context, Local<Value> key) {
