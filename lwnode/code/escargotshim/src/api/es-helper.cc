@@ -255,12 +255,16 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
           hiddenValuesObject = ObjectRef::create(state);
 
           LWNODE_DCHECK(
-              defineDataProperty(context,
-                                 object,
-                                 s_symbolKeyForHiddenValues,
-                                 ObjectRef::DataPropertyDescriptor(
-                                     hiddenValuesObject,
-                                     ObjectRef::PresentAttribute::NotPresent))
+              defineDataProperty(
+                  context,
+                  object,
+                  s_symbolKeyForHiddenValues,
+                  ObjectRef::DataPropertyDescriptor(
+                      hiddenValuesObject,
+                      static_cast<ObjectRef::PresentAttribute>(
+                          ObjectRef::PresentAttribute::WritablePresent |
+                          ObjectRef::PresentAttribute::NonEnumerablePresent |
+                          ObjectRef::PresentAttribute::NonConfigurablePresent)))
                   .isSuccessful());
         } else {
           hiddenValuesObject = hiddenValuesRef->asObject();
