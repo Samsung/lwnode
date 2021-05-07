@@ -17,6 +17,8 @@
 #include "api.h"
 #include "base.h"
 
+#include <sstream>
+
 using namespace Escargot;
 using namespace EscargotShim;
 
@@ -159,7 +161,15 @@ ScriptOrigin Message::GetScriptOrigin() const {
 }
 
 v8::Local<Value> Message::GetScriptResourceName() const {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto stackTrace = lwIsolate->stackTrace();
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  return Utils::NewLocal<String>(lwIsolate->toV8(), top->src);
 }
 
 v8::Local<v8::StackTrace> Message::GetStackTrace() const {
@@ -167,15 +177,42 @@ v8::Local<v8::StackTrace> Message::GetStackTrace() const {
 }
 
 Maybe<int> Message::GetLineNumber(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(int)
+  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto stackTrace = lwIsolate->stackTrace();
+
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return Just<int>(0);
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  return Just<int>(top->loc.line);
 }
 
 int Message::GetStartPosition() const {
-  LWNODE_RETURN_0;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto stackTrace = lwIsolate->stackTrace();
+
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return 0;
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  return top->loc.index;
 }
 
 int Message::GetEndPosition() const {
-  LWNODE_RETURN_0;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto stackTrace = lwIsolate->stackTrace();
+
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return 0;
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  return top->loc.index + 1;
 }
 
 int Message::ErrorLevel() const {
@@ -183,7 +220,8 @@ int Message::ErrorLevel() const {
 }
 
 int Message::GetStartColumn() const {
-  LWNODE_RETURN_0;
+  return GetStartColumn(Isolate::GetCurrent()->GetCurrentContext())
+      .FromMaybe(0);
 }
 
 int Message::GetWasmFunctionIndex() const {
@@ -191,15 +229,35 @@ int Message::GetWasmFunctionIndex() const {
 }
 
 Maybe<int> Message::GetStartColumn(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(int);
+  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto stackTrace = lwIsolate->stackTrace();
+
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return Nothing<int>();
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  return Just<int>(top->loc.column - 1);
 }
 
 int Message::GetEndColumn() const {
-  LWNODE_RETURN_0;
+  return GetEndColumn(Isolate::GetCurrent()->GetCurrentContext()).FromMaybe(0);
 }
 
 Maybe<int> Message::GetEndColumn(Local<Context> context) const {
-  LWNODE_RETURN_MAYBE(int);
+  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto stackTrace = lwIsolate->stackTrace();
+
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return Nothing<int>();
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  int endCol = top->loc.column;
+
+  return Just<int>(endCol);
 }
 
 bool Message::IsSharedCrossOrigin() const {
@@ -211,7 +269,26 @@ bool Message::IsOpaque() const {
 }
 
 MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
-  LWNODE_RETURN_LOCAL(String);
+  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto stackTrace = lwIsolate->stackTrace();
+
+  if (stackTrace.empty()) {
+    LWNODE_LOG_WARN("No StackTrace found");
+    return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
+  }
+
+  IsolateWrap::StackTraceData* top = stackTrace.front();
+  std::string code = top->sourceCode->toStdUTF8String();
+  std::stringstream ss(code);
+  std::string line;
+  for (size_t i = 1; std::getline(ss, line); i++) {
+    if (i == top->loc.line) {
+      break;
+    }
+  }
+
+  return Utils::NewLocal<String>(
+      lwIsolate->toV8(), StringRef::createFromASCII(line.data(), line.size()));
 }
 
 void Message::PrintCurrentStackTrace(Isolate* isolate, FILE* out) {

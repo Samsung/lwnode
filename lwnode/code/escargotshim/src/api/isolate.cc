@@ -292,6 +292,13 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   return newSymbol;
 }
 
+void IsolateWrap::setStackTrace(
+    GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
+  for (size_t i = 0; i < stackTraceData.size(); i++) {
+    m_stackTrace.push_back(new StackTraceData(stackTraceData[i]));
+  }
+}
+
 ValueWrap* IsolateWrap::getGlobal(const int index) {
   LWNODE_CHECK(index < internal::Internals::kRootIndexSize);
   return globalSlot_[index];

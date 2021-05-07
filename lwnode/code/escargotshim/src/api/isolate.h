@@ -154,6 +154,30 @@ class IsolateWrap final : public v8::internal::Isolate {
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
   GlobalHandles* globalHandles() { return &globalHandles_; }
+  struct StackTraceData : public gc {
+   public:
+    StackTraceData(Escargot::Evaluator::StackTraceData& data)
+        : src(data.src),
+          sourceCode(data.sourceCode),
+          loc(data.loc),
+          functionName(data.functionName),
+          isConstructor(data.isConstructor),
+          isAssociatedWithJavaScriptCode(data.isAssociatedWithJavaScriptCode),
+          isEval(data.isEval) {}
+
+    StringRef* src{nullptr};
+    StringRef* sourceCode{nullptr};
+    Escargot::Evaluator::LOC loc{0, 0, 0};
+    StringRef* functionName{nullptr};
+    bool isFunction{false};
+    bool isConstructor{false};
+    bool isAssociatedWithJavaScriptCode{false};
+    bool isEval{false};
+  };
+
+  GCVector<StackTraceData*> stackTrace() { return m_stackTrace; }
+  void setStackTrace(
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
 
  private:
   IsolateWrap();
@@ -192,6 +216,8 @@ class IsolateWrap final : public v8::internal::Isolate {
       set_abort_on_uncaught_exception_callback_ = nullptr;
 
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
+
+  GCVector<StackTraceData*> m_stackTrace;
 };
 
 }  // namespace EscargotShim

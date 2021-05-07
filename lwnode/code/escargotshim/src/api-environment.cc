@@ -2329,7 +2329,9 @@ DEFINE_ERROR(Error, error)
 
 Local<Message> Exception::CreateMessage(Isolate* isolate,
                                         Local<Value> exception) {
-  LWNODE_RETURN_LOCAL(Message);
+  API_ENTER_NO_EXCEPTION(isolate);
+  auto esException = CVAL(*exception)->value();
+  return Utils::NewLocal<Message>(isolate, esException);
 }
 
 Local<StackTrace> Exception::GetStackTrace(Local<Value> exception) {
