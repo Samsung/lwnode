@@ -163,12 +163,12 @@ ScriptOrigin Message::GetScriptOrigin() const {
 v8::Local<Value> Message::GetScriptResourceName() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto stackTrace = lwIsolate->stackTrace();
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   return Utils::NewLocal<String>(lwIsolate->toV8(), top->src);
 }
 
@@ -180,12 +180,12 @@ Maybe<int> Message::GetLineNumber(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
   auto stackTrace = lwIsolate->stackTrace();
 
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return Just<int>(0);
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   return Just<int>(top->loc.line);
 }
 
@@ -193,12 +193,12 @@ int Message::GetStartPosition() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto stackTrace = lwIsolate->stackTrace();
 
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return 0;
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   return top->loc.index;
 }
 
@@ -206,12 +206,12 @@ int Message::GetEndPosition() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto stackTrace = lwIsolate->stackTrace();
 
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return 0;
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   return top->loc.index + 1;
 }
 
@@ -232,12 +232,12 @@ Maybe<int> Message::GetStartColumn(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
   auto stackTrace = lwIsolate->stackTrace();
 
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return Nothing<int>();
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   return Just<int>(top->loc.column - 1);
 }
 
@@ -249,12 +249,12 @@ Maybe<int> Message::GetEndColumn(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
   auto stackTrace = lwIsolate->stackTrace();
 
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return Nothing<int>();
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   int endCol = top->loc.column;
 
   return Just<int>(endCol);
@@ -272,12 +272,12 @@ MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
   auto stackTrace = lwIsolate->stackTrace();
 
-  if (stackTrace.empty()) {
+  if (stackTrace->empty()) {
     LWNODE_LOG_WARN("No StackTrace found");
     return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
   }
 
-  IsolateWrap::StackTraceData* top = stackTrace.front();
+  IsolateWrap::StackTraceData* top = stackTrace->front();
   std::string code = top->sourceCode->toStdUTF8String();
   std::stringstream ss(code);
   std::string line;

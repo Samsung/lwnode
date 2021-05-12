@@ -107,6 +107,10 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
         return script->execute(state);
       },
       esScript);
+
+  if (!r.isSuccessful()) {
+    lwIsolate->setStackTrace(r.stackTraceData);
+  }
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);

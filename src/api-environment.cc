@@ -1655,20 +1655,10 @@ v8::Local<v8::Context> Isolate::GetIncumbentContext() {
 
 v8::Local<Value> Isolate::ThrowException(v8::Local<v8::Value> value) {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
   auto esValue = CVAL(*value)->value();
+  lwIsolate->ScheduleThrow(esValue);
 
-  auto r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState, ValueRef* value) -> ValueRef* {
-        esState->throwException(value);
-        return value;
-      },
-      esValue);
-
-  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Value>());
-
-  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), esValue);
 }
 
 void Isolate::AddGCPrologueCallback(GCCallbackWithData callback,

@@ -295,7 +295,7 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
 void IsolateWrap::setStackTrace(
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
   for (size_t i = 0; i < stackTraceData.size(); i++) {
-    m_stackTrace.push_back(new StackTraceData(stackTraceData[i]));
+    stackTrace_.push_back(new StackTraceData(stackTraceData[i]));
   }
 }
 
