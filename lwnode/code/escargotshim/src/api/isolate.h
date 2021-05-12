@@ -175,7 +175,7 @@ class IsolateWrap final : public v8::internal::Isolate {
     bool isEval{false};
   };
 
-  GCVector<StackTraceData*> stackTrace() { return m_stackTrace; }
+  GCVector<StackTraceData*>* stackTrace() { return &stackTrace_; }
   void setStackTrace(
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
 
@@ -217,7 +217,7 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
 
-  GCVector<StackTraceData*> m_stackTrace;
+  GCVector<StackTraceData*> stackTrace_;
 };
 
 }  // namespace EscargotShim
