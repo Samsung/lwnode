@@ -254,7 +254,7 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
           // 'PRIVATE_SYMBOL_KEY' doesn't exist. create it.
           hiddenValuesObject = ObjectRef::create(state);
 
-          LWNODE_DCHECK(
+          auto result =
               defineDataProperty(
                   context,
                   object,
@@ -265,12 +265,14 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
                           ObjectRef::PresentAttribute::WritablePresent |
                           ObjectRef::PresentAttribute::NonEnumerablePresent |
                           ObjectRef::PresentAttribute::NonConfigurablePresent)))
-                  .isSuccessful());
+                  .isSuccessful();
+
+          LWNODE_DCHECK(result);
         } else {
           hiddenValuesObject = hiddenValuesRef->asObject();
         }
 
-        LWNODE_DCHECK(hiddenValuesObject->set(state, param1, param2));
+        hiddenValuesObject->set(state, param1, param2);
 
         return ValueRef::create(true);
       },
