@@ -1283,8 +1283,17 @@ Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
       },
       CVAL(this)->value()->asObject(),
       level == IntegrityLevel::kSealed);
+// TODO: Fail to execute SetIntegrityLevel because the property assigned with
+// SetAccessor has special attribute.
+// The attribute is data property, configurable and writable.
+#if 0
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
-
+#else
+  if (!r.isSuccessful()) {
+    LWNODE_DLOG_ERROR("Fail to execute 'setIntegrityLevel'");
+    return Just(true);
+  }
+#endif
   return Just(r.result->asBoolean());
 }
 
