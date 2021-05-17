@@ -44,7 +44,7 @@ def divide_list(l, n):
 class Runner():
   def __init__(self, options):
     self.current_path = os.path.dirname(__file__)
-    self.project_path = os.path.join(self.current_path, "../../../../../")
+    self.project_path = os.path.join(self.current_path, "../../../../../../")
     self.execute_file_path = os.path.join(self.project_path, "node")
     self.test_folder_path = os.path.join(self.project_path, "test")
     self.test_temp_folder_path = os.path.join(self.test_folder_path, "tmp")
@@ -133,7 +133,7 @@ class Runner():
             self.all_test_list.append(file_path)
             self.all_skip_list.append(file_path)
             continue
-        
+
         self.all_test_list.append(file_path)
         if file_path in self.sequential_list:
           sequential_list.append(file_path)
@@ -151,7 +151,7 @@ class Runner():
         target=self._exec_test, args=(self, test, False))
       p.start()
       processes.append(p)
-    
+
     # sequential test
     p = multiprocessing.Process(
       target=self._exec_test, args=(self, sequential_list, True))
