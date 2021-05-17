@@ -24,6 +24,7 @@ namespace EscargotShim {
 
 class ContextWrap;
 class IsolateWrap;
+class ModuleWrap;
 
 class HandleWrap : public gc {
  public:
@@ -33,6 +34,7 @@ class HandleWrap : public gc {
     ObjectTemplate,
     FunctionTemplate,
     Script,
+    Module,
     // NotPresent should be at last
     NotPresent,
   };
@@ -75,6 +77,10 @@ class ValueWrap : public HandleWrap {
   static ValueWrap* createObjectTemplate(
       Escargot::ObjectTemplateRef* esTemplate);
   Escargot::ObjectTemplateRef* otpl() const;
+
+  // Module
+  static ValueWrap* createModule(ModuleWrap* esModule);
+  ModuleWrap* module() const;
 
  private:
   ValueWrap(void* ptr, HandleWrap::Type type);

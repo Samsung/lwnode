@@ -193,11 +193,14 @@ int Module::GetIdentityHash() const {
 
 Maybe<bool> Module::InstantiateModule(Local<Context> context,
                                       Module::ResolveCallback callback) {
-  LWNODE_RETURN_MAYBE(bool);
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+  return Just(true);
 }
 
 MaybeLocal<Value> Module::Evaluate(Local<Context> context) {
-  LWNODE_RETURN_LOCAL(Value);
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  return v8::Utils::ToLocal<Value>(lwIsolate->undefined());
 }
 
 Local<Module> Module::CreateSyntheticModule(
@@ -205,17 +208,35 @@ Local<Module> Module::CreateSyntheticModule(
     Local<String> module_name,
     const std::vector<Local<v8::String>>& export_names,
     v8::Module::SyntheticModuleEvaluationSteps evaluation_steps) {
-  LWNODE_RETURN_LOCAL(Module);
+  API_ENTER(isolate, Local<Module>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  LWNODE_CALL_TRACE(
+      "module name: %s\n",
+      std::string(*(String::Utf8Value(isolate, module_name))).data());
+
+  ScriptParserRef* parser = esContext->scriptParser();
+  ScriptParserRef::InitializeScriptResult result =
+      parser->initializeScript(lwIsolate->emptyString()->value()->asString(),
+                               CVAL(*module_name)->value()->asString(),
+                               true);
+  LWNODE_CHECK_MSG(result.isSuccessful(), "Cannot create Synthetic Module!");
+  // TODO: save the result value to the ModuleWrap
+  return v8::Utils::NewLocal<Module>(isolate,
+                                     ValueWrap::createModule(new ModuleWrap()));
 }
 
 Maybe<bool> Module::SetSyntheticModuleExport(Isolate* isolate,
                                              Local<String> export_name,
                                              Local<v8::Value> export_value) {
-  LWNODE_RETURN_MAYBE(bool);
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+  return Just(true);
 }
 
 void Module::SetSyntheticModuleExport(Local<String> export_name,
-                                      Local<v8::Value> export_value) {}
+                                      Local<v8::Value> export_value) {
+  LWNODE_RETURN_VOID;
+}
 
 MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
     Isolate* v8_isolate,
@@ -246,8 +267,8 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
 
   ContextRef* esPureContext = ContextRef::create(lwIsolate->vmInstance());
   ScriptParserRef* parser = esPureContext->scriptParser();
-  ScriptParserRef::InitializeScriptResult result =
-      parser->initializeScript(esSource, esResourceName, false);
+  ScriptParserRef::InitializeScriptResult result = parser->initializeScript(
+      esSource, esResourceName, source->GetResourceOptions().IsModule());
 
   if (!result.isSuccessful()) {
     return MaybeLocal<UnboundScript>();
@@ -287,7 +308,21 @@ MaybeLocal<Module> ScriptCompiler::CompileModule(
     Source* source,
     CompileOptions options,
     NoCacheReason no_cache_reason) {
-  LWNODE_RETURN_LOCAL(Module);
+  LWNODE_CHECK(options == kNoCompileOptions || options == kConsumeCodeCache);
+  API_ENTER(isolate, MaybeLocal<Module>());
+
+  LWNODE_CHECK_MSG(source->GetResourceOptions().IsModule(),
+                   "Invalid ScriptOrigin: is_module must be true");
+
+  auto maybe =
+      CompileUnboundInternal(isolate, source, options, no_cache_reason);
+  Local<UnboundScript> unbound;
+  if (!maybe.ToLocal(&unbound)) return MaybeLocal<Module>();
+
+  // TODO: save the unbound result to the ModuleWrap
+  return v8::Utils::NewLocal<Module>(
+      isolate,
+      ValueWrap::createModule(new ModuleWrap()));
 }
 
 MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
@@ -371,7 +406,9 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
   return Utils::NewLocal<Function>(lwIsolate->toV8(), r.result);
 }
 
-void ScriptCompiler::ScriptStreamingTask::Run() {}
+void ScriptCompiler::ScriptStreamingTask::Run() {
+  LWNODE_RETURN_VOID;
+}
 
 ScriptCompiler::ScriptStreamingTask* ScriptCompiler::StartStreamingScript(
     Isolate* v8_isolate, StreamedSource* source, CompileOptions options) {

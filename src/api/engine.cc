@@ -49,6 +49,7 @@ PlatformRef::LoadModuleResult Platform::onLoadModule(
     ContextRef* relatedContext,
     ScriptRef* whereRequestFrom,
     StringRef* moduleSrc) {
+  LWNODE_DLOG_INFO("onLoadModule: %s", moduleSrc->toStdUTF8String().c_str());
   LWNODE_UNIMPLEMENT;
 
   return LoadModuleResult(nullptr);
@@ -57,6 +58,7 @@ PlatformRef::LoadModuleResult Platform::onLoadModule(
 void Platform::didLoadModule(ContextRef* relatedContext,
                              OptionalRef<ScriptRef> referrer,
                              ScriptRef* loadedModule) {
+  LWNODE_DLOG_INFO("didModule");
   LWNODE_UNIMPLEMENT;
 }
 

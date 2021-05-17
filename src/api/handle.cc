@@ -101,4 +101,13 @@ Escargot::ObjectTemplateRef* ValueWrap::otpl() const {
   return reinterpret_cast<ObjectTemplateRef*>(holder_);
 }
 
+ValueWrap* ValueWrap::createModule(ModuleWrap* esModule) {
+  return new ValueWrap(esModule, Type::Module);
+}
+
+ModuleWrap* ValueWrap::module() const {
+  LWNODE_CHECK(type() == Type::Module);
+  return reinterpret_cast<ModuleWrap*>(holder_);
+}
+
 }  // namespace EscargotShim
