@@ -547,12 +547,12 @@ void v8::RegExp::CheckCast(v8::Value* that) {
 }
 
 Maybe<double> Value::NumberValue(Local<Context> context) const {
-  API_ENTER_WITH_CONTEXT(context, Nothing<double>());
   auto lwValue = CVAL(this)->value();
   if (lwValue->isNumber()) {
     return Just(lwValue->asNumber());
   }
 
+  API_ENTER_WITH_CONTEXT(context, Nothing<double>());
   auto lwContext = CVAL(*context)->context();
   auto r = Evaluator::execute(
       lwContext->get(),
@@ -566,12 +566,12 @@ Maybe<double> Value::NumberValue(Local<Context> context) const {
 }
 
 Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
-  API_ENTER_WITH_CONTEXT(context, Nothing<int64_t>());
   auto lwValue = CVAL(this)->value();
   if (lwValue->isNumber()) {
     return Just(NumberToInt64(lwValue));
   }
 
+  API_ENTER_WITH_CONTEXT(context, Nothing<int64_t>());
   auto lwContext = VAL(*context)->context();
   auto r = Evaluator::execute(
       lwContext->get(),
@@ -586,6 +586,11 @@ Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
 }
 
 Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
+  auto self = CVAL(this)->value();
+  if (self->isInt32()) {
+    return Just(self->asInt32());
+  }
+
   API_ENTER_WITH_CONTEXT(context, Nothing<int32_t>());
   auto lwContext = VAL(*context)->context();
 
@@ -601,6 +606,11 @@ Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
 }
 
 Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
+  auto self = CVAL(this)->value();
+  if (self->isUInt32()) {
+    return Just(self->asUint32());
+  }
+
   API_ENTER_WITH_CONTEXT(context, Nothing<uint32_t>());
   auto lwContext = VAL(*context)->context();
 
