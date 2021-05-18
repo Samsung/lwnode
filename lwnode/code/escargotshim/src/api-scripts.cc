@@ -188,7 +188,8 @@ Local<UnboundModuleScript> Module::GetUnboundModuleScript() {
 }
 
 int Module::GetIdentityHash() const {
-  LWNODE_RETURN_0;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+  return 0;
 }
 
 Maybe<bool> Module::InstantiateModule(Local<Context> context,

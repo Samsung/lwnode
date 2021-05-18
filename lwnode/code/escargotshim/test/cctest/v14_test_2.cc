@@ -142,3 +142,37 @@ TEST(ObjectTemplateSimple) {
 
   ExpectString("object_from_template.message", "Hello");
 }
+
+
+static bool onread_flag = false;
+static void GetOnread(Local<Name> name,
+                      const v8::PropertyCallbackInfo<v8::Value>& info) {
+  CHECK_EQ(info.This()->InternalFieldCount(), 2);
+  onread_flag = !onread_flag;
+}
+
+THREADED_TEST(MultiSetInternalFields) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  Local<v8::ObjectTemplate> instance_templ = templ->InstanceTemplate();
+  instance_templ->SetInternalFieldCount(3);
+  Local<v8::ObjectTemplate> proto_templ = templ->PrototypeTemplate();
+  proto_templ->SetAccessor(v8_str("onread"), GetOnread);
+  instance_templ->SetInternalFieldCount(2);
+
+  Local<v8::Function> fn = templ->GetFunction(env.local()).ToLocalChecked();
+  CHECK((*env)->Global()->Set(env.local(), v8_str("ClassA"), fn).FromJust());
+  CompileRun("var a = new ClassA();");
+  CompileRun("a.onread");
+  CHECK(onread_flag);
+
+  instance_templ->SetInternalFieldCount(5);
+  Local<v8::Function> fn2 = templ->GetFunction(env.local()).ToLocalChecked();
+  CHECK((*env)->Global()->Set(env.local(), v8_str("ClassB"), fn2).FromJust());
+  CompileRun("var b = new ClassB();");
+  CompileRun("b.onread");
+  CHECK(!onread_flag);
+}

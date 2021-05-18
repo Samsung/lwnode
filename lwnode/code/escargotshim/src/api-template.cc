@@ -653,6 +653,11 @@ int ObjectTemplate::InternalFieldCount() {
 
 void ObjectTemplate::SetInternalFieldCount(int value) {
   auto esObjectTemplate = CVAL(this)->otpl();
+  if (esObjectTemplate->didInstantiate()) {
+    LWNODE_DLOG_WARN(
+        "Don't modify internal field count after instantiating object");
+    return;
+  }
   ObjectTemplateRefHelper::setInternalFieldCount(esObjectTemplate, value);
 }
 
