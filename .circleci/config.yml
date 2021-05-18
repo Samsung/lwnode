@@ -12,7 +12,7 @@ jobs:
       - run: ./configure --without-npm --without-bundled-v8 --without-v8-platform
              --without-inspector --without-node-code-cache --without-node-snapshot
              --with-intl none --shared-zlib --dest-os linux --dest-cpu x64
-             --engine escargot --ninja --static-escargot
+             --engine escargot --ninja
       - run: ninja -v -C out/Release node
       - run: ls ./out/Release/node
       - run:
