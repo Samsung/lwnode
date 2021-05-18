@@ -38,7 +38,6 @@ int ObjectData::internalFieldCount() {
 
 void ObjectData::setInternalFieldCount(int size) {
   // TODO: throw internal error
-  LWNODE_CHECK_NULL(m_internalFields);
   if (size <= 0) {
     LWNODE_DLOG_ERROR("InternalField: The size is negative");
     return;
