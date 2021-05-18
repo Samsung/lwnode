@@ -5926,20 +5926,20 @@ THREADED_TEST(APIThrowTryCatch) {
 // }
 
 
-// THREADED_TEST(CatchZero) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   v8::TryCatch try_catch(context->GetIsolate());
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun("throw 10");
-//   CHECK(try_catch.HasCaught());
-//   CHECK_EQ(10, try_catch.Exception()->Int32Value(context.local()).FromJust());
-//   try_catch.Reset();
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun("throw 0");
-//   CHECK(try_catch.HasCaught());
-//   CHECK_EQ(0, try_catch.Exception()->Int32Value(context.local()).FromJust());
-// }
+THREADED_TEST(CatchZero) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  v8::TryCatch try_catch(context->GetIsolate());
+  CHECK(!try_catch.HasCaught());
+  CompileRun("throw 10");
+  CHECK(try_catch.HasCaught());
+  CHECK_EQ(10, try_catch.Exception()->Int32Value(context.local()).FromJust());
+  try_catch.Reset();
+  CHECK(!try_catch.HasCaught());
+  CompileRun("throw 0");
+  CHECK(try_catch.HasCaught());
+  CHECK_EQ(0, try_catch.Exception()->Int32Value(context.local()).FromJust());
+}
 
 
 THREADED_TEST(CatchExceptionFromWith) {

@@ -194,4 +194,10 @@ class EvalResultHelper {
       ContextRef* context, const Evaluator::EvaluatorResult& eval_result);
 };
 
+class ExceptionHelper {
+ public:
+  static ValueWrap* wrapException(ValueRef* exception);
+  static ValueRef* unwrapException(void* exception);
+};
+
 }  // namespace EscargotShim
