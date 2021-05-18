@@ -17,10 +17,12 @@
 #include "isolate.h"
 #include "utils/gc.h"
 #include "utils/misc.h"
+#include "es-helper.h"
 
 namespace v8 {
 namespace internal {
 
+// 'exception_' is of type ValueWrap*. Ref: api-exception.cc
 void Isolate::SetTerminationOnExternalTryCatch() {
   if (try_catch_handler_ == nullptr) {
     return;
@@ -28,7 +30,7 @@ void Isolate::SetTerminationOnExternalTryCatch() {
   try_catch_handler_->can_continue_ = false;
   try_catch_handler_->has_terminated_ = true;
   try_catch_handler_->exception_ =
-      reinterpret_cast<void*>(scheduled_exception_);
+      EscargotShim::ExceptionHelper::wrapException(scheduled_exception_);
 }
 
 bool Isolate::IsExecutionTerminating() {
@@ -65,7 +67,8 @@ void Isolate::UnregisterTryCatchHandler(v8::TryCatch* that) {
 
 void Isolate::CancelScheduledExceptionFromTryCatch(v8::TryCatch* that) {
   LWNODE_DCHECK(has_scheduled_exception());
-  if (scheduled_exception() == that->exception_) {
+  if (scheduled_exception() ==
+      EscargotShim::ExceptionHelper::unwrapException(that->exception_)) {
     clear_scheduled_exception();
   } else {
     // TODO

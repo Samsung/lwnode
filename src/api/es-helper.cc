@@ -536,4 +536,12 @@ FunctionData* FunctionTemplateRefHelper::getInstanceExtraData(
   return reinterpret_cast<FunctionData*>(data);
 }
 
+ValueWrap* ExceptionHelper::wrapException(ValueRef* exception) {
+  return ValueWrap::createValue(exception);
+}
+
+ValueRef* ExceptionHelper::unwrapException(void* exception) {
+  return reinterpret_cast<ValueWrap*>(exception)->value();
+}
+
 }  // namespace EscargotShim

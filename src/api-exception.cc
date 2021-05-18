@@ -25,11 +25,7 @@ using namespace EscargotShim;
 namespace v8 {
 // --- E x c e p t i o n s ---
 
-// The type of 'exception_' is 'Escargot::ValueRef*.
-static inline Escargot::ValueRef* toEsValue(void* exception) {
-  return reinterpret_cast<Escargot::ValueRef*>(exception);
-}
-
+// 'exception_' is of type ValueWrap*.
 v8::TryCatch::TryCatch(v8::Isolate* isolate)
     : isolate_(reinterpret_cast<i::Isolate*>(isolate)),
       next_(isolate_->try_catch_handler()),
@@ -84,7 +80,8 @@ void v8::TryCatch::operator delete[](void*, size_t) {
 }
 
 bool v8::TryCatch::HasCaught() const {
-  return !IsolateWrap::fromV8(isolate_)->isHole(toEsValue(exception_));
+  return !IsolateWrap::fromV8(isolate_)->isHole(
+      ExceptionHelper::unwrapException(exception_));
 }
 
 bool v8::TryCatch::CanContinue() const {
@@ -105,8 +102,9 @@ v8::Local<v8::Value> v8::TryCatch::ReThrow() {
 
 v8::Local<Value> v8::TryCatch::Exception() const {
   if (HasCaught()) {
-    return v8::Utils::NewLocal<Value>(IsolateWrap::toV8(isolate_),
-                                      toEsValue(exception_));
+    return v8::Utils::NewLocal<Value>(
+        IsolateWrap::toV8(isolate_),
+        EscargotShim::ExceptionHelper::unwrapException(exception_));
   } else {
     return v8::Local<Value>();
   }
@@ -125,12 +123,15 @@ v8::Local<v8::Message> v8::TryCatch::Message() const {
   LWNODE_RETURN_LOCAL(v8::Message);
 }
 
-void v8::TryCatch::Reset() {}
+void v8::TryCatch::Reset() {
+  rethrow_ = false;
+  isolate_->CancelScheduledExceptionFromTryCatch(this);
+  ResetInternal();
+}
 
 void v8::TryCatch::ResetInternal() {
-  auto esHole = IsolateWrap::fromV8(isolate_)->hole()->value();
-  exception_ = esHole;
-  message_obj_ = esHole;
+  exception_ = IsolateWrap::fromV8(isolate_)->hole();
+  message_obj_ = IsolateWrap::fromV8(isolate_)->hole()->value();
 }
 
 void v8::TryCatch::SetVerbose(bool value) {
