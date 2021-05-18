@@ -28,9 +28,9 @@
       'libraries': [
         '-lpthread',
         '<@(escargot_libs)',
-        '-Wl,-rpath,<(output_dir)',
+        '-Wl,-rpath,\$$ORIGIN/<(output_dir)',
         '-Wl,-rpath,../lib',
-        '-Wl,-rpath,.',
+        '-Wl,-rpath,\$$ORIGIN',
       ],
       'cflags': [ '-pthread' ],
       'ldflags': [ '-pthread' ],
