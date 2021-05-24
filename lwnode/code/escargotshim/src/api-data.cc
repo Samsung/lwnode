@@ -121,7 +121,7 @@ bool Value::IsBigInt() const {
 }
 
 bool Value::IsProxy() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isProxyObject();
 }
 
 #define VALUE_IS_SPECIFIC_TYPE(Type, Check)                                    \
@@ -203,7 +203,7 @@ bool Value::IsSetIterator() const {
 }
 
 bool Value::IsPromise() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isPromiseObject();
 }
 
 bool Value::IsModuleNamespaceObject() const {
@@ -1131,70 +1131,11 @@ Local<Object> v8::Object::FindInstanceInPrototypeChain(
 }
 
 MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Array>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asObject();
-
-  EvalResult r = Evaluator::execute(
-      esContext,
-      [](ExecutionStateRef* esState, ObjectRef* esSelf) -> ValueRef* {
-        auto globalObject = esState->context()->globalObject()->object();
-        auto f = globalObject->getOwnProperty(
-            esState, StringRef::createFromASCII("getOwnPropertyNames"));
-        auto set = SetObjectRef::create(esState);
-        auto vector = ValueVectorRef::create();
-
-        auto done = StringRef::createFromASCII("done");
-        auto value = StringRef::createFromASCII("value");
-        auto enumerable = StringRef::createFromASCII("enumerable");
-
-        {
-          ValueRef* argv[] = {esSelf};
-          auto props = f->call(esState, globalObject, 1, argv);
-          auto itr = props->asArrayObject()->values(esState);
-          for (auto entry = itr->next(esState);
-               entry->asObject()->get(esState, done)->isFalse();
-               entry = itr->next(esState)) {
-            auto val = entry->asObject()->get(esState, value);
-            auto p = esSelf->getOwnPropertyDescriptor(esState, val);
-            if (p->asObject()->get(esState, enumerable)->asBoolean()) {
-              set->add(esState, val);
-            }
-          }
-        }
-
-        for (OptionalRef<ObjectRef> p = esSelf->getPrototypeObject(esState);
-             p.hasValue();
-             p = p.value()->getPrototypeObject(esState)) {
-          ValueRef* argv[] = {p.value()};
-          auto props = f->call(esState, globalObject, 1, argv);
-          auto itr = props->asArrayObject()->values(esState);
-          for (auto entry = itr->next(esState);
-               entry->asObject()->get(esState, done)->isFalse();
-               entry = itr->next(esState)) {
-            auto val = entry->asObject()->get(esState, value);
-            auto property =
-                argv[0]->asObject()->getOwnPropertyDescriptor(esState, val);
-            if (property->asObject()->get(esState, enumerable)->asBoolean()) {
-              set->add(esState, val);
-            }
-          }
-        }
-
-        auto itr = set->values(esState);
-        for (auto entry = itr->next(esState);
-             entry->asObject()->get(esState, done)->isFalse();
-             entry = itr->next(esState)) {
-          auto val = entry->asObject()->get(esState, value);
-          vector->pushBack(val);
-        }
-
-        return ArrayObjectRef::create(esState, vector);
-      },
-      esSelf);
-  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Array>());
-
-  return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
+  return GetPropertyNames(
+      context,
+      v8::KeyCollectionMode::kIncludePrototypes,
+      static_cast<v8::PropertyFilter>(ONLY_ENUMERABLE | SKIP_SYMBOLS),
+      v8::IndexFilter::kIncludeIndices);
 }
 
 MaybeLocal<Array> v8::Object::GetPropertyNames(
@@ -1203,54 +1144,110 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(
     PropertyFilter property_filter,
     IndexFilter index_filter,
     KeyConversionMode key_conversion) {
-  LWNODE_UNIMPLEMENT;
-  return GetPropertyNames(context);
-}
-
-MaybeLocal<Array> v8::Object::GetOwnPropertyNames(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Array>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esSelf = CVAL(this)->value()->asObject();
 
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState, ObjectRef* esSelf) -> ValueRef* {
-        auto globalObject = esState->context()->globalObject()->object();
-        auto f = globalObject->getOwnProperty(
-            esState, StringRef::createFromASCII("getOwnPropertyNames"));
+      [](ExecutionStateRef* esState,
+         ObjectRef* esSelf,
+         KeyCollectionMode mode,
+         PropertyFilter property_filter,
+         IndexFilter index_filter,
+         KeyConversionMode key_conversion) -> ValueRef* {
+        auto set = SetObjectRef::create(esState);
         auto vector = ValueVectorRef::create();
 
         auto done = StringRef::createFromASCII("done");
         auto value = StringRef::createFromASCII("value");
         auto enumerable = StringRef::createFromASCII("enumerable");
+        auto writable = StringRef::createFromASCII("writable");
+        auto configurable = StringRef::createFromASCII("configurable");
 
-        ValueRef* argv[] = {esSelf};
-        auto props = f->call(esState, globalObject, 1, argv);
-        auto itr = props->asArrayObject()->values(esState);
-        for (auto entry = itr->next(esState);
-             entry->asObject()->get(esState, done)->isFalse();
-             entry = itr->next(esState)) {
-          auto val = entry->asObject()->get(esState, value);
-          auto p = esSelf->getOwnPropertyDescriptor(esState, val);
-          if (p->asObject()->get(esState, enumerable)->asBoolean()) {
-            vector->pushBack(val);
+        auto iter = OptionalRef<ObjectRef>(esSelf);
+        while (iter) {
+          auto keys = iter->ownPropertyKeys(esState);
+          for (size_t i = 0; i < keys->size(); i++) {
+            auto key = keys->at(i);
+
+            if (key->isSymbol()) {
+              if (!(property_filter & PropertyFilter::SKIP_SYMBOLS)) {
+                set->add(esState, key);
+              }
+              continue;
+            }
+
+            if (key->isString() &&
+                (property_filter & PropertyFilter::SKIP_STRINGS)) {
+              continue;
+            }
+
+            if (property_filter & (PropertyFilter::ONLY_WRITABLE |
+                                   PropertyFilter::ONLY_ENUMERABLE |
+                                   PropertyFilter::ONLY_CONFIGURABLE)) {
+              auto desc =
+                  iter->getOwnPropertyDescriptor(esState, key)->asObject();
+
+              if (((property_filter & PropertyFilter::ONLY_WRITABLE) &&
+                   desc->get(esState, writable)->isFalse()) ||
+                  ((property_filter & PropertyFilter::ONLY_ENUMERABLE) &&
+                   desc->get(esState, enumerable)->isFalse()) ||
+                  ((property_filter & PropertyFilter::ONLY_CONFIGURABLE) &&
+                   desc->get(esState, configurable)->isFalse())) {
+                continue;
+              }
+            }
+
+            if (index_filter == IndexFilter::kSkipIndices) {
+              LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+            }
+
+            set->add(esState, key);
           }
+
+          if ((mode == KeyCollectionMode::kOwnOnly)) {
+            break;
+          }
+          iter = iter->getPrototypeObject(esState);
         }
 
+        auto setIter = set->values(esState);
+        for (auto entry = setIter->next(esState);
+             entry->asObject()->get(esState, done)->isFalse();
+             entry = setIter->next(esState)) {
+          if (key_conversion == KeyConversionMode::kKeepNumbers) {
+            LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+          }
+          auto key = entry->asObject()->get(esState, value);
+          vector->pushBack(key);
+        }
         return ArrayObjectRef::create(esState, vector);
       },
-      esSelf);
+      esSelf,
+      mode,
+      property_filter,
+      index_filter,
+      key_conversion);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Array>());
 
   return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
+}
+
+MaybeLocal<Array> v8::Object::GetOwnPropertyNames(Local<Context> context) {
+  return GetOwnPropertyNames(
+      context, static_cast<v8::PropertyFilter>(ONLY_ENUMERABLE | SKIP_SYMBOLS));
 }
 
 MaybeLocal<Array> v8::Object::GetOwnPropertyNames(
     Local<Context> context,
     PropertyFilter filter,
     KeyConversionMode key_conversion) {
-  LWNODE_UNIMPLEMENT;
-  return GetOwnPropertyNames(context);
+  return GetPropertyNames(context,
+                          KeyCollectionMode::kOwnOnly,
+                          filter,
+                          v8::IndexFilter::kIncludeIndices,
+                          key_conversion);
 }
 
 MaybeLocal<String> v8::Object::ObjectProtoToString(Local<Context> context) {
