@@ -1203,7 +1203,8 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(
     PropertyFilter property_filter,
     IndexFilter index_filter,
     KeyConversionMode key_conversion) {
-  LWNODE_RETURN_LOCAL(Array);
+  LWNODE_UNIMPLEMENT;
+  return GetPropertyNames(context);
 }
 
 MaybeLocal<Array> v8::Object::GetOwnPropertyNames(Local<Context> context) {
@@ -1248,7 +1249,8 @@ MaybeLocal<Array> v8::Object::GetOwnPropertyNames(
     Local<Context> context,
     PropertyFilter filter,
     KeyConversionMode key_conversion) {
-  LWNODE_RETURN_LOCAL(Array);
+  LWNODE_UNIMPLEMENT;
+  return GetOwnPropertyNames(context);
 }
 
 MaybeLocal<String> v8::Object::ObjectProtoToString(Local<Context> context) {
@@ -1563,6 +1565,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
                                      int argc,
                                      v8::Local<v8::Value> argv[]) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  LWNODE_CHECK(CVAL(this)->value()->isCallable());
 
   auto lwContext = VAL(*context)->context();
 
@@ -1574,13 +1577,13 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* state,
-         FunctionObjectRef* self,
+         ValueRef* self,
          ValueRef* receiver,
          const size_t argc,
          ValueRef** argv) -> ValueRef* {
         return self->call(state, receiver, argc, argv);
       },
-      CVAL(this)->value()->asFunctionObject(),
+      CVAL(this)->value(),
       CVAL(*recv)->value(),
       arguments.size(),
       arguments.data());
