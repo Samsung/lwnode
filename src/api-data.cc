@@ -1471,7 +1471,41 @@ Maybe<PropertyAttribute> v8::Object::GetRealNamedPropertyAttributes(
     Local<Name> key){LWNODE_RETURN_MAYBE(PropertyAttribute)}
 
 Local<v8::Object> v8::Object::Clone() {
-  LWNODE_RETURN_LOCAL(Object);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esSelf = CVAL(this)->value()->asObject();
+
+  auto r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ObjectRef* esSelf) -> ValueRef* {
+        auto constructor =
+            esSelf->get(esState, StringRef::createFromASCII("constructor"));
+        ValueRef* args[] = {};
+        auto esCloneObject =
+            constructor->construct(esState, 0, args)->asObject();
+
+        esSelf->enumerateObjectOwnProperies(
+            esState,
+            [esSelf, esCloneObject](ExecutionStateRef* esState,
+                                    ValueRef* propertyName,
+                                    bool isWritable,
+                                    bool isEnumerable,
+                                    bool isConfigurable) -> bool {
+              auto prop = esSelf->getOwnProperty(esState, propertyName);
+              esCloneObject->defineDataProperty(esState,
+                                                propertyName,
+                                                prop,
+                                                isWritable,
+                                                isEnumerable,
+                                                isConfigurable);
+              return true;
+            });
+        return esCloneObject;
+      },
+      esSelf);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return v8::Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
 }
 
 Local<v8::Context> v8::Object::CreationContext() {
