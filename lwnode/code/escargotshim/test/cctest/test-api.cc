@@ -14528,63 +14528,63 @@ THREADED_TEST(ProxyGetPropertyNames) {
 
 
 // // Verify that we can clone an object
-// TEST(ObjectClone) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+TEST(ObjectClone) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   const char* sample =
-//     "var rv = {};"      \
-//     "rv.alpha = 'hello';" \
-//     "rv.beta = 123;"     \
-//     "rv;";
+  const char* sample =
+    "var rv = {};"      \
+    "rv.alpha = 'hello';" \
+    "rv.beta = 123;"     \
+    "rv;";
 
-//   // Create an object, verify basics.
-//   Local<Value> val = CompileRun(sample);
-//   CHECK(val->IsObject());
-//   Local<v8::Object> obj = val.As<v8::Object>();
-//   obj->Set(env.local(), v8_str("gamma"), v8_str("cloneme")).FromJust();
+  // Create an object, verify basics.
+  Local<Value> val = CompileRun(sample);
+  CHECK(val->IsObject());
+  Local<v8::Object> obj = val.As<v8::Object>();
+  obj->Set(env.local(), v8_str("gamma"), v8_str("cloneme")).FromJust();
 
-//   CHECK(v8_str("hello")
-//             ->Equals(env.local(),
-//                      obj->Get(env.local(), v8_str("alpha")).ToLocalChecked())
-//             .FromJust());
-//   CHECK(v8::Integer::New(isolate, 123)
-//             ->Equals(env.local(),
-//                      obj->Get(env.local(), v8_str("beta")).ToLocalChecked())
-//             .FromJust());
-//   CHECK(v8_str("cloneme")
-//             ->Equals(env.local(),
-//                      obj->Get(env.local(), v8_str("gamma")).ToLocalChecked())
-//             .FromJust());
+  CHECK(v8_str("hello")
+            ->Equals(env.local(),
+                     obj->Get(env.local(), v8_str("alpha")).ToLocalChecked())
+            .FromJust());
+  CHECK(v8::Integer::New(isolate, 123)
+            ->Equals(env.local(),
+                     obj->Get(env.local(), v8_str("beta")).ToLocalChecked())
+            .FromJust());
+  CHECK(v8_str("cloneme")
+            ->Equals(env.local(),
+                     obj->Get(env.local(), v8_str("gamma")).ToLocalChecked())
+            .FromJust());
 
-//   // Clone it.
-//   Local<v8::Object> clone = obj->Clone();
-//   CHECK(v8_str("hello")
-//             ->Equals(env.local(),
-//                      clone->Get(env.local(), v8_str("alpha")).ToLocalChecked())
-//             .FromJust());
-//   CHECK(v8::Integer::New(isolate, 123)
-//             ->Equals(env.local(),
-//                      clone->Get(env.local(), v8_str("beta")).ToLocalChecked())
-//             .FromJust());
-//   CHECK(v8_str("cloneme")
-//             ->Equals(env.local(),
-//                      clone->Get(env.local(), v8_str("gamma")).ToLocalChecked())
-//             .FromJust());
+  // Clone it.
+  Local<v8::Object> clone = obj->Clone();
+  CHECK(v8_str("hello")
+            ->Equals(env.local(),
+                     clone->Get(env.local(), v8_str("alpha")).ToLocalChecked())
+            .FromJust());
+  CHECK(v8::Integer::New(isolate, 123)
+            ->Equals(env.local(),
+                     clone->Get(env.local(), v8_str("beta")).ToLocalChecked())
+            .FromJust());
+  CHECK(v8_str("cloneme")
+            ->Equals(env.local(),
+                     clone->Get(env.local(), v8_str("gamma")).ToLocalChecked())
+            .FromJust());
 
-//   // Set a property on the clone, verify each object.
-//   CHECK(clone->Set(env.local(), v8_str("beta"), v8::Integer::New(isolate, 456))
-//             .FromJust());
-//   CHECK(v8::Integer::New(isolate, 123)
-//             ->Equals(env.local(),
-//                      obj->Get(env.local(), v8_str("beta")).ToLocalChecked())
-//             .FromJust());
-//   CHECK(v8::Integer::New(isolate, 456)
-//             ->Equals(env.local(),
-//                      clone->Get(env.local(), v8_str("beta")).ToLocalChecked())
-//             .FromJust());
-// }
+  // Set a property on the clone, verify each object.
+  CHECK(clone->Set(env.local(), v8_str("beta"), v8::Integer::New(isolate, 456))
+            .FromJust());
+  CHECK(v8::Integer::New(isolate, 123)
+            ->Equals(env.local(),
+                     obj->Get(env.local(), v8_str("beta")).ToLocalChecked())
+            .FromJust());
+  CHECK(v8::Integer::New(isolate, 456)
+            ->Equals(env.local(),
+                     clone->Get(env.local(), v8_str("beta")).ToLocalChecked())
+            .FromJust());
+}
 
 
 // class OneByteVectorResource : public v8::String::ExternalOneByteStringResource {
@@ -15321,26 +15321,26 @@ THREADED_TEST(ProxyGetPropertyNames) {
 // }
 
 
-// // Regression test for issue 398.
-// // If a function is added to an object, creating a constant function
-// // field, and the result is cloned, replacing the constant function on the
-// // original should not affect the clone.
-// // See http://code.google.com/p/v8/issues/detail?id=398
-// THREADED_TEST(ReplaceConstantFunction) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//   v8::Local<v8::FunctionTemplate> func_templ =
-//       v8::FunctionTemplate::New(isolate);
-//   v8::Local<v8::String> foo_string = v8_str("foo");
-//   obj->Set(context.local(), foo_string,
-//            func_templ->GetFunction(context.local()).ToLocalChecked())
-//       .FromJust();
-//   v8::Local<v8::Object> obj_clone = obj->Clone();
-//   obj_clone->Set(context.local(), foo_string, v8_str("Hello")).FromJust();
-//   CHECK(!obj->Get(context.local(), foo_string).ToLocalChecked()->IsUndefined());
-// }
+// Regression test for issue 398.
+// If a function is added to an object, creating a constant function
+// field, and the result is cloned, replacing the constant function on the
+// original should not affect the clone.
+// See http://code.google.com/p/v8/issues/detail?id=398
+THREADED_TEST(ReplaceConstantFunction) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  v8::Local<v8::FunctionTemplate> func_templ =
+      v8::FunctionTemplate::New(isolate);
+  v8::Local<v8::String> foo_string = v8_str("foo");
+  obj->Set(context.local(), foo_string,
+           func_templ->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  v8::Local<v8::Object> obj_clone = obj->Clone();
+  obj_clone->Set(context.local(), foo_string, v8_str("Hello")).FromJust();
+  CHECK(!obj->Get(context.local(), foo_string).ToLocalChecked()->IsUndefined());
+}
 
 // THREADED_TEST(ScriptContextDependence) {
 //   LocalContext c1;
