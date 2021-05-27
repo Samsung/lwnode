@@ -684,7 +684,21 @@ double v8::Date::ValueOf() const {
 MaybeLocal<v8::RegExp> v8::RegExp::New(Local<Context> context,
                                        Local<String> pattern,
                                        Flags flags) {
-  LWNODE_RETURN_LOCAL(RegExp);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<RegExp>());
+  auto lwContext = CVAL(*context)->context();
+  auto lwPattern = CVAL(*pattern)->value();
+  int flagsValue = (int)flags;
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, ValueRef* source, int flags) -> ValueRef* {
+        return RegExpObjectRef::create(esState, source, (RegExpObjectRef::RegExpObjectOption)flags);
+      },
+      lwPattern,
+      flagsValue);
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<RegExp>());
+
+  return Utils::NewLocal<RegExp>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<v8::RegExp> v8::RegExp::NewWithBacktrackLimit(
@@ -696,12 +710,39 @@ MaybeLocal<v8::RegExp> v8::RegExp::NewWithBacktrackLimit(
 }
 
 Local<v8::String> v8::RegExp::GetSource() const {
-  LWNODE_RETURN_LOCAL(String);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto self = CVAL(this)->value();
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState, RegExpObjectRef* self) -> ValueRef* {
+        return self->source();
+      },
+      self->asRegExpObject());
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
 }
 
 v8::RegExp::Flags v8::RegExp::GetFlags() const {
-  LWNODE_UNIMPLEMENT;
-  return kNone;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto self = CVAL(this)->value();
+
+  int flags = RegExp::Flags::kNone;
+  auto r = Evaluator::execute(lwContext->get(),
+                              [](ExecutionStateRef* esState,
+                                 RegExpObjectRef* self,
+                                 int* flags) -> ValueRef* {
+                                *flags = self->option();
+                                return ValueRef::createNull();
+                              },
+                              self->asRegExpObject(),
+                              &flags);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return (RegExp::Flags)flags;
 }
 
 MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
