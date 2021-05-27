@@ -18765,108 +18765,108 @@ THREADED_TEST(ReplaceConstantFunction) {
 //   object.Reset();
 // }
 
-// TEST(RegExp) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
+TEST(RegExp) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
 
-//   v8::Local<v8::RegExp> re =
-//       v8::RegExp::New(context.local(), v8_str("foo"), v8::RegExp::kNone)
-//           .ToLocalChecked();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("foo")).FromJust());
-//   CHECK_EQ(v8::RegExp::kNone, re->GetFlags());
+  v8::Local<v8::RegExp> re =
+      v8::RegExp::New(context.local(), v8_str("foo"), v8::RegExp::kNone)
+          .ToLocalChecked();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("foo")).FromJust());
+  CHECK_EQ(v8::RegExp::kNone, re->GetFlags());
 
-//   re = v8::RegExp::New(context.local(), v8_str("bar"),
-//                        static_cast<v8::RegExp::Flags>(v8::RegExp::kIgnoreCase |
-//                                                       v8::RegExp::kGlobal))
-//            .ToLocalChecked();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("bar")).FromJust());
-//   CHECK_EQ(v8::RegExp::kIgnoreCase | v8::RegExp::kGlobal,
-//            static_cast<int>(re->GetFlags()));
+  re = v8::RegExp::New(context.local(), v8_str("bar"),
+                       static_cast<v8::RegExp::Flags>(v8::RegExp::kIgnoreCase |
+                                                      v8::RegExp::kGlobal))
+           .ToLocalChecked();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("bar")).FromJust());
+  CHECK_EQ(v8::RegExp::kIgnoreCase | v8::RegExp::kGlobal,
+           static_cast<int>(re->GetFlags()));
 
-//   re = v8::RegExp::New(context.local(), v8_str("baz"),
-//                        static_cast<v8::RegExp::Flags>(v8::RegExp::kIgnoreCase |
-//                                                       v8::RegExp::kMultiline))
-//            .ToLocalChecked();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("baz")).FromJust());
-//   CHECK_EQ(v8::RegExp::kIgnoreCase | v8::RegExp::kMultiline,
-//            static_cast<int>(re->GetFlags()));
+  re = v8::RegExp::New(context.local(), v8_str("baz"),
+                       static_cast<v8::RegExp::Flags>(v8::RegExp::kIgnoreCase |
+                                                      v8::RegExp::kMultiline))
+           .ToLocalChecked();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("baz")).FromJust());
+  CHECK_EQ(v8::RegExp::kIgnoreCase | v8::RegExp::kMultiline,
+           static_cast<int>(re->GetFlags()));
 
-//   re = v8::RegExp::New(context.local(), v8_str("baz"),
-//                        static_cast<v8::RegExp::Flags>(v8::RegExp::kUnicode |
-//                                                       v8::RegExp::kSticky))
-//            .ToLocalChecked();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("baz")).FromJust());
-//   CHECK_EQ(v8::RegExp::kUnicode | v8::RegExp::kSticky,
-//            static_cast<int>(re->GetFlags()));
+  re = v8::RegExp::New(context.local(), v8_str("baz"),
+                       static_cast<v8::RegExp::Flags>(v8::RegExp::kUnicode |
+                                                      v8::RegExp::kSticky))
+           .ToLocalChecked();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("baz")).FromJust());
+  CHECK_EQ(v8::RegExp::kUnicode | v8::RegExp::kSticky,
+           static_cast<int>(re->GetFlags()));
 
-//   re = CompileRun("/quux/").As<v8::RegExp>();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("quux")).FromJust());
-//   CHECK_EQ(v8::RegExp::kNone, re->GetFlags());
+  re = CompileRun("/quux/").As<v8::RegExp>();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("quux")).FromJust());
+  CHECK_EQ(v8::RegExp::kNone, re->GetFlags());
 
-//   re = CompileRun("/quux/gm").As<v8::RegExp>();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("quux")).FromJust());
-//   CHECK_EQ(v8::RegExp::kGlobal | v8::RegExp::kMultiline,
-//            static_cast<int>(re->GetFlags()));
+  re = CompileRun("/quux/gm").As<v8::RegExp>();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("quux")).FromJust());
+  CHECK_EQ(v8::RegExp::kGlobal | v8::RegExp::kMultiline,
+           static_cast<int>(re->GetFlags()));
 
-//   // Override the RegExp constructor and check the API constructor
-//   // still works.
-//   CompileRun("RegExp = function() {}");
+  // Override the RegExp constructor and check the API constructor
+  // still works.
+  CompileRun("RegExp = function() {}");
 
-//   re = v8::RegExp::New(context.local(), v8_str("foobar"), v8::RegExp::kNone)
-//            .ToLocalChecked();
-//   CHECK(re->IsRegExp());
-//   CHECK(re->GetSource()->Equals(context.local(), v8_str("foobar")).FromJust());
-//   CHECK_EQ(v8::RegExp::kNone, re->GetFlags());
+  re = v8::RegExp::New(context.local(), v8_str("foobar"), v8::RegExp::kNone)
+           .ToLocalChecked();
+  CHECK(re->IsRegExp());
+  CHECK(re->GetSource()->Equals(context.local(), v8_str("foobar")).FromJust());
+  CHECK_EQ(v8::RegExp::kNone, re->GetFlags());
 
-//   re = v8::RegExp::New(context.local(), v8_str("foobarbaz"),
-//                        static_cast<v8::RegExp::Flags>(v8::RegExp::kIgnoreCase |
-//                                                       v8::RegExp::kMultiline))
-//            .ToLocalChecked();
-//   CHECK(re->IsRegExp());
-//   CHECK(
-//       re->GetSource()->Equals(context.local(), v8_str("foobarbaz")).FromJust());
-//   CHECK_EQ(v8::RegExp::kIgnoreCase | v8::RegExp::kMultiline,
-//            static_cast<int>(re->GetFlags()));
+  re = v8::RegExp::New(context.local(), v8_str("foobarbaz"),
+                       static_cast<v8::RegExp::Flags>(v8::RegExp::kIgnoreCase |
+                                                      v8::RegExp::kMultiline))
+           .ToLocalChecked();
+  CHECK(re->IsRegExp());
+  CHECK(
+      re->GetSource()->Equals(context.local(), v8_str("foobarbaz")).FromJust());
+  CHECK_EQ(v8::RegExp::kIgnoreCase | v8::RegExp::kMultiline,
+           static_cast<int>(re->GetFlags()));
 
-//   CHECK(context->Global()->Set(context.local(), v8_str("re"), re).FromJust());
-//   ExpectTrue("re.test('FoobarbaZ')");
+  CHECK(context->Global()->Set(context.local(), v8_str("re"), re).FromJust());
+  ExpectTrue("re.test('FoobarbaZ')");
 
-//   // RegExps are objects on which you can set properties.
-//   re->Set(context.local(), v8_str("property"),
-//           v8::Integer::New(context->GetIsolate(), 32))
-//       .FromJust();
-//   v8::Local<v8::Value> value(CompileRun("re.property"));
-//   CHECK_EQ(32, value->Int32Value(context.local()).FromJust());
+  // RegExps are objects on which you can set properties.
+  re->Set(context.local(), v8_str("property"),
+          v8::Integer::New(context->GetIsolate(), 32))
+      .FromJust();
+  v8::Local<v8::Value> value(CompileRun("re.property"));
+  CHECK_EQ(32, value->Int32Value(context.local()).FromJust());
 
-//   {
-//     v8::TryCatch try_catch(context->GetIsolate());
-//     CHECK(v8::RegExp::New(context.local(), v8_str("foo["), v8::RegExp::kNone)
-//               .IsEmpty());
-//     CHECK(try_catch.HasCaught());
-//     CHECK(context->Global()
-//               ->Set(context.local(), v8_str("ex"), try_catch.Exception())
-//               .FromJust());
-//     ExpectTrue("ex instanceof SyntaxError");
-//   }
+//  {
+//    v8::TryCatch try_catch(context->GetIsolate());
+//    CHECK(v8::RegExp::New(context.local(), v8_str("foo["), v8::RegExp::kNone)
+//              .IsEmpty());
+//    CHECK(try_catch.HasCaught());
+//    CHECK(context->Global()
+//              ->Set(context.local(), v8_str("ex"), try_catch.Exception())
+//              .FromJust());
+//    ExpectTrue("ex instanceof SyntaxError");
+//  }
 
-//   // RegExp::Exec.
-//   {
-//     v8::Local<v8::RegExp> regexp =
-//         v8::RegExp::New(context.local(), v8_str("a.c"), {}).ToLocalChecked();
-//     v8::Local<v8::Object> result0 =
-//         regexp->Exec(context.local(), v8_str("abc")).ToLocalChecked();
-//     CHECK(result0->IsArray());
-//     v8::Local<v8::Object> result1 =
-//         regexp->Exec(context.local(), v8_str("abd")).ToLocalChecked();
-//     CHECK(result1->IsNull());
-//   }
-// }
+//  // RegExp::Exec.
+//  {
+//    v8::Local<v8::RegExp> regexp =
+//        v8::RegExp::New(context.local(), v8_str("a.c"), {}).ToLocalChecked();
+//    v8::Local<v8::Object> result0 =
+//        regexp->Exec(context.local(), v8_str("abc")).ToLocalChecked();
+//    CHECK(result0->IsArray());
+//    v8::Local<v8::Object> result1 =
+//        regexp->Exec(context.local(), v8_str("abd")).ToLocalChecked();
+//    CHECK(result1->IsNull());
+//  }
+}
 
 
 // THREADED_TEST(Equals) {

@@ -179,7 +179,7 @@ bool Value::IsNativeError() const {
 }
 
 bool Value::IsRegExp() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isRegExpObject();
 }
 
 bool Value::IsAsyncFunction() const {
