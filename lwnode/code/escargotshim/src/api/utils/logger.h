@@ -20,6 +20,8 @@
 #include <string.h>
 #include <cstdio>
 
+#include "flags.h"
+
 #define COLOR_RESET "\033[0m"
 #define COLOR_DIM "\033[0;2m"
 #define COLOR_RED "\033[0;31m"
@@ -46,28 +48,30 @@
 #define TRACE_ARGS __PRETTY_FUNCTION__, __FILENAME__, __LINE__
 #define TRACE_ARGS2 __FUNCTION__, __FILENAME__, __LINE__
 
-#define LWNODE_LOG_RAW(fmt, ...) fprintf(stdout, fmt "\n", ##__VA_ARGS__);
-
-#define LWNODE_LOG_INFO(fmt, ...)                                              \
+#if !defined(NDEBUG)
+#define LWNODE_LOG_RAW(fmt, ...)                                               \
   do {                                                                         \
-    fprintf(stdout, "INFO " fmt "\n", ##__VA_ARGS__);                          \
+    fprintf(stderr, fmt "\n", ##__VA_ARGS__);                                  \
   } while (0);
+#else
+#define LWNODE_LOG_RAW(fmt, ...)                                               \
+  do {                                                                         \
+    if (EscargotShim::Flags::isInternalLogEnabled() == true) {                 \
+      fprintf(stderr, fmt "\n", ##__VA_ARGS__);                                \
+    }                                                                          \
+  } while (0);
+#endif
+
+#define LWNODE_LOG_INFO(fmt, ...) LWNODE_LOG_RAW("INFO " fmt, ##__VA_ARGS__);
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
-  do {                                                                         \
-    fprintf(stderr, COLOR_YELLOW "WARN " fmt COLOR_RESET "\n", ##__VA_ARGS__); \
-  } while (0);
+  LWNODE_LOG_RAW(COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
-  do {                                                                         \
-    fprintf(stderr, COLOR_BRED "ERROR " fmt COLOR_RESET "\n", ##__VA_ARGS__);  \
-  } while (0);
+  LWNODE_LOG_RAW(COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_UNIMPLEMENT                                                     \
-  do {                                                                         \
-    LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED" TRACE_FMT COLOR_RESET,            \
-                   TRACE_ARGS);                                                \
-  } while (0);
+  LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED" TRACE_FMT COLOR_RESET, TRACE_ARGS);
 
 // conditional loggers
 

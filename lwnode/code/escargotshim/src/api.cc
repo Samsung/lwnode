@@ -191,6 +191,9 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
           Flags::setTraceCallId(token);
         }
       }
+    } else if (strEquals("--internal-log", arg)) {
+      flags |= FlagType::InternalLog;
+      checked = true;
     } else if (remove_flags && (strStartsWith(arg, "--debug") ||
                                 strStartsWith(arg, "--stack-size=") ||
                                 strStartsWith(arg, "--nolazy") ||
