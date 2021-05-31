@@ -34,6 +34,7 @@ enum FlagType : flag_t {
   // lwnode
   TraceCall = 1 << 5,
   TraceGC = 1 << 6,
+  InternalLog = 1 << 7,
 };
 
 class LWNODE_EXPORT Flags {
@@ -44,6 +45,7 @@ class LWNODE_EXPORT Flags {
 
   static bool isTraceCallEnabled(std::string id = "*");
   static bool isTraceGCEnabled() { return s_flags & FlagType::TraceGC; }
+  static bool isInternalLogEnabled() { return s_flags & FlagType::InternalLog; }
 
   static void setTraceCallId(std::string id) { s_trace_ids.insert(id); }
 
