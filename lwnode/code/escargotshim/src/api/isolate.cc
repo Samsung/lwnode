@@ -15,9 +15,9 @@
  */
 
 #include "isolate.h"
+#include "es-helper.h"
 #include "utils/gc.h"
 #include "utils/misc.h"
-#include "es-helper.h"
 
 namespace v8 {
 namespace internal {
@@ -175,9 +175,13 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
 
   LWNODE_CHECK_NOT_NULL(arrayBufferDecorator_->array_buffer_allocator());
 
-  vmInstance_ = VMInstanceRef::create(new Platform(array_buffer_allocator()));
-  vmInstance_->setOnVMInstanceDelete(
-      [](VMInstanceRef* instance) { delete instance->platform(); });
+  auto platform = Platform::GetInstance();
+  platform->setAllocator(array_buffer_allocator());
+
+  vmInstance_ = VMInstanceRef::create(platform);
+  vmInstance_->setOnVMInstanceDelete([](VMInstanceRef* instance) {
+    // Do Nothing
+  });
 
   InitializeGlobalSlots();
 

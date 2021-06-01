@@ -29,7 +29,8 @@ namespace EscargotShim {
 
 class Platform : public PlatformRef {
  public:
-  Platform(v8::ArrayBuffer::Allocator* allocator);
+  static Platform* GetInstance();
+  static void Dispose();
 
   void markJSJobEnqueued(ContextRef* relatedContext) override;
   void* onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
@@ -54,7 +55,12 @@ class Platform : public PlatformRef {
                          PersistentRefHolder<ScriptRef>>>
       loadedModules;
 
+  void setAllocator(v8::ArrayBuffer::Allocator* allocator) {
+    allocator_ = allocator;
+  }
+
  private:
+  Platform() = default;
   v8::ArrayBuffer::Allocator* allocator_ = nullptr;
 };
 

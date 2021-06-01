@@ -23,11 +23,21 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-// --- P l a t f o r m ---
-Platform::Platform(v8::ArrayBuffer::Allocator* allocator) {
-  LWNODE_CHECK_NOT_NULL(allocator);
-  allocator_ = allocator;
+static Platform* s_platform;
+
+Platform* Platform::GetInstance() {
+  if (s_platform == nullptr) {
+    s_platform = new Platform();
+  }
+  return s_platform;
 }
+
+void Platform::Dispose() {
+  delete s_platform;
+  s_platform = nullptr;
+}
+
+// --- P l a t f o r m ---
 
 void Platform::markJSJobEnqueued(ContextRef* relatedContext) {
   // @note the timing to handle pending jobs depends on clients
@@ -118,6 +128,8 @@ void Engine::initialize() {
 void Engine::finalize() {
   Globals::finalize();
   MemoryUtil::gcFull();
+
+  Platform::Dispose();
 }
 
 }  // namespace EscargotShim
