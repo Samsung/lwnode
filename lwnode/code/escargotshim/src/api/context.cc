@@ -17,16 +17,43 @@
 #include "context.h"
 #include "base.h"
 #include "es-helper.h"
+#include "escargot_natives.h"
 #include "isolate.h"
 
 using namespace Escargot;
 
 namespace EscargotShim {
 
+static void evalJavaScript(ContextRef* context,
+                           const char* name,
+                           const char* buffer,
+                           size_t bufferSize) {
+  ScriptParserRef::InitializeScriptResult scriptResult =
+      context->scriptParser()->initializeScript(
+          StringRef::createExternalFromASCII(buffer, bufferSize),
+          StringRef::createFromASCII(name, sizeof(name)));
+  LWNODE_CHECK_MSG(scriptResult.isSuccessful(),
+                   "Cannot parser %s: %s",
+                   name,
+                   scriptResult.parseErrorMessage->toStdUTF8String().data());
+
+  auto r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
+        return script->execute(state);
+      },
+      scriptResult.script.get());
+  LWNODE_CHECK_MSG(r.isSuccessful(), "Cannot execute %s", name);
+}
+
 static bool createGlobals(ContextRef* context) {
 #if defined(HOST_TIZEN)
 // @todo setup device APIs
 #endif
+  evalJavaScript(context,
+                 "stack_frame",
+                 reinterpret_cast<const char*>(stack_frame_raw),
+                 sizeof(stack_frame_raw));
   return true;
 }
 
