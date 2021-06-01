@@ -15,10 +15,10 @@ jobs:
              --engine escargot --ninja
       - run: ninja -v -C out/Release node
       - run: ls ./out/Release/node
-      - run:
-          name: Run node.js TCs
-          command: |
-            ln -sf out/Release/node node && ./lwnode/code/escargotshim/test/jstester/jstester.py
+      # - run:
+      #     name: Run node.js TCs
+      #     command: |
+      #       ln -sf out/Release/node node && ./lwnode/code/escargotshim/test/jstester/jstester.py
   test:
     machine:
       image: art.sec.samsung.net/ci-docker/lws/starfish:latest
