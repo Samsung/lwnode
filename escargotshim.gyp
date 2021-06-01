@@ -17,6 +17,7 @@
         'src',
         'include',
         '.',
+        '<(SHARED_INTERMEDIATE_DIR)',
       ],
       'sources': [
         'src/api.cc',
@@ -69,6 +70,28 @@
           '.',
         ],
       },
+      'actions': [
+        {
+          'action_name': 'escargotshim_js2c',
+          'process_outputs_as_sources': 1,
+          'javascript_files': [
+            'lib/stack_frame.js',
+          ],
+          'inputs': [
+            'tools/js2c.py',
+            '<@(_javascript_files)',
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/escargot_natives.h',
+          ],
+          'action': [
+            'python',
+            '<@(_inputs)',
+            '--target',
+            '<@(_outputs)',
+          ],
+        },
+      ],
     },
   ],
 }
