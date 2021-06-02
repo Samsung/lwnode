@@ -747,7 +747,38 @@ v8::RegExp::Flags v8::RegExp::GetFlags() const {
 
 MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
                                         Local<v8::String> subject) {
-  LWNODE_RETURN_LOCAL(Object);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Object>());
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto self = CVAL(this)->value();
+  auto esSubject = CVAL(*subject)->value()->asString();
+
+  auto r = Evaluator::execute(lwContext->get(),
+                              [](ExecutionStateRef* state,
+                                 RegExpObjectRef* self,
+                                 StringRef* subject) -> ValueRef* {
+                                RegExpObjectRef::RegexMatchResult r;
+                                self->match(state, subject, r, false, 0);
+
+                                if (r.m_matchResults.empty()) {
+                                  return ValueRef::createNull();
+                                }
+
+                                auto vector = ValueVectorRef::create();
+                                for (auto tokens : r.m_matchResults) {
+                                  for (auto token : tokens) {
+                                    auto match = subject->substring(
+                                        token.m_start, token.m_end);
+                                    vector->pushBack(match);
+                                  }
+                                }
+
+                                return ArrayObjectRef::create(state, vector);
+                              },
+                              self->asRegExpObject(),
+                              esSubject);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {

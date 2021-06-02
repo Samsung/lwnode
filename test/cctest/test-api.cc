@@ -18855,17 +18855,17 @@ TEST(RegExp) {
 //    ExpectTrue("ex instanceof SyntaxError");
 //  }
 
-//  // RegExp::Exec.
-//  {
-//    v8::Local<v8::RegExp> regexp =
-//        v8::RegExp::New(context.local(), v8_str("a.c"), {}).ToLocalChecked();
-//    v8::Local<v8::Object> result0 =
-//        regexp->Exec(context.local(), v8_str("abc")).ToLocalChecked();
-//    CHECK(result0->IsArray());
-//    v8::Local<v8::Object> result1 =
-//        regexp->Exec(context.local(), v8_str("abd")).ToLocalChecked();
-//    CHECK(result1->IsNull());
-//  }
+ // RegExp::Exec.
+ {
+   v8::Local<v8::RegExp> regexp =
+       v8::RegExp::New(context.local(), v8_str("a.c"), {}).ToLocalChecked();
+   v8::Local<v8::Object> result0 =
+       regexp->Exec(context.local(), v8_str("abc")).ToLocalChecked();
+   CHECK(result0->IsArray());
+   v8::Local<v8::Object> result1 =
+       regexp->Exec(context.local(), v8_str("abd")).ToLocalChecked();
+   CHECK(result1->IsNull());
+ }
 }
 
 
