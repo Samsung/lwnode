@@ -80,7 +80,7 @@ bool Value::IsArray() const {
 }
 
 bool Value::IsArrayBuffer() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isArrayBufferObject();
 }
 
 bool Value::IsArrayBufferView() const {
@@ -101,7 +101,7 @@ TYPED_ARRAYS(VALUE_IS_TYPED_ARRAY)
 #undef VALUE_IS_TYPED_ARRAY
 
 bool Value::IsDataView() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isDataViewObject();
 }
 
 bool Value::IsSharedArrayBuffer() const {
@@ -158,12 +158,12 @@ bool Value::IsBoolean() const {
 }
 
 bool Value::IsExternal() const {
-  auto esObject = CVAL(this)->value()->asObject();
-  auto data = ObjectRefHelper::getExtraData(esObject);
-  if (data->isExternalObjectData()) {
-    return true;
+  auto esValue = CVAL(this)->value();
+  if (!esValue->isObject()) {
+    return false;
   }
-  return false;
+  auto data = ObjectRefHelper::getExtraData(esValue->asObject());
+  return data && data->isExternalObjectData();
 }
 
 bool Value::IsInt32() const {
