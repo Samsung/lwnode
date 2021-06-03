@@ -4983,6 +4983,10 @@ class V8_EXPORT BackingStore : public v8::internal::BackingStoreBase {
  public:
   ~BackingStore();
 
+  // @lwnode
+  void operator delete(void* p);
+  // end @lwnode
+
   /**
    * Return a pointer to the beginning of the memory block for this backing
    * store. The pointer is only valid as long as this backing store object
