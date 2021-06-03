@@ -114,6 +114,9 @@ class IsolateWrap final : public v8::internal::Isolate {
   // Eternal
   void addEternal(GCManagedObject* value);
 
+  void addBackingStore(BackingStoreRef* value);
+  void removeBackingStore(BackingStoreRef* value);
+
   VMInstanceRef* get() { return vmInstance_; }
   VMInstanceRef* vmInstance() { return vmInstance_; }
 
@@ -185,6 +188,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   void InitializeGlobalSlots();
 
   GCVector<GCManagedObject*> eternals_;
+  GCUnorderedSet<BackingStoreRef*> backingStores_;
   GCVector<HandleScopeWrap*> handleScopes_;
   GCVector<ContextWrap*> contextScopes_;
   GCVector<Escargot::SymbolRef*> privateSymbols_;

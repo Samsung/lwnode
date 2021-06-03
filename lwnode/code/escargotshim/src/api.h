@@ -28,7 +28,6 @@
 #include "v8-profiler.h"
 #include "v8-util.h"
 
-#include "api/backing-store.h"
 #include "api/context.h"
 #include "api/es-helper.h"
 #include "api/es-v8-helper.h"

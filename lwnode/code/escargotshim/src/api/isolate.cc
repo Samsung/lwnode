@@ -280,6 +280,14 @@ void IsolateWrap::addEternal(GCManagedObject* value) {
   eternals_.push_back(value);
 }
 
+void IsolateWrap::addBackingStore(BackingStoreRef* value) {
+  backingStores_.insert(value);
+}
+
+void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
+  backingStores_.erase(value);
+}
+
 SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   // @check replace this container if this function is called a lot.
   LWNODE_CALL_TRACE_2();

@@ -22,8 +22,6 @@
 #include "v8.h"
 
 namespace EscargotShim {
-
-class ArrayBufferObjectData;
 class ExternalObjectData;
 class ValueWrap;
 class BackingStoreWrap;
@@ -32,17 +30,11 @@ using namespace Escargot;
 
 class ObjectData : public gc {
  public:
-  ArrayBufferObjectData* asArrayBufferObjectData() {
-    LWNODE_CHECK(isArryBufferObjectData());
-    return reinterpret_cast<ArrayBufferObjectData*>(this);
-  }
-
   ExternalObjectData* asExternalObjectData() {
     LWNODE_CHECK(isExternalObjectData());
     return reinterpret_cast<ExternalObjectData*>(this);
   }
 
-  virtual bool isArryBufferObjectData() const { return false; }
   virtual bool isFunctionData() const { return false; }
   virtual bool isExternalObjectData() const { return false; }
 
@@ -93,20 +85,6 @@ class FunctionData : public ObjectData {
   v8::Value* m_callbackData{nullptr};
   v8::Signature* m_signature{nullptr};
   int m_length{0};
-};
-
-class ArrayBufferObjectData : public ObjectData {
- public:
-  ArrayBufferObjectData(std::shared_ptr<BackingStoreWrap> backingStore) {
-    m_backingStore = backingStore;
-  }
-
-  bool isArryBufferObjectData() const override { return true; }
-  void releaseBackingStore() { m_backingStore.reset(); }
-  std::shared_ptr<BackingStoreWrap> backingStore() { return m_backingStore; }
-
- private:
-  std::shared_ptr<BackingStoreWrap> m_backingStore;
 };
 
 class ExternalObjectData : public ObjectData {

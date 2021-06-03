@@ -433,19 +433,27 @@ void v8::WasmModuleObject::CheckCast(Value* that) {
 
 v8::BackingStore::~BackingStore() {}
 
+void v8::BackingStore::operator delete(void* p) {
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  lwIsolate->removeBackingStore(reinterpret_cast<BackingStoreRef*>(p));
+}
+
 void* v8::BackingStore::Data() const {
-  auto self = BackingStoreWrap::fromV8(this);
-  return self->Data();
+  auto self = const_cast<BackingStoreRef*>(
+      reinterpret_cast<const BackingStoreRef*>(this));
+  return self->data();
 }
 
 size_t v8::BackingStore::ByteLength() const {
-  auto self = BackingStoreWrap::fromV8(this);
-  return self->ByteLength();
+  auto self = const_cast<BackingStoreRef*>(
+      reinterpret_cast<const BackingStoreRef*>(this));
+  return self->byteLength();
 }
 
 bool v8::BackingStore::IsShared() const {
-  auto self = BackingStoreWrap::fromV8(this);
-  return self->IsShared();
+  auto self = const_cast<BackingStoreRef*>(
+      reinterpret_cast<const BackingStoreRef*>(this));
+  return self->isShared();
 }
 
 // static
@@ -465,24 +473,31 @@ void v8::BackingStore::EmptyDeleter(void* data,
 }
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
-  auto esArrayBufferObject = VAL(this)->value()->asArrayBufferObject();
+  auto lwContext = IsolateWrap::GetCurrent()->GetCurrentContext();
+  auto self = CVAL(this)->value()->asArrayBufferObject();
 
-  if (ObjectRefHelper::hasExtraData(esArrayBufferObject) == false) {
-    return ArrayBuffer::NewBackingStore(
-        esArrayBufferObject->rawBuffer(),
-        esArrayBufferObject->byteLength(),
-        [](void*, size_t, void*) -> void {
-          // note: this buffer is JS allocated.
-        },
-        nullptr);
-  }
+  BackingStoreRef* esBackingStore = nullptr;
+  EvalResult r =
+      Evaluator::execute(lwContext->get(),
+                         [](ExecutionStateRef* esState,
+                            ArrayBufferObjectRef* arrayBuffer,
+                            BackingStoreRef** backingStore) -> ValueRef* {
+                           auto v = arrayBuffer->backingStore();
 
-  auto arrayBufferObjectData =
-      ObjectRefHelper::getExtraData(esArrayBufferObject)
-          ->asArrayBufferObjectData();
+                           if (v.hasValue()) {
+                             *backingStore = v.value();
+                           } else {
+                             *backingStore = BackingStoreRef::create(0);
+                           }
 
-  return reinterpret_shared_pointer_cast<v8::BackingStore>(
-      arrayBufferObjectData->backingStore());
+                           return ValueRef::createNull();
+                         },
+                         self,
+                         &esBackingStore);
+  LWNODE_CHECK(esBackingStore);
+
+  return std::shared_ptr<v8::BackingStore>(
+      reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
 
 std::shared_ptr<v8::BackingStore> v8::SharedArrayBuffer::GetBackingStore() {

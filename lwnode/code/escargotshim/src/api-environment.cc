@@ -1289,61 +1289,21 @@ size_t v8::ArrayBuffer::ByteLength() const {
   return CVAL(this)->value()->asArrayBufferObject()->byteLength();
 }
 
-static ValueRef* createArrayBuffer(
-    ExecutionStateRef* state,
-    std::shared_ptr<BackingStoreWrap> lwBackingStore) {
-  auto esBackingStore = BackingStoreRef::create(
-      lwBackingStore->Data(),
-      lwBackingStore->ByteLength(),
-      [](void* data, size_t length, void* deleterData) -> void {
-        // do nothing
-      },
-      nullptr);
-
-  auto esArrayBufferObject = ArrayBufferObjectRef::create(state);
-
-  esArrayBufferObject->attachBuffer(esBackingStore);
-
-  auto arrayBufferObjectData =
-      new ArrayBufferObjectData(std::move(lwBackingStore));
-
-  ObjectRefHelper::setExtraData(
-      esArrayBufferObject, arrayBufferObjectData, [](void* self) {
-        // note: this is a finalizer for arrayBuffer
-        auto value = reinterpret_cast<ValueRef*>(self);
-        auto arrayBufferObjectData =
-            ObjectRefHelper::getExtraData(value->asArrayBufferObject())
-                ->asArrayBufferObjectData();
-
-        // note: backingStore is shared with clients as standard C++
-        // memory ownership types. Since GC doesn't call the destructor of
-        // ArrayBufferObjectData automatically, we should de-reference the
-        // shared_ptr of the backing store when arraybuffer is GCed.
-        arrayBufferObjectData->releaseBackingStore();
-      });
-
-  return esArrayBufferObject;
-};
-
 Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate, size_t byte_length) {
   // @note regarding Backing Store and Array Buffer:
   // https://docs.google.com/document/d/1sTc_jRL87Fu175Holm5SV0kajkseGl2r8ifGY76G35k/edit#
-
   API_ENTER_NO_EXCEPTION(isolate);
+  auto lwContext = lwIsolate->GetCurrentContext();
 
-  LWNODE_CHECK_MSG(byte_length > 0, "unimplemented");
-
-  // 1. create a backing store for an array buffer which will be newly created.
-  auto allocator = lwIsolate->array_buffer_allocator();
-  auto lwBackingStore = std::make_shared<BackingStoreWrap>(
-      allocator->Allocate(byte_length),
-      byte_length,
-      SharedFlag::kNotShared,
-      std::make_unique<ArrayBufferAllocatorDeleter>(allocator));
-
-  // 2. create an array buffer
   EvalResult r = Evaluator::execute(
-      lwIsolate->GetCurrentContext()->get(), createArrayBuffer, lwBackingStore);
+      lwContext->get(),
+      [](ExecutionStateRef* esState, size_t byteLength) -> ValueRef* {
+        auto arrayBuffer = ArrayBufferObjectRef::create(esState);
+        arrayBuffer->allocateBuffer(esState, byteLength);
+        return arrayBuffer;
+      },
+      byte_length);
+  LWNODE_CHECK(r.isSuccessful());
 
   return Utils::NewLocal<ArrayBuffer>(isolate, r.result);
 }
@@ -1358,12 +1318,19 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(Isolate* isolate,
 Local<ArrayBuffer> v8::ArrayBuffer::New(
     Isolate* isolate, std::shared_ptr<BackingStore> backing_store) {
   API_ENTER_NO_EXCEPTION(isolate);
-
-  auto lwBackingStore =
-      reinterpret_shared_pointer_cast<BackingStoreWrap>(backing_store);
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto esBackingStore = reinterpret_cast<BackingStoreRef*>(backing_store.get());
 
   EvalResult r = Evaluator::execute(
-      lwIsolate->GetCurrentContext()->get(), createArrayBuffer, lwBackingStore);
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         BackingStoreRef* backingStore) -> ValueRef* {
+        auto arrayBuffer = ArrayBufferObjectRef::create(esState);
+        arrayBuffer->attachBuffer(backingStore);
+        return arrayBuffer;
+      },
+      esBackingStore);
+  LWNODE_CHECK(r.isSuccessful());
 
   return Utils::NewLocal<ArrayBuffer>(isolate, r.result);
 }
@@ -1371,16 +1338,25 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
   API_ENTER_NO_EXCEPTION(isolate);
+  auto lwContext = lwIsolate->GetCurrentContext();
 
-  auto allocator = lwIsolate->array_buffer_allocator();
-  auto lwBackstore = new BackingStoreWrap(
-      allocator->Allocate(byte_length),
-      byte_length,
-      SharedFlag::kNotShared,
-      std::make_unique<ArrayBufferAllocatorDeleter>(allocator));
+  BackingStoreRef* esBackingStore = nullptr;
+  EvalResult r = Evaluator::execute(lwContext->get(),
+                                    [](ExecutionStateRef* esState,
+                                       BackingStoreRef** backingStore,
+                                       size_t byteLength) -> ValueRef* {
+                                      *backingStore =
+                                          BackingStoreRef::create(byteLength);
+                                      return ValueRef::createNull();
+                                    },
+                                    &esBackingStore,
+                                    byte_length);
+  LWNODE_CHECK(esBackingStore);
+
+  lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(
-      reinterpret_cast<v8::BackingStore*>(lwBackstore));
+      reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
 
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
@@ -1388,14 +1364,48 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     size_t byte_length,
     v8::BackingStore::DeleterCallback deleter,
     void* deleter_data) {
-  auto lwBackstore = new BackingStoreWrap(
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  BackingStoreRef* esBackingStore = nullptr;
+  EvalResult r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         BackingStoreRef** backingStore,
+         void* data,
+         size_t byteLength,
+         v8::BackingStore::DeleterCallback deleter,
+         void* deleterData) -> ValueRef* {
+        struct Params {
+          v8::BackingStore::DeleterCallback deleter;
+          void* deleterData;
+        };
+
+        Params* callbackData = new Params();
+        callbackData->deleter = deleter;
+        callbackData->deleterData = deleterData;
+        auto callback = [](void* data, size_t length, void* callbackData) {
+          Params* p = (Params*)callbackData;
+          p->deleter(data, length, p->deleterData);
+          delete p;
+        };
+
+        *backingStore =
+            BackingStoreRef::create(data, byteLength, callback, callbackData);
+
+        return ValueRef::createNull();
+      },
+      &esBackingStore,
       data,
       byte_length,
-      SharedFlag::kNotShared,
-      std::make_unique<ExternalBufferDeleter>(deleter, deleter_data));
+      deleter,
+      deleter_data);
+  LWNODE_CHECK(esBackingStore);
+
+  lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(
-      reinterpret_cast<v8::BackingStore*>(lwBackstore));
+      reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
 
 Local<ArrayBuffer> v8::ArrayBufferView::Buffer() {
