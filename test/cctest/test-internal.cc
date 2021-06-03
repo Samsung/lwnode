@@ -217,6 +217,12 @@ TEST(internal_GCContainer) {
   CHECK_LE(g_tracer.getAllocatedCount(), 1);
 }
 
+static ValueRef* compileRun(ContextRef* context, const char* source) {
+  auto r = EvalResultHelper::compileRun(context, source);
+  LWNODE_CHECK(r.isSuccessful());
+  return r.result;
+}
+
 static int shadow_y_setter_call_count;
 static int shadow_y_getter_call_count;
 
@@ -370,14 +376,13 @@ TEST(internal_Escargot_ShadowObject) {
                                esInstance);
 
   // {"enumerable":true,"configurable":true}
-  EvalResultHelper::compileRun(
-      esContext,
-      "print(JSON.stringify(Object.getOwnPropertyDescriptor(this.__"
-      "proto__, \"y\")))");
+  compileRun(esContext,
+             "print(JSON.stringify(Object.getOwnPropertyDescriptor(this.__"
+             "proto__, \"y\")))");
 
-  EvalResultHelper::compileRun(esContext, "y = 43");
+  compileRun(esContext, "y = 43");
   CHECK_EQ(1, shadow_y_setter_call_count);
-  CHECK_EQ(42, EvalResultHelper::compileRun(esContext, "y")->asInt32());
+  CHECK_EQ(42, compileRun(esContext, "y")->asInt32());
   CHECK_EQ(1, shadow_y_getter_call_count);
 }
 
