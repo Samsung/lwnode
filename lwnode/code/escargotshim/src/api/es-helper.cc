@@ -309,6 +309,22 @@ ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
   return reinterpret_cast<ObjectData*>(data);
 }
 
+std::string getCodeLine(const std::string& codeString, int errorLine) {
+  LWNODE_CHECK(errorLine >= 1);
+
+  std::stringstream sstream(codeString);
+  std::string result;
+  int curLine = 1;
+
+  for (std::string line; std::getline(sstream, line); ++curLine) {
+    if (curLine == errorLine) {
+      result = line;
+      break;
+    }
+  }
+  return result;
+}
+
 std::string EvalResultHelper::getErrorString(
     ContextRef* context, const Evaluator::EvaluatorResult& result) {
   const auto& traceData = result.stackTraceData;
@@ -326,13 +342,12 @@ std::string EvalResultHelper::getErrorString(
     const int errorColumn = lastTraceData.loc.column;
     const int marginLine = 5;
 
-    oss << "Place: " << std::endl;
-    oss << separator << resourceName << std::endl;
+    oss << "Name: " << std::endl;
+    oss << separator << (resourceName == "" ? "(empty name)" : resourceName)
+        << std::endl;
     oss << "Reason: " << std::endl;
-    oss << separator;
-    oss << "(" << (int)lastTraceData.loc.line << ":"
-        << (int)lastTraceData.loc.column << ") ";
-    oss << reasonString << std::endl;
+    oss << separator << "(" << errorLine << ":" << errorColumn << ") "
+        << reasonString << std::endl;
 
     oss << "Source: " << std::endl;
     std::stringstream sstream(codeString);
@@ -353,33 +368,73 @@ std::string EvalResultHelper::getErrorString(
       }
     }
 
+    size_t maxPrintStackSize = std::min(5, (int)traceData.size());
+
     oss << "Call Stack:" << std::endl;
-    for (size_t i = 0; i < traceData.size(); ++i) {
-      oss << separator << i << ": " << traceData[i].src->toStdUTF8String();
-      oss << "(" << (int)traceData[i].loc.line << ":"
-          << (int)traceData[i].loc.column << ")" << std::endl;
+    for (size_t i = 0; i < maxPrintStackSize; ++i) {
+      const auto& iter = traceData[i];
+      const auto& resourceName = iter.src->toStdUTF8String();
+      const auto& codeString = iter.sourceCode->toStdUTF8String();
+      const int errorLine = iter.loc.line;
+      const int errorColumn = iter.loc.column;
+
+      auto sourceOnStack = getCodeLine(codeString, errorLine);
+
+      // Trim left spaces
+      auto pos = sourceOnStack.find_first_not_of(' ');
+      auto errorCodeLine =
+          sourceOnStack.substr(pos != std::string::npos ? pos : 0);
+
+      oss << separator << i << ": " << errorCodeLine << " ";
+      oss << "(" << (resourceName == "" ? "?" : resourceName) << ":"
+          << errorLine << ":" << errorColumn << ")" << std::endl;
     }
   }
 
   return oss.str();
 }
 
-ValueRef* EvalResultHelper::compileRun(ContextRef* context,
-                                       const char* source) {
+static ErrorObjectRef* createErrorObject(ContextRef* context,
+                                         ErrorObjectRef::Code code,
+                                         StringRef* errorMessage) {
+  EvalResult r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ErrorObjectRef::Code code,
+         StringRef* errorMessage) -> ValueRef* {
+        return ErrorObjectRef::create(state, code, errorMessage);
+      },
+      code,
+      errorMessage);
+
+  LWNODE_CHECK(r.isSuccessful());
+  return r.result->asErrorObject();
+}
+
+Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
+                                                        const char* source,
+                                                        bool isModule) {
   auto compileResult = context->scriptParser()->initializeScript(
       StringRef::createFromUTF8(source, strLength(source)),
       StringRef::emptyString(),
-      false);
+      isModule);
 
-  auto evalResult = Evaluator::execute(
+  if (!compileResult.isSuccessful()) {
+    Evaluator::EvaluatorResult result;
+    result.error = createErrorObject(
+        context, compileResult.parseErrorCode, compileResult.parseErrorMessage);
+
+    LWNODE_LOG_ERROR(
+        "%s", result.resultOrErrorToString(context)->toStdUTF8String().c_str());
+    return result;
+  }
+
+  return Evaluator::execute(
       context,
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
       compileResult.script.get());
-
-  LWNODE_CHECK(evalResult.isSuccessful());
-  return evalResult.result;
 }
 
 void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
