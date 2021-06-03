@@ -386,4 +386,111 @@ TEST(internal_Escargot_ShadowObject) {
   CHECK_EQ(1, shadow_y_getter_call_count);
 }
 
+TEST(DISABLED_internal_Escargot_Extends) {
+  LocalContext env;
+  auto esContext =
+      IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
+
+  EvalResultHelper::attachBuiltinPrint(esContext);
+
+  auto esFunctionTemplate = FunctionTemplateRef::create(
+      AtomicStringRef::create(esContext, "ContextifyScript"),
+      0,
+      false,
+      true,  // isConstruction
+      [](ExecutionStateRef* state,
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        if (newTarget.hasValue()) {
+          return thisValue;
+        }
+
+        return ValueRef::createUndefined();
+      });
+
+  auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
+
+  esPrototypeTemplate->set(
+      TemplatePropertyNameRef(StringRef::createFromUTF8("RunInThisContext")),
+      FunctionTemplateRef::create(
+          AtomicStringRef::emptyAtomicString(),
+          0,
+          false,
+          false,  // isConstruction
+          [](ExecutionStateRef* state,
+             ValueRef* thisValue,
+             size_t argc,
+             ValueRef** argv,
+             OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+            if (newTarget.hasValue()) {
+              return thisValue;
+            }
+
+            printf("ContextifyScript::RunInThisContext [NATIVE]\n");
+
+            return ValueRef::createUndefined();
+          }),
+      true,
+      true,
+      true);
+
+  ObjectRefHelper::setProperty(esContext,
+                               esContext->globalObject(),
+                               StringRef::createFromUTF8("ContextifyScript"),
+                               esFunctionTemplate->instantiate(esContext));
+
+  const char* source =
+      R"(
+        function assert(condition, message) {
+            if (!condition) {
+              throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        function test() {
+          print("[ContextifyScript]");
+          var cs = new ContextifyScript();
+          cs.RunInThisContext();
+
+          class Script extends ContextifyScript {
+              constructor() {
+                  super();
+              }
+
+              RunInThisContext() {
+                  print('Script::RunInThisContext [JS]');
+
+                  super.RunInThisContext();
+              }
+
+              Test() {}
+          };
+
+          print("[Script]");
+          var s = new Script();
+          s.RunInThisContext();
+
+          print(Object.getOwnPropertyDescriptor(s, 'RunInThisContext'));
+          print(Object.getOwnPropertyDescriptor(s, 'Test'));
+          print(Object.getOwnPropertyDescriptor(s.__proto__, 'RunInThisContext'));
+
+          assert(Object.getOwnPropertyDescriptor(s, "RunInThisContext"), 'Empty descriptor');
+          assert(Object.getOwnPropertyDescriptor(s, "Test"), 'Empty descriptor');
+          assert(Object.getOwnPropertyDescriptor(s.__proto__), 'Empty descriptor');
+        }
+
+        test();
+      )";
+
+  auto r = EvalResultHelper::compileRun(esContext, source);
+
+  if (!r.isSuccessful()) {
+    printf("%s\n", EvalResultHelper::getErrorString(esContext, r).c_str());
+  }
+
+  CHECK_EQ(r.isSuccessful(), true);
+}
+
 #endif
