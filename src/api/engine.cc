@@ -43,17 +43,14 @@ void Platform::markJSJobEnqueued(ContextRef* relatedContext) {
   // @note the timing to handle pending jobs depends on clients
 }
 
-// void* Platform::onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
-//                                                     ArrayBufferObjectRef* obj,
-//                                                     size_t sizeInByte) {
-//   return allocator_->Allocate(sizeInByte);
-// }
+void* Platform::onMallocArrayBufferObjectDataBuffer(size_t sizeInByte) {
+  return allocator_->Allocate(sizeInByte);
+}
 
-// void Platform::onArrayBufferObjectDataBufferFree(ContextRef* whereObjectMade,
-//                                                  ArrayBufferObjectRef* obj,
-//                                                  void* buffer) {
-//   return allocator_->Free(buffer, obj->byteLength());
-// }
+void Platform::onFreeArrayBufferObjectDataBuffer(void* buffer,
+                                                 size_t sizeInByte) {
+  return allocator_->Free(buffer, sizeInByte);
+}
 
 PlatformRef::LoadModuleResult Platform::onLoadModule(
     ContextRef* relatedContext,
