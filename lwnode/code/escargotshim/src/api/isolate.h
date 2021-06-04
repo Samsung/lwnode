@@ -139,7 +139,7 @@ class IsolateWrap final : public v8::internal::Isolate {
     message_callback_ = callback;
   }
 
-  ValueWrap* getGlobal(const int idex);
+  ValueWrap** getGlobal(const int idex);
   ValueWrap* undefined();
   ValueWrap* hole() override;
   ValueWrap* null();

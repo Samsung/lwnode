@@ -306,9 +306,9 @@ void IsolateWrap::setStackTrace(
   }
 }
 
-ValueWrap* IsolateWrap::getGlobal(const int index) {
+ValueWrap** IsolateWrap::getGlobal(const int index) {
   LWNODE_CHECK(index < internal::Internals::kRootIndexSize);
-  return globalSlot_[index];
+  return &globalSlot_[index];
 }
 
 ValueWrap* IsolateWrap::undefined() {
