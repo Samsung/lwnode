@@ -29,7 +29,7 @@ class ModuleWrap;
 class HandleWrap : public gc {
  public:
   enum Type : uint8_t {
-    JsValue = 0,
+    JsValue = 101,
     Context,
     ObjectTemplate,
     FunctionTemplate,
@@ -44,6 +44,7 @@ class HandleWrap : public gc {
 
  protected:
   HandleWrap() = default;
+  void* holder_ = nullptr;
   uint8_t type_ = NotPresent;
 };
 
@@ -84,7 +85,6 @@ class ValueWrap : public HandleWrap {
 
  private:
   ValueWrap(void* ptr, HandleWrap::Type type);
-  void* holder_ = nullptr;
 };
 
 }  // namespace EscargotShim

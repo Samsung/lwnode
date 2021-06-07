@@ -239,10 +239,7 @@ class Local {
     internal::Address* b = reinterpret_cast<internal::Address*>(that.val_);
     if (a == nullptr) return b == nullptr;
     if (b == nullptr) return false;
-    //@lwnode
-    // return *a == *b;
-    return a[1] == b[1];
-    // end @lwnode
+    return *a == *b;
   }
 
   template <class S> V8_INLINE bool operator==(
@@ -251,10 +248,7 @@ class Local {
     internal::Address* b = reinterpret_cast<internal::Address*>(that.val_);
     if (a == nullptr) return b == nullptr;
     if (b == nullptr) return false;
-    // @lwnode
-    // return *a == *b;
-    return a[1] == b[1];
-    // end @lwnode
+    return *a == *b;
   }
 
   /**
