@@ -835,7 +835,7 @@ uint32_t v8::Array::Length() const {
       esArrayObject);
   API_HANDLE_EXCEPTION(r, lwIsolate, 0);
 
-  return r.result->asUint32();
+  return r.result->asUInt32();
 }
 
 Local<v8::Map> v8::Map::New(Isolate* isolate) {

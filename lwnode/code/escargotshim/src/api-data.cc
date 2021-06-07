@@ -623,7 +623,7 @@ Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
 Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
   auto self = CVAL(this)->value();
   if (self->isUInt32()) {
-    return Just(self->asUint32());
+    return Just(self->asUInt32());
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<uint32_t>());
@@ -1499,7 +1499,7 @@ Local<v8::Object> v8::Object::Clone() {
         auto esCloneObject =
             constructor->construct(esState, 0, args)->asObject();
 
-        esSelf->enumerateObjectOwnProperies(
+        esSelf->enumerateObjectOwnProperties(
             esState,
             [esSelf, esCloneObject](ExecutionStateRef* esState,
                                     ValueRef* propertyName,
