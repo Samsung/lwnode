@@ -51,22 +51,46 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
 HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
                                                      int argc,
                                                      ValueRef** argv) {
-  HandleWrap** values = new HandleWrap*[argc + 1];
+  /*
+    note:
+    In case that V8_REVERSE_JSARGS is disabled, v8 uses JS arguments order like
+    a stack.
+
+    e.g)
+    input:
+      argc==2, argv==[string1, string2]
+
+    output:
+      m_args.length == 3
+      m_args == [string2, string1, this]
+
+    return:
+      string1 // the beginning of the arguments array
+  */
+
+  m_args = reinterpret_cast<HandleWrap**>(
+      Escargot::Memory::gcMalloc(sizeof(HandleWrap*) * (argc + 1)));
+
 #ifdef V8_REVERSE_JSARGS
 #error "Not implement V8_REVERSE_JSARGS"
 #else
+  const int idx_end = argc - 1;
+  const int idx_this = argc;
+
   for (int i = 0; i < argc; i++) {
-    values[argc - i - 1] = ValueWrap::createValue(argv[i]);
+    m_args[idx_end - i] = ValueWrap::createValue(argv[i]);
   }
-  values[argc] = ValueWrap::createValue(thisValue);
-  return values + argc - 1;
+
+  m_args[idx_this] = ValueWrap::createValue(thisValue);
+
+  return m_args + idx_end;
 #endif
 }
 
 FunctionCallbackInfoWrap::~FunctionCallbackInfoWrap() {
-  HandleWrap** values =
-      reinterpret_cast<HandleWrap**>(this->values_) - this->Length() + 1;
-  delete[] values;
+  if (m_args) {
+    Escargot::Memory::gcFree(m_args);
+  }
 }
 
 // PropertyCallbackInfoWrap
