@@ -49,7 +49,12 @@ ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {
 }
 
 ValueRef* ValueWrap::value() const {
-  LWNODE_CHECK(type() == Type::JsValue);
+  LWNODE_CHECK_MSG(type() == Type::JsValue,
+                   "type should be %d but %d. (this: %p, holder_: %p)",
+                   Type::JsValue,
+                   type(),
+                   this,
+                   holder_);
   return reinterpret_cast<ValueRef*>(holder_);
 }
 
