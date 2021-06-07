@@ -118,7 +118,7 @@ IsolateWrap* IsolateWrap::New() {
 
 void IsolateWrap::Dispose() {
   unlock_gc_release();
-  MemoryUtil::gcFull();
+  MemoryUtil::gc();
 }
 
 void IsolateWrap::set_array_buffer_allocator(
