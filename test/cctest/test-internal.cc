@@ -386,7 +386,7 @@ TEST(internal_Escargot_ShadowObject) {
   CHECK_EQ(1, shadow_y_getter_call_count);
 }
 
-TEST(DISABLED_internal_Escargot_Extends) {
+TEST(internal_Escargot_Extends) {
   LocalContext env;
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
@@ -451,8 +451,8 @@ TEST(DISABLED_internal_Escargot_Extends) {
 
         function test() {
           print("[ContextifyScript]");
-          var cs = new ContextifyScript();
-          cs.RunInThisContext();
+          let parent = new ContextifyScript();
+          parent.RunInThisContext();
 
           class Script extends ContextifyScript {
               constructor() {
@@ -469,16 +469,20 @@ TEST(DISABLED_internal_Escargot_Extends) {
           };
 
           print("[Script]");
-          var s = new Script();
-          s.RunInThisContext();
+          let child = new Script();
+          child.RunInThisContext();
 
-          print(Object.getOwnPropertyDescriptor(s, 'RunInThisContext'));
-          print(Object.getOwnPropertyDescriptor(s, 'Test'));
-          print(Object.getOwnPropertyDescriptor(s.__proto__, 'RunInThisContext'));
+          print("child instance of Script: " + (child instanceof Script));
 
-          assert(Object.getOwnPropertyDescriptor(s, "RunInThisContext"), 'Empty descriptor');
-          assert(Object.getOwnPropertyDescriptor(s, "Test"), 'Empty descriptor');
-          assert(Object.getOwnPropertyDescriptor(s.__proto__), 'Empty descriptor');
+          print(Object.getOwnPropertyDescriptor(child.__proto__, 'Test'));
+          print(Object.getOwnPropertyDescriptor(child.__proto__, 'RunInThisContext'));
+          print(Object.getOwnPropertyDescriptor(child.__proto__.__proto__, 'RunInThisContext'));
+
+          assert((child instanceof Script), 'should be an instance of Script');
+
+          assert(Object.getOwnPropertyDescriptor(child.__proto__, "Test"), 'Empty descriptor');
+          assert(Object.getOwnPropertyDescriptor(child.__proto__, "RunInThisContext"), 'Empty descriptor');
+          assert(Object.getOwnPropertyDescriptor(child.__proto__.__proto__, "RunInThisContext"), 'Empty descriptor');
         }
 
         test();
