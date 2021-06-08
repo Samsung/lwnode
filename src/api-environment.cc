@@ -49,11 +49,13 @@ bool TryHandleWebAssemblyTrapPosix(int sig_code,
 }
 
 bool V8::EnableWebAssemblyTrapHandler(bool use_v8_signal_handler) {
-  LWNODE_RETURN_FALSE;
+  LWNODE_UNIMPLEMENT_WORKAROUND;
+  return false;
 }
 
 void v8::V8::SetEntropySource(EntropySource entropy_source) {
   LWNODE_CALL_TRACE();
+  LWNODE_UNIMPLEMENT_IGNORED;
 }
 
 void v8::V8::SetReturnAddressLocationResolver(
@@ -1699,7 +1701,8 @@ void Isolate::CheckMemoryPressure() {
 }
 
 HeapProfiler* Isolate::GetHeapProfiler() {
-  LWNODE_RETURN_NULLPTR;
+  LWNODE_UNIMPLEMENT_IGNORED;
+  return nullptr;
 }
 
 void Isolate::SetIdle(bool is_idle) {
@@ -2165,7 +2168,7 @@ size_t Isolate::CopyCodePages(size_t capacity, MemoryRange* code_pages_out) {
 }
 
 #define CALLBACK_SETTER(ExternalName, Type, InternalName)                      \
-  void Isolate::Set##ExternalName(Type callback) { LWNODE_RETURN_VOID; }
+  void Isolate::Set##ExternalName(Type callback) { LWNODE_UNIMPLEMENT_IGNORED; }
 
 // CALLBACK_SETTER(FatalErrorHandler, FatalErrorCallback, exception_behavior)
 void Isolate::SetFatalErrorHandler(FatalErrorCallback that) {
