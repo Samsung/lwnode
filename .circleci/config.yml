@@ -13,8 +13,14 @@ jobs:
              --without-inspector --without-node-code-cache --without-node-snapshot
              --with-intl none --shared-zlib --dest-os linux --dest-cpu x64
              --engine escargot --ninja
-      - run: ninja -v -C out/Release node
-      - run: ls ./out/Release/node
+      - run: |
+          gcc --version
+          cmake --version
+          ninja -v -C out/Release node
+          du -h out/Release/node
+      - run:
+          name: Run Hello World
+          command: out/Release/node test/message/hello_world.js
       # - run:
       #     name: Run node.js TCs
       #     command: |

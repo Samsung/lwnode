@@ -1099,9 +1099,16 @@ int Start(int argc, char** argv) {
                                    result.exec_args,
                                    indexes);
     result.exit_code = main_instance.Run();
+
+    // @lwnode
+    // Escargot::Platform::onFreeArrayBufferObjectDataBuffer uses
+    // the NodeArrayBufferAllocator instance which main_instance has.
+    // And it may be invoked during Escargot::Globals::finalize.
+    // Thus, TearDownOncePerProcess() related to Globals::finalize
+    // should be called in this scope where the main_instance is alive.
+    TearDownOncePerProcess();
   }
 
-  TearDownOncePerProcess();
   return result.exit_code;
 }
 
