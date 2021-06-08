@@ -73,6 +73,15 @@
 #define LWNODE_UNIMPLEMENT                                                     \
   LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED" TRACE_FMT COLOR_RESET, TRACE_ARGS);
 
+#define LWNODE_UNIMPLEMENT_IGNORED                                             \
+  LWNODE_LOG_RAW(COLOR_DIM "UNIMPLEMENTED (IGNORED)" TRACE_FMT COLOR_RESET,    \
+                 TRACE_ARGS);
+
+#define LWNODE_UNIMPLEMENT_WORKAROUND                                          \
+  LWNODE_LOG_RAW(COLOR_DIM                                                     \
+                 "UNIMPLEMENTED (USE WORKAROUND)" TRACE_FMT COLOR_RESET,       \
+                 TRACE_ARGS);
+
 // conditional loggers
 
 #if !defined(NDEBUG)

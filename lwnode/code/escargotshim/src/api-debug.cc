@@ -877,7 +877,7 @@ void HeapProfiler::DeleteAllHeapSnapshots() {
 
 void HeapProfiler::AddBuildEmbedderGraphCallback(
     BuildEmbedderGraphCallback callback, void* data) {
-  LWNODE_RETURN_VOID;
+  LWNODE_UNIMPLEMENT_IGNORED;
 }
 
 void HeapProfiler::RemoveBuildEmbedderGraphCallback(
