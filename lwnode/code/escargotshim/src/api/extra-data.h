@@ -54,13 +54,11 @@ class FunctionData : public ObjectData {
   FunctionData(v8::Isolate* isolate,
                v8::FunctionCallback callback,
                v8::Value* callbackData,
-               v8::Signature* signature,
-               int length)
+               v8::Signature* signature)
       : m_isolate(isolate),
         m_callback(callback),
         m_callbackData(callbackData),
-        m_signature(signature),
-        m_length(length) {}
+        m_signature(signature){}
 
   bool isFunctionData() const override { return true; }
 
@@ -84,7 +82,6 @@ class FunctionData : public ObjectData {
   v8::FunctionCallback m_callback{nullptr};
   v8::Value* m_callbackData{nullptr};
   v8::Signature* m_signature{nullptr};
-  int m_length{0};
 };
 
 class ExternalObjectData : public ObjectData {
