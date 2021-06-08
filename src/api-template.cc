@@ -173,7 +173,7 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
 
   FunctionTemplateRefHelper::setInstanceExtraData(
       esFunctionTemplate,
-      new FunctionData(isolate, *callback, *data, *signature, length));
+      new FunctionData(isolate, *callback, *data, *signature));
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
@@ -272,7 +272,26 @@ MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
 }
 
 bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
-  LWNODE_RETURN_FALSE;
+  LWNODE_CALL_TRACE();
+  auto esContext = IsolateWrap::GetCurrent()->GetCurrentContext()->get();
+  auto esValue = CVAL(*value)->value();
+  if (!esValue->isObject()) {
+    return false;
+  }
+  auto esTemplateObject = CVAL(this)->ftpl()->instantiate(esContext);
+
+  auto r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState,
+         ValueRef* esValue,
+         ObjectRef* esTemplateObject) -> ValueRef* {
+        return ValueRef::create(esValue->instanceOf(esState, esTemplateObject));
+      },
+      esValue,
+      esTemplateObject);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return r.result->asBoolean();
 }
 
 // --- O b j e c t T e m p l a t e ---
