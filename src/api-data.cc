@@ -296,7 +296,20 @@ MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
 }
 
 MaybeLocal<Integer> Value::ToInteger(Local<Context> context) const {
-  LWNODE_RETURN_LOCAL(Integer);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Integer>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  auto esValue = CVAL(this)->value();
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
+        return ValueRef::create(esValue->toInteger(esState));
+      },
+      esValue);
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Local<Integer>());
+
+  return Utils::NewLocal<Integer>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<Int32> Value::ToInt32(Local<Context> context) const {
@@ -477,23 +490,23 @@ std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
   auto self = CVAL(this)->value()->asArrayBufferObject();
 
   BackingStoreRef* esBackingStore = nullptr;
-  EvalResult r =
-      Evaluator::execute(lwContext->get(),
-                         [](ExecutionStateRef* esState,
-                            ArrayBufferObjectRef* arrayBuffer,
-                            BackingStoreRef** backingStore) -> ValueRef* {
-                           auto v = arrayBuffer->backingStore();
+  EvalResult r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         ArrayBufferObjectRef* arrayBuffer,
+         BackingStoreRef** backingStore) -> ValueRef* {
+        auto v = arrayBuffer->backingStore();
 
-                           if (v.hasValue()) {
-                             *backingStore = v.value();
-                           } else {
-                             *backingStore = BackingStoreRef::create(0);
-                           }
+        if (v.hasValue()) {
+          *backingStore = v.value();
+        } else {
+          *backingStore = BackingStoreRef::create(0);
+        }
 
-                           return ValueRef::createNull();
-                         },
-                         self,
-                         &esBackingStore);
+        return ValueRef::createNull();
+      },
+      self,
+      &esBackingStore);
   LWNODE_CHECK(esBackingStore);
 
   return std::shared_ptr<v8::BackingStore>(
@@ -591,8 +604,7 @@ Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* esState, ValueRef* self) {
-        // TODO: change 'toNumber' to 'toInteger'
-        return ValueRef::create(self->toNumber(esState));
+        return ValueRef::create(self->toInteger(esState));
       },
       CVAL(this)->value());
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<int64_t>());

@@ -5380,57 +5380,57 @@ THREADED_TEST(IntegerType) {
   CHECK_EQ(-3, result.As<v8::Integer>()->Value());
 }
 
-// static void CheckUncle(v8::Isolate* isolate, v8::TryCatch* try_catch) {
-//   CHECK(try_catch->HasCaught());
-//   String::Utf8Value str_value(isolate, try_catch->Exception());
-//   CHECK_EQ(0, strcmp(*str_value, "uncle?"));
-//   try_catch->Reset();
-// }
+static void CheckUncle(v8::Isolate* isolate, v8::TryCatch* try_catch) {
+  CHECK(try_catch->HasCaught());
+  String::Utf8Value str_value(isolate, try_catch->Exception());
+  CHECK_EQ(0, strcmp(*str_value, "uncle?"));
+  try_catch->Reset();
+}
 
-// THREADED_TEST(ConversionException) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   CompileRun(
-//       "function TestClass() { };"
-//       "TestClass.prototype.toString = function () { throw 'uncle?'; };"
-//       "var obj = new TestClass();");
-//   Local<Value> obj =
-//       env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+THREADED_TEST(ConversionException) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  CompileRun(
+      "function TestClass() { };"
+      "TestClass.prototype.toString = function () { throw 'uncle?'; };"
+      "var obj = new TestClass();");
+  Local<Value> obj =
+      env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
 
-//   v8::TryCatch try_catch(isolate);
+  v8::TryCatch try_catch(isolate);
 
-//   CHECK(obj->ToString(env.local()).IsEmpty());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->ToString(env.local()).IsEmpty());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->ToNumber(env.local()).IsEmpty());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->ToNumber(env.local()).IsEmpty());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->ToInteger(env.local()).IsEmpty());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->ToInteger(env.local()).IsEmpty());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->ToUint32(env.local()).IsEmpty());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->ToUint32(env.local()).IsEmpty());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->ToInt32(env.local()).IsEmpty());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->ToInt32(env.local()).IsEmpty());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(v8::Undefined(isolate)->ToObject(env.local()).IsEmpty());
-//   CHECK(try_catch.HasCaught());
-//   try_catch.Reset();
+  CHECK(v8::Undefined(isolate)->ToObject(env.local()).IsEmpty());
+  CHECK(try_catch.HasCaught());
+  try_catch.Reset();
 
-//   CHECK(obj->Int32Value(env.local()).IsNothing());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->Int32Value(env.local()).IsNothing());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->Uint32Value(env.local()).IsNothing());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->Uint32Value(env.local()).IsNothing());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->NumberValue(env.local()).IsNothing());
-//   CheckUncle(isolate, &try_catch);
+  CHECK(obj->NumberValue(env.local()).IsNothing());
+  CheckUncle(isolate, &try_catch);
 
-//   CHECK(obj->IntegerValue(env.local()).IsNothing());
-//   CheckUncle(isolate, &try_catch);
-// }
+  CHECK(obj->IntegerValue(env.local()).IsNothing());
+  CheckUncle(isolate, &try_catch);
+}
 
 
 void ThrowFromC(const v8::FunctionCallbackInfo<v8::Value>& args) {
