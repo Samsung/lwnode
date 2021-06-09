@@ -165,8 +165,13 @@ int NodeMainInstance::Run() {
   }
 #endif
 
+// @lwnode
+// We prevent premature termination when detecting leak,
+// as our GC runs after shutting down node platform.
+#if 0
 #if defined(LEAK_SANITIZER)
   __lsan_do_leak_check();
+#endif
 #endif
 
   return exit_code;
