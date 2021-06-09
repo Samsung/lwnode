@@ -1417,7 +1417,21 @@ Local<ArrayBuffer> v8::ArrayBufferView::Buffer() {
 }
 
 size_t v8::ArrayBufferView::CopyContents(void* dest, size_t byte_length) {
-  LWNODE_RETURN_0;
+  LWNODE_CALL_TRACE();
+  LWNODE_CHECK_NOT_NULL(dest);
+
+  auto esArrayBufferView = CVAL(this)->value()->asArrayBufferView();
+
+  if (byte_length == 0 || esArrayBufferView->rawBuffer() == nullptr) {
+    return 0;
+  }
+
+  size_t byteLengthToCopy =
+      std::min(byte_length, esArrayBufferView->byteLength());
+
+  memcpy(dest, esArrayBufferView->rawBuffer(), byteLengthToCopy);
+
+  return byteLengthToCopy;
 }
 
 bool v8::ArrayBufferView::HasBuffer() const {
