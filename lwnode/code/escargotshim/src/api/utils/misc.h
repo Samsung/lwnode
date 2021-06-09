@@ -17,6 +17,7 @@
 #pragma once
 
 #include <assert.h>
+#include "debug.h"
 #include "flags.h"
 #include "logger.h"
 
@@ -44,6 +45,7 @@
 
 #define _LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                 \
   LWNODE_LOG_RAW(CHECK_FMT msg "\n\t" TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);   \
+  EscargotShim::DebugUtils::printStackTrace();                                 \
   std::abort();
 
 #define LWNODE_CHECK_MSG(condition, msg, ...)                                  \
