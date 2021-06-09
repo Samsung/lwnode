@@ -366,7 +366,7 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
   auto esContext = VAL(*v8_context)->context()->get();
   auto esSource = VAL(*source->source_string)->value()->asString();
 
-  std::vector<ValueRef*> arguments_list;
+  GCVector<ValueRef*> arguments_list;
 
   for (size_t i = 0; i < arguments_count; i++) {
     arguments_list.push_back(VAL(*arguments[i])->value());

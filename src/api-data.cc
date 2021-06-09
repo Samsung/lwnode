@@ -1588,7 +1588,7 @@ MaybeLocal<Object> Function::NewInstance(Local<Context> context,
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Object>());
   auto lwContext = CVAL(*context)->context();
 
-  std::vector<ValueRef*> arguments;
+  GCVector<ValueRef*> arguments;
   for (int i = 0; i < argc; i++) {
     arguments.push_back(VAL(*argv[i])->value());
   }
@@ -1627,7 +1627,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
 
   auto lwContext = VAL(*context)->context();
 
-  std::vector<ValueRef*> arguments;
+  GCVector<ValueRef*> arguments;
   for (int i = 0; i < argc; i++) {
     arguments.push_back(VAL(*argv[i])->value());
   }
