@@ -1630,17 +1630,17 @@ THREADED_TEST(OutOfSignedRangeUnsignedInteger) {
 }
 
 
-// THREADED_TEST(IsNativeError) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::Local<Value> syntax_error = CompileRun(
-//       "var out = 0; try { eval(\"#\"); } catch(x) { out = x; } out; ");
-//   CHECK(syntax_error->IsNativeError());
-//   v8::Local<Value> not_error = CompileRun("{a:42}");
-//   CHECK(!not_error->IsNativeError());
-//   v8::Local<Value> not_object = CompileRun("42");
-//   CHECK(!not_object->IsNativeError());
-// }
+THREADED_TEST(IsNativeError) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::Local<Value> syntax_error = CompileRun(
+      "var out = 0; try { eval(\"#\"); } catch(x) { out = x; } out; ");
+  CHECK(syntax_error->IsNativeError());
+  v8::Local<Value> not_error = CompileRun("{a:42}");
+  CHECK(!not_error->IsNativeError());
+  v8::Local<Value> not_object = CompileRun("42");
+  CHECK(!not_object->IsNativeError());
+}
 
 
 // THREADED_TEST(IsGeneratorFunctionOrObject) {
