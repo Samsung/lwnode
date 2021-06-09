@@ -23,7 +23,7 @@ jobs:
           command: out/Release/node test/message/hello_world.js
       - run:
           name: Run node.js TCs (test.py)
-          command: tools/test.py -J -p dots --report
+          command: tools/test.py -J -p dots -t 20 --report
                    --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                    test/parallel
       - run:

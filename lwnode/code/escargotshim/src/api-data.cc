@@ -175,7 +175,7 @@ bool Value::IsUint32() const {
 }
 
 bool Value::IsNativeError() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isErrorObject();
 }
 
 bool Value::IsRegExp() const {
