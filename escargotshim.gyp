@@ -39,6 +39,7 @@
         'src/libplatform/tracing/trace-config.cc',
         'src/libplatform/tracing/trace-object.cc',
         'src/libplatform/tracing/trace-writer.cc',
+        'src/api/utils/debug.cc',
         'src/api/utils/flags.cc',
         'src/api/utils/gc.cc',
         'src/api/arraybuffer-allocator.cc',
@@ -69,6 +70,13 @@
           '.',
         ],
       },
+      'conditions': [
+        ['OS == "linux"', {
+          'defines': [
+            'LWNODE_PLATFORM_LINUX=1',
+          ],
+        }],
+      ],
       'actions': [
         {
           'action_name': 'escargotshim_js2c',
