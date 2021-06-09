@@ -22,8 +22,11 @@
 
 v8::Isolate* CcTest::isolate_ = nullptr;
 v8::Context::Scope* CcTest::contextScope_ = nullptr;
+v8::ArrayBuffer::Allocator* CcTest::allocator_ = nullptr;
 static bool disable_automatic_dispose_ = false;
 v8::Isolate::CreateParams create_params_;
+
+static CcTest g_cctest;
 
 LocalContext::~LocalContext() {
   v8::HandleScope scope(isolate_);
@@ -44,10 +47,17 @@ void LocalContext::Initialize(v8::Isolate* isolate,
   isolate_ = isolate;
 }
 
+CcTest::CcTest() {
+  allocator_ = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+}
+
+CcTest::~CcTest() {
+  delete allocator_;
+}
+
 v8::Isolate* CcTest::isolate() {
   if (isolate_ == nullptr) {
-    create_params_.array_buffer_allocator =
-        v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+    create_params_.array_buffer_allocator = allocator_;
     CcTest::isolate_ = v8::Isolate::New(create_params_);
   }
   return isolate_;
@@ -64,7 +74,6 @@ void CcTest::disposeIsolate() {
   if (isolate_ != nullptr) {
     isolate_->Exit();
     isolate_->Dispose();
-    delete create_params_.array_buffer_allocator;
     isolate_ = nullptr;
   }
 }
