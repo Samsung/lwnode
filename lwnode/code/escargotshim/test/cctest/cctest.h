@@ -62,6 +62,9 @@
 
 class CcTest {
  public:
+  CcTest();
+  ~CcTest();
+
   static v8::Isolate* isolate();
   static void disposeScope();
   static void disposeIsolate();
@@ -72,6 +75,7 @@ class CcTest {
 
  private:
   static v8::Isolate* isolate_;
+  static v8::ArrayBuffer::Allocator* allocator_;
 };
 
 static inline v8::Local<v8::Boolean> v8_bool(bool val) {
