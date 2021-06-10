@@ -23,14 +23,15 @@ jobs:
           command: out/Release/node test/message/hello_world.js
       - run:
           name: Run node.js TCs (test.py)
-          command: tools/test.py -J -p dots -t 20 --report
+          command: tools/test.py -J -p dots --report
+                   --timeout 30 --repeat 5
                    --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                    test/parallel
-      - run:
-          name: Run node.js TCs
-          command: |
-            ln -sf out/Release/node node
-            lwnode/code/escargotshim/test/jstester/jstester.py --process 8
+      # - run:
+      #     name: Run node.js TCs
+      #     command: |
+      #       ln -sf out/Release/node node
+      #       lwnode/code/escargotshim/test/jstester/jstester.py --process 8
   test:
     machine:
       image: art.sec.samsung.net/ci-docker/lws/starfish:latest
