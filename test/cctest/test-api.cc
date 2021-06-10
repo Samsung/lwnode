@@ -10384,12 +10384,12 @@ THREADED_TEST(ObjectGetOwnPropertyNames) {
   CHECK(property.As<v8::String>()
             ->Equals(context.local(), v8_str("length"))
             .FromMaybe(false));
-  // for (int i = 0; i < 4; ++i) {
-  //   v8::Local<v8::Value> property;
-  //   CHECK(properties->Get(context.local(), i).ToLocal(&property) &&
-  //         property->IsInt32());
-  //   CHECK_EQ(property.As<v8::Int32>()->Value(), i);
-  // }
+  for (int i = 0; i < 4; ++i) {
+    v8::Local<v8::Value> property;
+    CHECK(properties->Get(context.local(), i).ToLocal(&property) &&
+          property->IsInt32());
+    CHECK_EQ(property.As<v8::Int32>()->Value(), i);
+  }
 
   CHECK(value
             ->GetOwnPropertyNames(context.local(),
@@ -10410,10 +10410,10 @@ THREADED_TEST(ObjectGetOwnPropertyNames) {
     CHECK(number_properties->Get(context.local(), i).ToLocal(&property_name));
     CHECK(property_name->IsString());
 
-    // CHECK(properties->Get(context.local(), i).ToLocal(&property_index));
-    // CHECK(property_index->IsInt32());
+    CHECK(properties->Get(context.local(), i).ToLocal(&property_index));
+    CHECK(property_index->IsInt32());
 
-    // CHECK_EQ(property_index.As<v8::Int32>()->Value(), i);
+    CHECK_EQ(property_index.As<v8::Int32>()->Value(), i);
     CHECK_EQ(property_name->ToNumber(context.local())
                  .ToLocalChecked()
                  .As<v8::Int32>()
@@ -14260,26 +14260,26 @@ THREADED_TEST(GetPropertyNames) {
   CheckStringArray(isolate, properties, 12, expected_properties1_1);
   CheckIsSymbolAt(isolate, properties, 7, "symbol");
 
-  // properties =
-  //     object
-  //         ->GetPropertyNames(context.local(),
-  //                            v8::KeyCollectionMode::kIncludePrototypes,
-  //                            default_filter, v8::IndexFilter::kSkipIndices)
-  //         .ToLocalChecked();
-  // const char* expected_properties2[] = {"a",          "b", "4294967296",
-  //                                       "4294967295", "c", "d"};
-  // CheckStringArray(isolate, properties, 6, expected_properties2);
+  properties =
+      object
+          ->GetPropertyNames(context.local(),
+                             v8::KeyCollectionMode::kIncludePrototypes,
+                             default_filter, v8::IndexFilter::kSkipIndices)
+          .ToLocalChecked();
+  const char* expected_properties2[] = {"a",          "b", "4294967296",
+                                        "4294967295", "c", "d"};
+  CheckStringArray(isolate, properties, 6, expected_properties2);
 
-  // properties = object
-  //                  ->GetPropertyNames(context.local(),
-  //                                     v8::KeyCollectionMode::kIncludePrototypes,
-  //                                     include_symbols_filter,
-  //                                     v8::IndexFilter::kSkipIndices)
-  //                  .ToLocalChecked();
-  // const char* expected_properties2_1[] = {
-  //     "a", "b", "4294967296", "4294967295", nullptr, "c", "d"};
-  // CheckStringArray(isolate, properties, 7, expected_properties2_1);
-  // CheckIsSymbolAt(isolate, properties, 4, "symbol");
+  properties = object
+                   ->GetPropertyNames(context.local(),
+                                      v8::KeyCollectionMode::kIncludePrototypes,
+                                      include_symbols_filter,
+                                      v8::IndexFilter::kSkipIndices)
+                   .ToLocalChecked();
+  const char* expected_properties2_1[] = {
+      "a", "b", "4294967296", "4294967295", nullptr, "c", "d"};
+  CheckStringArray(isolate, properties, 7, expected_properties2_1);
+  CheckIsSymbolAt(isolate, properties, 4, "symbol");
 
   properties =
       object
@@ -14301,23 +14301,23 @@ THREADED_TEST(GetPropertyNames) {
   CheckStringArray(isolate, properties, 8, expected_properties3_1);
   CheckIsSymbolAt(isolate, properties, 7, "symbol");
 
-  // properties =
-  //     object
-  //         ->GetPropertyNames(context.local(), v8::KeyCollectionMode::kOwnOnly,
-  //                            default_filter, v8::IndexFilter::kSkipIndices)
-  //         .ToLocalChecked();
-  // const char* expected_properties4[] = {"a", "b", "4294967296", "4294967295"};
-  // CheckStringArray(isolate, properties, 4, expected_properties4);
+  properties =
+      object
+          ->GetPropertyNames(context.local(), v8::KeyCollectionMode::kOwnOnly,
+                             default_filter, v8::IndexFilter::kSkipIndices)
+          .ToLocalChecked();
+  const char* expected_properties4[] = {"a", "b", "4294967296", "4294967295"};
+  CheckStringArray(isolate, properties, 4, expected_properties4);
 
-  // properties = object
-  //                  ->GetPropertyNames(
-  //                      context.local(), v8::KeyCollectionMode::kOwnOnly,
-  //                      include_symbols_filter, v8::IndexFilter::kSkipIndices)
-  //                  .ToLocalChecked();
-  // const char* expected_properties4_1[] = {"a", "b", "4294967296", "4294967295",
-  //                                         nullptr};
-  // CheckStringArray(isolate, properties, 5, expected_properties4_1);
-  // CheckIsSymbolAt(isolate, properties, 4, "symbol");
+  properties = object
+                   ->GetPropertyNames(
+                       context.local(), v8::KeyCollectionMode::kOwnOnly,
+                       include_symbols_filter, v8::IndexFilter::kSkipIndices)
+                   .ToLocalChecked();
+  const char* expected_properties4_1[] = {"a", "b", "4294967296", "4294967295",
+                                          nullptr};
+  CheckStringArray(isolate, properties, 5, expected_properties4_1);
+  CheckIsSymbolAt(isolate, properties, 4, "symbol");
 }
 
 THREADED_TEST(ProxyGetPropertyNames) {
@@ -14343,7 +14343,7 @@ THREADED_TEST(ProxyGetPropertyNames) {
   const char* expected_properties1[] = {"0", "1",          "4294967294", "a",
                                         "b", "4294967296", "4294967295", "2",
                                         "3", "c",          "d"};
-  // CheckStringArray(isolate, properties, 11, expected_properties1);
+  CheckStringArray(isolate, properties, 11, expected_properties1);
 
   properties =
       object
@@ -14365,26 +14365,26 @@ THREADED_TEST(ProxyGetPropertyNames) {
   CheckStringArray(isolate, properties, 12, expected_properties1_1);
   CheckIsSymbolAt(isolate, properties, 7, "symbol");
 
-  // properties =
-  //     object
-  //         ->GetPropertyNames(context.local(),
-  //                            v8::KeyCollectionMode::kIncludePrototypes,
-  //                            default_filter, v8::IndexFilter::kSkipIndices)
-  //         .ToLocalChecked();
-  // const char* expected_properties2[] = {"a",          "b", "4294967296",
-  //                                       "4294967295", "c", "d"};
-  // CheckStringArray(isolate, properties, 6, expected_properties2);
+  properties =
+      object
+          ->GetPropertyNames(context.local(),
+                             v8::KeyCollectionMode::kIncludePrototypes,
+                             default_filter, v8::IndexFilter::kSkipIndices)
+          .ToLocalChecked();
+  const char* expected_properties2[] = {"a",          "b", "4294967296",
+                                        "4294967295", "c", "d"};
+  CheckStringArray(isolate, properties, 6, expected_properties2);
 
-  // properties = object
-  //                  ->GetPropertyNames(context.local(),
-  //                                     v8::KeyCollectionMode::kIncludePrototypes,
-  //                                     include_symbols_filter,
-  //                                     v8::IndexFilter::kSkipIndices)
-  //                  .ToLocalChecked();
-  // const char* expected_properties2_1[] = {
-  //     "a", "b", "4294967296", "4294967295", nullptr, "c", "d"};
-  // CheckStringArray(isolate, properties, 7, expected_properties2_1);
-  // CheckIsSymbolAt(isolate, properties, 4, "symbol");
+  properties = object
+                   ->GetPropertyNames(context.local(),
+                                      v8::KeyCollectionMode::kIncludePrototypes,
+                                      include_symbols_filter,
+                                      v8::IndexFilter::kSkipIndices)
+                   .ToLocalChecked();
+  const char* expected_properties2_1[] = {
+      "a", "b", "4294967296", "4294967295", nullptr, "c", "d"};
+  CheckStringArray(isolate, properties, 7, expected_properties2_1);
+  CheckIsSymbolAt(isolate, properties, 4, "symbol");
 
   properties =
       object
@@ -14405,23 +14405,23 @@ THREADED_TEST(ProxyGetPropertyNames) {
   CheckStringArray(isolate, properties, 8, expected_properties3_1);
   CheckIsSymbolAt(isolate, properties, 7, "symbol");
 
-  // properties =
-  //     object
-  //         ->GetPropertyNames(context.local(), v8::KeyCollectionMode::kOwnOnly,
-  //                            default_filter, v8::IndexFilter::kSkipIndices)
-  //         .ToLocalChecked();
-  // const char* expected_properties4[] = {"a", "b", "4294967296", "4294967295"};
-  // CheckStringArray(isolate, properties, 4, expected_properties4);
+  properties =
+      object
+          ->GetPropertyNames(context.local(), v8::KeyCollectionMode::kOwnOnly,
+                             default_filter, v8::IndexFilter::kSkipIndices)
+          .ToLocalChecked();
+  const char* expected_properties4[] = {"a", "b", "4294967296", "4294967295"};
+  CheckStringArray(isolate, properties, 4, expected_properties4);
 
-  // properties = object
-  //                  ->GetPropertyNames(
-  //                      context.local(), v8::KeyCollectionMode::kOwnOnly,
-  //                      include_symbols_filter, v8::IndexFilter::kSkipIndices)
-  //                  .ToLocalChecked();
-  // const char* expected_properties4_1[] = {"a", "b", "4294967296", "4294967295",
-  //                                         nullptr};
-  // CheckStringArray(isolate, properties, 5, expected_properties4_1);
-  // CheckIsSymbolAt(isolate, properties, 4, "symbol");
+  properties = object
+                   ->GetPropertyNames(
+                       context.local(), v8::KeyCollectionMode::kOwnOnly,
+                       include_symbols_filter, v8::IndexFilter::kSkipIndices)
+                   .ToLocalChecked();
+  const char* expected_properties4_1[] = {"a", "b", "4294967296", "4294967295",
+                                          nullptr};
+  CheckStringArray(isolate, properties, 5, expected_properties4_1);
+  CheckIsSymbolAt(isolate, properties, 4, "symbol");
 }
 
 // THREADED_TEST(AccessChecksReenabledCorrectly) {
