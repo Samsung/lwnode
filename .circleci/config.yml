@@ -27,7 +27,7 @@ jobs:
       - run:
           name: Run node.js TCs (test.py)
           command: tools/test.py -J -p dots --report
-                   --timeout 30 --repeat 5
+                   --timeout 60 --repeat 5
                    --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                    test/parallel
       # - run:

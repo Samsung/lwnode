@@ -1166,6 +1166,16 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(Local<Context> context) {
       v8::IndexFilter::kIncludeIndices);
 }
 
+static void pushUniqueValue(SetObjectRef* set,
+                            GCVector<ValueRef*>* vector,
+                            ValueRef* value,
+                            ExecutionStateRef* state) {
+  if (!set->has(state, value)) {
+    vector->push_back(value);
+    set->add(state, value);
+  }
+}
+
 MaybeLocal<Array> v8::Object::GetPropertyNames(
     Local<Context> context,
     KeyCollectionMode mode,
@@ -1174,89 +1184,120 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(
     KeyConversionMode key_conversion) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Array>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asObject();
 
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState,
-         ObjectRef* esSelf,
+      [](ExecutionStateRef* state,
+         ObjectRef* esObject,
          KeyCollectionMode mode,
          PropertyFilter property_filter,
          IndexFilter index_filter,
          KeyConversionMode key_conversion) -> ValueRef* {
-        auto set = SetObjectRef::create(esState);
-        auto vector = ValueVectorRef::create();
+        auto propertyNameVector = ValueVectorRef::create();
+        auto propertyNameSet = SetObjectRef::create(state);
 
-        auto done = StringRef::createFromASCII("done");
-        auto value = StringRef::createFromASCII("value");
-        auto enumerable = StringRef::createFromASCII("enumerable");
-        auto writable = StringRef::createFromASCII("writable");
-        auto configurable = StringRef::createFromASCII("configurable");
+        ObjectRef* esSelf = esObject;
 
-        auto iter = OptionalRef<ObjectRef>(esSelf);
-        while (iter) {
-          auto keys = iter->ownPropertyKeys(esState);
-          for (size_t i = 0; i < keys->size(); i++) {
-            auto key = keys->at(i);
+        while (true) {
+          GCVector<ValueRef*> indexes;
+          GCVector<ValueRef*> strings;
+          GCVector<ValueRef*> symbols;
+          esSelf->enumerateObjectOwnProperties(
+              state,
+              [&propertyNameSet,
+               &indexes,
+               &strings,
+               &symbols,
+               property_filter,
+               index_filter](ExecutionStateRef* state,
+                             ValueRef* propertyName,
+                             bool isWritable,
+                             bool isEnumerable,
+                             bool isConfigurable) -> bool {
+                if (propertyName->isSymbol()) {
+                  if (!(property_filter & PropertyFilter::SKIP_SYMBOLS)) {
+                    pushUniqueValue(
+                        propertyNameSet, &symbols, propertyName, state);
+                  }
+                  return true;
+                }
 
-            if (key->isSymbol()) {
-              if (!(property_filter & PropertyFilter::SKIP_SYMBOLS)) {
-                set->add(esState, key);
+                if (property_filter & (PropertyFilter::ONLY_WRITABLE |
+                                       PropertyFilter::ONLY_ENUMERABLE |
+                                       PropertyFilter::ONLY_CONFIGURABLE)) {
+                  if (((property_filter & PropertyFilter::ONLY_WRITABLE) &&
+                       !isWritable) ||
+                      ((property_filter & PropertyFilter::ONLY_ENUMERABLE) &&
+                       !isEnumerable) ||
+                      ((property_filter & PropertyFilter::ONLY_CONFIGURABLE) &&
+                       !isConfigurable)) {
+                    return true;
+                  }
+                }
+
+                auto index = propertyName->tryToUseAsArrayIndex(state);
+                if (index == ValueRef::InvalidArrayIndexValue) {
+                  if (!(property_filter & PropertyFilter::SKIP_STRINGS)) {
+                    pushUniqueValue(
+                        propertyNameSet, &strings, propertyName, state);
+                    return true;
+                  }
+                } else {
+                  if (index_filter != IndexFilter::kSkipIndices) {
+                    pushUniqueValue(
+                        propertyNameSet, &indexes, propertyName, state);
+                  }
+                }
+                return true;
+              },
+              false);
+
+          if (index_filter != IndexFilter::kSkipIndices) {
+            std::sort(indexes.begin(),
+                      indexes.end(),
+                      [&state](ValueRef* a, ValueRef* b) -> bool {
+                        return a->toUint32(state) < b->toUint32(state);
+                      });
+            if (key_conversion == KeyConversionMode::kConvertToString) {
+              for (auto& index : indexes) {
+                propertyNameVector->pushBack(index->toString(state));
               }
-              continue;
-            }
-
-            if (key->isString() &&
-                (property_filter & PropertyFilter::SKIP_STRINGS)) {
-              continue;
-            }
-
-            if (property_filter & (PropertyFilter::ONLY_WRITABLE |
-                                   PropertyFilter::ONLY_ENUMERABLE |
-                                   PropertyFilter::ONLY_CONFIGURABLE)) {
-              auto desc =
-                  iter->getOwnPropertyDescriptor(esState, key)->asObject();
-
-              if (((property_filter & PropertyFilter::ONLY_WRITABLE) &&
-                   desc->get(esState, writable)->isFalse()) ||
-                  ((property_filter & PropertyFilter::ONLY_ENUMERABLE) &&
-                   desc->get(esState, enumerable)->isFalse()) ||
-                  ((property_filter & PropertyFilter::ONLY_CONFIGURABLE) &&
-                   desc->get(esState, configurable)->isFalse())) {
-                continue;
+            } else {
+              for (auto& index : indexes) {
+                propertyNameVector->pushBack(index);
               }
             }
-
-            if (index_filter == IndexFilter::kSkipIndices) {
-              LWNODE_ONCE(LWNODE_UNIMPLEMENT);
-            }
-
-            set->add(esState, key);
           }
 
-          if ((mode == KeyCollectionMode::kOwnOnly)) {
+          if (!(property_filter & PropertyFilter::SKIP_STRINGS)) {
+            for (auto& string : strings) {
+              propertyNameVector->pushBack(string);
+            }
+          }
+
+          if (!(property_filter & PropertyFilter::SKIP_SYMBOLS)) {
+            for (auto& symbol : symbols) {
+              propertyNameVector->pushBack(symbol);
+            }
+          }
+
+          if (mode == KeyCollectionMode::kOwnOnly) {
             break;
           }
-          iter = iter->getPrototypeObject(esState);
-        }
-
-        auto setIter = set->values(esState);
-        for (auto entry = setIter->next(esState);
-             entry->asObject()->get(esState, done)->isFalse();
-             entry = setIter->next(esState)) {
-          if (key_conversion == KeyConversionMode::kKeepNumbers) {
-            LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+          auto prototype = esSelf->getPrototypeObject(state);
+          if (!prototype.hasValue()) {
+            break;
           }
-          auto key = entry->asObject()->get(esState, value);
-          vector->pushBack(key);
+          esSelf = prototype.get();
         }
-        return ArrayObjectRef::create(esState, vector);
+        return ArrayObjectRef::create(state, propertyNameVector);
       },
-      esSelf,
+      CVAL(this)->value()->asObject(),
       mode,
       property_filter,
       index_filter,
       key_conversion);
+
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Array>());
 
   return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
