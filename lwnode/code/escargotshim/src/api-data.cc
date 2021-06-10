@@ -60,7 +60,8 @@ bool Value::IsFunction() const {
 }
 
 bool Value::IsName() const {
-  LWNODE_RETURN_FALSE;
+  auto esValue = CVAL(this)->value();
+  return esValue->isString() || esValue->isSymbol();
 }
 
 bool Value::FullIsString() const {
@@ -377,7 +378,7 @@ void v8::Boolean::CheckCast(v8::Value* that) {
 }
 
 void v8::Name::CheckCast(v8::Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsName());
 }
 
 void v8::String::CheckCast(v8::Value* that) {
