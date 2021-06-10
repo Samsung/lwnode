@@ -2400,20 +2400,31 @@ String::Value::~Value() {
   delete[] str_;
 }
 
-#define DEFINE_ERROR(NAME, name)                                               \
+#define DEFINE_UNIMPLEMENTED_ERROR(NAME, name)                                 \
   Local<Value> Exception::NAME(v8::Local<v8::String> raw_message) {            \
     LWNODE_RETURN_LOCAL(Value);                                                \
   }
 
-DEFINE_ERROR(RangeError, range_error)
-DEFINE_ERROR(ReferenceError, reference_error)
-DEFINE_ERROR(SyntaxError, syntax_error)
-DEFINE_ERROR(TypeError, type_error)
-DEFINE_ERROR(WasmCompileError, wasm_compile_error)
-DEFINE_ERROR(WasmLinkError, wasm_link_error)
-DEFINE_ERROR(WasmRuntimeError, wasm_runtime_error)
-DEFINE_ERROR(Error, error)
+#define DEFINE_ERROR(NAME, ES_ERROR_CODE)                                      \
+  Local<Value> Exception::NAME(v8::Local<v8::String> message) {                \
+    auto lwIsolate = IsolateWrap::GetCurrent();                                \
+    auto esError = ExceptionHelper::createErrorObject(                         \
+        lwIsolate->GetCurrentContext()->get(),                                 \
+        ErrorObjectRef::Code::ES_ERROR_CODE,                                   \
+        VAL(*message)->value()->asString());                                   \
+    return Utils::NewLocal<Value>(lwIsolate->toV8(), esError);                 \
+  }
 
+DEFINE_ERROR(RangeError, RangeError)
+DEFINE_ERROR(ReferenceError, ReferenceError)
+DEFINE_ERROR(SyntaxError, SyntaxError)
+DEFINE_ERROR(TypeError, TypeError)
+DEFINE_ERROR(Error, None)
+DEFINE_UNIMPLEMENTED_ERROR(WasmCompileError, wasm_compile_error)
+DEFINE_UNIMPLEMENTED_ERROR(WasmLinkError, wasm_link_error)
+DEFINE_UNIMPLEMENTED_ERROR(WasmRuntimeError, wasm_runtime_error)
+
+#undef DEFINE_UNIMPLEMENTED_ERROR
 #undef DEFINE_ERROR
 
 Local<Message> Exception::CreateMessage(Isolate* isolate,

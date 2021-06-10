@@ -394,23 +394,6 @@ std::string EvalResultHelper::getErrorString(
   return oss.str();
 }
 
-static ErrorObjectRef* createErrorObject(ContextRef* context,
-                                         ErrorObjectRef::Code code,
-                                         StringRef* errorMessage) {
-  EvalResult r = Evaluator::execute(
-      context,
-      [](ExecutionStateRef* state,
-         ErrorObjectRef::Code code,
-         StringRef* errorMessage) -> ValueRef* {
-        return ErrorObjectRef::create(state, code, errorMessage);
-      },
-      code,
-      errorMessage);
-
-  LWNODE_CHECK(r.isSuccessful());
-  return r.result->asErrorObject();
-}
-
 Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
                                                         const char* source,
                                                         bool isModule) {
@@ -421,7 +404,7 @@ Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
 
   if (!compileResult.isSuccessful()) {
     Evaluator::EvaluatorResult result;
-    result.error = createErrorObject(
+    result.error = ExceptionHelper::createErrorObject(
         context, compileResult.parseErrorCode, compileResult.parseErrorMessage);
 
     LWNODE_LOG_ERROR(
@@ -597,6 +580,22 @@ ValueWrap* ExceptionHelper::wrapException(ValueRef* exception) {
 
 ValueRef* ExceptionHelper::unwrapException(void* exception) {
   return reinterpret_cast<ValueWrap*>(exception)->value();
+}
+
+ErrorObjectRef* ExceptionHelper::createErrorObject(
+    ContextRef* context, ErrorObjectRef::Code code, StringRef* errorMessage) {
+  EvalResult r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ErrorObjectRef::Code code,
+         StringRef* errorMessage) -> ValueRef* {
+        return ErrorObjectRef::create(state, code, errorMessage);
+      },
+      code,
+      errorMessage);
+
+  LWNODE_CHECK(r.isSuccessful());
+  return r.result->asErrorObject();
 }
 
 }  // namespace EscargotShim

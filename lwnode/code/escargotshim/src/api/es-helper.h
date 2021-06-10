@@ -200,6 +200,9 @@ class ExceptionHelper {
  public:
   static ValueWrap* wrapException(ValueRef* exception);
   static ValueRef* unwrapException(void* exception);
+  static ErrorObjectRef* createErrorObject(ContextRef* context,
+                                           ErrorObjectRef::Code code,
+                                           StringRef* errorMessage);
 };
 
 }  // namespace EscargotShim
