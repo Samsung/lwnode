@@ -1,10 +1,6 @@
 # Conventions
 
-
-
---------
-
-### directives
+### Directives
 
 * **SHALL** is used to express mandatory requirements. (negative form: **SHALL NOT**)
   * Do not use MUST as an alternative to SHALL.
@@ -14,17 +10,16 @@
 
 ---------
 
-
-
 ## Naming
 
-- If a corresponding class or a simlar concept exists in v8, name it with a postfix, `Wrap`.
-```
-  - Context (v8)
-  - ContextWrap (lwnode)
-  - Isolate (v8)
-  - IsolateWrap (lwnode)
-```
+- If a corresponding class or a similar concept exists in v8, name it with a postfix, `Wrap`.
+The following table shows how a v8 class and its matching lwnode class are named.
+
+| v8      | lwnode      |
+|---------|-------------|
+| Context | ContextWrap |
+| Isolate | IsolateWrap |
+
 
 - If there is a corresponding functions in v8, it **SHALL** use the exact name.
 ```
@@ -45,30 +40,28 @@
 - typedef Escargot::ContextRef* JsContextRef; // (x)
 ```
 
-* API Levels
-  * API level 1 : v8 apis
-  * API level 2 : EscargotShim apis (Wrapped Values)
-  * API level 3 : Escargot apis
-* Regarding Variable Names,
-* In Level 1, if there are same concepts among the API levels, it **SHOULD** use the following conventions:
-  * name a value of API level 3 (Escargot Value) with `es` .
-  * name a value of API level 2 (Wrapped Value) with `lw`.
-  * name v8 Value with no prefix or `v8`.
-  * It **SHALL** use the above especially when using `auto` type inference.
-* In Level 3, it **NEEDS NOT** to meet the above conventions.
+* EscargotShim works as a bridge between V8 and Escargot. It is responsible for
+  transforming a V8 value to an Escargot value, and vice versa. This results in
+  three types of "modules" as described by the following diagram.
 
+```
++----+      +--------------+      +----------+
+| V8 |------| EscargotShim |------| Escargot |
++----+      +--------------+      +----------+
+```
 
+  * We deal with a three sets of APIs, it is often confusing which value, out of three,
+    a variable refers to. To prevent this, we add a prefix when a variable is named as described below:
 
-## Sources
+| API          | Prefix                                  |
+|--------------|-----------------------------------------|
+| V8           | v8 (can be omitted if context is clear) |
+| EscargotShim | lw                                      |
+| Escargot     | es                                      |
 
-### Source regions
+* This naming rules **SHALL** be applied to all ``api-*.cc`` files.
 
-|       Level 0       |        Level 1         |         Level 2         |       Level 3        |
-| :-----------------: | :--------------------: | :---------------------: | :------------------: |
-| User apps (Node.js) | v8 apis (`src/api.cc`) | lwnode apis (`src/api`) | js engine (escargot) |
-
-* In the level 1, `ValueWrap` **SHALL** be used for type convertion between v8 and lwnode apis.
-
+* Within EscargotShim, `ValueWrap` **SHALL** be used for type convertion between v8 and lwnode apis.
 
 
 ## Type conversion between lwnode world and v8 world
@@ -137,12 +130,13 @@ return Utils::NewLocal<String>(isolate, esString);
 - Type Names
   - Type names start with a capital letter and have a capital letter for each new word: `MyClass`, `MyEnum`.
 - Variable Names
-  - Class data member (TBD)
-    - 1) m_value
-    - 2) value_ (node, v8)
+  - Class data member
+    - ``myValue_`` for a member variable
+    - ``g_myValue`` for a global variable
+    - ``s_myValue`` for a static variable
+    - ``kMyConstValue`` for a (global) constant value
   - Common data (TBD)
     - 1) stringValue
     - 2) string_value (v8)
 - File Names
   - Filenames should be all lowercase and may include dashes (-).
-
