@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2019-present Samsung Electronics Co., Ltd.
+# Copyright (c) 2021-present Samsung Electronics Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import sys
 
 from argparse import ArgumentParser
 from difflib import unified_diff
-from os.path import join, relpath, splitext, dirname, abspath
-
+from os.path import join, relpath, splitext
+from distutils import spawn
 
 TERM_RED = '\033[1;31m'
 TERM_GREEN = '\033[1;32m'
@@ -32,20 +32,41 @@ TERM_PURPLE = '\033[35m'
 TERM_EMPTY = '\033[0m'
 
 
-clang_format_exts = ['.cpp', '.h', '.hpp', '.cc']
+clang_format_exts = ['.cc', '.h']
 skip_dirs = [
-    'build',
-    'escargot',
-    'out',
-    'tool',
-    'include',
-    'tizen-device-api'
+    'benchmark',
+    'deps',
+    'doc',
+    'lib',
+    'packaging',
+    'src',
+    'test',
+    'tools',
+    'lwnode/code/escargotshim/deps',
+    'lwnode/code/escargotshim/include/cppgc',
+    'lwnode/code/escargotshim/include/libplatform',
+    'lwnode/code/escargotshim/test/cctest/gtest',
+    'lwnode/code/escargotshim/src/libplatform',
+    'lwnode/code/tizen',
+    'CMakeFiles',
+    '.git',
+    'out'
 ]
-
 skip_files = [
-
+    'v8-fast-api-calls.h',
+    'v8-inspector.h',
+    'v8-internal.h',
+    'v8-platform.h',
+    'v8-profiler.h',
+    'v8-util.h',
+    'v8-value-serializer-version.h',
+    'v8-version-string.h',
+    'v8-wasm-trap-handler-posix.h',
+    'v8.h',
+    'v8config.h',
+    'test-api.h',
+    'test-api.cc'
 ]
-
 
 class Stats(object):
     def __init__(self):
@@ -60,15 +81,33 @@ def is_checked_by_clang(file):
     return ext in clang_format_exts and file not in skip_files
 
 
-def check_tidy(update, clang_format, stats):
-    src_dir = dirname(dirname(abspath(__file__)))
+def check_tidy(src_dir, update, base, stats):
+    clang_format = spawn.find_executable(base)
+    if not clang_format:
+        clang_format = spawn.find_executable("clang-format-8")
+        if clang_format:
+            print("Using %s instead of %s" % (clang_format, base))
+        else:
+            print("No %s found, skipping checks!" % base)
+
+
     print('%sprocessing directory: %s%s' % (TERM_PURPLE, src_dir, TERM_EMPTY))
 
     for dirpath, _, filenames in os.walk(src_dir):
-        if any(d in relpath(dirpath, src_dir) for d in skip_dirs):
+        if relpath(dirpath, src_dir) in skip_dirs:
+            continue
+
+        skip = False
+        for d in skip_dirs:
+            if relpath(dirpath, src_dir).startswith(d):
+                skip=True
+                break
+
+        if skip:
             continue
 
         for file in [join(dirpath, name) for name in filenames if is_checked_by_clang(name)]:
+
             def report_error(msg, line=None):
                 print('%s%s:%s %s%s' % (TERM_YELLOW, file, '%d:' % line if line else '', msg, TERM_EMPTY))
                 stats.errors += 1
@@ -109,15 +148,18 @@ def check_tidy(update, clang_format, stats):
 
 def main():
     parser = ArgumentParser(description='Starfish Source Format Checker and Updater')
-    parser.add_argument('--clang-format', metavar='PATH', default='clang-format-6.0',
+    parser.add_argument('--clang-format', metavar='PATH', default='clang-format-8',
                         help='path to clang-format (default: %(default)s)')
     parser.add_argument('--update', action='store_true',
                         help='reformat files')
+    parser.add_argument('dir', nargs='*', default=['.'],
+                        help='directory to process (default: .)')
     args = parser.parse_args()
 
     stats = Stats()
 
-    check_tidy(args.update, args.clang_format, stats)
+    for dir in args.dir:
+        check_tidy(dir, args.update, args.clang_format, stats)
 
     print()
     print('* Total number of files: %d' % stats.files)
