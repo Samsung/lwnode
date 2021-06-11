@@ -321,9 +321,8 @@ MaybeLocal<Module> ScriptCompiler::CompileModule(
   if (!maybe.ToLocal(&unbound)) return MaybeLocal<Module>();
 
   // TODO: save the unbound result to the ModuleWrap
-  return v8::Utils::NewLocal<Module>(
-      isolate,
-      ValueWrap::createModule(new ModuleWrap()));
+  return v8::Utils::NewLocal<Module>(isolate,
+                                     ValueWrap::createModule(new ModuleWrap()));
 }
 
 MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(

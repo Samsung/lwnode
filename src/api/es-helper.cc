@@ -582,8 +582,9 @@ ValueRef* ExceptionHelper::unwrapException(void* exception) {
   return reinterpret_cast<ValueWrap*>(exception)->value();
 }
 
-ErrorObjectRef* ExceptionHelper::createErrorObject(
-    ContextRef* context, ErrorObjectRef::Code code, StringRef* errorMessage) {
+ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
+                                                   ErrorObjectRef::Code code,
+                                                   StringRef* errorMessage) {
   EvalResult r = Evaluator::execute(
       context,
       [](ExecutionStateRef* state,

@@ -47,6 +47,7 @@ class Isolate : public gc {
 
  protected:
   Escargot::ValueRef* scheduled_exception_{nullptr};
+
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
 };

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "lwnode-internal.h"
 #include "api/isolate.h"
+#include "lwnode-internal.h"
 
 namespace EscargotShim {
 

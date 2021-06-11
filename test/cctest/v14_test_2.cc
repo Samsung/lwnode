@@ -143,7 +143,6 @@ TEST(ObjectTemplateSimple) {
   ExpectString("object_from_template.message", "Hello");
 }
 
-
 static bool onread_flag = false;
 static void GetOnread(Local<Name> name,
                       const v8::PropertyCallbackInfo<v8::Value>& info) {

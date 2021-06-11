@@ -42,4 +42,4 @@ void ExternalBufferDeleter::Free(void* data, size_t length) {
   deleter_(data, length, deleter_data_);
 }
 
-}
+}  // namespace EscargotShim

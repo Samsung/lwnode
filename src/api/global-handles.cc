@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <EscargotPublic.h>
 #include "global-handles.h"
+#include <EscargotPublic.h>
 
 namespace EscargotShim {
 

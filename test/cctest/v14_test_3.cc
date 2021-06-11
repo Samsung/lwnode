@@ -38,7 +38,8 @@ TEST(StringNewFromUtf8Literal) {
 
   CHECK_EQ(v8::String::NewFromUtf8Literal(
                isolate, "한글", v8::NewStringType::kNormal)
-               ->Utf8Length(isolate), 6);
+               ->Utf8Length(isolate),
+           6);
 
   CHECK_EQ(v8::String::NewFromUtf8Literal(
                isolate, "UTF8 String Test", v8::NewStringType::kNormal)
@@ -47,7 +48,8 @@ TEST(StringNewFromUtf8Literal) {
 
   CHECK_EQ(v8::String::NewFromUtf8Literal(
                isolate, "한글", v8::NewStringType::kNormal)
-               ->Length(), 2);
+               ->Length(),
+           2);
 
   CHECK_EQ(v8::String::NewFromUtf8Literal(
                isolate, "UTF8 String Test", v8::NewStringType::kNormal)
@@ -158,12 +160,10 @@ TEST(SymbolPropertiesInternal) {
   CHECK(sym2->Name()->Equals(context, v8_str("my-symbol")).FromJust());
 }
 
-
-
 // Helper functions for Interceptor/Accessor interaction tests
 
 void SimpleAccessorGetter1(Local<String> name,
-                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+                           const v8::PropertyCallbackInfo<v8::Value>& info) {
   Local<Object> self = Local<Object>::Cast(info.This());
   info.GetReturnValue().Set(
       self->Get(info.GetIsolate()->GetCurrentContext(),
@@ -171,8 +171,9 @@ void SimpleAccessorGetter1(Local<String> name,
           .ToLocalChecked());
 }
 
-void SimpleAccessorSetter1(Local<String> name, Local<Value> value,
-                          const v8::PropertyCallbackInfo<void>& info) {
+void SimpleAccessorSetter1(Local<String> name,
+                           Local<Value> value,
+                           const v8::PropertyCallbackInfo<void>& info) {
   Local<Object> self = Local<Object>::Cast(info.This());
   CHECK(self->Set(info.GetIsolate()->GetCurrentContext(),
                   String::Concat(info.GetIsolate(), v8_str("accessor_"), name),
@@ -181,25 +182,21 @@ void SimpleAccessorSetter1(Local<String> name, Local<Value> value,
 }
 
 void SymbolAccessorGetter1(Local<Name> name,
-                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+                           const v8::PropertyCallbackInfo<v8::Value>& info) {
   CHECK(name->IsSymbol());
   Local<Symbol> sym = Local<Symbol>::Cast(name);
   if (sym->Description()->IsUndefined()) return;
   SimpleAccessorGetter1(Local<String>::Cast(sym->Description()), info);
 }
 
-void SymbolAccessorSetter1(Local<Name> name, Local<Value> value,
-                          const v8::PropertyCallbackInfo<void>& info) {
+void SymbolAccessorSetter1(Local<Name> name,
+                           Local<Value> value,
+                           const v8::PropertyCallbackInfo<void>& info) {
   CHECK(name->IsSymbol());
   Local<Symbol> sym = Local<Symbol>::Cast(name);
   if (sym->Description()->IsUndefined()) return;
   SimpleAccessorSetter1(Local<String>::Cast(sym->Description()), value, info);
 }
-
-
-
-
-
 
 THREADED_TEST(SymbolPropertiesInternal2) {
   LocalContext env;
@@ -258,18 +255,21 @@ THREADED_TEST(SymbolPropertiesInternal2) {
   CHECK(
       obj->Set(env.local(), sym1, v8::Integer::New(isolate, 1503)).FromJust());
   CHECK(obj->Has(env.local(), sym1).FromJust());
-  CHECK_EQ(1503, obj->Get(env.local(), sym1)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
+  CHECK_EQ(1503,
+           obj->Get(env.local(), sym1)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
   CHECK(
       obj->Set(env.local(), sym1, v8::Integer::New(isolate, 2002)).FromJust());
   CHECK(obj->Has(env.local(), sym1).FromJust());
-  CHECK_EQ(2002, obj->Get(env.local(), sym1)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
-  // CHECK_EQ(v8::None, obj->GetPropertyAttributes(env.local(), sym1).FromJust());
+  CHECK_EQ(2002,
+           obj->Get(env.local(), sym1)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
+  // CHECK_EQ(v8::None, obj->GetPropertyAttributes(env.local(),
+  // sym1).FromJust());
 
   CHECK_EQ(0u,
            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
@@ -301,7 +301,8 @@ THREADED_TEST(SymbolPropertiesInternal2) {
   // CHECK(obj->SetNativeDataProperty(env.local(), sym4, SymbolAccessorGetter)
   //           .FromJust());
   CHECK(obj->Get(env.local(), sym4).ToLocalChecked()->IsUndefined());
-  CHECK(obj->Set(env.local(), v8_str("accessor_native"),
+  CHECK(obj->Set(env.local(),
+                 v8_str("accessor_native"),
                  v8::Integer::New(isolate, 123))
             .FromJust());
   // CHECK_EQ(123, obj->Get(env.local(), sym4)
@@ -319,18 +320,21 @@ THREADED_TEST(SymbolPropertiesInternal2) {
   // slow case.
   CHECK(
       obj->Set(env.local(), sym2, v8::Integer::New(isolate, 2008)).FromJust());
-  CHECK_EQ(2002, obj->Get(env.local(), sym1)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
-  CHECK_EQ(2008, obj->Get(env.local(), sym2)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
-  CHECK_EQ(2002, obj->Get(env.local(), sym1)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
+  CHECK_EQ(2002,
+           obj->Get(env.local(), sym1)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
+  CHECK_EQ(2008,
+           obj->Get(env.local(), sym2)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
+  CHECK_EQ(2002,
+           obj->Get(env.local(), sym1)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
   CHECK_EQ(2u,
            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 
@@ -343,10 +347,11 @@ THREADED_TEST(SymbolPropertiesInternal2) {
   CHECK(!obj->Has(env.local(), sym2).FromJust());
   CHECK(obj->Has(env.local(), sym3).FromJust());
   // CHECK(obj->Has(env.local(), v8_str("accessor_sym3")).FromJust());
-  CHECK_EQ(2002, obj->Get(env.local(), sym1)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
+  CHECK_EQ(2002,
+           obj->Get(env.local(), sym1)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
   CHECK(obj->Get(env.local(), sym3)
             .ToLocalChecked()
             ->Equals(env.local(), v8::Integer::New(isolate, 42))
@@ -362,10 +367,11 @@ THREADED_TEST(SymbolPropertiesInternal2) {
   v8::Local<v8::Object> child = v8::Object::New(isolate);
   CHECK(child->SetPrototype(env.local(), obj).FromJust());
   CHECK(child->Has(env.local(), sym1).FromJust());
-  CHECK_EQ(2002, child->Get(env.local(), sym1)
-                     .ToLocalChecked()
-                     ->Int32Value(env.local())
-                     .FromJust());
+  CHECK_EQ(2002,
+           child->Get(env.local(), sym1)
+               .ToLocalChecked()
+               ->Int32Value(env.local())
+               .FromJust());
   CHECK(obj->Get(env.local(), sym3)
             .ToLocalChecked()
             ->Equals(env.local(), v8::Integer::New(isolate, 42))
@@ -401,10 +407,9 @@ THREADED_TEST(Array2) {
   CHECK(!array->Has(context, 0).FromJust());
   CHECK(!array->Has(context, 1).FromJust());
   CHECK(array->Has(context, 2).FromJust());
-  CHECK_EQ(7, array->Get(context, 2)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
+  CHECK_EQ(
+      7,
+      array->Get(context, 2).ToLocalChecked()->Int32Value(context).FromJust());
   // Local<Value> obj = CompileRun("[1, 2, 3]");
   // Local<v8::Array> arr = obj.As<v8::Array>();
   Local<v8::Array> arr = v8::Array::New(context->GetIsolate());
@@ -412,18 +417,12 @@ THREADED_TEST(Array2) {
   CHECK(arr->Set(context, 1, v8_num(2)).FromJust());
   CHECK(arr->Set(context, 2, v8_num(3)).FromJust());
   CHECK_EQ(3u, arr->Length());
-  CHECK_EQ(1, arr->Get(context, 0)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
-  CHECK_EQ(2, arr->Get(context, 1)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
-  CHECK_EQ(3, arr->Get(context, 2)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
+  CHECK_EQ(
+      1, arr->Get(context, 0).ToLocalChecked()->Int32Value(context).FromJust());
+  CHECK_EQ(
+      2, arr->Get(context, 1).ToLocalChecked()->Int32Value(context).FromJust());
+  CHECK_EQ(
+      3, arr->Get(context, 2).ToLocalChecked()->Int32Value(context).FromJust());
   array = v8::Array::New(context->GetIsolate(), 27);
   CHECK_EQ(27u, array->Length());
   array = v8::Array::New(context->GetIsolate(), -27);
@@ -432,23 +431,18 @@ THREADED_TEST(Array2) {
   std::vector<Local<Value>> vector = {v8_num(1), v8_num(2), v8_num(3)};
   array = v8::Array::New(context->GetIsolate(), vector.data(), vector.size());
   CHECK_EQ(vector.size(), array->Length());
-  CHECK_EQ(1, arr->Get(context, 0)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
-  CHECK_EQ(2, arr->Get(context, 1)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
-  CHECK_EQ(3, arr->Get(context, 2)
-                  .ToLocalChecked()
-                  ->Int32Value(context)
-                  .FromJust());
+  CHECK_EQ(
+      1, arr->Get(context, 0).ToLocalChecked()->Int32Value(context).FromJust());
+  CHECK_EQ(
+      2, arr->Get(context, 1).ToLocalChecked()->Int32Value(context).FromJust());
+  CHECK_EQ(
+      3, arr->Get(context, 2).ToLocalChecked()->Int32Value(context).FromJust());
 }
 
-class TestResource: public String::ExternalStringResource {
+class TestResource : public String::ExternalStringResource {
  public:
-  explicit TestResource(uint16_t* data, int* counter = nullptr,
+  explicit TestResource(uint16_t* data,
+                        int* counter = nullptr,
                         bool owning_data = true)
       : data_(data), length_(0), counter_(counter), owning_data_(owning_data) {
     while (data[length_]) ++length_;
@@ -472,7 +466,8 @@ class TestResource: public String::ExternalStringResource {
 
 class TestOneByteResource : public String::ExternalOneByteStringResource {
  public:
-  explicit TestOneByteResource(const char* data, int* counter = nullptr,
+  explicit TestOneByteResource(const char* data,
+                               int* counter = nullptr,
                                size_t offset = 0)
       : orig_data_(data),
         data_(data + offset),
@@ -528,9 +523,7 @@ THREADED_TEST(StringConcatInternal) {
     }
 
     testOneByteResource = new TestOneByteResource(i::StrDup(one_byte_extern_1));
-    right = String::NewExternalOneByte(
-                env->GetIsolate(),
-                testOneByteResource)
+    right = String::NewExternalOneByte(env->GetIsolate(), testOneByteResource)
                 .ToLocalChecked();
     source = String::Concat(isolate, source, right);
     {
@@ -546,9 +539,7 @@ THREADED_TEST(StringConcatInternal) {
     delete testOneByteResource;
 
     testResource = new TestResource(AsciiToTwoByteString(two_byte_extern_1));
-    right = String::NewExternalTwoByte(
-                env->GetIsolate(),
-                testResource)
+    right = String::NewExternalTwoByte(env->GetIsolate(), testResource)
                 .ToLocalChecked();
     source = String::Concat(isolate, source, right);
     right = v8_str(one_byte_string_2);
@@ -562,9 +553,7 @@ THREADED_TEST(StringConcatInternal) {
 
     testResource = new TestResource(AsciiToTwoByteString(two_byte_extern_2));
     source = String::Concat(isolate, source, right);
-    right = String::NewExternalTwoByte(
-                env->GetIsolate(),
-                testResource)
+    right = String::NewExternalTwoByte(env->GetIsolate(), testResource)
                 .ToLocalChecked();
     source = String::Concat(isolate, source, right);
     {

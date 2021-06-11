@@ -35,8 +35,8 @@
 #include "api/function.h"
 #include "api/handle.h"
 #include "api/isolate.h"
-#include "api/object.h"
 #include "api/module.h"
+#include "api/object.h"
 #include "api/utils/string.h"
 
 namespace i = v8::internal;
