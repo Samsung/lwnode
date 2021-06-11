@@ -58,7 +58,7 @@ class FunctionData : public ObjectData {
       : m_isolate(isolate),
         m_callback(callback),
         m_callbackData(callbackData),
-        m_signature(signature){}
+        m_signature(signature) {}
 
   bool isFunctionData() const override { return true; }
 
@@ -85,7 +85,7 @@ class FunctionData : public ObjectData {
 };
 
 class ExternalObjectData : public ObjectData {
-public:
+ public:
   bool isExternalObjectData() const override { return true; }
 };
 

@@ -694,7 +694,8 @@ MaybeLocal<v8::RegExp> v8::RegExp::New(Local<Context> context,
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* esState, ValueRef* source, int flags) -> ValueRef* {
-        return RegExpObjectRef::create(esState, source, (RegExpObjectRef::RegExpObjectOption)flags);
+        return RegExpObjectRef::create(
+            esState, source, (RegExpObjectRef::RegExpObjectOption)flags);
       },
       lwPattern,
       flagsValue);
@@ -733,15 +734,16 @@ v8::RegExp::Flags v8::RegExp::GetFlags() const {
   auto self = CVAL(this)->value();
 
   int flags = RegExp::Flags::kNone;
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* esState,
-                                 RegExpObjectRef* self,
-                                 int* flags) -> ValueRef* {
-                                *flags = self->option();
-                                return ValueRef::createNull();
-                              },
-                              self->asRegExpObject(),
-                              &flags);
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         RegExpObjectRef* self,
+         int* flags) -> ValueRef* {
+        *flags = self->option();
+        return ValueRef::createNull();
+      },
+      self->asRegExpObject(),
+      &flags);
   LWNODE_CHECK(r.isSuccessful());
 
   return (RegExp::Flags)flags;
@@ -754,30 +756,30 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
   auto self = CVAL(this)->value();
   auto esSubject = CVAL(*subject)->value()->asString();
 
-  auto r = Evaluator::execute(lwContext->get(),
-                              [](ExecutionStateRef* state,
-                                 RegExpObjectRef* self,
-                                 StringRef* subject) -> ValueRef* {
-                                RegExpObjectRef::RegexMatchResult r;
-                                self->match(state, subject, r, false, 0);
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state,
+         RegExpObjectRef* self,
+         StringRef* subject) -> ValueRef* {
+        RegExpObjectRef::RegexMatchResult r;
+        self->match(state, subject, r, false, 0);
 
-                                if (r.m_matchResults.empty()) {
-                                  return ValueRef::createNull();
-                                }
+        if (r.m_matchResults.empty()) {
+          return ValueRef::createNull();
+        }
 
-                                auto vector = ValueVectorRef::create();
-                                for (auto tokens : r.m_matchResults) {
-                                  for (auto token : tokens) {
-                                    auto match = subject->substring(
-                                        token.m_start, token.m_end);
-                                    vector->pushBack(match);
-                                  }
-                                }
+        auto vector = ValueVectorRef::create();
+        for (auto tokens : r.m_matchResults) {
+          for (auto token : tokens) {
+            auto match = subject->substring(token.m_start, token.m_end);
+            vector->pushBack(match);
+          }
+        }
 
-                                return ArrayObjectRef::create(state, vector);
-                              },
-                              self->asRegExpObject(),
-                              esSubject);
+        return ArrayObjectRef::create(state, vector);
+      },
+      self->asRegExpObject(),
+      esSubject);
   LWNODE_CHECK(r.isSuccessful());
 
   return Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
@@ -1343,16 +1345,16 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
   auto lwContext = lwIsolate->GetCurrentContext();
 
   BackingStoreRef* esBackingStore = nullptr;
-  EvalResult r = Evaluator::execute(lwContext->get(),
-                                    [](ExecutionStateRef* esState,
-                                       BackingStoreRef** backingStore,
-                                       size_t byteLength) -> ValueRef* {
-                                      *backingStore =
-                                          BackingStoreRef::create(byteLength);
-                                      return ValueRef::createNull();
-                                    },
-                                    &esBackingStore,
-                                    byte_length);
+  EvalResult r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* esState,
+         BackingStoreRef** backingStore,
+         size_t byteLength) -> ValueRef* {
+        *backingStore = BackingStoreRef::create(byteLength);
+        return ValueRef::createNull();
+      },
+      &esBackingStore,
+      byte_length);
   LWNODE_CHECK(esBackingStore);
 
   lwIsolate->addBackingStore(esBackingStore);

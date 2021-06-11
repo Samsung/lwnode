@@ -16,8 +16,8 @@
 
 #ifndef __ESCARGOTSHIM_CCTEST__
 #define __ESCARGOTSHIM_CCTEST__
-#include <cstddef>
 #include <stdint.h>
+#include <cstddef>
 #include <cstring>
 
 #include "globals.h"

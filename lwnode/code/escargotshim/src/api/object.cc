@@ -28,10 +28,11 @@ using AccessorNameCallbackDataWrap =
     NativeDataAccessorPropertyDataWrap<AccessorNameGetterCallback,
                                        AccessorNameSetterCallback>;
 
-static ValueRef* accessorPropertyGetter(ExecutionStateRef* state,
-                                        ObjectRef* self,
-                                        ValueRef* receiver,
-                                        ObjectRef::NativeDataAccessorPropertyData* data) {
+static ValueRef* accessorPropertyGetter(
+    ExecutionStateRef* state,
+    ObjectRef* self,
+    ValueRef* receiver,
+    ObjectRef::NativeDataAccessorPropertyData* data) {
   auto wrapper = AccessorNameCallbackDataWrap::toWrap(data);
 
   PropertyCallbackInfoWrap<v8::Value> info(
@@ -48,11 +49,12 @@ static ValueRef* accessorPropertyGetter(ExecutionStateRef* state,
   return VAL(*info.GetReturnValue().Get())->value();
 }
 
-static bool accessorPropertySetter(ExecutionStateRef* state,
-                                   ObjectRef* self,
-                                   ValueRef* receiver,
-                                   ObjectRef::NativeDataAccessorPropertyData* data,
-                                   ValueRef* setterInputData) {
+static bool accessorPropertySetter(
+    ExecutionStateRef* state,
+    ObjectRef* self,
+    ValueRef* receiver,
+    ObjectRef::NativeDataAccessorPropertyData* data,
+    ValueRef* setterInputData) {
   auto wrapper = AccessorNameCallbackDataWrap::toWrap(data);
 
   HandleScope handle_scope(wrapper->m_isolate);
@@ -119,8 +121,8 @@ Maybe<bool> ObjectUtils::SetAccessor(ObjectRef* esObject,
          ObjectRef* esSelf,
          ValueRef* esName,
          AccessorNameCallbackDataWrap* data) {
-        return ValueRef::create(
-            esSelf->defineNativeDataAccessorProperty(esState, esName, data, true));
+        return ValueRef::create(esSelf->defineNativeDataAccessorProperty(
+            esState, esName, data, true));
       },
       esObject,
       esName,
@@ -177,8 +179,8 @@ void ObjectTemplateUtils::SetAccessor(ObjectTemplateRef* esObjectTemplate,
       !(attribute & v8::DontEnum),
       !(attribute & v8::DontDelete));
 
-  esObjectTemplate->setNativeDataAccessorProperty(esPropertyName,
-                                                  accessorWrapData, true);
+  esObjectTemplate->setNativeDataAccessorProperty(
+      esPropertyName, accessorWrapData, true);
 }
 
 }  // namespace EscargotShim

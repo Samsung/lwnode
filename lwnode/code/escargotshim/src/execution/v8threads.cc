@@ -18,8 +18,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "v8.h"
 #include "base.h"
+#include "v8.h"
 
 namespace v8 {
 
@@ -41,9 +41,7 @@ Locker::~Locker() {
   LWNODE_UNIMPLEMENT;
 }
 
-void Unlocker::Initialize(v8::Isolate* isolate) {
-  LWNODE_RETURN_VOID
-}
+void Unlocker::Initialize(v8::Isolate* isolate){LWNODE_RETURN_VOID}
 
 Unlocker::~Unlocker() {
   LWNODE_UNIMPLEMENT;
