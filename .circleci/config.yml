@@ -13,6 +13,9 @@ jobs:
              --without-inspector --without-node-code-cache --without-node-snapshot
              --with-intl none --shared-zlib --dest-os linux --dest-cpu x64
              --engine escargot --ninja
+      - run:
+          name: check_tidy
+          command: ./lwnode/tools/check_tidy.py
       - run: |
           gcc --version
           cmake --version
