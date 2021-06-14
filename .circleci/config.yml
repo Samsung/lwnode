@@ -21,14 +21,15 @@ check_submodule_status: &check_submodule_status
 restore_submodule_cache: &restore_submodule_cache
   restore_cache:
     name: Restoring cached submodules
-    key: v1-submodules-{{ checksum "~/submodule-status" }}
+    key: v2-submodules-{{ checksum "~/submodule-status" }}
 
 save_submodule_cache: &save_submodule_cache
   save_cache:
     name: Caching submodules
     paths:
+      - .git/modules
       - lwnode/code/escargotshim/deps/escargot
-    key: v1-submodules-{{ checksum "~/submodule-status" }}
+    key: v2-submodules-{{ checksum "~/submodule-status" }}
 
 jobs:
   build_release:
@@ -53,7 +54,7 @@ jobs:
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
             --engine escargot --ninja
-            ninja -C out/Release node
+            ninja -v -C out/Release node
       - run:
           name: Run basic test
           command: |
@@ -62,7 +63,7 @@ jobs:
       - run:
           name: Run node.js TCs (test.py)
           command: tools/test.py -J -p dots --report
-                  --timeout 60 --repeat 5
+                  --timeout 300 --repeat 5
                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                   test/parallel
 
