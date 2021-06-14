@@ -149,3 +149,4 @@ bdwgcUsage.dat
 
 *.mk
 /cctest
+skip_list.gen.txt
