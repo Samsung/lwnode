@@ -46,7 +46,7 @@ jobs:
       - *save_submodule_cache
       - run:
           name: Environment Information
-          command: gcc --version; cmake --version
+          command: gcc --version; cmake --version; python --version
       - run:
           name: Build
           command: |
@@ -62,8 +62,8 @@ jobs:
             out/Release/node test/message/hello_world.js
       - run:
           name: Run node.js TCs (test.py)
-          command: tools/test.py -J -p dots --report
-                  --timeout 300 --repeat 5
+          command: tools/test.py -J -p dots --report --time
+                  --timeout 180 --repeat 1
                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                   test/parallel
 

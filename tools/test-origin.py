@@ -29,7 +29,6 @@
 
 
 from __future__ import print_function
-from __future__ import division
 import logging
 import optparse
 import os
@@ -44,7 +43,7 @@ import utils
 import multiprocessing
 import errno
 import copy
-import io
+
 
 if sys.version_info >= (3, 5):
   from importlib import machinery, util
@@ -273,7 +272,7 @@ class DotsProgressIndicator(SimpleProgressIndicator):
 
   def HasRun(self, output):
     total = self.succeeded + len(self.failed)
-    if (total > 1) and (total % 150 == 1):
+    if (total > 1) and (total % 50 == 1):
       sys.stdout.write('\n')
     if output.UnexpectedOutput():
       if output.HasCrashed():
@@ -921,7 +920,7 @@ class Context(object):
 
 def RunTestCases(cases_to_run, progress, tasks, flaky_tests_mode):
   progress = PROGRESS_INDICATORS[progress](cases_to_run, flaky_tests_mode)
-  return (progress.Run(tasks), progress)
+  return progress.Run(tasks)
 
 # -------------------------------------------
 # --- T e s t   C o n f i g u r a t i o n ---
@@ -1524,55 +1523,6 @@ def get_env_type(vm, options_type, context):
       env_type = 'fips'
   return env_type
 
-def WriteFileWithList(filename, textList):
-  with io.open(filename, 'w', encoding='utf-8') as file:
-    for line in textList:
-      file.write(line)
-      file.write("\n")
-
-SKIP_LIST_FILENAME="skip_list.gen.txt"
-
-def OuputTestResult(progress, skip_count, options):
-  total_count = skip_count + progress.total
-  failed_count = len(progress.failed)
-  succeed_count = progress.total - failed_count
-
-  print()
-  print("Total: %5d" % total_count)
-  print(
-    "Pass:  %5d (%.2f%%)"
-    % (
-        succeed_count,
-        (succeed_count / total_count) * 100.0,
-    )
-  )
-  print("Fail:  %5d" % failed_count)
-  print("Skip:  %5d" % skip_count)
-
-  if failed_count != 0:
-    print()
-    print("=== %i failed command(s)" % failed_count)
-
-    failed_cases_paths = []
-
-    for failed in progress.failed:
-      command = failed.command
-      path = command[-1].split("/")
-      failed_cases_path = "%s/%s/%s" % (path[-3], path[-2], path[-1])
-      failed_cases_paths.append(failed_cases_path)
-
-      print("%s %s" % ("C" if failed.HasCrashed() else "T", EscapeCommand(command)))
-
-    global SKIP_LIST_FILENAME
-
-    skip_tests = options.skip_tests[:]
-    skip_tests.extend(failed_cases_paths)
-    skip_tests.sort()
-    WriteFileWithList(SKIP_LIST_FILENAME, skip_tests)
-
-    print()
-    print("=== skip_list is generated.")
-    print("%s" % (os.path.join(os.getcwd() , SKIP_LIST_FILENAME)))
 
 def Main():
   parser = BuildOptions()
@@ -1748,18 +1698,11 @@ def Main():
   else:
     try:
       start = time.time()
-      progress_result, progress = RunTestCases(
-        cases_to_run, options.progress, options.j, options.flaky_tests
-      )
-      if progress_result:
+      if RunTestCases(cases_to_run, options.progress, options.j, options.flaky_tests):
         result = 0
       else:
         result = 1
       duration = time.time() - start
-
-      skip_count = len(all_cases) - len(cases_to_run)
-      OuputTestResult(progress, skip_count, options)
-
     except KeyboardInterrupt:
       print("Interrupted")
       return 1
@@ -1770,7 +1713,7 @@ def Main():
     print()
     sys.stderr.write("--- Total time: %s ---\n" % FormatTime(duration))
     timed_tests = [ t for t in cases_to_run if not t.duration is None ]
-    timed_tests.sort(key=lambda x: x.duration, reverse=True)
+    timed_tests.sort(key=lambda x: x.duration)
     for i, entry in enumerate(timed_tests[:20], start=1):
       t = FormatTimedelta(entry.duration)
       sys.stderr.write("%4i (%s) %s\n" % (i, t, entry.GetLabel()))
