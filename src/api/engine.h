@@ -67,9 +67,19 @@ class Engine {
   static bool Initialize();
   static bool Dispose();
 
+  static Engine* current();
+  static void registerExternalString(
+      v8::String::ExternalStringResourceBase* v8Str);
+  static void unregisterExternalString(
+      v8::String::ExternalStringResourceBase* v8Str);
+
  private:
   Engine() = default;
   void initialize();
   void finalize();
+  void disposeExternalStrings();
+
+  static std::unordered_set<v8::String::ExternalStringResourceBase*>
+      s_externalStrings;
 };
 }  // namespace EscargotShim

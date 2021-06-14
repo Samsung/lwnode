@@ -1945,6 +1945,17 @@ v8::String::GetExternalOneByteStringResource() const {
   LWNODE_RETURN_NULLPTR;
 }
 
+void* String::ExternalStringResourceBase::operator new(size_t size) {
+  ExternalStringResourceBase* buf = (ExternalStringResourceBase*)malloc(size);
+  Engine::current()->registerExternalString(buf);
+  return buf;
+}
+
+void String::ExternalStringResourceBase::operator delete(void* ptr) {
+  Engine::current()->unregisterExternalString((ExternalStringResourceBase*)ptr);
+  free(ptr);
+}
+
 Local<Value> Symbol::Description() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esDescription = CVAL(this)->value()->asSymbol()->description();
