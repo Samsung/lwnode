@@ -404,8 +404,8 @@ test/parallel/test-fs-promisified.js
 test/parallel/test-fs-read-empty-buffer.js
 test/parallel/test-fs-read-stream-autoClose.js
 test/parallel/test-fs-read-stream-concurrent-reads.js
-test/parallel/test-fs-read-stream-fd.js
 test/parallel/test-fs-read-stream-fd-leak.js
+test/parallel/test-fs-read-stream-fd.js
 test/parallel/test-fs-read-stream-throw-type-error.js
 test/parallel/test-fs-read-stream.js
 test/parallel/test-fs-readdir-buffer.js
