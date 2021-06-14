@@ -1,57 +1,96 @@
 version: 2
+
+# Configuration
+config: &config
+  machine:
+    image: art.sec.samsung.net/ci-docker/lws/starfish:latest
+  environment:
+    no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+
+set_proxy: &set_proxy
+  run:
+    name: Set proxy
+    command: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh
+
+# Submodule
+check_submodule_status: &check_submodule_status
+  run:
+    name: Check submodule status
+    command: git submodule status | tee ~/submodule-status
+
+restore_submodule_cache: &restore_submodule_cache
+  restore_cache:
+    name: Restoring cached submodules
+    key: v1-submodules-{{ checksum "~/submodule-status" }}
+
+save_submodule_cache: &save_submodule_cache
+  save_cache:
+    name: Caching submodules
+    paths:
+      - lwnode/code/escargotshim/deps/escargot
+    key: v1-submodules-{{ checksum "~/submodule-status" }}
+
 jobs:
   build_release:
-    machine:
-      image: art.sec.samsung.net/ci-docker/lws/starfish:latest
-    environment:
-      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    <<: *config
     steps:
-      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - *set_proxy
       - checkout
-      - run: git submodule sync; git submodule update --init --recursive
-      - run: ./configure --without-npm --without-bundled-v8 --without-v8-platform
-             --without-inspector --without-node-code-cache --without-node-snapshot
-             --with-intl none --shared-zlib --dest-os linux --dest-cpu x64
-             --engine escargot --ninja
       - run:
-          name: check_tidy
+          name: Check tidy
           command: ./lwnode/tools/check_tidy.py
-      - run: |
-          gcc --version
-          cmake --version
-          ninja -v -C out/Release node
-          du -h out/Release/node
+      - *check_submodule_status
+      - *restore_submodule_cache
+      - run: git submodule update --init --recursive
+      - *save_submodule_cache
       - run:
-          name: Run Hello World
-          command: out/Release/node test/message/hello_world.js
+          name: Environment Information
+          command: gcc --version; cmake --version
+      - run:
+          name: Build
+          command: |
+            ./configure --without-npm --without-bundled-v8 --without-v8-platform \
+            --without-inspector --without-node-code-cache --without-node-snapshot \
+            --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
+            --engine escargot --ninja
+            ninja -C out/Release node
+      - run:
+          name: Run basic test
+          command: |
+            du -h out/Release/node
+            out/Release/node test/message/hello_world.js
       - run:
           name: Run node.js TCs (test.py)
           command: tools/test.py -J -p dots --report
-                   --timeout 60 --repeat 5
-                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
-                   test/parallel
-      # - run:
-      #     name: Run node.js TCs
-      #     command: |
-      #       ln -sf out/Release/node node
-      #       lwnode/code/escargotshim/test/jstester/jstester.py --process 8
-  test:
-    machine:
-      image: art.sec.samsung.net/ci-docker/lws/starfish:latest
-    environment:
-      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+                  --timeout 60 --repeat 5
+                  --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
+                  test/parallel
+
+  node_test_jstester:
+    <<: *config
     steps:
-      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - run:
+          name: Run node.js TCs
+          command: |
+            ln -sf out/Release/node node
+            lwnode/code/escargotshim/test/jstester/jstester.py --process 8
+
+  cctest:
+    <<: *config
+    steps:
       - checkout
-      - run: git submodule sync; git submodule update --init --recursive
-      - run: ./lwnode/build-cctest.sh
-      - run: ./out/cctest/out/Debug/cctest
+      - *check_submodule_status
+      - *restore_submodule_cache
+      - run: git submodule update --init --recursive
+      - *save_submodule_cache
+      - run: lwnode/build-cctest.sh
+      - run: out/cctest/out/Debug/cctest
 
 workflows:
     version: 2
-    build_release:
+    verify_node:
       jobs:
         - build_release
-    test:
+    verify_cctest:
       jobs:
-        - test
+        - cctest
