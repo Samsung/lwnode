@@ -79,6 +79,8 @@ void Platform::hostImportModuleDynamically(ContextRef* relatedContext,
 // --- E n g i n e ---
 
 static Engine* s_engine;
+std::unordered_set<v8::String::ExternalStringResourceBase*>
+    Engine::s_externalStrings;
 
 bool Engine::Initialize() {
   if (s_engine == nullptr) {
@@ -127,6 +129,35 @@ void Engine::finalize() {
   MemoryUtil::gcFull();
 
   Platform::Dispose();
+  disposeExternalStrings();
+}
+
+Engine* Engine::current() {
+  LWNODE_CHECK(s_engine);
+  return s_engine;
+}
+
+void Engine::registerExternalString(
+    v8::String::ExternalStringResourceBase* v8Str) {
+  s_externalStrings.emplace(v8Str);
+}
+
+void Engine::unregisterExternalString(
+    v8::String::ExternalStringResourceBase* v8Str) {
+  s_externalStrings.erase(v8Str);
+}
+
+void Engine::disposeExternalStrings() {
+  std::vector<v8::String::ExternalStringResourceBase*> strToDispose;
+
+  for (auto str : s_externalStrings) {
+    strToDispose.push_back(str);
+  }
+  for (auto str : strToDispose) {
+    str->Dispose();
+  }
+
+  s_externalStrings.clear();
 }
 
 }  // namespace EscargotShim

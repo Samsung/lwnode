@@ -34,6 +34,7 @@
 #include "lwnode-internal.h"
 namespace EscargotShim{
 class HandleWrap;
+class Engine;
 }
 namespace e = EscargotShim;
 // end @lwnode
@@ -3074,6 +3075,11 @@ class V8_EXPORT String : public Name {
 
   class V8_EXPORT ExternalStringResourceBase {  // NOLINT
    public:
+    // @lwnode
+    static void* operator new(size_t size);
+    static void operator delete(void* ptr);
+    // end of @lwnode
+
     virtual ~ExternalStringResourceBase() = default;
 
     /**
@@ -3120,6 +3126,10 @@ class V8_EXPORT String : public Name {
     friend class internal::ExternalString;
     friend class v8::String;
     friend class internal::ScopedExternalStringLock;
+
+    //@lwnode
+    friend class EscargotShim::Engine;
+    // end of @lwnode
   };
 
   /**
