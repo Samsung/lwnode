@@ -1138,57 +1138,180 @@ Local<Array> Set::AsArray() const {
   return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
 }
 
-MaybeLocal<Promise::Resolver> Promise::Resolver::New(Local<Context> context){
-    LWNODE_RETURN_LOCAL(Promise::Resolver)}
+MaybeLocal<Promise::Resolver> Promise::Resolver::New(Local<Context> context) {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Promise::Resolver>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
 
-Local<Promise> Promise::Resolver::GetPromise(){LWNODE_RETURN_LOCAL(Promise)}
+  EvalResult r =
+      Evaluator::execute(esContext, [](ExecutionStateRef* state) -> ValueRef* {
+        return PromiseObjectRef::create(state);
+      });
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Promise::Resolver>());
+
+  return Utils::NewLocal<Promise::Resolver>(lwIsolate->toV8(), r.result);
+}
+
+Local<Promise> Promise::Resolver::GetPromise() {
+  return Utils::NewLocal<Promise>(IsolateWrap::GetCurrent()->toV8(),
+                                  VAL(this)->value());
+}
 
 Maybe<bool> Promise::Resolver::Resolve(Local<Context> context,
-                                       Local<Value> value){
-    LWNODE_RETURN_MAYBE(bool)}
+                                       Local<Value> value) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto self = CVAL(this)->value()->asPromiseObject();
+
+  if (self->state() != Escargot::PromiseObjectRef::PromiseState::Pending) {
+    return Just(true);
+  }
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         PromiseObjectRef* promise,
+         ValueRef* esValue) -> ValueRef* {
+        promise->fulfill(state, esValue);
+        return ValueRef::createUndefined();
+      },
+      self,
+      CVAL(*value)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(true);
+}
 
 Maybe<bool> Promise::Resolver::Reject(Local<Context> context,
-                                      Local<Value> value){
-    LWNODE_RETURN_MAYBE(bool)}
+                                      Local<Value> value) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto self = CVAL(this)->value()->asPromiseObject();
+
+  if (self->state() != Escargot::PromiseObjectRef::PromiseState::Pending) {
+    return Just(true);
+  }
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         PromiseObjectRef* promise,
+         ValueRef* esValue) -> ValueRef* {
+        promise->reject(state, esValue);
+        return ValueRef::createUndefined();
+      },
+      self,
+      CVAL(*value)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(true);
+}
 
 MaybeLocal<Promise> Promise::Catch(Local<Context> context,
-                                   Local<Function> handler){
-    LWNODE_RETURN_LOCAL(Promise)}
+                                   Local<Function> handler) {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Promise>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         PromiseObjectRef* promise,
+         FunctionObjectRef* esHandler) -> ValueRef* {
+        return promise->catchOperation(state, esHandler);
+      },
+      CVAL(this)->value()->asPromiseObject(),
+      CVAL(*handler)->value()->asFunctionObject());
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Promise>());
+
+  return Utils::NewLocal<Promise>(lwIsolate->toV8(), r.result);
+}
 
 MaybeLocal<Promise> Promise::Then(Local<Context> context,
-                                  Local<Function> handler){
-    LWNODE_RETURN_LOCAL(Promise)}
+                                  Local<Function> handler) {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Promise>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         PromiseObjectRef* promise,
+         FunctionObjectRef* esHandler) -> ValueRef* {
+        return promise->then(state, esHandler);
+      },
+      CVAL(this)->value()->asPromiseObject(),
+      CVAL(*handler)->value()->asFunctionObject());
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Promise>());
+
+  return Utils::NewLocal<Promise>(lwIsolate->toV8(), r.result);
+}
 
 MaybeLocal<Promise> Promise::Then(Local<Context> context,
                                   Local<Function> on_fulfilled,
                                   Local<Function> on_rejected) {
-  LWNODE_RETURN_LOCAL(Promise)
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Promise>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         PromiseObjectRef* promise,
+         FunctionObjectRef* esOnFulfilled,
+         FunctionObjectRef* esOnRejected) -> ValueRef* {
+        return promise->then(state, esOnFulfilled, esOnRejected);
+      },
+      CVAL(this)->value()->asPromiseObject(),
+      CVAL(*on_fulfilled)->value()->asFunctionObject(),
+      CVAL(*on_rejected)->value()->asFunctionObject());
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Promise>());
+
+  return Utils::NewLocal<Promise>(lwIsolate->toV8(), r.result);
 }
 
 bool Promise::HasHandler() {
   LWNODE_RETURN_FALSE;
 }
 
-Local<Value> Promise::Result(){LWNODE_RETURN_LOCAL(Value)}
-
-Promise::PromiseState Promise::State() {
-  LWNODE_UNIMPLEMENT;
-  return kRejected;
+Local<Value> Promise::Result() {
+  return Utils::NewLocal<Value>(
+      IsolateWrap::GetCurrent()->toV8(),
+      CVAL(this)->value()->asPromiseObject()->promiseResult());
 }
 
-void Promise::MarkAsHandled() {}
+Promise::PromiseState Promise::State() {
+  auto self = CVAL(this)->value()->asPromiseObject();
+  switch (self->state()) {
+    case Escargot::PromiseObjectRef::PromiseState::Pending:
+      return v8::Promise::PromiseState::kPending;
+    case Escargot::PromiseObjectRef::PromiseState::FulFilled:
+      return v8::Promise::PromiseState::kFulfilled;
+    case Escargot::PromiseObjectRef::PromiseState::Rejected:
+      return v8::Promise::PromiseState::kRejected;
+    default:
+      LWNODE_CHECK_NOT_REACH_HERE();
+      break;
+  }
+  LWNODE_CHECK_NOT_REACH_HERE();
+  return v8::Promise::PromiseState::kPending;
+}
 
-Local<Value> Proxy::GetTarget(){LWNODE_RETURN_LOCAL(Value)}
+void Promise::MarkAsHandled() {
+  LWNODE_UNIMPLEMENT;
+}
+
+Local<Value> Proxy::GetTarget() {
+  LWNODE_RETURN_LOCAL(Value);
+}
 
 Local<Value> Proxy::GetHandler() {
-  LWNODE_RETURN_LOCAL(Value)
+  LWNODE_RETURN_LOCAL(Value);
 }
 
 bool Proxy::IsRevoked() {
   LWNODE_RETURN_FALSE;
 }
 
-void Proxy::Revoke() {}
+void Proxy::Revoke() {
+  LWNODE_UNIMPLEMENT;
+}
 
 MaybeLocal<Proxy> Proxy::New(Local<Context> context,
                              Local<Object> local_target,
@@ -1225,13 +1348,15 @@ WasmModuleObjectBuilderStreaming::WasmModuleObjectBuilderStreaming(
     Isolate* isolate) {}
 
 Local<Promise> WasmModuleObjectBuilderStreaming::GetPromise() {
-  return {};
+  LWNODE_RETURN_LOCAL(Promise);
 }
 
 void WasmModuleObjectBuilderStreaming::OnBytesReceived(const uint8_t* bytes,
                                                        size_t size) {}
 
-void WasmModuleObjectBuilderStreaming::Finish() {}
+void WasmModuleObjectBuilderStreaming::Finish() {
+  LWNODE_UNIMPLEMENT;
+}
 
 void WasmModuleObjectBuilderStreaming::Abort(MaybeLocal<Value> exception) {}
 
