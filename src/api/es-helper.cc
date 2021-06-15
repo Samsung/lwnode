@@ -309,8 +309,10 @@ ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
   return reinterpret_cast<ObjectData*>(data);
 }
 
-std::string getCodeLine(const std::string& codeString, int errorLine) {
-  LWNODE_CHECK(errorLine >= 1);
+static std::string getCodeLine(const std::string& codeString, int errorLine) {
+  if (errorLine < 1 || codeString.empty()) {
+    return "";
+  }
 
   std::stringstream sstream(codeString);
   std::string result;
@@ -385,7 +387,8 @@ std::string EvalResultHelper::getErrorString(
       auto errorCodeLine =
           sourceOnStack.substr(pos != std::string::npos ? pos : 0);
 
-      oss << separator << i << ": " << errorCodeLine << " ";
+      oss << separator << i << ": "
+          << (errorCodeLine == "" ? "?" : errorCodeLine) << " ";
       oss << "(" << (resourceName == "" ? "?" : resourceName) << ":"
           << errorLine << ":" << errorColumn << ")" << std::endl;
     }
