@@ -32,20 +32,17 @@ class HandleScopeWrap : public gc {
     Sealed,
   };
 
-  HandleScopeWrap(v8::HandleScope* scope,
-                  HandleScopeWrap::Type type = Type::Normal);
+  HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type);
 
   void add(HandleWrap* value);
   bool remove(HandleWrap* value);
   void clear();
 
-  v8::HandleScope* v8HandleScope() const { return scope_; }
-
-  static HandleWrap* CreateHandle(IsolateWrap* isolate, HandleWrap* value);
+  void* v8Scope() const { return v8scope_; }
 
  private:
   Type type_;
-  v8::HandleScope* scope_ = nullptr;
+  void* v8scope_ = nullptr;
   GCVector<HandleWrap*> handles_;
 };
 

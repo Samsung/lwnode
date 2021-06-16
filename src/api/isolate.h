@@ -101,9 +101,9 @@ class IsolateWrap final : public v8::internal::Isolate {
   static IsolateWrap* GetCurrent();
 
   // HandleScope & Handle
-  void pushHandleScope(v8::HandleScope* handleScope);
+  void pushHandleScope(HandleScopeWrap* handleScope);
   void popHandleScope(v8::HandleScope* handleScope);
-  void addHandle(HandleWrap* value);
+  void addHandleToLastScope(HandleWrap* value);
   void escapeHandle(HandleWrap* value);
 
   // Context

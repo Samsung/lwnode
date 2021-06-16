@@ -25,7 +25,7 @@ namespace EscargotShim {
 
 HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope,
                                  HandleScopeWrap::Type type)
-    : type_(type), scope_(scope) {}
+    : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
   LWNODE_CALL_TRACE_2("%p", value);
@@ -51,19 +51,6 @@ void HandleScopeWrap::clear() {
   }
 
   handles_.clear();
-}
-
-HandleWrap* HandleScopeWrap::CreateHandle(IsolateWrap* isolate,
-                                          HandleWrap* value) {
-  if (!value) {
-    return nullptr;
-  }
-
-  LWNODE_CHECK(value->isValid());
-
-  isolate->addHandle(value);
-
-  return value;
 }
 
 }  // namespace EscargotShim
