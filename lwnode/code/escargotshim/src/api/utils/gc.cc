@@ -229,6 +229,7 @@ void MemoryUtil::printEveryReachableGCObjects() {
 }
 
 void MemoryUtil::gcFull() {
+  LWNODE_CALL_TRACE_GC_START();
   LOG_HANDLER("[FULL GC]");
   GC_register_mark_stack_func([]() {
     // do nothing for skip stack
@@ -240,14 +241,17 @@ void MemoryUtil::gcFull() {
   GC_gcollect_and_unmap();
   GC_register_mark_stack_func(nullptr);
   GC_gcollect();
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 void MemoryUtil::gc() {
+  LWNODE_CALL_TRACE_GC_START();
   LOG_HANDLER("[GC]");
   GC_gcollect();
   for (int i = 0; i < 5; ++i) {
     GC_gcollect_and_unmap();
   }
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 void MemoryUtil::gcEndStatsTrace() {

@@ -91,11 +91,24 @@
 
 #define LWNODE_CALL_TRACE_3(msg, ...)                                          \
   LWNODE_CALL_TRACE_ID("3", "\t\t", msg, ##__VA_ARGS__);
+
+#define LWNODE_CALL_TRACE_GC_START(msg, ...)                                   \
+  if (EscargotShim::Flags::isTraceCallEnabled("gc")) {                         \
+    LWNODE_DLOG_INFO("GC: %s (%s:%d): " msg, TRACE_ARGS, ##__VA_ARGS__);       \
+  }
+
+#define LWNODE_CALL_TRACE_GC_END(msg, ...)                                     \
+  if (EscargotShim::Flags::isTraceCallEnabled("gc")) {                         \
+    LWNODE_DLOG_INFO("GC: /%s (%s:%d): " msg, TRACE_ARGS, ##__VA_ARGS__);      \
+  }
+
 #else
 #define LWNODE_CALL_TRACE_ID(id, prefix, msg, ...)
 #define LWNODE_CALL_TRACE(msg, ...)
 #define LWNODE_CALL_TRACE_2(msg, ...)
 #define LWNODE_CALL_TRACE_3(msg, ...)
+#define LWNODE_CALL_TRACE_GC_START(msg, ...)
+#define LWNODE_CALL_TRACE_GC_END(msg, ...)
 #endif
 
 #if !defined(NDEBUG)

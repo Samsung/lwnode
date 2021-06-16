@@ -33,8 +33,10 @@ Platform* Platform::GetInstance() {
 }
 
 void Platform::Dispose() {
+  LWNODE_CALL_TRACE_GC_START();
   delete s_platform;
   s_platform = nullptr;
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 // --- P l a t f o r m ---
@@ -91,12 +93,14 @@ bool Engine::Initialize() {
 }
 
 bool Engine::Dispose() {
+  LWNODE_CALL_TRACE_GC_START();
   if (s_engine) {
     s_engine->finalize();
     delete s_engine;
     s_engine = nullptr;
   }
 
+  LWNODE_CALL_TRACE_GC_END();
   return true;
 }
 
@@ -125,11 +129,13 @@ void Engine::initialize() {
 }
 
 void Engine::finalize() {
+  LWNODE_CALL_TRACE_GC_START();
   Globals::finalize();
   MemoryUtil::gcFull();
 
   Platform::Dispose();
   disposeExternalStrings();
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 Engine* Engine::current() {
