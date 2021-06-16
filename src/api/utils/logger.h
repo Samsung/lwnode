@@ -43,6 +43,9 @@
 #define COLOR_REDBG "\033[0;41m"
 
 std::string getPrettyFunctionName(const std::string fullname);
+std::string createCodeLocation(const char* functionName,
+                               const char* filename,
+                               const int line);
 
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)

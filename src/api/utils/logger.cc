@@ -16,6 +16,7 @@
 
 #include "logger.h"
 #include <regex>
+#include <sstream>
 
 std::string getPrettyFunctionName(const std::string fullname) {
   std::smatch match;
@@ -25,4 +26,13 @@ std::string getPrettyFunctionName(const std::string fullname) {
     return match.str(1);
   }
   return "";
+}
+
+std::string createCodeLocation(const char* functionName,
+                               const char* filename,
+                               const int line) {
+  std::ostringstream oss;
+  oss << getPrettyFunctionName(functionName) << " (" << filename << ":" << line
+      << ")" << std::endl;
+  return oss.str();
 }
