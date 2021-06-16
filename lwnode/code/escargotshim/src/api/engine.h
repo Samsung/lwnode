@@ -76,7 +76,7 @@ class Engine {
  private:
   Engine() = default;
   void initialize();
-  void finalize();
+  void dispose();
   void disposeExternalStrings();
 
   static std::unordered_set<v8::String::ExternalStringResourceBase*>

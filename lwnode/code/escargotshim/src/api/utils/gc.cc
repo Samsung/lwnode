@@ -247,10 +247,15 @@ void MemoryUtil::gcFull() {
 void MemoryUtil::gc() {
   LWNODE_CALL_TRACE_GC_START();
   LOG_HANDLER("[GC]");
-  GC_gcollect();
+
   for (int i = 0; i < 5; ++i) {
     GC_gcollect_and_unmap();
   }
+
+  for (int i = 0; i < 5; i++) {
+    GC_gcollect();
+  }
+
   LWNODE_CALL_TRACE_GC_END();
 }
 
