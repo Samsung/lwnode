@@ -183,6 +183,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   void setStackTrace(
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
 
+  void onFatalError(const char* location, const char* message);
+
  private:
   IsolateWrap();
 

@@ -365,4 +365,18 @@ bool IsolateWrap::isHole(const Escargot::ValueRef* ref) {
   return globalSlot_[internal::Internals::kTheHoleValueRootIndex]->value() ==
          ref;
 }
+
+void IsolateWrap::onFatalError(const char* location, const char* message) {
+  if (fatal_error_callback_) {
+    fatal_error_callback_(location, message);
+  } else {
+    if (location) {
+      LWNODE_DLOG_ERROR("FATAL: %s at %s", message, location);
+    } else {
+      LWNODE_DLOG_ERROR("FATAL: %s", message);
+    }
+    LWNODE_CHECK(false);
+  }
+}
+
 }  // namespace EscargotShim
