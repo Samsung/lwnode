@@ -85,6 +85,8 @@ test/parallel/test-child-process-exec-stdout-stderr-data-string.js
 test/parallel/test-child-process-exec-timeout.js
 test/parallel/test-child-process-execfile-maxbuf.js
 test/parallel/test-child-process-execfile.js
+test/parallel/test-child-process-execfilesync-maxbuf.js
+test/parallel/test-child-process-execsync-maxbuf.js
 test/parallel/test-child-process-exit-code.js
 test/parallel/test-child-process-flush-stdio.js
 test/parallel/test-child-process-fork-and-spawn.js
@@ -98,9 +100,11 @@ test/parallel/test-child-process-fork-getconnections.js
 test/parallel/test-child-process-fork-net-server.js
 test/parallel/test-child-process-fork-net-socket.js
 test/parallel/test-child-process-fork-net.js
+test/parallel/test-child-process-fork-no-shell.js
 test/parallel/test-child-process-fork-ref.js
 test/parallel/test-child-process-fork-stdio-string-variant.js
 test/parallel/test-child-process-fork-stdio.js
+test/parallel/test-child-process-fork.js
 test/parallel/test-child-process-http-socket-leak.js
 test/parallel/test-child-process-ipc-next-tick.js
 test/parallel/test-child-process-ipc.js
@@ -109,8 +113,11 @@ test/parallel/test-child-process-no-deprecation.js
 test/parallel/test-child-process-pipe-dataflow.js
 test/parallel/test-child-process-promisified.js
 test/parallel/test-child-process-recv-handle.js
+test/parallel/test-child-process-send-after-close.js
+test/parallel/test-child-process-send-cb.js
 test/parallel/test-child-process-send-keep-open.js
 test/parallel/test-child-process-send-returns-boolean.js
+test/parallel/test-child-process-send-type-error.js
 test/parallel/test-child-process-send-utf8.js
 test/parallel/test-child-process-server-close.js
 test/parallel/test-child-process-silent.js
@@ -122,8 +129,10 @@ test/parallel/test-child-process-spawnsync-args.js
 test/parallel/test-child-process-spawnsync-env.js
 test/parallel/test-child-process-spawnsync-input.js
 test/parallel/test-child-process-spawnsync-kill-signal.js
+test/parallel/test-child-process-spawnsync-maxbuf.js
 test/parallel/test-child-process-spawnsync-shell.js
 test/parallel/test-child-process-spawnsync.js
+test/parallel/test-child-process-stdin-ipc.js
 test/parallel/test-child-process-stdin.js
 test/parallel/test-child-process-stdio-big-write-end.js
 test/parallel/test-child-process-stdio-inherit.js
@@ -132,6 +141,7 @@ test/parallel/test-child-process-stdio-reuse-readable-stdio.js
 test/parallel/test-child-process-stdio.js
 test/parallel/test-child-process-stdout-flush-exit.js
 test/parallel/test-child-process-stdout-flush.js
+test/parallel/test-child-process-stdout-ipc.js
 test/parallel/test-child-process-uid-gid.js
 test/parallel/test-child-process-windows-hide.js
 test/parallel/test-cli-eval-event.js
@@ -141,6 +151,7 @@ test/parallel/test-cli-node-options.js
 test/parallel/test-cli-node-print-help.js
 test/parallel/test-cli-syntax-eval.js
 test/parallel/test-cli-syntax-piped-bad.js
+test/parallel/test-cli-syntax-piped-good.js
 test/parallel/test-cluster-advanced-serialization.js
 test/parallel/test-cluster-bind-privileged-port.js
 test/parallel/test-cluster-bind-twice.js
@@ -151,6 +162,7 @@ test/parallel/test-cluster-dgram-2.js
 test/parallel/test-cluster-dgram-bind-fd.js
 test/parallel/test-cluster-dgram-ipv6only.js
 test/parallel/test-cluster-dgram-reuse.js
+test/parallel/test-cluster-disconnect-exitedAfterDisconnect-race.js
 test/parallel/test-cluster-disconnect-idle-worker.js
 test/parallel/test-cluster-disconnect-race.js
 test/parallel/test-cluster-disconnect-unshared-tcp.js
@@ -162,6 +174,7 @@ test/parallel/test-cluster-fork-env.js
 test/parallel/test-cluster-fork-stdio.js
 test/parallel/test-cluster-fork-windowsHide.js
 test/parallel/test-cluster-http-pipe.js
+test/parallel/test-cluster-invalid-message.js
 test/parallel/test-cluster-ipc-throw.js
 test/parallel/test-cluster-kill-disconnect.js
 test/parallel/test-cluster-master-error.js
@@ -317,6 +330,7 @@ test/parallel/test-domain-top-level-error-handler-throw.js
 test/parallel/test-domain-uncaught-exception.js
 test/parallel/test-domain-with-abort-on-uncaught-exception.js
 test/parallel/test-dsa-fips-invalid-key.js
+test/parallel/test-dummy-stdio.js
 test/parallel/test-emit-after-uncaught-exception.js
 test/parallel/test-env-var-no-warnings.js
 test/parallel/test-error-prepare-stack-trace.js
@@ -1059,6 +1073,7 @@ test/parallel/test-listen-fd-server.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
 test/parallel/test-macos-app-sandbox.js
 test/parallel/test-macos-signed-deps.js
+test/parallel/test-math-random.js
 test/parallel/test-memory-usage.js
 test/parallel/test-module-circular-symlinks.js
 test/parallel/test-module-create-require.js
@@ -1069,7 +1084,10 @@ test/parallel/test-module-main-fail.js
 test/parallel/test-module-main-preserve-symlinks-fail.js
 test/parallel/test-module-multi-extensions.js
 test/parallel/test-module-readonly.js
+test/parallel/test-module-run-main-monkey-patch.js
 test/parallel/test-module-symlinked-peer-modules.js
+test/parallel/test-module-wrap.js
+test/parallel/test-module-wrapper.js
 test/parallel/test-net-after-close.js
 test/parallel/test-net-allow-half-open.js
 test/parallel/test-net-binary.js
@@ -1150,7 +1168,9 @@ test/parallel/test-next-tick-errors.js
 test/parallel/test-next-tick-when-exiting.js
 test/parallel/test-no-harmony-top-level-await.mjs
 test/parallel/test-npm-install.js
+test/parallel/test-openssl-ca-options.js
 test/parallel/test-os-checked-function.js
+test/parallel/test-os-homedir-no-envvar.js
 test/parallel/test-os-userinfo-handles-getter-errors.js
 test/parallel/test-os.js
 test/parallel/test-pending-deprecation.js
@@ -1203,6 +1223,7 @@ test/parallel/test-process-getactivehandles.js
 test/parallel/test-process-getgroups.js
 test/parallel/test-process-kill-null.js
 test/parallel/test-process-next-tick.js
+test/parallel/test-process-ppid.js
 test/parallel/test-process-raw-debug.js
 test/parallel/test-process-redirect-warnings-env.js
 test/parallel/test-process-redirect-warnings.js
@@ -1230,6 +1251,7 @@ test/parallel/test-queue-microtask.js
 test/parallel/test-readable-from-iterator-closing.js
 test/parallel/test-readline-async-iterators-destroy.js
 test/parallel/test-readline-async-iterators.js
+test/parallel/test-readline-interface.js
 test/parallel/test-readline-tab-complete.js
 test/parallel/test-release-npm.js
 test/parallel/test-repl-autolibs.js
@@ -1295,6 +1317,7 @@ test/parallel/test-repl-underscore.js
 test/parallel/test-repl-unexpected-token-recoverable.js
 test/parallel/test-repl-use-global.js
 test/parallel/test-repl.js
+test/parallel/test-require-invalid-main-no-exports.js
 test/parallel/test-require-invalid-package.js
 test/parallel/test-require-long-path.js
 test/parallel/test-require-symlink.js
@@ -1310,12 +1333,14 @@ test/parallel/test-socket-write-after-fin-error.js
 test/parallel/test-socket-write-after-fin.js
 test/parallel/test-source-map-api.js
 test/parallel/test-spawn-cmd-named-pipe.js
+test/parallel/test-startup-large-pages.js
 test/parallel/test-stdin-child-proc.js
 test/parallel/test-stdin-from-file.js
 test/parallel/test-stdin-pipe-large.js
 test/parallel/test-stdin-pipe-resume.js
 test/parallel/test-stdin-script-child-option.js
 test/parallel/test-stdin-script-child.js
+test/parallel/test-stdio-closed.js
 test/parallel/test-stdio-pipe-redirect.js
 test/parallel/test-stdio-pipe-stderr.js
 test/parallel/test-stdout-cannot-be-closed-child-process-pipe.js
@@ -1426,6 +1451,7 @@ test/parallel/test-tls-enable-trace-cli.js
 test/parallel/test-tls-enable-trace.js
 test/parallel/test-tls-env-bad-extra-ca.js
 test/parallel/test-tls-env-extra-ca-file-load.js
+test/parallel/test-tls-env-extra-ca-no-crypto.js
 test/parallel/test-tls-env-extra-ca.js
 test/parallel/test-tls-error-servername.js
 test/parallel/test-tls-exportkeyingmaterial.js
