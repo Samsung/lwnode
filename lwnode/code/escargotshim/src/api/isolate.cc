@@ -215,20 +215,21 @@ IsolateWrap* IsolateWrap::GetCurrent() {
   return s_currentIsolate;
 }
 
-void IsolateWrap::pushHandleScope(v8::HandleScope* handleScope) {
-  handleScopes_.push_back(new HandleScopeWrap(handleScope));
+void IsolateWrap::pushHandleScope(HandleScopeWrap* handleScope) {
+  handleScopes_.push_back(handleScope);
 }
 
 void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
-  LWNODE_CHECK(handleScopes_.back()->v8HandleScope() == handleScope);
+  LWNODE_CHECK(handleScopes_.back()->v8Scope() == handleScope);
 
   LWNODE_CALL_TRACE_2();
+  // TODO: remove the following line and simply pop the last
   handleScopes_.back()->clear();
 
   handleScopes_.pop_back();
 }
 
-void IsolateWrap::addHandle(HandleWrap* value) {
+void IsolateWrap::addHandleToLastScope(HandleWrap* value) {
   LWNODE_CHECK(handleScopes_.size() >= 1);
   handleScopes_.back()->add(value);
 }

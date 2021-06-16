@@ -23,15 +23,16 @@ using namespace EscargotShim;
 namespace v8 {
 
 // --- H a n d l e s ---
-HandleScope::HandleScope(Isolate* isolate) {
+HandleScope::HandleScope(Isolate* isolate)
+    : isolate_(reinterpret_cast<i::Isolate*>(isolate)) {
   LWNODE_CALL_TRACE();
-  Initialize(isolate);
+
+  IsolateWrap::fromV8(isolate_)->pushHandleScope(
+      new HandleScopeWrap(this, HandleScopeWrap::Type::Normal));
 }
 
 void HandleScope::Initialize(Isolate* isolate) {
-  isolate_ = (reinterpret_cast<i::Isolate*>(isolate));
-
-  IsolateWrap::fromV8(isolate_)->pushHandleScope(this);
+  LWNODE_UNIMPLEMENT;
 }
 
 HandleScope::~HandleScope() {
@@ -60,10 +61,17 @@ int HandleScope::NumberOfHandles(Isolate* isolate) {
 }
 
 i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
-  auto handle = HandleScopeWrap::CreateHandle(
-      IsolateWrap::fromV8(isolate), reinterpret_cast<HandleWrap*>(value));
+  if (value == 0) {
+    return nullptr;
+  }
 
-  return reinterpret_cast<i::Address*>(handle);
+  auto handle = reinterpret_cast<HandleWrap*>(value);
+
+  LWNODE_CHECK(handle->isValid());
+
+  IsolateWrap::fromV8(isolate)->addHandleToLastScope(handle);
+
+  return reinterpret_cast<i::Address*>(value);
 }
 
 EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate)
