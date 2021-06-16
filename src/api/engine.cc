@@ -95,7 +95,7 @@ bool Engine::Initialize() {
 bool Engine::Dispose() {
   LWNODE_CALL_TRACE_GC_START();
   if (s_engine) {
-    s_engine->finalize();
+    s_engine->dispose();
     delete s_engine;
     s_engine = nullptr;
   }
@@ -128,12 +128,9 @@ void Engine::initialize() {
   }
 }
 
-void Engine::finalize() {
+void Engine::dispose() {
   LWNODE_CALL_TRACE_GC_START();
   Globals::finalize();
-  MemoryUtil::gcFull();
-
-  Platform::Dispose();
   disposeExternalStrings();
   LWNODE_CALL_TRACE_GC_END();
 }

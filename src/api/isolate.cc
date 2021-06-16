@@ -105,10 +105,14 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 IsolateWrap::IsolateWrap() {
   LWNODE_CALL_TRACE_2("malc: %p", this);
 
-  lock_gc_release();
-
-  Memory::gcRegisterFinalizer(
-      this, [](void* self) { LWNODE_CALL_TRACE_2("free: %p", self); });
+  // NOTE: check lock_gc_release(); is needed (and where)
+  // lock_gc_release();
+  Memory::gcRegisterFinalizer(this, [](void* self) {
+    LWNODE_CALL_TRACE_2("free: %p", self);
+    LWNODE_CALL_TRACE_GC_START();
+    // NOTE: Called when this IsolateWrap is deallocated by gc
+    LWNODE_CALL_TRACE_GC_END();
+  });
 }
 
 IsolateWrap* IsolateWrap::New() {
@@ -118,8 +122,8 @@ IsolateWrap* IsolateWrap::New() {
 
 void IsolateWrap::Dispose() {
   LWNODE_CALL_TRACE_GC_START();
-  unlock_gc_release();
-  MemoryUtil::gc();
+  // NOTE: check unlock_gc_release(); is needed (and where)
+  // unlock_gc_release();
   LWNODE_CALL_TRACE_GC_END();
 }
 
@@ -183,6 +187,9 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   vmInstance_ = VMInstanceRef::create(platform);
   vmInstance_->setOnVMInstanceDelete([](VMInstanceRef* instance) {
     // Do Nothing
+    LWNODE_CALL_TRACE_GC_START();
+    // NOTE: Calls when vmInstance() is terminated. This happens before GC runs
+    LWNODE_CALL_TRACE_GC_END();
   });
 
   InitializeGlobalSlots();

@@ -16,6 +16,7 @@
 
 #include <memory>
 #include "api.h"
+#include "api/engine.h"
 #include "api/utils/cast.h"
 #include "base.h"
 
@@ -27,10 +28,15 @@ namespace v8 {
 
 void v8::V8::InitializePlatform(Platform* platform) {
   /* NOTHING TO DO */
+  LWNODE_CALL_TRACE_GC_START();
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 void v8::V8::ShutdownPlatform() {
-  /* NOTHING TO DO */
+  LWNODE_CALL_TRACE_GC_START();
+  MemoryUtil::gc();
+  EscargotShim::Platform::Dispose();
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 bool v8::V8::Initialize(const int build_config) {
