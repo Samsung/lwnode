@@ -117,8 +117,10 @@ IsolateWrap* IsolateWrap::New() {
 }
 
 void IsolateWrap::Dispose() {
+  LWNODE_CALL_TRACE_GC_START();
   unlock_gc_release();
   MemoryUtil::gc();
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 void IsolateWrap::set_array_buffer_allocator(
