@@ -102,9 +102,10 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   // HandleScope & Handle
   void pushHandleScope(HandleScopeWrap* handleScope);
-  void popHandleScope(v8::HandleScope* handleScope);
-  void addHandleToLastScope(HandleWrap* value);
+  void popHandleScope(v8Scope_t* v8HandleScope);
+  void addHandleToCurrentScope(HandleWrap* value);
   void escapeHandle(HandleWrap* value);
+  bool isCurrentScopeSealed();
 
   // Context
   void pushContext(ContextWrap* context);

@@ -228,7 +228,7 @@ void IsolateWrap::pushHandleScope(HandleScopeWrap* handleScope) {
   handleScopes_.push_back(handleScope);
 }
 
-void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
+void IsolateWrap::popHandleScope(v8Scope_t* handleScope) {
   LWNODE_CHECK(handleScopes_.back()->v8Scope() == handleScope);
 
   LWNODE_CALL_TRACE_2();
@@ -238,7 +238,7 @@ void IsolateWrap::popHandleScope(v8::HandleScope* handleScope) {
   handleScopes_.pop_back();
 }
 
-void IsolateWrap::addHandleToLastScope(HandleWrap* value) {
+void IsolateWrap::addHandleToCurrentScope(HandleWrap* value) {
   LWNODE_CHECK(handleScopes_.size() >= 1);
   handleScopes_.back()->add(value);
 }
@@ -249,9 +249,16 @@ void IsolateWrap::escapeHandle(HandleWrap* value) {
 
   auto last = handleScopes_.rbegin();
 
+  LWNODE_CHECK((*last)->type() == HandleScopeWrap::Type::Escapable);
+
   if ((*last)->remove(value)) {
     (*(++last))->add(value);
   }
+}
+
+bool IsolateWrap::isCurrentScopeSealed() {
+  LWNODE_CHECK(handleScopes_.size() > 0);
+  return (handleScopes_.back()->type() == HandleScopeWrap::Type::Sealed);
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {

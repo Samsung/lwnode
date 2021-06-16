@@ -21968,33 +21968,33 @@ TEST(HasOwnProperty) {
 //   }
 // }
 
-// TEST(EscapableHandleScope) {
-//   HandleScope outer_scope(CcTest::isolate());
-//   LocalContext context;
-//   const int runs = 10;
-//   Local<String> values[runs];
-//   for (int i = 0; i < runs; i++) {
-//     v8::EscapableHandleScope inner_scope(CcTest::isolate());
-//     Local<String> value;
-//     if (i != 0) value = v8_str("escape value");
-//     if (i < runs / 2) {
-//       values[i] = inner_scope.Escape(value);
-//     } else {
-//       values[i] = inner_scope.EscapeMaybe(v8::MaybeLocal<String>(value))
-//                       .ToLocalChecked();
-//     }
-//   }
-//   for (int i = 0; i < runs; i++) {
-//     Local<String> expected;
-//     if (i != 0) {
-//       CHECK(v8_str("escape value")
-//                 ->Equals(context.local(), values[i])
-//                 .FromJust());
-//     } else {
-//       CHECK(values[i].IsEmpty());
-//     }
-//   }
-// }
+TEST(EscapableHandleScope) {
+  HandleScope outer_scope(CcTest::isolate());
+  LocalContext context;
+  const int runs = 10;
+  Local<String> values[runs];
+  for (int i = 0; i < runs; i++) {
+    v8::EscapableHandleScope inner_scope(CcTest::isolate());
+    Local<String> value;
+    if (i != 0) value = v8_str("escape value");
+    if (i < runs / 2) {
+      values[i] = inner_scope.Escape(value);
+    } else {
+      values[i] = inner_scope.EscapeMaybe(v8::MaybeLocal<String>(value))
+                      .ToLocalChecked();
+    }
+  }
+  for (int i = 0; i < runs; i++) {
+    Local<String> expected;
+    if (i != 0) {
+      CHECK(v8_str("escape value")
+                ->Equals(context.local(), values[i])
+                .FromJust());
+    } else {
+      CHECK(values[i].IsEmpty());
+    }
+  }
+}
 
 
 // static void SetterWhichExpectsThisAndHolderToDiffer(
@@ -24683,22 +24683,22 @@ TEST(RejectedPromiseReFulfill) {
 // }
 
 
-// TEST(SealHandleScopeNested) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   LocalContext env;
+TEST(SealHandleScopeNested) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  LocalContext env;
 
-//   v8::SealHandleScope seal(isolate);
+  v8::SealHandleScope seal(isolate);
 
-//   {
-//     v8::HandleScope handle_scope(isolate);
+  {
+    v8::HandleScope handle_scope(isolate);
 
-//     // Should work
-//     v8::Local<v8::Object> obj = v8::Object::New(isolate);
+    // Should work
+    v8::Local<v8::Object> obj = v8::Object::New(isolate);
 
-//     USE(obj);
-//   }
-// }
+    // USE(obj);
+  }
+}
 
 TEST(Map) {
   v8::Isolate* isolate = CcTest::isolate();

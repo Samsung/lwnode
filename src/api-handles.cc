@@ -23,16 +23,17 @@ using namespace EscargotShim;
 namespace v8 {
 
 // --- H a n d l e s ---
-HandleScope::HandleScope(Isolate* isolate)
-    : isolate_(reinterpret_cast<i::Isolate*>(isolate)) {
-  LWNODE_CALL_TRACE();
+HandleScope::HandleScope(Isolate* isolate) {
+  LWNODE_CALL_TRACE("%p", this);
+
+  Initialize(isolate);
 
   IsolateWrap::fromV8(isolate_)->pushHandleScope(
       new HandleScopeWrap(this, HandleScopeWrap::Type::Normal));
 }
 
 void HandleScope::Initialize(Isolate* isolate) {
-  LWNODE_UNIMPLEMENT;
+  isolate_ = reinterpret_cast<i::Isolate*>(isolate);
 }
 
 HandleScope::~HandleScope() {
@@ -61,6 +62,14 @@ int HandleScope::NumberOfHandles(Isolate* isolate) {
 }
 
 i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
+  auto lwIsolate = IsolateWrap::fromV8(isolate);
+
+  if (lwIsolate->isCurrentScopeSealed()) {
+    lwIsolate->onFatalError(
+        createCodeLocation(TRACE_ARGS).c_str(),
+        "the current scope isn't allowed to allocate a handle");
+  }
+
   if (value == 0) {
     return nullptr;
   }
@@ -69,14 +78,19 @@ i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
 
   LWNODE_CHECK(handle->isValid());
 
-  IsolateWrap::fromV8(isolate)->addHandleToLastScope(handle);
+  lwIsolate->addHandleToCurrentScope(handle);
 
   return reinterpret_cast<i::Address*>(value);
 }
 
-EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate)
-    : HandleScope(v8_isolate) {
+EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate) {
   LWNODE_CALL_TRACE("%p", this);
+
+  Initialize(v8_isolate);
+
+  IsolateWrap::fromV8(v8_isolate)
+      ->pushHandleScope(
+          new HandleScopeWrap(this, HandleScopeWrap::Type::Escapable));
 }
 
 i::Address* EscapableHandleScope::Escape(i::Address* escape_value) {
@@ -104,11 +118,14 @@ void EscapableHandleScope::operator delete[](void*, size_t) {
 
 SealHandleScope::SealHandleScope(Isolate* isolate)
     : isolate_(reinterpret_cast<i::Isolate*>(isolate)) {
-  LWNODE_UNIMPLEMENT;
+  LWNODE_CALL_TRACE("%p", this);
+  IsolateWrap::fromV8(isolate_)->pushHandleScope(
+      new HandleScopeWrap(this, HandleScopeWrap::Type::Sealed));
 }
 
 SealHandleScope::~SealHandleScope() {
-  LWNODE_UNIMPLEMENT;
+  LWNODE_CALL_TRACE();
+  IsolateWrap::fromV8(isolate_)->popHandleScope(this);
 }
 
 void* SealHandleScope::operator new(size_t) {
