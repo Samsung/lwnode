@@ -470,30 +470,30 @@ THREADED_TEST(Script) {
 // };
 
 
-// class TestOneByteResource : public String::ExternalOneByteStringResource {
-//  public:
-//   explicit TestOneByteResource(const char* data, int* counter = nullptr,
-//                                size_t offset = 0)
-//       : orig_data_(data),
-//         data_(data + offset),
-//         length_(strlen(data) - offset),
-//         counter_(counter) {}
+class TestOneByteResource : public String::ExternalOneByteStringResource {
+ public:
+  explicit TestOneByteResource(const char* data, int* counter = nullptr,
+                               size_t offset = 0)
+      : orig_data_(data),
+        data_(data + offset),
+        length_(strlen(data) - offset),
+        counter_(counter) {}
 
-//   ~TestOneByteResource() override {
-//     i::DeleteArray(orig_data_);
-//     if (counter_ != nullptr) ++*counter_;
-//   }
+  ~TestOneByteResource() override {
+    i::DeleteArray(orig_data_);
+    if (counter_ != nullptr) ++*counter_;
+  }
 
-//   const char* data() const override { return data_; }
+  const char* data() const override { return data_; }
 
-//   size_t length() const override { return length_; }
+  size_t length() const override { return length_; }
 
-//  private:
-//   const char* orig_data_;
-//   const char* data_;
-//   size_t length_;
-//   int* counter_;
-// };
+ private:
+  const char* orig_data_;
+  const char* data_;
+  size_t length_;
+  int* counter_;
+};
 
 
 // THREADED_TEST(ScriptUsingStringResource) {
@@ -527,35 +527,38 @@ THREADED_TEST(Script) {
 // }
 
 
-// THREADED_TEST(ScriptUsingOneByteStringResource) {
-//   int dispose_count = 0;
-//   const char* c_source = "1 + 2 * 3";
-//   {
-//     LocalContext env;
-//     v8::HandleScope scope(env->GetIsolate());
-//     TestOneByteResource* resource =
-//         new TestOneByteResource(i::StrDup(c_source), &dispose_count);
-//     Local<String> source =
-//         String::NewExternalOneByte(env->GetIsolate(), resource)
-//             .ToLocalChecked();
-//     CHECK(source->IsExternalOneByte());
-//     CHECK_EQ(static_cast<const String::ExternalStringResourceBase*>(resource),
-//              source->GetExternalOneByteStringResource());
-//     String::Encoding encoding = String::UNKNOWN_ENCODING;
-//     CHECK_EQ(static_cast<const String::ExternalStringResourceBase*>(resource),
-//              source->GetExternalStringResourceBase(&encoding));
-//     CHECK_EQ(String::ONE_BYTE_ENCODING, encoding);
-//     Local<Script> script = v8_compile(source);
-//     Local<Value> value = script->Run(env.local()).ToLocalChecked();
-//     CHECK(value->IsNumber());
-//     CHECK_EQ(7, value->Int32Value(env.local()).FromJust());
-//     CcTest::CollectAllGarbage();
-//     CHECK_EQ(0, dispose_count);
-//   }
-//   CcTest::i_isolate()->compilation_cache()->Clear();
-//   CcTest::CollectAllAvailableGarbage();
-//   CHECK_EQ(1, dispose_count);
-// }
+THREADED_TEST(ScriptUsingOneByteStringResource) {
+  int dispose_count = 0;
+  const char* c_source = "1 + 2 * 3";
+  {
+    LocalContext env;
+    v8::HandleScope scope(env->GetIsolate());
+    // TODO: implement CollectAllGarbage and CollectAllAvailableGarbage
+    // TestOneByteResource* resource =
+    //     new TestOneByteResource(i::StrDup(c_source), &dispose_count);
+    TestOneByteResource* resource =
+        new TestOneByteResource(i::StrDup(c_source));
+    Local<String> source =
+        String::NewExternalOneByte(env->GetIsolate(), resource)
+            .ToLocalChecked();
+    CHECK(source->IsExternalOneByte());
+    CHECK_EQ(static_cast<const String::ExternalStringResourceBase*>(resource),
+             source->GetExternalOneByteStringResource());
+    String::Encoding encoding = String::UNKNOWN_ENCODING;
+    CHECK_EQ(static_cast<const String::ExternalStringResourceBase*>(resource),
+             source->GetExternalStringResourceBase(&encoding));
+    CHECK_EQ(String::ONE_BYTE_ENCODING, encoding);
+    Local<Script> script = v8_compile(source);
+    Local<Value> value = script->Run(env.local()).ToLocalChecked();
+    CHECK(value->IsNumber());
+    CHECK_EQ(7, value->Int32Value(env.local()).FromJust());
+    // CcTest::CollectAllGarbage();
+    // CHECK_EQ(0, dispose_count);
+  }
+  // CcTest::i_isolate()->compilation_cache()->Clear();
+  // CcTest::CollectAllAvailableGarbage();
+  // CHECK_EQ(1, dispose_count);
+}
 
 
 // THREADED_TEST(ScriptMakingExternalString) {

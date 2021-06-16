@@ -507,7 +507,8 @@ MaybeLocal<String> v8::String::NewExternalTwoByte(
   auto esString = StringRef::createExternalFromUTF16(
       reinterpret_cast<const char16_t*>(resource->data()), resource->length());
 
-  return Utils::NewLocal<String>(isolate, esString);
+  return Utils::NewLocal<String>(
+      isolate, ExternalStringWrap::create(esString, resource));
 }
 
 MaybeLocal<String> v8::String::NewExternalOneByte(
@@ -529,7 +530,8 @@ MaybeLocal<String> v8::String::NewExternalOneByte(
   auto externalString = StringRef::createExternalFromLatin1(
       (const unsigned char*)(resource->data()), resource->length());
 
-  return Utils::NewLocal<String>(isolate, externalString);
+  return Utils::NewLocal<String>(
+      isolate, ExternalStringWrap::create(externalString, resource));
 }
 
 bool v8::String::MakeExternal(v8::String::ExternalStringResource* resource) {
