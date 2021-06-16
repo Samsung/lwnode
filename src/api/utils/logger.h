@@ -42,11 +42,14 @@
 #define COLOR_WHITE "\033[01;37m"
 #define COLOR_REDBG "\033[0;41m"
 
+std::string getPrettyFunctionName(const std::string fullname);
+
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define TRACE_FMT " %s (%s:%d)"
 #define TRACE_ARGS __PRETTY_FUNCTION__, __FILENAME__, __LINE__
-#define TRACE_ARGS2 __FUNCTION__, __FILENAME__, __LINE__
+#define TRACE_ARGS2                                                            \
+  getPrettyFunctionName(__PRETTY_FUNCTION__).c_str(), __FILENAME__, __LINE__
 
 #if !defined(NDEBUG)
 #define LWNODE_LOG_RAW(fmt, ...)                                               \
