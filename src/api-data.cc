@@ -1918,31 +1918,46 @@ int String::Write(Isolate* isolate,
 }
 
 bool v8::String::IsExternal() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->isExternalString();
 }
 
 bool v8::String::IsExternalOneByte() const {
-  LWNODE_RETURN_FALSE;
+  auto lwSelf = CVAL(this);
+  return lwSelf->isExternalString() &&
+         lwSelf->value()->asString()->has8BitContent();
 }
 
 void v8::String::VerifyExternalStringResource(
-    v8::String::ExternalStringResource* value) const {}
+    v8::String::ExternalStringResource* value) const {
+  LWNODE_RETURN_VOID;
+}
 
 void v8::String::VerifyExternalStringResourceBase(
-    v8::String::ExternalStringResourceBase* value, Encoding encoding) const {}
+    v8::String::ExternalStringResourceBase* value, Encoding encoding) const {
+  LWNODE_RETURN_VOID;
+}
 
 String::ExternalStringResource* String::GetExternalStringResourceSlow() const {
-  LWNODE_RETURN_NULLPTR;
+  return reinterpret_cast<ExternalStringResource*>(
+      CVAL(this)->asExternalString()->resource());
 }
 
 String::ExternalStringResourceBase* String::GetExternalStringResourceBaseSlow(
     String::Encoding* encoding_out) const {
-  LWNODE_RETURN_NULLPTR;
+  auto lwSelf = CVAL(this);
+  auto esSelf = lwSelf->value()->asString();
+  if (esSelf->has8BitContent()) {
+    *encoding_out = String::Encoding::ONE_BYTE_ENCODING;
+  } else {
+    *encoding_out = String::Encoding::TWO_BYTE_ENCODING;
+  }
+  return lwSelf->asExternalString()->resource();
 }
 
 const v8::String::ExternalOneByteStringResource*
 v8::String::GetExternalOneByteStringResource() const {
-  LWNODE_RETURN_NULLPTR;
+  auto lwSelf = CVAL(this)->asExternalString();
+  return reinterpret_cast<ExternalOneByteStringResource*>(lwSelf->resource());
 }
 
 void* String::ExternalStringResourceBase::operator new(size_t size) {

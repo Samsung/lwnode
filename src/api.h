@@ -33,6 +33,7 @@
 #include "api/es-v8-helper.h"
 #include "api/extra-data.h"
 #include "api/function.h"
+#include "api/handle-external-string.h"
 #include "api/handle.h"
 #include "api/isolate.h"
 #include "api/module.h"

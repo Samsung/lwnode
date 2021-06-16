@@ -36,10 +36,22 @@ bool HandleWrap::isValid() const {
 
 // --- ValueWrap ---
 
-ValueWrap::ValueWrap(void* ptr, HandleWrap::Type type) {
+ValueWrap::ValueWrap(void* ptr,
+                     HandleWrap::Type type,
+                     HandleWrap::ValueType valueType) {
   LWNODE_CHECK_NOT_NULL(ptr);
   type_ = type;
   holder_ = ptr;
+  valueType_ = valueType;
+}
+
+bool ValueWrap::isExternalString() const {
+  return valueType_ == ValueWrap::ExternalString;
+}
+
+ExternalStringWrap* ValueWrap::asExternalString() const {
+  LWNODE_CHECK(isExternalString());
+  return reinterpret_cast<ExternalStringWrap*>(const_cast<ValueWrap*>(this));
 }
 
 ValueWrap* ValueWrap::createValue(Escargot::ValueRef* esValue) {

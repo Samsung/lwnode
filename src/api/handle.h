@@ -25,6 +25,7 @@ namespace EscargotShim {
 class ContextWrap;
 class IsolateWrap;
 class ModuleWrap;
+class ExternalStringWrap;
 
 class HandleWrap : public gc {
  public:
@@ -39,13 +40,19 @@ class HandleWrap : public gc {
     NotPresent,
   };
 
+  enum ValueType : uint8_t {
+    None,
+    ExternalString,
+  };
+
   uint8_t type() const;
   bool isValid() const;
 
  protected:
   HandleWrap() = default;
   void* holder_ = nullptr;
-  uint8_t type_ = NotPresent;
+  uint8_t type_ = Type::NotPresent;
+  uint8_t valueType_ = ValueType::None;  // TODO: remove this variable
 };
 
 class ValueWrap : public HandleWrap {
@@ -53,6 +60,9 @@ class ValueWrap : public HandleWrap {
   ValueWrap(const ValueWrap& src) = delete;
   const ValueWrap& operator=(const ValueWrap& src) = delete;
   const ValueWrap& operator=(ValueWrap&& src) = delete;
+
+  bool isExternalString() const;
+  ExternalStringWrap* asExternalString() const;
 
   // Value
   static ValueWrap* createValue(Escargot::ValueRef* esValue);
@@ -83,8 +93,10 @@ class ValueWrap : public HandleWrap {
   static ValueWrap* createModule(ModuleWrap* esModule);
   ModuleWrap* module() const;
 
- private:
-  ValueWrap(void* ptr, HandleWrap::Type type);
+ protected:
+  ValueWrap(void* ptr,
+            HandleWrap::Type type,
+            HandleWrap::ValueType valueType = HandleWrap::ValueType::None);
 };
 
 }  // namespace EscargotShim

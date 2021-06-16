@@ -11585,6 +11585,8 @@ String::ExternalStringResource* String::GetExternalStringResource() const {
 
 String::ExternalStringResourceBase* String::GetExternalStringResourceBase(
     String::Encoding* encoding_out) const {
+// @lwnode
+#if 0
   typedef internal::Address A;
   typedef internal::Internals I;
   A obj = *reinterpret_cast<const A*>(this);
@@ -11604,6 +11606,9 @@ String::ExternalStringResourceBase* String::GetExternalStringResourceBase(
   VerifyExternalStringResourceBase(resource, *encoding_out);
 #endif
   return resource;
+#endif
+// end @lwnode
+  return GetExternalStringResourceBaseSlow(encoding_out);
 }
 
 
