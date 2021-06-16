@@ -27,6 +27,14 @@ HandleScopeWrap::HandleScopeWrap(v8::HandleScope* scope,
                                  HandleScopeWrap::Type type)
     : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
 
+HandleScopeWrap::HandleScopeWrap(v8::SealHandleScope* scope,
+                                 HandleScopeWrap::Type type)
+    : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
+
+HandleScopeWrap::HandleScopeWrap(v8::EscapableHandleScope* scope,
+                                 HandleScopeWrap::Type type)
+    : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
+
 void HandleScopeWrap::add(HandleWrap* value) {
   LWNODE_CALL_TRACE_2("%p", value);
 
