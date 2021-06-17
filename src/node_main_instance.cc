@@ -60,12 +60,20 @@ NodeMainInstance::NodeMainInstance(
     const std::vector<size_t>* per_isolate_data_indexes)
     : args_(args),
       exec_args_(exec_args),
+// @lwnode
+#if 0
       array_buffer_allocator_(ArrayBufferAllocator::Create()),
+#endif
+      array_buffer_allocator_(ArrayBufferAllocator::Create().release()),
       isolate_(nullptr),
       platform_(platform),
       isolate_data_(nullptr),
       owns_isolate_(true) {
+// @lwnode
+#if 0
   params->array_buffer_allocator = array_buffer_allocator_.get();
+#endif
+  params->array_buffer_allocator = array_buffer_allocator_;
   isolate_ = Isolate::Allocate();
   CHECK_NOT_NULL(isolate_);
   // Register the isolate on the platform before the isolate gets initialized,
@@ -80,7 +88,11 @@ NodeMainInstance::NodeMainInstance(
   isolate_data_ = std::make_unique<IsolateData>(isolate_,
                                                 event_loop,
                                                 platform,
+// @lwnode
+#if 0
                                                 array_buffer_allocator_.get(),
+#endif
+                                                array_buffer_allocator_,
                                                 per_isolate_data_indexes);
   IsolateSettings s;
   SetIsolateMiscHandlers(isolate_, s);
