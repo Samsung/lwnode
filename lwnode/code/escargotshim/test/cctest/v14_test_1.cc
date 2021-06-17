@@ -163,7 +163,7 @@ TEST(ScriptCompiler_CompileFunctionInContext) {
 }
 
 // --- ArrayBuffer ---
-TEST(ArrayBuffer_New) {
+TEST(DISABLED_ArrayBuffer_New) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -198,7 +198,7 @@ TEST(ArrayBuffer_New) {
 
 static int s_array_buffer_release_pass;
 
-TEST(ArrayBuffer_Release) {
+TEST(DISABLED_ArrayBuffer_Release) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
