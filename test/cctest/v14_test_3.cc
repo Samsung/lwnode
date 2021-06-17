@@ -202,14 +202,14 @@ THREADED_TEST(SymbolPropertiesInternal2) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
+  Context::Scope context_scope(context);
 
   v8::Local<v8::Object> obj = v8::Object::New(isolate);
   v8::Local<v8::Symbol> sym1 = v8::Symbol::New(isolate);
   v8::Local<v8::Symbol> sym2 = v8::Symbol::New(isolate, v8_str("my-symbol"));
   v8::Local<v8::Symbol> sym3 = v8::Symbol::New(isolate, v8_str("sym3"));
   v8::Local<v8::Symbol> sym4 = v8::Symbol::New(isolate, v8_str("native"));
-
-  CcTest::CollectAllGarbage();
 
   // Check basic symbol functionality.
   CHECK(sym1->IsSymbol());
@@ -281,8 +281,6 @@ THREADED_TEST(SymbolPropertiesInternal2) {
            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
   CHECK_EQ(num_props + 1,
            obj->GetPropertyNames(env.local()).ToLocalChecked()->Length());
-
-  CcTest::CollectAllGarbage();
 
   // CHECK(obj->SetAccessor(env.local(), sym3, SymbolAccessorGetter1,
   //                        SymbolAccessorSetter1)
