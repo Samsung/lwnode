@@ -1072,6 +1072,9 @@ int Start(int argc, char** argv) {
     return result.exit_code;
   }
 
+  // @lwndoe
+  ArrayBufferAllocator* allocator = nullptr;
+  // end of @lwnode
   {
     Isolate::CreateParams params;
     const std::vector<size_t>* indexes = nullptr;
@@ -1098,17 +1101,18 @@ int Start(int argc, char** argv) {
                                    result.args,
                                    result.exec_args,
                                    indexes);
-    result.exit_code = main_instance.Run();
 
     // @lwnode
-    // Escargot::Platform::onFreeArrayBufferObjectDataBuffer uses
-    // the NodeArrayBufferAllocator instance which main_instance has.
-    // And it may be invoked during Escargot::Globals::finalize.
-    // Thus, TearDownOncePerProcess() related to Globals::finalize
-    // should be called in this scope where the main_instance is alive.
-    TearDownOncePerProcess();
+    allocator = main_instance.arrayBufferAllocator();
+    // endof @lwnode
+    result.exit_code = main_instance.Run();
   }
 
+  TearDownOncePerProcess();
+  // @lwnode
+  v8::V8::ShutdownPlatform();
+  delete allocator;
+  // end of @lwnode
   return result.exit_code;
 }
 
