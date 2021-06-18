@@ -34,9 +34,7 @@ void Isolate::SetTerminationOnExternalTryCatch() {
 }
 
 bool Isolate::IsExecutionTerminating() {
-  if (has_scheduled_exception()) {
-    return true;
-  }
+  // TODO: IMPLEMENT
   return false;
 }
 
@@ -324,11 +322,18 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   return newSymbol;
 }
 
-void IsolateWrap::setStackTrace(
+void IsolateWrap::setCurrentException(
+    ValueRef* exceptionValue,
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
+  exceptionDetails_.value = exceptionValue;
+
   for (size_t i = 0; i < stackTraceData.size(); i++) {
-    stackTrace_.push_back(new StackTraceData(stackTraceData[i]));
+    exceptionDetails_.stackTraces.push_back(
+        new StackTraceData(stackTraceData[i]));
   }
+
+  // TODO: remove this and use handling trycatch chains
+  ScheduleThrow(exceptionValue);
 }
 
 ValueWrap** IsolateWrap::getGlobal(const int index) {

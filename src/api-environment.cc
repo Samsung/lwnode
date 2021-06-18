@@ -2460,7 +2460,7 @@ void MicrotasksScope::PerformCheckpoint(Isolate* v8_isolate) {
   while (vmInstance->hasPendingJob()) {
     auto r = vmInstance->executePendingJob();
     if (!r.isSuccessful()) {
-      __DLOG_EVAL_ERROR(r);
+      __DLOG_EVAL_EXCEPTION(r);
       lwIsolate->SetTerminationOnExternalTryCatch();
       return;
     }

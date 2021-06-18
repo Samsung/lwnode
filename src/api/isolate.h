@@ -180,8 +180,19 @@ class IsolateWrap final : public v8::internal::Isolate {
     bool isEval{false};
   };
 
-  GCVector<StackTraceData*>* stackTrace() { return &stackTrace_; }
-  void setStackTrace(
+  struct ExceptionDetails : public gc {
+    ValueRef* value{nullptr};
+    GCVector<StackTraceData*> stackTraces;
+
+    bool hasErrorValue() { return value == nullptr; }
+  };
+
+  GCVector<StackTraceData*>* stackTrace() {
+    return &exceptionDetails_.stackTraces;
+  }
+
+  void setCurrentException(
+      ValueRef* exceptionValue,
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
 
   void onFatalError(const char* location, const char* message);
@@ -225,7 +236,7 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
 
-  GCVector<StackTraceData*> stackTrace_;
+  ExceptionDetails exceptionDetails_;
 };
 
 }  // namespace EscargotShim
