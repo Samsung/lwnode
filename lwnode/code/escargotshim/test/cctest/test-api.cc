@@ -7506,14 +7506,14 @@ THREADED_TEST(GlobalObjectTemplate) {
 // }
 
 
-// static const char* last_location;
-// static const char* last_message;
-// void StoringErrorCallback(const char* location, const char* message) {
-//   if (last_location == nullptr) {
-//     last_location = location;
-//     last_message = message;
-//   }
-// }
+static const char* last_location;
+static const char* last_message;
+void StoringErrorCallback(const char* location, const char* message) {
+  if (last_location == nullptr) {
+    last_location = location;
+    last_message = message;
+  }
+}
 
 
 // // ErrorReporting creates a circular extensions configuration and
@@ -18231,22 +18231,22 @@ THREADED_TEST(ReplaceConstantFunction) {
 // }
 
 
-// TEST(IsolateNewDispose) {
-//   v8::Isolate* current_isolate = CcTest::isolate();
-//   v8::Isolate::CreateParams create_params;
-//   create_params.array_buffer_allocator = CcTest::array_buffer_allocator();
-//   v8::Isolate* isolate = v8::Isolate::New(create_params);
-//   CHECK_NOT_NULL(isolate);
-//   CHECK(current_isolate != isolate);
-//   CHECK(current_isolate == CcTest::isolate());
-//   CHECK(isolate->GetArrayBufferAllocator() == CcTest::array_buffer_allocator());
+TEST(IsolateNewDispose) {
+  v8::Isolate* current_isolate = CcTest::isolate();
+  v8::Isolate::CreateParams create_params;
+  create_params.array_buffer_allocator = CcTest::array_buffer_allocator();
+  v8::Isolate* isolate = v8::Isolate::New(create_params);
+  CHECK_NOT_NULL(isolate);
+  CHECK(current_isolate != isolate);
+  CHECK(current_isolate == CcTest::isolate());
+  CHECK(isolate->GetArrayBufferAllocator() == CcTest::array_buffer_allocator());
 
-//   isolate->SetFatalErrorHandler(StoringErrorCallback);
-//   last_location = last_message = nullptr;
-//   isolate->Dispose();
-//   CHECK(!last_location);
-//   CHECK(!last_message);
-// }
+  isolate->SetFatalErrorHandler(StoringErrorCallback);
+  last_location = last_message = nullptr;
+  isolate->Dispose();
+  CHECK(!last_location);
+  CHECK(!last_message);
+}
 
 
 // UNINITIALIZED_TEST(DisposeIsolateWhenInUse) {
