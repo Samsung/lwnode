@@ -73,6 +73,10 @@ class CcTest {
   static void CollectGarbage();
   static void CollectAllGarbage(v8::Isolate* isolate = nullptr);
 
+  static v8::ArrayBuffer::Allocator* array_buffer_allocator() {
+    return allocator_;
+  }
+
  private:
   static v8::Isolate* isolate_;
   static v8::ArrayBuffer::Allocator* allocator_;

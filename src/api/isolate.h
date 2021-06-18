@@ -93,7 +93,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   void set_array_buffer_allocator(v8::ArrayBuffer::Allocator* allocator);
 
   v8::ArrayBuffer::Allocator* array_buffer_allocator() {
-    return arrayBufferDecorator_;
+    return arrayBufferDecorator_->array_buffer_allocator();
   }
 
   ArrayBufferAllocatorDecorator* arrayBufferDecorator_ = nullptr;
