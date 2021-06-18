@@ -23,19 +23,21 @@
 
 #define __TERMINATION_CHECK(lwIsolate, bailout_value)                          \
   if (lwIsolate->IsExecutionTerminating()) {                                   \
+    LWNODE_DLOG_WARN(                                                          \
+        "%s (%s:%d) is ignored due to script execution being terminated.",     \
+        TRACE_ARGS2);                                                          \
     return bailout_value;                                                      \
   }
 
 #if !defined(NDEBUG)
-#define __DLOG_EVAL_ERROR(eval_result)                                         \
-  LWNODE_DLOG_ERROR("Evaluate");                                               \
+#define __DLOG_EVAL_EXCEPTION(eval_result)                                     \
   LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",                                \
                   TRACE_ARGS2,                                                 \
                   EvalResultHelper::getErrorString(                            \
                       lwIsolate->GetCurrentContext()->get(), eval_result)      \
                       .c_str());
 #else
-#define __DLOG_EVAL_ERROR(eval_result)
+#define __DLOG_EVAL_EXCEPTION(eval_result)
 #endif
 
 #define API_ENTER(isolate, bailout_value)                                      \
@@ -56,8 +58,9 @@
 
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \
   if (!eval_result.isSuccessful()) {                                           \
-    __DLOG_EVAL_ERROR(eval_result);                                            \
-    lwIsolate->ScheduleThrow(eval_result.error.get());                         \
+    __DLOG_EVAL_EXCEPTION(eval_result);                                        \
+    lwIsolate->setCurrentException(eval_result.error.get(),                    \
+                                   eval_result.stackTraceData);                \
     return bailout_value;                                                      \
   }
 
