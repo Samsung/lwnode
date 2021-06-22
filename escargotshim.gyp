@@ -65,6 +65,7 @@
       ],
       'direct_dependent_settings': {
         'defines': [
+          'LWNODE=1',
         ],
         'include_dirs': [
           'include',
