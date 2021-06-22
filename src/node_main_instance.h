@@ -73,12 +73,6 @@ class NodeMainInstance {
   NodeMainInstance(NodeMainInstance&&) = delete;
   NodeMainInstance& operator=(NodeMainInstance&&) = delete;
 
-  // @lwnode
-  ArrayBufferAllocator* arrayBufferAllocator() {
-    return array_buffer_allocator_;
-  }
-  // end of @lwnode
-
  private:
   NodeMainInstance(v8::Isolate* isolate,
                    uv_loop_t* event_loop,
@@ -88,12 +82,18 @@ class NodeMainInstance {
 
   std::vector<std::string> args_;
   std::vector<std::string> exec_args_;
+#if LWNODE
   // @lwnode
-#if 0
+ public:
+  ArrayBufferAllocator* arrayBufferAllocator() {
+    return array_buffer_allocator_;
+  }
+
+ private:
+  ArrayBufferAllocator* array_buffer_allocator_;
+#else
   std::unique_ptr<ArrayBufferAllocator> array_buffer_allocator_;
 #endif
-  // end of @lwnode
-  ArrayBufferAllocator* array_buffer_allocator_;
 
   v8::Isolate* isolate_;
   MultiIsolatePlatform* platform_;
