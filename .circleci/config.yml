@@ -50,7 +50,7 @@ jobs:
       - run:
           name: Build
           command: |
-            ./configure --without-npm --without-bundled-v8 --without-v8-platform \
+            ./configure --without-npm --without-bundled-v8 \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
             --engine escargot --ninja
