@@ -84,6 +84,47 @@ struct V8Platform {
   bool initialized_ = false;
 
 #if NODE_USE_V8_PLATFORM
+#if LWNODE
+  inline void Initialize(int thread_pool_size) {
+    CHECK(!initialized_);
+    initialized_ = true;
+    platform_ = new NodePlatform(thread_pool_size, nullptr);
+    v8::V8::InitializePlatform(platform_);
+  }
+
+  inline void Dispose() {
+    if (!initialized_) return;
+    initialized_ = false;
+
+    StopTracingAgent();
+    platform_->Shutdown();
+    delete platform_;
+    platform_ = nullptr;
+    trace_state_observer_.reset(nullptr);
+  }
+
+  inline void DrainVMTasks(v8::Isolate* isolate) {
+    platform_->DrainTasks(isolate);
+  }
+
+  inline void StartTracingAgent() {
+    fprintf(stderr,
+            "Node compiled with LWNODE, "
+            "so event tracing is not available.\n");
+  }
+
+  inline void StopTracingAgent() { tracing_file_writer_.reset(); }
+
+  inline tracing::AgentWriterHandle* GetTracingAgentWriter() {
+    return &tracing_file_writer_;
+  }
+
+  inline NodePlatform* Platform() { return platform_; }
+
+  std::unique_ptr<NodeTraceStateObserver> trace_state_observer_;
+  tracing::AgentWriterHandle tracing_file_writer_;
+  NodePlatform* platform_;
+#else
   inline void Initialize(int thread_pool_size) {
     CHECK(!initialized_);
     initialized_ = true;
@@ -152,23 +193,10 @@ struct V8Platform {
   std::unique_ptr<tracing::Agent> tracing_agent_;
   tracing::AgentWriterHandle tracing_file_writer_;
   NodePlatform* platform_;
+#endif
 #else   // !NODE_USE_V8_PLATFORM
-  // @lwnode
-  inline void Initialize(int thread_pool_size) {
-    CHECK(!initialized_);
-    initialized_ = true;
-
-    // @lwnode @todo set thread_pool_size
-    platform_ = MultiIsolatePlatform::Create(0);
-
-    v8::V8::InitializePlatform(platform_.get());
-  }
-
-  inline void Dispose() {
-    if (!initialized_)
-      return;
-    initialized_ = false;
-  }
+  inline void Initialize(int thread_pool_size) {}
+  inline void Dispose() {}
 
   inline void DrainVMTasks(v8::Isolate* isolate) {}
   inline void StartTracingAgent() {
