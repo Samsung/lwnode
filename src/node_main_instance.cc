@@ -51,6 +51,7 @@ std::unique_ptr<NodeMainInstance> NodeMainInstance::Create(
       new NodeMainInstance(isolate, event_loop, platform, args, exec_args));
 }
 
+#ifdef LWNODE
 NodeMainInstance::NodeMainInstance(
     Isolate::CreateParams* params,
     uv_loop_t* event_loop,
@@ -102,6 +103,50 @@ NodeMainInstance::NodeMainInstance(
     SetIsolateErrorHandlers(isolate_, s);
   }
 }
+
+#else
+
+NodeMainInstance::NodeMainInstance(
+    Isolate::CreateParams* params,
+    uv_loop_t* event_loop,
+    MultiIsolatePlatform* platform,
+    const std::vector<std::string>& args,
+    const std::vector<std::string>& exec_args,
+    const std::vector<size_t>* per_isolate_data_indexes)
+    : args_(args),
+      exec_args_(exec_args),
+      array_buffer_allocator_(ArrayBufferAllocator::Create()),
+      isolate_(nullptr),
+      platform_(platform),
+      isolate_data_(nullptr),
+      owns_isolate_(true) {
+  params->array_buffer_allocator = array_buffer_allocator_.get();
+  isolate_ = Isolate::Allocate();
+  CHECK_NOT_NULL(isolate_);
+  // Register the isolate on the platform before the isolate gets initialized,
+  // so that the isolate can access the platform during initialization.
+  platform->RegisterIsolate(isolate_, event_loop);
+  SetIsolateCreateParamsForNode(params);
+  Isolate::Initialize(isolate_, *params);
+
+  deserialize_mode_ = per_isolate_data_indexes != nullptr;
+  // If the indexes are not nullptr, we are not deserializing
+  CHECK_IMPLIES(deserialize_mode_, params->external_references != nullptr);
+  isolate_data_ = std::make_unique<IsolateData>(isolate_,
+                                                event_loop,
+                                                platform,
+                                                array_buffer_allocator_.get(),
+                                                per_isolate_data_indexes);
+  IsolateSettings s;
+  SetIsolateMiscHandlers(isolate_, s);
+  if (!deserialize_mode_) {
+    // If in deserialize mode, delay until after the deserialization is
+    // complete.
+    SetIsolateErrorHandlers(isolate_, s);
+  }
+}
+
+#endif
 
 void NodeMainInstance::Dispose() {
   CHECK(!owns_isolate_);
