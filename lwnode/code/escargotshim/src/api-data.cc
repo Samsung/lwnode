@@ -595,9 +595,9 @@ Maybe<double> Value::NumberValue(Local<Context> context) const {
 }
 
 Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
-  auto lwValue = CVAL(this)->value();
-  if (lwValue->isNumber()) {
-    return Just(NumberToInt64(lwValue));
+  auto esSelf = CVAL(this)->value();
+  if (esSelf->isNumber()) {
+    return Just(NumberToInt64(esSelf));
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<int64_t>());
