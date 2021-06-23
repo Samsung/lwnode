@@ -16,6 +16,7 @@
 
 #include "logger.h"
 #include <regex>
+#include <set>
 #include <sstream>
 
 std::string getPrettyFunctionName(const std::string fullname) {
@@ -35,4 +36,32 @@ std::string createCodeLocation(const char* functionName,
   oss << getPrettyFunctionName(functionName) << " (" << filename << ":" << line
       << ")" << std::endl;
   return oss.str();
+}
+
+thread_local int s_callDepth = 0;
+thread_local std::set<std::string> s_counterIds;
+
+IndentCounter::IndentCounter(std::string id) {
+  s_callDepth++;
+  s_counterIds.insert(id);
+  id_ = id;
+}
+
+IndentCounter::~IndentCounter() {
+  s_callDepth--;
+  s_counterIds.erase(id_);
+}
+
+std::string IndentCounter::getString(std::string id) {
+  if (s_counterIds.find(id) == s_counterIds.end()) {
+    return "";
+  }
+
+  assert(s_callDepth >= 0);
+
+  std::string indent;
+  for (int i = 1; i < std::min(5, s_callDepth); ++i) {
+    indent += "\t";
+  }
+  return indent;
 }

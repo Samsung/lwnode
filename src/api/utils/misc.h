@@ -76,21 +76,31 @@
 #endif
 
 #if !defined(NDEBUG)
-#define LWNODE_CALL_TRACE_ID(id, prefix, msg, ...)                             \
+
+#define FIRST_ARG(N, ...) N
+#define LEFT_ARGS(N, ...) , ##__VA_ARGS__
+
+#define LWNODE_CALL_TRACE_LOG(id, prefix, ...)                                 \
   if (EscargotShim::Flags::isTraceCallEnabled(id)) {                           \
-    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix TRACE_FMT                         \
-                              " " COLOR_RESET msg COLOR_RESET,                 \
-                    TRACE_ARGS,                                                \
-                    ##__VA_ARGS__);                                            \
+    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix "%s" TRACE_FMT                    \
+                              " " COLOR_RESET FIRST_ARG(__VA_ARGS__)           \
+                                  COLOR_RESET,                                 \
+                    IndentCounter::getString(id).c_str(),                      \
+                    TRACE_ARGS2 LEFT_ARGS(__VA_ARGS__));                       \
   }
+
+#define LWNODE_CALL_TRACE_ID(id, ...)                                          \
+  IndentCounter __counter(#id);                                                \
+  LWNODE_CALL_TRACE_LOG(#id, " (" #id ")", ##__VA_ARGS__);
+
 #define LWNODE_CALL_TRACE(msg, ...)                                            \
-  LWNODE_CALL_TRACE_ID("1", "", msg, ##__VA_ARGS__);
+  LWNODE_CALL_TRACE_LOG("1", "", msg, ##__VA_ARGS__);
 
 #define LWNODE_CALL_TRACE_2(msg, ...)                                          \
-  LWNODE_CALL_TRACE_ID("2", "\t", msg, ##__VA_ARGS__);
+  LWNODE_CALL_TRACE_LOG("2", "\t", msg, ##__VA_ARGS__);
 
 #define LWNODE_CALL_TRACE_3(msg, ...)                                          \
-  LWNODE_CALL_TRACE_ID("3", "\t\t", msg, ##__VA_ARGS__);
+  LWNODE_CALL_TRACE_LOG("3", "\t\t", msg, ##__VA_ARGS__);
 
 #define LWNODE_CALL_TRACE_GC_START(msg, ...)                                   \
   if (EscargotShim::Flags::isTraceCallEnabled("gc")) {                         \
@@ -103,12 +113,12 @@
   }
 
 #else
-#define LWNODE_CALL_TRACE_ID(id, prefix, msg, ...)
-#define LWNODE_CALL_TRACE(msg, ...)
-#define LWNODE_CALL_TRACE_2(msg, ...)
-#define LWNODE_CALL_TRACE_3(msg, ...)
-#define LWNODE_CALL_TRACE_GC_START(msg, ...)
-#define LWNODE_CALL_TRACE_GC_END(msg, ...)
+#define LWNODE_CALL_TRACE_ID(...)
+#define LWNODE_CALL_TRACE(...)
+#define LWNODE_CALL_TRACE_2(...)
+#define LWNODE_CALL_TRACE_3(...)
+#define LWNODE_CALL_TRACE_GC_START(...)
+#define LWNODE_CALL_TRACE_GC_END(...)
 #endif
 
 #if !defined(NDEBUG)
