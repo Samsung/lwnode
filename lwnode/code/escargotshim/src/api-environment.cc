@@ -332,26 +332,6 @@ static_assert(v8::String::kMaxLength == Constants::kMaxStringLength,
 
 }  // anonymous namespace
 
-// TODO(dcarney): throw a context free exception.
-#define NEW_STRING(                                                            \
-    isolate, class_name, function_name, Char, data, type, length)              \
-  MaybeLocal<String> result;                                                   \
-  if (length == 0) {                                                           \
-    result = String::Empty(isolate);                                           \
-  } else if (length > i::String::kMaxLength) {                                 \
-    result = MaybeLocal<String>();                                             \
-  } else {                                                                     \
-    i::Isolate* i_isolate = reinterpret_cast<internal::Isolate*>(isolate);     \
-    ENTER_V8_NO_SCRIPT_NO_EXCEPTION(i_isolate);                                \
-    LOG_API(i_isolate, class_name, function_name);                             \
-    if (length < 0) length = strLength(data);                                  \
-    i::Handle<i::String> handle_result =                                       \
-        NewString(                                                             \
-            i_isolate->factory(), type, i::Vector<const Char>(data, length))   \
-            .ToHandleChecked();                                                \
-    result = Utils::ToLocal(handle_result);                                    \
-  }
-
 Local<String> String::NewFromUtf8Literal(Isolate* isolate,
                                          const char* literal,
                                          NewStringType type,

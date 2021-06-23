@@ -576,3 +576,23 @@ THREADED_TEST(StringConcatInternal) {
     // CHECK_EQ(68, value->Int32Value(env.local()).FromJust());
   }
 }
+
+THREADED_TEST(TwoByteStringToOneByteString) {
+  // NOTE: See String::WriteOneByte() to check the purpose of this TC
+  // Related to: test/parallel/test-buffer-write.js
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
+  Context::Scope context_scope(context);
+
+  uint16_t twoByteString[9] = {'f', 'o', 'o', 0, 0, 0, 0, 0, 0};
+
+  Local<String> s =
+      String::NewFromTwoByte(isolate, twoByteString).ToLocalChecked();
+
+  char buf[9];
+  int len = s->WriteOneByte(isolate, reinterpret_cast<uint8_t*>(buf));
+  CHECK_EQ(len, 3);
+  CHECK_EQ(0, strncmp("foo", buf, 3));
+}
