@@ -46,6 +46,19 @@ std::string getPrettyFunctionName(const std::string fullname);
 std::string createCodeLocation(const char* functionName,
                                const char* filename,
                                const int line);
+inline const char* strBool(bool value) {
+  return value ? "True" : "False";
+}
+
+class IndentCounter {
+ public:
+  IndentCounter(std::string id);
+  ~IndentCounter();
+  static std::string getString(std::string id = "");
+
+ private:
+  std::string id_;
+};
 
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
