@@ -384,7 +384,10 @@ MaybeLocal<String> String::NewFromOneByte(Isolate* isolate,
   } else if (length > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
-    if (length < 0) length = strLength(data);
+    if (length < 0) {
+      length = strLength(data);
+    }
+
     StringRef* esSource = StringRef::createFromLatin1(data, length);
     result = Utils::NewLocal<String>(isolate, esSource);
   }
