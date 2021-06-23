@@ -278,7 +278,49 @@ void PerIsolatePlatformData::PostNonNestableDelayedTask(
 }
 
 PerIsolatePlatformData::~PerIsolatePlatformData() {
+/*
+  @note @lwnode
+
+  Regarding blocking CHECK(!flush_tasks_)
+
+  Node.js termination flow has been observed so far is the following paths:
+
+  path i. Normal termination roughly consists two steps:
+    - a. Destructing a NodeMainInstance
+    - b. TearDownOncePerProcess
+
+  - During i-a, PerIsolatePlatformData::Shutdown cleans tasks V8 may request,
+    and makes `flush_tasks_ = nullptr`. After this step, shared_ptr<PerIsolate
+    PlatformData> is referenced only by NodePlatform.
+
+  - During i-b, NodePlatform::Shutdown do 'per_isolate_.clear()'. The instance
+    of PerIsolatePlatformData, which is contained in `per_isolate_`, is
+    referenced only by NodePlatform after i-a. Thus, this destructor is
+    invoked. The following `CHECK(!flush_tasks_);` is passed since it's nulled
+    in i-a.
+
+  path ii. Termination via callling Exit (e.g JS exception)
+
+    DefaultProcessExitHandler is invoked and it calls NodePlatform::Shutdown and
+    std::exit(code). In contrast to the normal path, there is no step like i-a.
+    Thus,`flush_tasks_ = nullptr` isn't made.
+
+    When NodePlatform::Shutdown do 'per_isolate_.clear()', there's a difference
+    behavior related to JS engine.
+
+  - a. With V8, the instance of PerIsolatePlatformData is shared with V8 tasks
+       (e.g DelayedTask) at the moment.
+
+  - b. With Escargot, the instance of PerIsolatePlatformData is shared only with
+       NodePlatform. It's because Escargot doesn't rely on v8::TaskRunner and
+       v8::Task v8-platform concept.
+
+  In conclusion, because of ii-b, when this destructor is invoked, the following
+  assertion fails. That's why the assertion is blocked.
+*/
+#ifndef LWNODE
   CHECK(!flush_tasks_);
+#endif
 }
 
 void PerIsolatePlatformData::AddShutdownCallback(void (*callback)(void*),

@@ -209,7 +209,11 @@ class PerProcessOptions : public Options {
   std::string title;
   std::string trace_event_categories;
   std::string trace_event_file_pattern = "node_trace.${rotation}.log";
+#ifdef LWNODE
+  int64_t v8_thread_pool_size = 0;
+#else
   int64_t v8_thread_pool_size = 4;
+#endif
   bool zero_fill_all_buffers = false;
   bool debug_arraybuffer_allocations = false;
   std::string disable_proto;
