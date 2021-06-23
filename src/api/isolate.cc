@@ -24,6 +24,8 @@ namespace internal {
 
 // 'exception_' is of type ValueWrap*. Ref: api-exception.cc
 void Isolate::SetTerminationOnExternalTryCatch() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "try_catch_handler_: %p", try_catch_handler_);
+
   if (try_catch_handler_ == nullptr) {
     return;
   }
@@ -39,6 +41,7 @@ bool Isolate::IsExecutionTerminating() {
 }
 
 void Isolate::ScheduleThrow(Escargot::ValueRef* result) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   // LWNODE_UNIMPLEMENT;
   // TODO: There are two types of exception handling.
   // 1. An exception raised when it should not. Usually this happens
@@ -55,15 +58,18 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* result) {
 }
 
 void Isolate::RegisterTryCatchHandler(v8::TryCatch* that) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%p", that);
   try_catch_handler_ = that;
 }
 
 void Isolate::UnregisterTryCatchHandler(v8::TryCatch* that) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%p -> %p", that, try_catch_handler_->next_);
   LWNODE_DCHECK(try_catch_handler_ == that);
   try_catch_handler_ = try_catch_handler_->next_;
 }
 
 void Isolate::CancelScheduledExceptionFromTryCatch(v8::TryCatch* that) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%p", that);
   LWNODE_DCHECK(has_scheduled_exception());
   if (scheduled_exception() ==
       EscargotShim::ExceptionHelper::unwrapException(that->exception_)) {
@@ -79,14 +85,17 @@ v8::TryCatch* Isolate::try_catch_handler() {
 }
 
 Escargot::ValueRef* Isolate::scheduled_exception() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   return scheduled_exception_;
 }
 
 bool Isolate::has_scheduled_exception() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   return !isHole(scheduled_exception_);
 }
 
 void Isolate::clear_scheduled_exception() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   scheduled_exception_ = hole()->value();
 }
 
@@ -325,6 +334,9 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
 void IsolateWrap::setCurrentException(
     ValueRef* exceptionValue,
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
+  LWNODE_DLOG_INFO("exceptionValue.isUndefined(): %s",
+                   strBool(exceptionValue->isUndefined()));
+
   exceptionDetails_.value = exceptionValue;
 
   for (size_t i = 0; i < stackTraceData.size(); i++) {
