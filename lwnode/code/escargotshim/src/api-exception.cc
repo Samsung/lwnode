@@ -34,11 +34,13 @@ v8::TryCatch::TryCatch(v8::Isolate* isolate)
       capture_message_(true),
       rethrow_(false),
       has_terminated_(false) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "this: %p, next: %p", this, next_);
   ResetInternal();
   isolate_->RegisterTryCatchHandler(this);
 }
 
 v8::TryCatch::~TryCatch() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   if (rethrow_) {
     v8::Isolate* v8Isolate = IsolateWrap::toV8(isolate_);
     v8::HandleScope scope(v8Isolate);
@@ -80,8 +82,12 @@ void v8::TryCatch::operator delete[](void*, size_t) {
 }
 
 bool v8::TryCatch::HasCaught() const {
-  return !IsolateWrap::fromV8(isolate_)->isHole(
-      ExceptionHelper::unwrapException(exception_));
+  bool hasCaught = (IsolateWrap::fromV8(isolate_)->isHole(
+                        ExceptionHelper::unwrapException(exception_)) == false);
+
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "hasCaught: %s", strBool(hasCaught));
+
+  return hasCaught;
 }
 
 bool v8::TryCatch::CanContinue() const {
@@ -93,6 +99,7 @@ bool v8::TryCatch::HasTerminated() const {
 }
 
 v8::Local<v8::Value> v8::TryCatch::ReThrow() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   if (!HasCaught()) {
     return v8::Local<v8::Value>();
   }
@@ -101,6 +108,7 @@ v8::Local<v8::Value> v8::TryCatch::ReThrow() {
 }
 
 v8::Local<Value> v8::TryCatch::Exception() const {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   if (HasCaught()) {
     return v8::Utils::NewLocal<Value>(
         IsolateWrap::toV8(isolate_),
@@ -124,25 +132,30 @@ v8::Local<v8::Message> v8::TryCatch::Message() const {
 }
 
 void v8::TryCatch::Reset() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   rethrow_ = false;
   isolate_->CancelScheduledExceptionFromTryCatch(this);
   ResetInternal();
 }
 
 void v8::TryCatch::ResetInternal() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   exception_ = IsolateWrap::fromV8(isolate_)->hole();
   message_obj_ = IsolateWrap::fromV8(isolate_)->hole()->value();
 }
 
 void v8::TryCatch::SetVerbose(bool value) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%s", strBool(value));
   is_verbose_ = value;
 }
 
 bool v8::TryCatch::IsVerbose() const {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   return is_verbose_;
 }
 
 void v8::TryCatch::SetCaptureMessage(bool value) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%s", strBool(value));
   capture_message_ = value;
 }
 
