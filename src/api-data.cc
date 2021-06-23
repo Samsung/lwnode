@@ -1816,7 +1816,7 @@ static void copyUtf8Sequences(
 
 int String::WriteUtf8(Isolate* v8_isolate,
                       char* buffer,
-                      int capacity,
+                      int capacity,  // nbytes
                       int* nchars_ref,
                       int options) const {
   int nchars = 0;
@@ -1859,18 +1859,64 @@ int String::WriteOneByte(Isolate* isolate,
   auto esString = CVAL(this)->value()->asString();
   auto bufferData = esString->stringBufferAccessData();
 
-  if (!buffer || length == 0 ||
-      static_cast<size_t>(start) > bufferData.length) {
+  if (!buffer || length == 0) {
     return 0;
   }
 
-  int bufferCapacity = length >= 0 ? length : v8::String::kMaxLength;
+  int bufferCapacity = length > 0 ? length : v8::String::kMaxLength;
+  int nchars = 0;
+  if (!esString->has8BitContent()) {
+    // NOTE
+    // The esString in this v8::String can contain a string encoded in UTF16
+    // even though all characters can be encoded in one-byte.
+    // This happens when:
+    // 1. The source JS file is encoded in UTF16
+    //    (due to non-one byte characters), and
+    // 2. The esString represents a string literal in the source JS file.
+    //
+    // In this case, all characters in the esString are one-byte-representable,
+    // but stored in uint16. V8 seems to use a one-byte string
+    // if the string can be represented in one byte characters.
+    // Hence, node.js assumes that when WriteOneByte() is called,
+    // the string is a one-byte string.
+    // To workaround, when this inconsistency happens, we check
+    // whether the string is one-byte representable, and we write
+    // back in one-byte string.
+    StringRef* toOneByteStr = StringRef::createFromUTF8(
+        reinterpret_cast<const char*>(bufferData.buffer),
+        bufferData.length * 2);
+    auto oneByteBufferData = toOneByteStr->stringBufferAccessData();
 
-  int nchars =
-      std::min(bufferCapacity, static_cast<int>(bufferData.length) - start);
-  memcpy(buffer,
-         reinterpret_cast<const uint8_t*>(bufferData.buffer) + start,
-         nchars);
+    if (static_cast<size_t>(start * 2) > oneByteBufferData.length) {
+      return 0;
+    }
+
+    if (!toOneByteStr->has8BitContent()) {
+      LWNODE_DLOG_WARN(
+          "Incorrectly converting a UTF16 string to a 1 byte string");
+    }
+
+    size_t j = 0;
+    for (size_t i = start * 2; i < oneByteBufferData.length; i += 2) {
+      if (j > static_cast<size_t>(bufferCapacity)) {
+        break;
+      }
+
+      buffer[j] = ((uint8_t*)(oneByteBufferData.buffer))[i];
+      j++;
+    }
+    nchars = j;
+  } else {
+    if (static_cast<size_t>(start) > bufferData.length) {
+      return 0;
+    }
+
+    nchars = std::min(static_cast<size_t>(bufferCapacity),
+                      bufferData.length - start);
+    memcpy(buffer,
+           reinterpret_cast<const uint8_t*>(bufferData.buffer) + start,
+           nchars);
+  }
 
   bool writeNull = !(options & String::NO_NULL_TERMINATION);
   if (writeNull && (nchars < bufferCapacity)) {
