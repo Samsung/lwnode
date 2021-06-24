@@ -41,6 +41,10 @@ class Isolate : public gc {
   bool has_scheduled_exception();
   void clear_scheduled_exception();
 
+  Escargot::ValueRef* pending_exception();
+  bool has_pending_exception();
+  void clear_pending_exception();
+
   virtual EscargotShim::ValueWrap* hole() = 0;
   virtual bool isHole(const EscargotShim::ValueWrap* wrap) = 0;
   virtual bool isHole(const Escargot::ValueRef* ref) = 0;
@@ -48,8 +52,11 @@ class Isolate : public gc {
  protected:
   Escargot::ValueRef* scheduled_exception_{nullptr};
 
+  void set_pending_exception(Escargot::ValueRef* exception_obj);
+
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
+  Escargot::ValueRef* pending_exception_{nullptr};
 };
 }  // namespace internal
 }  // namespace v8
@@ -180,7 +187,7 @@ class IsolateWrap final : public v8::internal::Isolate {
     bool isEval{false};
   };
 
-  struct ExceptionDetails : public gc {
+  struct ExceptionData : public gc {
     ValueRef* value{nullptr};
     GCVector<StackTraceData*> stackTraces;
 
@@ -188,11 +195,11 @@ class IsolateWrap final : public v8::internal::Isolate {
   };
 
   GCVector<StackTraceData*>* stackTrace() {
-    return &exceptionDetails_.stackTraces;
+    return &exceptionData_.stackTraces;
   }
 
-  void setCurrentException(
-      ValueRef* exceptionValue,
+  void ReportPendingMessages(
+      ValueRef* exception,
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
 
   void onFatalError(const char* location, const char* message);
@@ -236,7 +243,7 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
 
-  ExceptionDetails exceptionDetails_;
+  ExceptionData exceptionData_;
 };
 
 }  // namespace EscargotShim

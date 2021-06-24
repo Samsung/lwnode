@@ -99,6 +99,26 @@ void Isolate::clear_scheduled_exception() {
   scheduled_exception_ = hole()->value();
 }
 
+Escargot::ValueRef* Isolate::pending_exception() {
+  LWNODE_CHECK(has_pending_exception());
+  return pending_exception_;
+}
+
+void Isolate::set_pending_exception(Escargot::ValueRef* exception_obj) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  LWNODE_CHECK_NOT_NULL(exception_obj);
+  pending_exception_ = exception_obj;
+}
+
+void Isolate::clear_pending_exception() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  pending_exception_ = nullptr;
+}
+
+bool Isolate::has_pending_exception() {
+  return pending_exception_ != nullptr;
+}
+
 }  // namespace internal
 }  // namespace v8
 
@@ -331,21 +351,20 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   return newSymbol;
 }
 
-void IsolateWrap::setCurrentException(
-    ValueRef* exceptionValue,
+void IsolateWrap::ReportPendingMessages(
+    ValueRef* exception,
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
-  LWNODE_DLOG_INFO("exceptionValue.isUndefined(): %s",
-                   strBool(exceptionValue->isUndefined()));
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
 
-  exceptionDetails_.value = exceptionValue;
-
+  exceptionData_.value = exception;
   for (size_t i = 0; i < stackTraceData.size(); i++) {
-    exceptionDetails_.stackTraces.push_back(
-        new StackTraceData(stackTraceData[i]));
+    exceptionData_.stackTraces.push_back(new StackTraceData(stackTraceData[i]));
   }
 
   // TODO: remove this and use handling trycatch chains
-  ScheduleThrow(exceptionValue);
+  ScheduleThrow(exception);
+
+  set_pending_exception(exception);
 }
 
 ValueWrap** IsolateWrap::getGlobal(const int index) {
