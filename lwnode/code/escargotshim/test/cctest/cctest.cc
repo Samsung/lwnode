@@ -129,6 +129,16 @@ int main(int argc, char* argv[]) {
 #if defined(CCTEST_ENGINE_ESCARGOT)
     } else if (startsWith(arg, std::string("--trace-call"))) {
       EscargotShim::Flags::add(EscargotShim::FlagType::TraceCall);
+
+      std::string str(arg);
+      std::string::size_type pos = str.find_first_of('=');
+      if (std::string::npos != pos) {
+        std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+          EscargotShim::Flags::setTraceCallId(token);
+        }
+      }
     } else if (startsWith(arg, std::string("--trace-gc"))) {
       EscargotShim::Flags::add(EscargotShim::FlagType::TraceGC);
 #endif
