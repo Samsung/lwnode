@@ -459,7 +459,7 @@ class CompactProgressIndicator(ProgressIndicator):
       'mins': int(elapsed) / 60,
       'secs': int(elapsed) % 60
     }
-    status = self.Truncate(status, 78)
+    status = self.Truncate(status, 178)
     self.last_status_length = len(status)
     print(status, end='')
     sys.stdout.flush()
@@ -1536,7 +1536,8 @@ SKIP_LIST_FILENAME="skip_list.gen.txt"
 def OuputTestResult(progress, skip_count, options):
   total_count = skip_count + progress.total
   failed_count = len(progress.failed)
-  succeed_count = progress.total - failed_count
+  left_count = progress.remaining
+  succeed_count = progress.total - failed_count - left_count
 
   print()
   print("Total: %5d" % total_count)
@@ -1549,6 +1550,8 @@ def OuputTestResult(progress, skip_count, options):
   )
   print("Fail:  %5d" % failed_count)
   print("Skip:  %5d" % skip_count)
+  if left_count > 0 :
+    print("Left:  %5d" % left_count)
 
   if failed_count != 0:
     print()
