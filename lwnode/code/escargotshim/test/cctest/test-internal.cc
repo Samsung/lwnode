@@ -84,111 +84,125 @@ struct HandleScope : public gc {
 };
 
 struct Object : public gc {
-  GCVector<HandleScope*, true> handleScopes_;
+  GCVector<HandleScope*, true> handleScopes;
 };
 
 // --- Test Start ---
 
 static GCTracer g_tracer;
+#define GC_TRACE_RESET() g_tracer.reset()
+#define GC_TRACE_ADD_POINTER(value) g_tracer.add(value, #value)
+#define GC_TRACE_GET_ALIVE_COUNT() g_tracer.getAllocatedCount()
+#define GC_TRACE_PRINT_STATE()                                                 \
+  if (EscargotShim::Flags::isTraceGCEnabled()) {                               \
+    g_tracer.printState();                                                     \
+  }
 
 TEST(internal_GCObject1) {
-  g_tracer.reset();
+  GC_TRACE_RESET();
 
   []() {
     Object* object = new Object();
-    g_tracer.add(object);
+    GC_TRACE_ADD_POINTER(object);
   }();
 
   CcTest::CollectGarbage();
 
-  CHECK_EQ(g_tracer.getAllocatedCount(), 0);
+  CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 0);
 }
 
 TEST(internal_GCObject2) {
-  g_tracer.reset();
+  GC_TRACE_RESET();
 
   []() {
     auto scope = new HandleScope();
+    auto basic1 = new ObjectBasic();
+    auto basic2 = new ObjectBasic();
 
-    scope->add(new ObjectBasic());
-    scope->add(new ObjectBasic());
+    scope->add(basic1);
+    scope->add(basic2);
 
-    g_tracer.add(scope->get(0));
-    g_tracer.add(scope->get(1));
+    GC_TRACE_ADD_POINTER(basic1);
+    GC_TRACE_ADD_POINTER(basic2);
 
-    CHECK_EQ(g_tracer.getAllocatedCount(), 2);
+    CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 2);
   }();
 
   CcTest::CollectGarbage();
-  CHECK_EQ(g_tracer.getAllocatedCount(), 0);
+
+  CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 0);
 }
 
 TEST(internal_GCObject3) {
-  g_tracer.reset();
+  GC_TRACE_RESET();
 
   []() {
-    auto object = new Object();
+    auto object1 = new Object();
+    auto object2 = new ObjectBasic();
+    auto handleScope1 = new HandleScope();
+    auto handleScope2 = new HandleScope();
 
-    object->handleScopes_.push_back(new HandleScope());
-    object->handleScopes_.push_back(new HandleScope());
+    GC_TRACE_ADD_POINTER(handleScope2);
+    GC_TRACE_ADD_POINTER(object2);
+    CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 2);
 
-    object->handleScopes_.back()->add(new ObjectBasic());
+    object1->handleScopes.push_back(handleScope1);
+    object1->handleScopes.push_back(handleScope2);
+    handleScope2->add(object2);
 
-    g_tracer.add(object->handleScopes_.back());
-    g_tracer.add(object->handleScopes_.back()->get(0));
-
-    CHECK_EQ(g_tracer.getAllocatedCount(), 2);
-
-    if (EscargotShim::Flags::isTraceGCEnabled()) {
-      g_tracer.printState();
-    }
+    GC_TRACE_PRINT_STATE();
   }();
 
   CcTest::CollectGarbage();
 
-  if (EscargotShim::Flags::isTraceGCEnabled()) {
-    g_tracer.printState();
-  }
+  GC_TRACE_PRINT_STATE();
 
-  CHECK_LE(g_tracer.getAllocatedCount(), 1);
+  // object1 isn't hold, everything can be released
+  // but it's not guarantee that gc runs the deallocation for all.
+  EXPECT_LE(g_tracer.getAllocatedCount(), 1);
 }
 
 TEST(internal_GCObject4) {
-  g_tracer.reset();
+  GC_TRACE_RESET();
 
   Escargot::PersistentRefHolder<Object> holder;
 
   [&holder]() {
-    auto object = new Object();
-    holder.reset(object);
+    auto object1 = new Object();
+    auto object2 = new ObjectBasic();
+    auto handleScope1 = new HandleScope();
+    auto handleScope2 = new HandleScope();
 
-    object->handleScopes_.push_back(new HandleScope());
-    object->handleScopes_.push_back(new HandleScope());
+    GC_TRACE_ADD_POINTER(object1);
+    GC_TRACE_ADD_POINTER(object2);
+    GC_TRACE_ADD_POINTER(handleScope2);
 
-    object->handleScopes_.back()->add(new ObjectBasic());
+    EXPECT_EQ(GC_TRACE_GET_ALIVE_COUNT(), 3);
 
-    g_tracer.add(object, "object");
-    g_tracer.add(object->handleScopes_.back(), "scope");
-    g_tracer.add(object->handleScopes_.back()->get(0), "baseobject");
+    holder.reset(object1);
 
-    CHECK_EQ(g_tracer.getAllocatedCount(), 3);
+    object1->handleScopes.push_back(handleScope1);
+    object1->handleScopes.push_back(handleScope2);
+    handleScope2->add(object2);
 
-    object->handleScopes_.pop_back();
+    EXPECT_EQ(object1->handleScopes.back(), handleScope2);
+
+    object1->handleScopes.pop_back();
   }();
 
   CcTest::CollectGarbage();
 
-  if (EscargotShim::Flags::isTraceGCEnabled()) {
-    g_tracer.printState();
-  }
+  GC_TRACE_PRINT_STATE();
 
-  CHECK_EQ(g_tracer.getAllocatedCount(), 1);
+  ASSERT_EQ(GC_TRACE_GET_ALIVE_COUNT(), 1);
 
   holder.release();
 
   CcTest::CollectGarbage();
 
-  CHECK_LE(g_tracer.getAllocatedCount(), 1);
+  // Although holder's released, it's not guarantee that gc runs the
+  // but it's not guarantee that gc runs the deallocation for all.
+  EXPECT_LE(GC_TRACE_GET_ALIVE_COUNT(), 1);
 }
 
 TEST(internal_GCContainer) {
