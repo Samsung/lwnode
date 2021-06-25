@@ -43,7 +43,11 @@ class Isolate : public gc {
 
   Escargot::ValueRef* pending_exception();
   bool has_pending_exception();
-  void clear_pending_exception();
+
+  Escargot::ValueRef* pending_message_obj();
+
+  bool PropagatePendingExceptionToExternalTryCatch();
+  void ReportPendingMessages();
 
   virtual EscargotShim::ValueWrap* hole() = 0;
   virtual bool isHole(const EscargotShim::ValueWrap* wrap) = 0;
@@ -53,10 +57,17 @@ class Isolate : public gc {
   Escargot::ValueRef* scheduled_exception_{nullptr};
 
   void set_pending_exception(Escargot::ValueRef* exception_obj);
+  void set_pending_message_obj(Escargot::ValueRef* message_obj);
+  void clear_pending_exception();
+  void clear_pending_message_obj();
+
+  v8::TryCatch* getExternalTryCatchOnTop();
+  bool hasExternalTryCatch();
 
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
   Escargot::ValueRef* pending_exception_{nullptr};
+  Escargot::ValueRef* pending_message_obj_{nullptr};
 };
 }  // namespace internal
 }  // namespace v8
@@ -198,9 +209,10 @@ class IsolateWrap final : public v8::internal::Isolate {
     return &exceptionData_.stackTraces;
   }
 
-  void ReportPendingMessages(
+  void SetPendingExceptionAndMessage(
       ValueRef* exception,
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
+  void ClearPendingExceptionAndMessage();
 
   void onFatalError(const char* location, const char* message);
 
@@ -222,8 +234,6 @@ class IsolateWrap final : public v8::internal::Isolate {
   // V8 CreateParams
   v8::ArrayBuffer::Allocator* array_buffer_allocator_ = nullptr;
   std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
-  v8::TryCatch* try_catch_handler_ = nullptr;
-  Escargot::ValueRef* last_error_result = nullptr;
 
   VMInstanceRef* vmInstance_ = nullptr;
 

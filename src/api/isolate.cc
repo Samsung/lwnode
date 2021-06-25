@@ -119,6 +119,67 @@ bool Isolate::has_pending_exception() {
   return pending_exception_ != nullptr;
 }
 
+void Isolate::set_pending_message_obj(Escargot::ValueRef* message_obj) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  pending_message_obj_ = message_obj;
+}
+
+void Isolate::clear_pending_message_obj() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  pending_message_obj_ = nullptr;
+}
+
+v8::TryCatch* Isolate::getExternalTryCatchOnTop() {
+  return try_catch_handler();
+}
+
+bool Isolate::hasExternalTryCatch() {
+  return (try_catch_handler() != nullptr);
+}
+
+bool Isolate::PropagatePendingExceptionToExternalTryCatch() {
+  // Propagate the pending exception only when any try-catch exists.
+  // If not exists, propagation pregress is done with no action.
+  if (hasExternalTryCatch()) {
+    v8::TryCatch* handler = getExternalTryCatchOnTop();
+    handler->can_continue_ = true;
+    handler->has_terminated_ = false;
+
+    LWNODE_CHECK_NULL(handler->exception_);
+    LWNODE_CHECK_NULL(handler->message_obj_);
+
+    // gets the status changed from `pending` to `done' through
+    // setting them to an external v8::TryCatch handler.
+    handler->exception_ = reinterpret_cast<void*>(pending_exception_);
+    handler->message_obj_ = reinterpret_cast<void*>(pending_message_obj_);
+  }
+
+  return true;
+}
+
+void Isolate::ReportPendingMessages() {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+
+  PropagatePendingExceptionToExternalTryCatch();
+
+  bool should_report_exception = false;
+
+  if (hasExternalTryCatch()) {
+    // Only report the exception if the external handler is verbose.
+    should_report_exception = getExternalTryCatchOnTop()->is_verbose_;
+  }
+
+  // Clear the pending message object early to avoid endless recursion.
+  auto message_obj = pending_message_obj_;
+  clear_pending_message_obj();
+
+  // Actually report the message to all message handlers.
+  if (message_obj && should_report_exception) {
+    LWNODE_UNIMPLEMENT;
+    // TODO: report message
+  }
+}
+
 }  // namespace internal
 }  // namespace v8
 
@@ -351,20 +412,31 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   return newSymbol;
 }
 
-void IsolateWrap::ReportPendingMessages(
+static ValueRef* createErrorMessageObject(
+    const IsolateWrap::ExceptionData& exceptionData) {
+  LWNODE_UNIMPLEMENT;
+  return ValueRef::createUndefined();
+}
+
+void IsolateWrap::ClearPendingExceptionAndMessage() {
+  clear_pending_exception();
+  clear_pending_message_obj();
+}
+
+void IsolateWrap::SetPendingExceptionAndMessage(
     ValueRef* exception,
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
+  // TODO: remove this and use handling trycatch chains
+  ScheduleThrow(exception);
   exceptionData_.value = exception;
   for (size_t i = 0; i < stackTraceData.size(); i++) {
     exceptionData_.stackTraces.push_back(new StackTraceData(stackTraceData[i]));
   }
 
-  // TODO: remove this and use handling trycatch chains
-  ScheduleThrow(exception);
-
   set_pending_exception(exception);
+  set_pending_message_obj(nullptr);  // TODO: set_pending_message_obj
 }
 
 ValueWrap** IsolateWrap::getGlobal(const int index) {

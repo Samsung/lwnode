@@ -59,8 +59,8 @@
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \
   if (!eval_result.isSuccessful()) {                                           \
     __DLOG_EVAL_EXCEPTION(eval_result);                                        \
-    lwIsolate->ReportPendingMessages(eval_result.error.get(),                  \
-                                     eval_result.stackTraceData);              \
+    lwIsolate->SetPendingExceptionAndMessage(eval_result.error.get(),          \
+                                             eval_result.stackTraceData);      \
     return bailout_value;                                                      \
   }
 
