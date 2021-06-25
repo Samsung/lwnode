@@ -194,7 +194,9 @@ TEST(internal_GCObject4) {
 
   GC_TRACE_PRINT_STATE();
 
-  ASSERT_EQ(GC_TRACE_GET_ALIVE_COUNT(), 1);
+  // the count may be expected as 1, but it's not guarantee that
+  // gc runs the deallocation for all.
+  ASSERT_LE(GC_TRACE_GET_ALIVE_COUNT(), 2);
 
   holder.release();
 
