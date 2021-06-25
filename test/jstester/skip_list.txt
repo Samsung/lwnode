@@ -1075,6 +1075,7 @@ test/parallel/test-macos-app-sandbox.js
 test/parallel/test-macos-signed-deps.js
 test/parallel/test-math-random.js
 test/parallel/test-memory-usage.js
+test/parallel/test-module-circular-dependency-warning.js
 test/parallel/test-module-circular-symlinks.js
 test/parallel/test-module-create-require.js
 test/parallel/test-module-loading-error.js
