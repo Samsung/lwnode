@@ -21,7 +21,7 @@
 
 std::string getPrettyFunctionName(const std::string fullname) {
   std::smatch match;
-  const std::regex re(R"(([\w\:]+)\()");
+  const std::regex re(R"(([\w\:~]+)\()");
 
   if (std::regex_search(fullname, match, re) && match.size() > 1) {
     return match.str(1);
