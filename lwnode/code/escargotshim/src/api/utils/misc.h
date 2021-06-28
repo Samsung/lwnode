@@ -79,19 +79,29 @@
 
 #define FIRST_ARG(N, ...) N
 #define LEFT_ARGS(N, ...) , ##__VA_ARGS__
+#define TRACE_ID(id) COLOR_DIM "TRACE (" id ")"
+#define COUNTER_FMT "%s"
+#define COUNTER_ARG(id) IndentCounter::getString(id).c_str()
 
 #define LWNODE_CALL_TRACE_LOG(id, prefix, ...)                                 \
   if (EscargotShim::Flags::isTraceCallEnabled(id)) {                           \
-    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix "%s" TRACE_FMT                    \
+    LWNODE_DLOG_RAW(COLOR_DIM "TRACE" prefix COUNTER_FMT TRACE_FMT             \
                               " " COLOR_RESET FIRST_ARG(__VA_ARGS__)           \
                                   COLOR_RESET,                                 \
-                    IndentCounter::getString(id).c_str(),                      \
+                    COUNTER_ARG(id),                                           \
                     TRACE_ARGS2 LEFT_ARGS(__VA_ARGS__));                       \
   }
 
 #define LWNODE_CALL_TRACE_ID(id, ...)                                          \
   IndentCounter __counter(#id);                                                \
   LWNODE_CALL_TRACE_LOG(#id, " (" #id ")", ##__VA_ARGS__);
+
+#define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
+  if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
+    LWNODE_DLOG_RAW(TRACE_ID(#id) " " COUNTER_FMT COLOR_RESET FIRST_ARG(       \
+                        __VA_ARGS__) COLOR_RESET,                              \
+                    COUNTER_ARG(#id) LEFT_ARGS(__VA_ARGS__));                  \
+  }
 
 #define LWNODE_CALL_TRACE(msg, ...)                                            \
   LWNODE_CALL_TRACE_LOG("1", "", msg, ##__VA_ARGS__);
