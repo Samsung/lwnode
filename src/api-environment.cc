@@ -1871,6 +1871,7 @@ v8::Local<v8::Context> Isolate::GetIncumbentContext() {
 }
 
 v8::Local<Value> Isolate::ThrowException(v8::Local<v8::Value> value) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esValue = CVAL(*value)->value();
   lwIsolate->ScheduleThrow(esValue);
@@ -2464,6 +2465,8 @@ String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
   API_ENTER_NO_EXCEPTION(isolate);
   auto lwContext = lwIsolate->GetCurrentContext();
+
+  TryCatch try_catch(isolate);
 
   auto r = Evaluator::execute(
       lwContext->get(),

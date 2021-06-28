@@ -61,6 +61,7 @@
     __DLOG_EVAL_EXCEPTION(eval_result);                                        \
     lwIsolate->SetPendingExceptionAndMessage(eval_result.error.get(),          \
                                              eval_result.stackTraceData);      \
+    lwIsolate->ReportPendingMessages();                                        \
     return bailout_value;                                                      \
   }
 
