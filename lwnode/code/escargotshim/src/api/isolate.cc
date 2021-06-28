@@ -16,6 +16,7 @@
 
 #include "isolate.h"
 #include "es-helper.h"
+#include "extra-data.h"
 #include "utils/gc.h"
 #include "utils/misc.h"
 
@@ -31,8 +32,7 @@ void Isolate::SetTerminationOnExternalTryCatch() {
   }
   try_catch_handler_->can_continue_ = false;
   try_catch_handler_->has_terminated_ = true;
-  try_catch_handler_->exception_ =
-      EscargotShim::ExceptionHelper::wrapException(scheduled_exception_);
+  try_catch_handler_->exception_ = nullptr;
 }
 
 bool Isolate::IsExecutionTerminating() {
@@ -40,9 +40,8 @@ bool Isolate::IsExecutionTerminating() {
   return false;
 }
 
-void Isolate::ScheduleThrow(Escargot::ValueRef* result) {
+void Isolate::ScheduleThrow(Escargot::ValueRef* value) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
-  // LWNODE_UNIMPLEMENT;
   // TODO: There are two types of exception handling.
   // 1. An exception raised when it should not. Usually this happens
   // when we are using Escargot API, and caused by incorrect development
@@ -51,10 +50,11 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* result) {
   // it is the external developer's responsibility to handle an exception
   // using v8:tryCatch, etc. In this case, we should not do any exception
   // handling.
-  // TODO: Fix API_HANDLE_EXCEPTION() accordingly
-  scheduled_exception_ = result;
 
-  SetTerminationOnExternalTryCatch();
+  // Note: No stack data exist
+  GCManagedVector<Escargot::Evaluator::StackTraceData> stackTraceData;
+  SetPendingExceptionAndMessage(value, stackTraceData);
+  PropagatePendingExceptionToExternalTryCatch();
 }
 
 void Isolate::RegisterTryCatchHandler(v8::TryCatch* that) {
@@ -70,14 +70,7 @@ void Isolate::UnregisterTryCatchHandler(v8::TryCatch* that) {
 
 void Isolate::CancelScheduledExceptionFromTryCatch(v8::TryCatch* that) {
   LWNODE_CALL_TRACE_ID(TRYCATCH, "%p", that);
-  LWNODE_DCHECK(has_scheduled_exception());
-  if (scheduled_exception() ==
-      EscargotShim::ExceptionHelper::unwrapException(that->exception_)) {
-    clear_scheduled_exception();
-  } else {
-    // TODO
-    LWNODE_RETURN_VOID;
-  }
+  // Note: we have no scheduled_exception, but have pending_exception only.
 }
 
 v8::TryCatch* Isolate::try_catch_handler() {
@@ -162,10 +155,9 @@ void Isolate::ReportPendingMessages() {
 
   PropagatePendingExceptionToExternalTryCatch();
 
-  bool should_report_exception = false;
+  bool should_report_exception = true;
 
   if (hasExternalTryCatch()) {
-    // Only report the exception if the external handler is verbose.
     should_report_exception = getExternalTryCatchOnTop()->is_verbose_;
   }
 
@@ -428,15 +420,17 @@ void IsolateWrap::SetPendingExceptionAndMessage(
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
-  // TODO: remove this and use handling trycatch chains
-  ScheduleThrow(exception);
-  exceptionData_.value = exception;
+  exceptionData_.reset();
+  exceptionData_.exception = exception;
   for (size_t i = 0; i < stackTraceData.size(); i++) {
     exceptionData_.stackTraces.push_back(new StackTraceData(stackTraceData[i]));
   }
 
   set_pending_exception(exception);
-  set_pending_message_obj(nullptr);  // TODO: set_pending_message_obj
+  // @note
+  // pending_message_obj: v8::Message isn't created. Instead v8::Message
+  // uses `exceptionData_.stackTraces` directly to make a result requested.
+  set_pending_message_obj(nullptr);
 }
 
 ValueWrap** IsolateWrap::getGlobal(const int index) {

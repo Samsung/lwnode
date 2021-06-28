@@ -30,7 +30,7 @@ class Isolate : public gc {
   void RegisterTryCatchHandler(v8::TryCatch* that);
   void UnregisterTryCatchHandler(v8::TryCatch* that);
   void SetTerminationOnExternalTryCatch();
-  void ScheduleThrow(Escargot::ValueRef* result);
+  void ScheduleThrow(Escargot::ValueRef* value);
   bool IsExecutionTerminating();
   void CancelScheduledExceptionFromTryCatch(v8::TryCatch* that);
   void ThrowException(Escargot::ValueRef* value);
@@ -46,6 +46,9 @@ class Isolate : public gc {
 
   Escargot::ValueRef* pending_message_obj();
 
+  virtual void SetPendingExceptionAndMessage(
+      Escargot::ValueRef* exception,
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) = 0;
   bool PropagatePendingExceptionToExternalTryCatch();
   void ReportPendingMessages();
 
@@ -199,10 +202,13 @@ class IsolateWrap final : public v8::internal::Isolate {
   };
 
   struct ExceptionData : public gc {
-    ValueRef* value{nullptr};
+    ValueRef* exception{nullptr};
     GCVector<StackTraceData*> stackTraces;
 
-    bool hasErrorValue() { return value == nullptr; }
+    void reset() {
+      exception = nullptr;
+      stackTraces.clear();
+    }
   };
 
   GCVector<StackTraceData*>* stackTrace() {
@@ -211,7 +217,8 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   void SetPendingExceptionAndMessage(
       ValueRef* exception,
-      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData)
+      override;
   void ClearPendingExceptionAndMessage();
 
   void onFatalError(const char* location, const char* message);

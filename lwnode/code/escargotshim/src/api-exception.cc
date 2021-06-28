@@ -25,7 +25,13 @@ using namespace EscargotShim;
 namespace v8 {
 // --- E x c e p t i o n s ---
 
-// 'exception_' is of type ValueWrap*.
+thread_local int s_depth = 0;
+
+// 'v8::TryCatch::exception_' is of type ValueRef*.
+static ValueRef* fromV8Exception(void* exception) {
+  return reinterpret_cast<ValueRef*>(exception);
+}
+
 v8::TryCatch::TryCatch(v8::Isolate* isolate)
     : isolate_(reinterpret_cast<i::Isolate*>(isolate)),
       next_(isolate_->try_catch_handler()),
@@ -34,13 +40,17 @@ v8::TryCatch::TryCatch(v8::Isolate* isolate)
       capture_message_(true),
       rethrow_(false),
       has_terminated_(false) {
-  LWNODE_CALL_TRACE_ID(TRYCATCH, "this: %p, next: %p", this, next_);
+  ++s_depth;
+  LWNODE_CALL_TRACE_ID(
+      TRYCATCH, "depth: %d, this: %p, next: %p", s_depth, this, next_);
+
   ResetInternal();
   isolate_->RegisterTryCatchHandler(this);
 }
 
 v8::TryCatch::~TryCatch() {
-  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  --s_depth;
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "depth: %d -> %d", s_depth + 1, s_depth);
   if (rethrow_) {
     v8::Isolate* v8Isolate = IsolateWrap::toV8(isolate_);
     v8::HandleScope scope(v8Isolate);
@@ -82,8 +92,7 @@ void v8::TryCatch::operator delete[](void*, size_t) {
 }
 
 bool v8::TryCatch::HasCaught() const {
-  bool hasCaught = (IsolateWrap::fromV8(isolate_)->isHole(
-                        ExceptionHelper::unwrapException(exception_)) == false);
+  bool hasCaught = (exception_ != nullptr);
 
   LWNODE_CALL_TRACE_ID(TRYCATCH, "hasCaught: %s", strBool(hasCaught));
 
@@ -110,9 +119,8 @@ v8::Local<v8::Value> v8::TryCatch::ReThrow() {
 v8::Local<Value> v8::TryCatch::Exception() const {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   if (HasCaught()) {
-    return v8::Utils::NewLocal<Value>(
-        IsolateWrap::toV8(isolate_),
-        EscargotShim::ExceptionHelper::unwrapException(exception_));
+    return v8::Utils::NewLocal<Value>(IsolateWrap::toV8(isolate_),
+                                      fromV8Exception(exception_));
   } else {
     return v8::Local<Value>();
   }
@@ -140,8 +148,8 @@ void v8::TryCatch::Reset() {
 
 void v8::TryCatch::ResetInternal() {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
-  exception_ = IsolateWrap::fromV8(isolate_)->hole();
-  message_obj_ = IsolateWrap::fromV8(isolate_)->hole()->value();
+  exception_ = nullptr;
+  message_obj_ = nullptr;
 }
 
 void v8::TryCatch::SetVerbose(bool value) {

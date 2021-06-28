@@ -1688,14 +1688,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
       arguments.size(),
       arguments.data());
 
-  if (!r.isSuccessful()) {
-    __DLOG_EVAL_EXCEPTION(r);
-    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
-    lwIsolate->ReportPendingMessages();
-    return MaybeLocal<Value>();
-  } else {
-    lwIsolate->ClearPendingExceptionAndMessage();
-  }
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
 
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
