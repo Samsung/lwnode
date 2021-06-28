@@ -16,18 +16,78 @@
 
 #pragma once
 
+#include <EscargotPublic.h>
 #include "handle.h"
 #include "utils/gc.h"
 
 namespace EscargotShim {
 
-class GlobalHandles final {
+class GlobalHandles final : public gc {
  public:
-  ~GlobalHandles();
-  size_t add(ValueWrap* ptr);
-  size_t remove(ValueWrap* ptr);
+  GlobalHandles(v8::Isolate* isolate) : isolate_(isolate) {}
+  ~GlobalHandles() = default;
+
+  void Create(ValueWrap* lwValue);
+  void Destroy(ValueWrap* lwValue);
+
+  bool MakeWeak(ValueWrap* lwValue,
+                void* parameter,
+                v8::WeakCallbackInfo<void>::Callback callback);
+
+  size_t handles_count();
+
+  void Dispose();
+
+  class Node {
+   public:
+    Node(void* parameter, v8::WeakCallbackInfo<void>::Callback callback);
+    ~Node();
+
+    Node(const Node&) = delete;
+
+    Node* nextNode() { return nextNode_; }
+    void* parameter() { return parameter_; }
+    v8::WeakCallbackInfo<void>::Callback callback() { return callback_; }
+
+   private:
+    Node* nextNode_{nullptr};
+    void* parameter_{nullptr};
+    v8::WeakCallbackInfo<void>::Callback callback_;
+  };
+
+  class NodeBlock {
+   public:
+    enum State { None, Weak, Clear };
+
+    NodeBlock(v8::Isolate* isolate, uint32_t count);
+
+    ~NodeBlock();
+
+    NodeBlock(const NodeBlock&) = delete;
+
+    bool increaseUsage();
+
+    bool decreaseUsage();
+
+    uint32_t usage() { return usedNodes_; }
+
+    Node* firstNode() { return firstNode_; }
+    void setFirstNode(Node* node) { firstNode_ = node; }
+
+    Node* pushNode(ValueWrap* lwValue, Node* node);
+
+    void registerWeakCallback(ValueWrap* lwValue);
+
+    v8::Isolate* isolate() { return isolate_; }
+
+   private:
+    v8::Isolate* isolate_{nullptr};
+    uint32_t usedNodes_{0};
+    Node* firstNode_{nullptr};
+  };
 
  private:
-  GCUnorderedMap<ValueWrap*, size_t> persistentMap_;
+  GCUnorderedMap<ValueWrap*, std::unique_ptr<NodeBlock>> persistentValues_;
+  v8::Isolate* isolate_{nullptr};
 };
 }  // namespace EscargotShim

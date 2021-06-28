@@ -179,7 +179,7 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
-  GlobalHandles* globalHandles() { return &globalHandles_; }
+  GlobalHandles* globalHandles() { return globalHandles_; }
 
   void SetPendingExceptionAndMessage(
       ValueRef* exception,
@@ -188,6 +188,9 @@ class IsolateWrap final : public v8::internal::Isolate {
   void ClearPendingExceptionAndMessage();
 
   void onFatalError(const char* location, const char* message);
+
+  void lock_gc_release() { release_lock_.reset(this); }
+  void unlock_gc_release() { release_lock_.release(); }
 
  private:
   IsolateWrap();
@@ -210,12 +213,9 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   VMInstanceRef* vmInstance_ = nullptr;
 
-  GlobalHandles globalHandles_;
+  GlobalHandles* globalHandles_ = nullptr;
 
   PersistentRefHolder<IsolateWrap> release_lock_;
-
-  void lock_gc_release() { release_lock_.reset(this); }
-  void unlock_gc_release() { release_lock_.release(); }
 
   v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
   v8::MessageCallback message_callback_ = nullptr;

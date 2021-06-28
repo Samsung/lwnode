@@ -186,10 +186,13 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 IsolateWrap::IsolateWrap() {
   LWNODE_CALL_TRACE_2("malc: %p", this);
 
+  globalHandles_ = new GlobalHandles(toV8());
+
   // NOTE: check lock_gc_release(); is needed (and where)
   // lock_gc_release();
   Memory::gcRegisterFinalizer(this, [](void* self) {
     LWNODE_CALL_TRACE_2("free: %p", self);
+    reinterpret_cast<IsolateWrap*>(self)->globalHandles()->Dispose();
     LWNODE_CALL_TRACE_GC_START();
     // NOTE: Called when this IsolateWrap is deallocated by gc
     LWNODE_CALL_TRACE_GC_END();

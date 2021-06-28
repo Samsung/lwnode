@@ -59,6 +59,9 @@ v8::Isolate* CcTest::isolate() {
   if (isolate_ == nullptr) {
     create_params_.array_buffer_allocator = allocator_;
     CcTest::isolate_ = v8::Isolate::New(create_params_);
+#if defined(CCTEST_ENGINE_ESCARGOT)
+    e::IsolateWrap::fromV8(isolate_)->lock_gc_release();
+#endif
   }
   return isolate_;
 }
@@ -74,15 +77,18 @@ void CcTest::disposeIsolate() {
   if (isolate_ != nullptr) {
     isolate_->Exit();
     isolate_->Dispose();
+#if defined(CCTEST_ENGINE_ESCARGOT)
+    e::IsolateWrap::fromV8(isolate_)->unlock_gc_release();
+    CcTest::CollectAllGarbage();
+#endif
     isolate_ = nullptr;
   }
 }
 
 void CcTest::TearDown() {
   if (isolate_ != nullptr) {
-    isolate_->Dispose();
+    disposeIsolate();
     delete create_params_.array_buffer_allocator;
-    isolate_ = nullptr;
   }
 }
 
@@ -93,6 +99,15 @@ void CcTest::CollectGarbage() {
 }
 
 void CcTest::CollectAllGarbage(v8::Isolate* isolate) {
+#if defined(CCTEST_ENGINE_ESCARGOT)
+  if (isolate) {
+    printf("(!) gc per isolate isn't supported yet.");
+  }
+  MemoryUtil::gcFull();
+#endif
+}
+
+void CcTest::PreciseCollectAllGarbage(v8::Isolate* isolate) {
 #if defined(CCTEST_ENGINE_ESCARGOT)
   if (isolate) {
     printf("(!) gc per isolate isn't supported yet.");

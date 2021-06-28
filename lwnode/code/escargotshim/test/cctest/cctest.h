@@ -24,6 +24,12 @@
 #include "gtest/gtest.h"
 #include "v8.h"
 
+#if defined(CCTEST_ENGINE_ESCARGOT)
+#include "api/global-handles.h"
+#include "api/isolate.h"
+namespace e = EscargotShim;
+#endif
+
 #define TEST_CAST_NAME CCTest
 
 #define UNINITIALIZED_TEST(Name) GTEST_TEST(TEST_CAST_NAME, Name)
@@ -72,6 +78,7 @@ class CcTest {
   static void TearDown();
   static void CollectGarbage();
   static void CollectAllGarbage(v8::Isolate* isolate = nullptr);
+  static void PreciseCollectAllGarbage(v8::Isolate* isolate = nullptr);
 
   static v8::ArrayBuffer::Allocator* array_buffer_allocator() {
     return allocator_;
