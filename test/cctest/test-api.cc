@@ -13402,34 +13402,38 @@ THREADED_TEST(Overriding) {
 // }
 
 
-// static void WeakApiCallback(
-//     const v8::WeakCallbackInfo<Persistent<v8::Object>>& data) {
-//   data.GetParameter()->Reset();
-//   delete data.GetParameter();
-// }
+static void WeakApiCallback(
+    const v8::WeakCallbackInfo<Persistent<v8::Object>>& data) {
+  data.GetParameter()->Reset();
+  delete data.GetParameter();
+}
 
 
-// TEST(WeakCallbackApi) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   i::GlobalHandles* globals =
-//       reinterpret_cast<i::Isolate*>(isolate)->global_handles();
-//   size_t initial_handles = globals->handles_count();
-//   {
-//     v8::HandleScope scope(isolate);
-//     v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//     CHECK(
-//         obj->Set(context.local(), v8_str("key"), v8::Integer::New(isolate, 231))
-//             .FromJust());
-//     v8::Persistent<v8::Object>* handle =
-//         new v8::Persistent<v8::Object>(isolate, obj);
-//     handle->SetWeak<v8::Persistent<v8::Object>>(
-//         handle, WeakApiCallback, v8::WeakCallbackType::kParameter);
-//   }
-//   CcTest::PreciseCollectAllGarbage();
-//   // Verify disposed.
-//   CHECK_EQ(initial_handles, globals->handles_count());
-// }
+TEST(WeakCallbackApi) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+#if defined(CCTEST_ENGINE_ESCARGOT)
+  e::GlobalHandles* globals = e::IsolateWrap::fromV8(isolate)->globalHandles();
+#else
+  i::GlobalHandles* globals =
+      reinterpret_cast<i::Isolate*>(isolate)->global_handles();
+#endif
+  size_t initial_handles = globals->handles_count();
+  {
+    v8::HandleScope scope(isolate);
+    v8::Local<v8::Object> obj = v8::Object::New(isolate);
+    CHECK(
+        obj->Set(context.local(), v8_str("key"), v8::Integer::New(isolate, 231))
+            .FromJust());
+    v8::Persistent<v8::Object>* handle =
+        new v8::Persistent<v8::Object>(isolate, obj);
+    handle->SetWeak<v8::Persistent<v8::Object>>(
+        handle, WeakApiCallback, v8::WeakCallbackType::kParameter);
+  }
+  CcTest::PreciseCollectAllGarbage();
+  // Verify disposed.
+  CHECK_EQ(initial_handles, globals->handles_count());
+}
 
 
 // v8::Persistent<v8::Object> some_object;

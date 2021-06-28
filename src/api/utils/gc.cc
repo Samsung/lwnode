@@ -300,6 +300,11 @@ void MemoryUtil::gcRegisterFinalizer(Escargot::ValueRef* ptr,
   Escargot::Memory::gcRegisterFinalizer(ptr->asObject(), callback);
 }
 
+void MemoryUtil::gcRegisterFinalizer(EscargotShim::ValueWrap* ptr,
+                                     GCAllocatedMemoryFinalizer callback) {
+  Escargot::Memory::gcRegisterFinalizer(ptr, callback);
+}
+
 void MemoryUtil::gcUnregisterFinalizer(Escargot::ValueRef* ptr,
                                        GCAllocatedMemoryFinalizer callback) {
   Escargot::Memory::gcUnregisterFinalizer(ptr->asObject(), callback);

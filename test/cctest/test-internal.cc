@@ -153,13 +153,12 @@ TEST(internal_GCObject3) {
     GC_TRACE_PRINT_STATE();
   }();
 
-  CcTest::CollectGarbage();
+  CcTest::CollectAllGarbage();
 
   GC_TRACE_PRINT_STATE();
 
   // object1 isn't hold, everything can be released
-  // but it's not guarantee that gc runs the deallocation for all.
-  EXPECT_LE(g_tracer.getAllocatedCount(), 1);
+  EXPECT_EQ(g_tracer.getAllocatedCount(), 0);
 }
 
 TEST(internal_GCObject4) {

@@ -134,6 +134,10 @@ class ValueRef;
 class ObjectRef;
 }  // namespace Escargot
 
+namespace EscargotShim {
+class ValueWrap;
+}
+
 class GCTracer {
  public:
   ~GCTracer();
@@ -164,6 +168,8 @@ class ESCARGOT_EXPORT MemoryUtil {
 
   typedef void (*GCAllocatedMemoryFinalizer)(void* self);
   static void gcRegisterFinalizer(Escargot::ValueRef* gcPtr,
+                                  GCAllocatedMemoryFinalizer callback);
+  static void gcRegisterFinalizer(EscargotShim::ValueWrap* gcPtr,
                                   GCAllocatedMemoryFinalizer callback);
   static void gcUnregisterFinalizer(Escargot::ValueRef* gcPtr,
                                     GCAllocatedMemoryFinalizer callback);

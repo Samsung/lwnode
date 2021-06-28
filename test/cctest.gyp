@@ -18,6 +18,7 @@
         '-Wno-unused-parameter',
         '-Wno-comment',
         '-Wno-sign-compare',
+        '-Wno-cast-function-type',
         '-std=gnu++11',
       ],
       'include_dirs': [

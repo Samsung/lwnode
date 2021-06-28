@@ -5,6 +5,7 @@
     'tizen_device_api_dir': 'deps/tizen-device-api',
     'enable_escargotshim_asan%': 0,
     'enable_external_builtin_scripts%': 'false',
+    'enable_experimental%': 'false',
   },
   'targets': [
     {
@@ -76,6 +77,11 @@
         ['OS == "linux"', {
           'defines': [
             'LWNODE_PLATFORM_LINUX=1',
+          ],
+        }],
+        ['enable_experimental == "true"', {
+          'defines': [
+            'LWNODE_ENABLE_EXPERIMENTAL=1',
           ],
         }],
       ],
