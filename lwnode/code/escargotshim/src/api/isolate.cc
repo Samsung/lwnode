@@ -15,6 +15,7 @@
  */
 
 #include "isolate.h"
+#include "context.h"
 #include "es-helper.h"
 #include "extra-data.h"
 #include "utils/gc.h"
@@ -92,12 +93,12 @@ void Isolate::clear_scheduled_exception() {
   scheduled_exception_ = hole()->value();
 }
 
-Escargot::ValueRef* Isolate::pending_exception() {
+Escargot::ObjectRef* Isolate::pending_exception() {
   LWNODE_CHECK(has_pending_exception());
   return pending_exception_;
 }
 
-void Isolate::set_pending_exception(Escargot::ValueRef* exception_obj) {
+void Isolate::set_pending_exception(Escargot::ObjectRef* exception_obj) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   LWNODE_CHECK_NOT_NULL(exception_obj);
   pending_exception_ = exception_obj;
@@ -404,12 +405,6 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   return newSymbol;
 }
 
-static ValueRef* createErrorMessageObject(
-    const IsolateWrap::ExceptionData& exceptionData) {
-  LWNODE_UNIMPLEMENT;
-  return ValueRef::createUndefined();
-}
-
 void IsolateWrap::ClearPendingExceptionAndMessage() {
   clear_pending_exception();
   clear_pending_message_obj();
@@ -420,16 +415,15 @@ void IsolateWrap::SetPendingExceptionAndMessage(
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
-  exceptionData_.reset();
-  exceptionData_.exception = exception;
-  for (size_t i = 0; i < stackTraceData.size(); i++) {
-    exceptionData_.stackTraces.push_back(new StackTraceData(stackTraceData[i]));
-  }
+  auto exceptionObject =
+      ObjectRefHelper::toObject(GetCurrentContext()->get(), exception);
+  ObjectRefHelper::setExtraData(exceptionObject,
+                                new ExceptionObjectData(stackTraceData));
 
-  set_pending_exception(exception);
+  set_pending_exception(exceptionObject);
   // @note
   // pending_message_obj: v8::Message isn't created. Instead v8::Message
-  // uses `exceptionData_.stackTraces` directly to make a result requested.
+  // uses `stackTraceData.stackTraces()` directly to make a result requested.
   set_pending_message_obj(nullptr);
 }
 

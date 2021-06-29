@@ -101,6 +101,8 @@ class ObjectRefHelper {
   static void setInternalPointer(ObjectRef* object, int idx, void* ptr);
   static void* getInternalPointer(ObjectRef* object, int idx);
 
+  static ObjectRef* toObject(ContextRef* context, ValueRef* value);
+
  private:
   static SymbolRef* s_symbolKeyForHiddenValues;
 };
