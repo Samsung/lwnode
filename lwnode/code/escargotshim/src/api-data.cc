@@ -223,11 +223,11 @@ bool Value::IsGeneratorObject() const {
 }
 
 bool Value::IsMapIterator() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isMapIteratorObject();
 }
 
 bool Value::IsSetIterator() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isSetIteratorObject();
 }
 
 bool Value::IsPromise() const {
@@ -445,15 +445,15 @@ void v8::Array::CheckCast(Value* that) {
 }
 
 void v8::Map::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsMap());
 }
 
 void v8::Set::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsSet());
 }
 
 void v8::Promise::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsPromise());
 }
 
 void v8::Promise::Resolver::CheckCast(Value* that) {
@@ -461,7 +461,7 @@ void v8::Promise::Resolver::CheckCast(Value* that) {
 }
 
 void v8::Proxy::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsProxy());
 }
 
 void v8::WasmModuleObject::CheckCast(Value* that) {
