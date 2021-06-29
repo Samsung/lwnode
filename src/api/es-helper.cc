@@ -309,6 +309,18 @@ ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
   return reinterpret_cast<ObjectData*>(data);
 }
 
+ObjectRef* ObjectRefHelper::toObject(ContextRef* context, ValueRef* value) {
+  EvalResult r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ValueRef* value) -> ValueRef* {
+        return value->toObject(state);
+      },
+      value);
+
+  LWNODE_CHECK(r.isSuccessful());
+  return r.result->asObject();
+}
+
 static std::string getCodeLine(const std::string& codeString, int errorLine) {
   if (errorLine < 1 || codeString.empty()) {
     return "";

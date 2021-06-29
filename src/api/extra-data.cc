@@ -17,6 +17,7 @@
 #include "extra-data.h"
 #include "base.h"
 #include "context.h"
+#include "es-helper.h"
 #include "isolate.h"
 #include "utils/misc.h"
 #include "v8.h"
@@ -87,4 +88,12 @@ bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
   LWNODE_CHECK(r.isSuccessful());
   return r.result->asBoolean();
 }
+
+GCVector<ExceptionObjectData::StackTraceData*>* ExceptionObjectData::stackTrace(
+    ObjectRef* exceptionObject) {
+  auto exceptionObjectData = static_cast<ExceptionObjectData*>(
+      ObjectRefHelper::getExtraData(exceptionObject));
+  return exceptionObjectData->stackTrace();
+}
+
 }  // namespace EscargotShim

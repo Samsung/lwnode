@@ -41,7 +41,7 @@ class Isolate : public gc {
   bool has_scheduled_exception();
   void clear_scheduled_exception();
 
-  Escargot::ValueRef* pending_exception();
+  Escargot::ObjectRef* pending_exception();
   bool has_pending_exception();
 
   Escargot::ValueRef* pending_message_obj();
@@ -59,7 +59,7 @@ class Isolate : public gc {
  protected:
   Escargot::ValueRef* scheduled_exception_{nullptr};
 
-  void set_pending_exception(Escargot::ValueRef* exception_obj);
+  void set_pending_exception(Escargot::ObjectRef* exception_obj);
   void set_pending_message_obj(Escargot::ValueRef* message_obj);
   void clear_pending_exception();
   void clear_pending_message_obj();
@@ -69,7 +69,7 @@ class Isolate : public gc {
 
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
-  Escargot::ValueRef* pending_exception_{nullptr};
+  Escargot::ObjectRef* pending_exception_{nullptr};
   Escargot::ValueRef* pending_message_obj_{nullptr};
 };
 }  // namespace internal
@@ -180,40 +180,6 @@ class IsolateWrap final : public v8::internal::Isolate {
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
   GlobalHandles* globalHandles() { return &globalHandles_; }
-  struct StackTraceData : public gc {
-   public:
-    StackTraceData(Escargot::Evaluator::StackTraceData& data)
-        : src(data.src),
-          sourceCode(data.sourceCode),
-          loc(data.loc),
-          functionName(data.functionName),
-          isConstructor(data.isConstructor),
-          isAssociatedWithJavaScriptCode(data.isAssociatedWithJavaScriptCode),
-          isEval(data.isEval) {}
-
-    StringRef* src{nullptr};
-    StringRef* sourceCode{nullptr};
-    Escargot::Evaluator::LOC loc{0, 0, 0};
-    StringRef* functionName{nullptr};
-    bool isFunction{false};
-    bool isConstructor{false};
-    bool isAssociatedWithJavaScriptCode{false};
-    bool isEval{false};
-  };
-
-  struct ExceptionData : public gc {
-    ValueRef* exception{nullptr};
-    GCVector<StackTraceData*> stackTraces;
-
-    void reset() {
-      exception = nullptr;
-      stackTraces.clear();
-    }
-  };
-
-  GCVector<StackTraceData*>* stackTrace() {
-    return &exceptionData_.stackTraces;
-  }
 
   void SetPendingExceptionAndMessage(
       ValueRef* exception,
@@ -259,8 +225,6 @@ class IsolateWrap final : public v8::internal::Isolate {
       abort_on_uncaught_exception_callback_ = nullptr;
 
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
-
-  ExceptionData exceptionData_;
 };
 
 }  // namespace EscargotShim

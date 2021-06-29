@@ -37,6 +37,7 @@ class ObjectData : public gc {
 
   virtual bool isFunctionData() const { return false; }
   virtual bool isExternalObjectData() const { return false; }
+  virtual bool isExceptionObjectData() const { return false; }
 
   // InternalFields
   int internalFieldCount();
@@ -87,6 +88,46 @@ class FunctionData : public ObjectData {
 class ExternalObjectData : public ObjectData {
  public:
   bool isExternalObjectData() const override { return true; }
+};
+
+class ExceptionObjectData : public ObjectData {
+ public:
+  struct StackTraceData : public gc {
+   public:
+    StackTraceData(Escargot::Evaluator::StackTraceData& data)
+        : src(data.src),
+          sourceCode(data.sourceCode),
+          loc(data.loc),
+          functionName(data.functionName),
+          isConstructor(data.isConstructor),
+          isAssociatedWithJavaScriptCode(data.isAssociatedWithJavaScriptCode),
+          isEval(data.isEval) {}
+
+    StringRef* src{nullptr};
+    StringRef* sourceCode{nullptr};
+    Escargot::Evaluator::LOC loc{0, 0, 0};
+    StringRef* functionName{nullptr};
+    bool isFunction{false};
+    bool isConstructor{false};
+    bool isAssociatedWithJavaScriptCode{false};
+    bool isEval{false};
+  };
+
+ public:
+  ExceptionObjectData(
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
+    for (size_t i = 0; i < stackTraceData.size(); i++) {
+      stackTraces_.push_back(new StackTraceData(stackTraceData[i]));
+    }
+  }
+
+  bool isExceptionObjectData() const override { return true; }
+
+  GCVector<StackTraceData*>* stackTrace() { return &stackTraces_; }
+  static GCVector<StackTraceData*>* stackTrace(ObjectRef* exceptionObject);
+
+ private:
+  GCVector<StackTraceData*> stackTraces_;
 };
 
 }  // namespace EscargotShim
