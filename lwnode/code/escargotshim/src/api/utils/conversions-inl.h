@@ -39,4 +39,18 @@ int64_t NumberToInt64(ValueRef* number) {
   return static_cast<int64_t>(d);
 }
 
+bool isInteger(ValueRef* number) {
+  double d = number->asNumber();
+  if (std::isnan(d)) {
+    return false;
+  }
+
+  double intPart = 0;
+  if (std::modf(d, &intPart) == 0.0) {
+    return true;
+  }
+
+  return false;
+}
+
 }  // namespace EscargotShim

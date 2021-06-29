@@ -168,11 +168,38 @@ bool Value::IsExternal() const {
 }
 
 bool Value::IsInt32() const {
-  return CVAL(this)->value()->isInt32();
+  auto esSelf = CVAL(this)->value();
+
+  if (esSelf->isInt32()) {
+    return true;
+  } else if (esSelf->isNumber()) {
+    double val = esSelf->asNumber();
+    bool rangeOk = false;
+    if (std::numeric_limits<int32_t>::min() <= val &&
+        val <= std::numeric_limits<int32_t>::max()) {
+      rangeOk = true;
+    }
+    return isInteger(esSelf) && rangeOk;
+  }
+
+  return false;
 }
 
 bool Value::IsUint32() const {
-  return CVAL(this)->value()->isUInt32();
+  auto esSelf = CVAL(this)->value();
+
+  if (esSelf->isUInt32()) {
+    return true;
+  } else if (esSelf->isNumber()) {
+    double val = esSelf->asNumber();
+    bool rangeOk = false;
+    if (0 <= val && val <= std::numeric_limits<uint32_t>::max()) {
+      rangeOk = true;
+    }
+    return isInteger(esSelf) && rangeOk;
+  }
+
+  return false;
 }
 
 bool Value::IsNativeError() const {

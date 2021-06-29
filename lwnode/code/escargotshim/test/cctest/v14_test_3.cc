@@ -596,3 +596,24 @@ THREADED_TEST(TwoByteStringToOneByteString) {
   CHECK_EQ(len, 3);
   CHECK_EQ(0, strncmp("foo", buf, 3));
 }
+
+THREADED_TEST(Int32Number) {
+  // Ref: test/parallel/test-buffer-indexof.js
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context = env.local();
+  Context::Scope context_scope(context);
+
+  v8::Local<v8::Number> num = v8::Number::New(isolate, 1);
+  CHECK(num->IsUint32());
+
+  num = v8::Number::New(isolate, 1);
+  CHECK(num->IsInt32());
+
+  num = v8::Number::New(isolate, -1);
+  CHECK(num->IsInt32());
+
+  num = v8::Number::New(isolate, -1);
+  CHECK(!num->IsUint32());
+}
