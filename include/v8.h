@@ -11563,6 +11563,10 @@ Local<String> String::Empty(Isolate* isolate) {
 // end @lwnode
 
 String::ExternalStringResource* String::GetExternalStringResource() const {
+// @lwnode
+#if LWNODE
+  return GetExternalStringResourceSlow();
+#else
   typedef internal::Address A;
   typedef internal::Internals I;
   A obj = *reinterpret_cast<const A*>(this);
@@ -11580,6 +11584,8 @@ String::ExternalStringResource* String::GetExternalStringResource() const {
   VerifyExternalStringResource(result);
 #endif
   return result;
+#endif
+// end of @lwnode
 }
 
 
