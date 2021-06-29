@@ -65,7 +65,8 @@ skip_files = [
     'v8.h',
     'v8config.h',
     'test-api.h',
-    'test-api.cc'
+    'test-api.cc',
+    'test-strings.cc'
 ]
 
 class Stats(object):

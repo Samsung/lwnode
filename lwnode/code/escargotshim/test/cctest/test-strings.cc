@@ -1155,27 +1155,27 @@ static const int kDeepOneByteDepth = 100000;
 //   CHECK_EQ(0, CompileRun(source)->Int32Value(context.local()).FromJust());
 // }
 
-// TEST(ReplaceInvalidUtf8) {
-//   LocalContext context;
-//   v8::HandleScope handle_scope(CcTest::isolate());
-//   v8::Local<v8::String> string =
-//   CompileRun("'ab\\ud800cd'").As<v8::String>(); char buffer[7];
-//   memset(buffer, 0, 7);
-//   int chars_written = 0;
-//   int size = string->WriteUtf8(CcTest::isolate(), buffer, 7, &chars_written,
-//                                v8::String::REPLACE_INVALID_UTF8);
-//   CHECK_EQ(7, size);
-//   CHECK_EQ(5, chars_written);
-//   CHECK_EQ(0, memcmp("\x61\x62\xef\xbf\xbd\x63\x64", buffer, 7));
+TEST(ReplaceInvalidUtf8) {
+  LocalContext context;
+  v8::HandleScope handle_scope(CcTest::isolate());
+  v8::Local<v8::String> string =
+  CompileRun("'ab\\ud800cd'").As<v8::String>(); char buffer[7];
+  memset(buffer, 0, 7);
+  int chars_written = 0;
+  int size = string->WriteUtf8(CcTest::isolate(), buffer, 7, &chars_written,
+                               v8::String::REPLACE_INVALID_UTF8);
+  CHECK_EQ(7, size);
+  CHECK_EQ(5, chars_written);
+  CHECK_EQ(0, memcmp("\x61\x62\xef\xbf\xbd\x63\x64", buffer, 7));
 
-//   memset(buffer, 0, 7);
-//   chars_written = 0;
-//   size = string->WriteUtf8(CcTest::isolate(), buffer, 6, &chars_written,
-//                            v8::String::REPLACE_INVALID_UTF8);
-//   CHECK_EQ(6, size);
-//   CHECK_EQ(4, chars_written);
-//   CHECK_EQ(0, memcmp("\x61\x62\xef\xbf\xbd\x63", buffer, 6));
-// }
+  memset(buffer, 0, 7);
+  chars_written = 0;
+  size = string->WriteUtf8(CcTest::isolate(), buffer, 6, &chars_written,
+                           v8::String::REPLACE_INVALID_UTF8);
+  CHECK_EQ(6, size);
+  CHECK_EQ(4, chars_written);
+  CHECK_EQ(0, memcmp("\x61\x62\xef\xbf\xbd\x63", buffer, 6));
+}
 
 // TEST(JSONStringifySliceMadeExternal) {
 //   if (!FLAG_string_slices) return;
@@ -1910,26 +1910,26 @@ static const int kDeepOneByteDepth = 100000;
 //   }
 // }
 
-// TEST(StringEquals) {
-//   v8::V8::Initialize();
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
+TEST(StringEquals) {
+  v8::V8::Initialize();
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
 
-//   auto foo_str = v8::String::NewFromUtf8Literal(isolate, "foo");
-//   auto bar_str = v8::String::NewFromUtf8Literal(isolate, "bar");
-//   auto foo_str2 = v8::String::NewFromUtf8Literal(isolate, "foo");
+  auto foo_str = v8::String::NewFromUtf8Literal(isolate, "foo");
+  auto bar_str = v8::String::NewFromUtf8Literal(isolate, "bar");
+  auto foo_str2 = v8::String::NewFromUtf8Literal(isolate, "foo");
 
-//   uint16_t* two_byte_source = AsciiToTwoByteString("foo");
-//   auto foo_two_byte_str =
-//       v8::String::NewFromTwoByte(isolate, two_byte_source).ToLocalChecked();
-//   i::DeleteArray(two_byte_source);
+  uint16_t* two_byte_source = AsciiToTwoByteString("foo");
+  auto foo_two_byte_str =
+      v8::String::NewFromTwoByte(isolate, two_byte_source).ToLocalChecked();
+  i::DeleteArray(two_byte_source);
 
-//   CHECK(foo_str->StringEquals(foo_str));
-//   CHECK(!foo_str->StringEquals(bar_str));
-//   CHECK(foo_str->StringEquals(foo_str2));
-//   CHECK(foo_str->StringEquals(foo_two_byte_str));
-//   CHECK(!bar_str->StringEquals(foo_str2));
-// }
+  CHECK(foo_str->StringEquals(foo_str));
+  CHECK(!foo_str->StringEquals(bar_str));
+  CHECK(foo_str->StringEquals(foo_str2));
+  CHECK(foo_str->StringEquals(foo_two_byte_str));
+  CHECK(!bar_str->StringEquals(foo_str2));
+}
 
 // class OneByteStringResource : public v8::String::ExternalOneByteStringResource {
 //  public:
