@@ -157,7 +157,7 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   void SetAbortOnUncaughtExceptionCallback(
       v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
-    set_abort_on_uncaught_exception_callback_ = callback;
+    abort_on_uncaught_exception_callback_ = callback;
   }
 
   void AddMessageListenerWithErrorLevel(v8::MessageCallback callback) {
@@ -256,7 +256,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   v8::FatalErrorCallback fatal_error_callback_ = nullptr;
   v8::PrepareStackTraceCallback prepare_stack_trace_callback_ = nullptr;
   v8::Isolate::AbortOnUncaughtExceptionCallback
-      set_abort_on_uncaught_exception_callback_ = nullptr;
+      abort_on_uncaught_exception_callback_ = nullptr;
 
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
 
