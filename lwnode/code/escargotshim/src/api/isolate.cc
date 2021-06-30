@@ -184,14 +184,14 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
 IsolateWrap::IsolateWrap() {
-  LWNODE_CALL_TRACE_2("malc: %p", this);
+  LWNODE_CALL_TRACE("malc: %p", this);
 
   globalHandles_ = new GlobalHandles(toV8());
 
   // NOTE: check lock_gc_release(); is needed (and where)
   // lock_gc_release();
   Memory::gcRegisterFinalizer(this, [](void* self) {
-    LWNODE_CALL_TRACE_2("free: %p", self);
+    LWNODE_CALL_TRACE("free: %p", self);
     reinterpret_cast<IsolateWrap*>(self)->globalHandles()->Dispose();
     LWNODE_CALL_TRACE_GC_START();
     // NOTE: Called when this IsolateWrap is deallocated by gc
@@ -315,7 +315,7 @@ void IsolateWrap::pushHandleScope(HandleScopeWrap* handleScope) {
 void IsolateWrap::popHandleScope(v8Scope_t* handleScope) {
   LWNODE_CHECK(handleScopes_.back()->v8Scope() == handleScope);
 
-  LWNODE_CALL_TRACE_2();
+  LWNODE_CALL_TRACE();
   // TODO: remove the following line and simply pop the last
   handleScopes_.back()->clear();
 
@@ -346,7 +346,7 @@ bool IsolateWrap::isCurrentScopeSealed() {
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  LWNODE_CALL_TRACE_2("%p", context);
+  LWNODE_CALL_TRACE("%p", context);
 
   if (contextScopes_.size() && (contextScopes_.back() != context)) {
     LWNODE_DLOG_WARN(R"(multiple contexts exist:
@@ -363,7 +363,7 @@ context which is related to Object::CreateContext().
 
 void IsolateWrap::popContext(ContextWrap* context) {
   LWNODE_CHECK(contextScopes_.back() == context);
-  LWNODE_CALL_TRACE_2("%p", context);
+  LWNODE_CALL_TRACE("%p", context);
   contextScopes_.pop_back();
 }
 
@@ -377,7 +377,7 @@ ContextWrap* IsolateWrap::GetCurrentContext() {
 }
 
 void IsolateWrap::addEternal(GCManagedObject* value) {
-  LWNODE_CALL_TRACE_2("%p", value);
+  LWNODE_CALL_TRACE("%p", value);
   eternals_.push_back(value);
 }
 
@@ -391,7 +391,7 @@ void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
 
 SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   // @check replace this container if this function is called a lot.
-  LWNODE_CALL_TRACE_2();
+  LWNODE_CALL_TRACE();
 
   for (size_t i = 0; i < privateSymbols_.size(); i++) {
     if (privateSymbols_[i]->description()->equals(esString)) {
