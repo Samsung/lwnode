@@ -115,10 +115,9 @@ void GlobalHandles::Dispose() {
 void GlobalHandles::Create(ValueWrap* lwValue) {
   auto iter = persistentValues_.find(lwValue);
   if (iter == persistentValues_.end()) {
-    persistentValues_.emplace(lwValue,
-                              std::make_unique<NodeBlock>(isolate_, 1));
+    persistentValues_.emplace(lwValue, 1);
   } else {
-    iter->second->increaseUsage();
+    ++iter->second;
     // TODO:
     LWNODE_DLOG_WARN("Persistent value was created multiple times.")
   }
@@ -127,10 +126,10 @@ void GlobalHandles::Create(ValueWrap* lwValue) {
 void GlobalHandles::Destroy(ValueWrap* lwValue) {
   auto iter = persistentValues_.find(lwValue);
   if (iter != persistentValues_.end()) {
-    if (iter->second->usage() == 1) {
+    if (iter->second == 1) {
       persistentValues_.erase(iter);
     } else {
-      iter->second->decreaseUsage();
+      --iter->second;
     }
   } else {
     LWNODE_CALL_TRACE_ID(
@@ -146,9 +145,10 @@ bool GlobalHandles::MakeWeak(ValueWrap* lwValue,
     LWNODE_LOG_ERROR("Only Persistent value can be made weak.");
     return false;
   }
+  auto block = std::make_unique<NodeBlock>(isolate_, iter->second);
+  block->pushNode(lwValue, new Node(parameter, callback));
+  g_WeakValues.emplace(lwValue, std::move(block));
 
-  iter->second->pushNode(lwValue, new Node(parameter, callback));
-  g_WeakValues.emplace(lwValue, std::move(iter->second));
   persistentValues_.erase(iter);
   LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "The value(%p) was weakened.", lwValue)
   return true;
