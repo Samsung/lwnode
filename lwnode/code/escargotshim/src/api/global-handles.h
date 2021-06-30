@@ -87,7 +87,7 @@ class GlobalHandles final : public gc {
   };
 
  private:
-  GCUnorderedMap<ValueWrap*, std::unique_ptr<NodeBlock>> persistentValues_;
+  GCUnorderedMap<ValueWrap*, size_t> persistentValues_;
   v8::Isolate* isolate_{nullptr};
 };
 }  // namespace EscargotShim
