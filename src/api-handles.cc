@@ -25,7 +25,7 @@ namespace v8 {
 // --- H a n d l e s ---
 HandleScope::HandleScope(Isolate* isolate) {
   LWNODE_CALL_TRACE("%p", this);
-
+  LWNODE_CALL_TRACE_INDENT();
   Initialize(isolate);
 
   IsolateWrap::fromV8(isolate_)->pushHandleScope(
@@ -37,6 +37,7 @@ void HandleScope::Initialize(Isolate* isolate) {
 }
 
 HandleScope::~HandleScope() {
+  LWNODE_CALL_TRACE_UNINDENT();
   LWNODE_CALL_TRACE();
   IsolateWrap::fromV8(isolate_)->popHandleScope(this);
 }
@@ -85,6 +86,7 @@ i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
 
 EscapableHandleScope::EscapableHandleScope(Isolate* v8_isolate) {
   LWNODE_CALL_TRACE("%p", this);
+  LWNODE_CALL_TRACE_INDENT();
 
   Initialize(v8_isolate);
 

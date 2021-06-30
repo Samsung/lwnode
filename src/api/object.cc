@@ -40,7 +40,7 @@ static ValueRef* accessorPropertyGetter(
 
   auto v8Getter = wrapper->m_getter;
   LWNODE_CHECK_NOT_NULL(v8Getter);
-  LWNODE_CALL_TRACE_2(
+  LWNODE_CALL_TRACE(
       "name: %s",
       VAL(wrapper->m_name)->value()->asString()->toStdUTF8String().c_str())
 

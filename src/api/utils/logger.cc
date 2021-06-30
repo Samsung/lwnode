@@ -38,17 +38,33 @@ std::string createCodeLocation(const char* functionName,
   return oss.str();
 }
 
-thread_local int s_callDepth = 0;
+thread_local int s_indentCount = 0;
+thread_local int s_deltaCount = 0;
 thread_local std::set<std::string> s_counterIds;
 
+void IndentCounter::indent(std::string id) {
+  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) return;
+  s_deltaCount++;
+}
+
+void IndentCounter::unIndent(std::string id) {
+  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) return;
+  s_deltaCount--;
+}
+
 IndentCounter::IndentCounter(std::string id) {
-  s_callDepth++;
-  s_counterIds.insert(id);
   id_ = id;
+
+  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) return;
+
+  s_indentCount++;
+  s_counterIds.insert(id);
 }
 
 IndentCounter::~IndentCounter() {
-  s_callDepth--;
+  if (EscargotShim::Flags::isTraceCallEnabled(id_) == false) return;
+
+  s_indentCount--;
   s_counterIds.erase(id_);
 }
 
@@ -57,11 +73,18 @@ std::string IndentCounter::getString(std::string id) {
     return "";
   }
 
-  assert(s_callDepth >= 0);
+  assert(s_indentCount >= 0);
 
-  std::string indent;
-  for (int i = 1; i < std::min(5, s_callDepth); ++i) {
-    indent += "\t";
+  std::ostringstream oss;
+  int indentCount = s_indentCount + s_deltaCount;
+
+  if (s_deltaCount > 0) {
+    oss << s_deltaCount << " ";
   }
-  return indent;
+
+  for (int i = 1; i < std::min(30, indentCount); ++i) {
+    oss << "  ";
+  }
+
+  return oss.str();
 }

@@ -58,7 +58,7 @@ class GCContainer : public gc {
   const GCContainer<T>& operator=(const GCContainer<T>& other) = delete;
 
   ~GCContainer() {
-    LWNODE_CALL_TRACE_3();
+    LWNODE_CALL_TRACE_ID(GCDEBUG);
     if (buffer_) {
       for (size_t i = 0; i < size_; i++) {
         buffer_[i].~T();

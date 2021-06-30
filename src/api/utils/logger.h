@@ -55,6 +55,8 @@ class IndentCounter {
   IndentCounter(std::string id);
   ~IndentCounter();
   static std::string getString(std::string id = "");
+  static void indent(std::string id);
+  static void unIndent(std::string id);
 
  private:
   std::string id_;
@@ -62,7 +64,7 @@ class IndentCounter {
 
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define TRACE_FMT " %s (%s:%d)"
+#define TRACE_FMT "%s (%s:%d)"
 #define TRACE_ARGS __PRETTY_FUNCTION__, __FILENAME__, __LINE__
 #define TRACE_ARGS2                                                            \
   getPrettyFunctionName(__PRETTY_FUNCTION__).c_str(), __FILENAME__, __LINE__
@@ -90,15 +92,15 @@ class IndentCounter {
   LWNODE_LOG_RAW(COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_UNIMPLEMENT                                                     \
-  LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED" TRACE_FMT COLOR_RESET, TRACE_ARGS2);
+  LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED " TRACE_FMT COLOR_RESET, TRACE_ARGS2);
 
 #define LWNODE_UNIMPLEMENT_IGNORED                                             \
-  LWNODE_LOG_RAW(COLOR_DIM "UNIMPLEMENTED (IGNORED)" TRACE_FMT COLOR_RESET,    \
+  LWNODE_LOG_RAW(COLOR_DIM "UNIMPLEMENTED (IGNORED) " TRACE_FMT COLOR_RESET,   \
                  TRACE_ARGS2);
 
 #define LWNODE_UNIMPLEMENT_WORKAROUND                                          \
   LWNODE_LOG_RAW(COLOR_DIM                                                     \
-                 "UNIMPLEMENTED (USE WORKAROUND)" TRACE_FMT COLOR_RESET,       \
+                 "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT COLOR_RESET,      \
                  TRACE_ARGS2);
 
 // conditional loggers

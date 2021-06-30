@@ -2363,6 +2363,7 @@ bool Isolate::AddMessageListener(MessageCallback that, Local<Value> data) {
 bool Isolate::AddMessageListenerWithErrorLevel(MessageCallback that,
                                                int message_levels,
                                                Local<Value> data) {
+  LWNODE_CALL_TRACE();
   // @note: node use this only once with
   // Isolate::MessageErrorLevel::kMessageError |
   // Isolate::MessageErrorLevel::kMessageWarning

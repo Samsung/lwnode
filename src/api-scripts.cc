@@ -209,7 +209,7 @@ Local<Module> Module::CreateSyntheticModule(
   API_ENTER(isolate, Local<Module>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  LWNODE_CALL_TRACE(
+  LWNODE_CALL_TRACE_LOG(
       "module name: %s\n",
       std::string(*(String::Utf8Value(isolate, module_name))).data());
 
@@ -458,7 +458,7 @@ ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCacheForFunction(
   // the above node source. Before that is confirmed, track the size.
 #ifndef NDEBUG
   s_track_data_size += sizeof(CachedData);
-  LWNODE_CALL_TRACE(TRACK_MSG_FMT, s_track_data_size);
+  LWNODE_CALL_TRACE_LOG(TRACK_MSG_FMT, s_track_data_size);
 #endif
   return new CachedData();
 }

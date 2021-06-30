@@ -36,7 +36,7 @@ HandleScopeWrap::HandleScopeWrap(v8::EscapableHandleScope* scope,
     : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
-  LWNODE_CALL_TRACE_2("%p", value);
+  LWNODE_CALL_TRACE("%p", value);
 
   handles_.push_back(value);
 }
@@ -54,7 +54,7 @@ bool HandleScopeWrap::remove(HandleWrap* value) {
 void HandleScopeWrap::clear() {
   if (Flags::isTraceCallEnabled()) {
     for (auto it = handles_.begin(); it != handles_.end(); it++) {
-      LWNODE_CALL_TRACE_2("%p", *it);
+      LWNODE_CALL_TRACE("%p", *it);
     }
   }
 
