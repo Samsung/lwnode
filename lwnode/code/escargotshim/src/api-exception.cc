@@ -174,12 +174,35 @@ Local<String> Message::Get() const {
 }
 
 v8::Isolate* Message::GetIsolate() const {
-  LWNODE_RETURN_NULLPTR;
+  return IsolateWrap::GetCurrent()->toV8();
 }
 
 ScriptOrigin Message::GetScriptOrigin() const {
-  LWNODE_UNIMPLEMENT;
-  return ScriptOrigin(Local<Value>());
+  v8::Isolate* isolate = GetIsolate();
+
+  // todo: fill up the information if required
+  Local<Value> resource_name =
+      String::NewFromUtf8(isolate, "").ToLocalChecked();
+  Local<Integer> resource_line_offset = Integer::New(isolate, 0);
+  Local<Integer> resource_column_offset = Integer::New(isolate, 0);
+  Local<Boolean> resource_is_shared_cross_origin = False(isolate);
+  Local<Integer> script_id = Integer::New(isolate, 0);
+  Local<Value> source_map_url = Undefined(isolate);
+  Local<Boolean> resource_is_opaque = True(isolate);
+  Local<Boolean> is_wasm = False(isolate);
+  Local<Boolean> is_module = False(isolate);
+  Local<PrimitiveArray> host_defined_options = PrimitiveArray::New(isolate, 0);
+
+  return v8::ScriptOrigin(resource_name,
+                          resource_line_offset,
+                          resource_column_offset,
+                          resource_is_shared_cross_origin,
+                          script_id,
+                          source_map_url,
+                          resource_is_opaque,
+                          is_wasm,
+                          is_module,
+                          host_defined_options);
 }
 
 v8::Local<Value> Message::GetScriptResourceName() const {
@@ -242,7 +265,13 @@ int Message::GetEndPosition() const {
 }
 
 int Message::ErrorLevel() const {
-  LWNODE_RETURN_0;
+  /* @note
+    Isolate::MessageErrorLevel::kMessageError and
+    Isolate::MessageErrorLevel::kMessageWarning are used in Node.js.
+    Only MessageErrorLevel::kMessageError is supported for now.
+  */
+  LWNODE_UNIMPLEMENT_WORKAROUND;
+  return v8::Isolate::MessageErrorLevel::kMessageError;
 }
 
 int Message::GetStartColumn() const {

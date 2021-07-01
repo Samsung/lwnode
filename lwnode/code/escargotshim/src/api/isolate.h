@@ -56,6 +56,28 @@ class Isolate : public gc {
   virtual bool isHole(const EscargotShim::ValueWrap* wrap) = 0;
   virtual bool isHole(const Escargot::ValueRef* ref) = 0;
 
+  void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
+    promise_reject_callback_ = callback;
+  }
+
+  void SetFatalErrorHandler(v8::FatalErrorCallback callback) {
+    fatal_error_callback_ = callback;
+  }
+
+  void SetPrepareStackTraceCallback(v8::PrepareStackTraceCallback callback) {
+    prepare_stack_trace_callback_ = callback;
+  }
+
+  void SetAbortOnUncaughtExceptionCallback(
+      v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
+    abort_on_uncaught_exception_callback_ = callback;
+  }
+
+  void AddMessageListenerWithErrorLevel(v8::MessageCallback callback) {
+    LWNODE_DCHECK_NULL(message_callback_);
+    message_callback_ = callback;
+  }
+
  protected:
   Escargot::ValueRef* scheduled_exception_{nullptr};
 
@@ -66,6 +88,13 @@ class Isolate : public gc {
 
   v8::TryCatch* getExternalTryCatchOnTop();
   bool hasExternalTryCatch();
+
+  v8::PromiseRejectCallback promise_reject_callback_{nullptr};
+  v8::MessageCallback message_callback_{nullptr};
+  v8::FatalErrorCallback fatal_error_callback_{nullptr};
+  v8::PrepareStackTraceCallback prepare_stack_trace_callback_{nullptr};
+  v8::Isolate::AbortOnUncaughtExceptionCallback
+      abort_on_uncaught_exception_callback_{nullptr};
 
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
@@ -143,28 +172,6 @@ class IsolateWrap final : public v8::internal::Isolate {
   VMInstanceRef* get() { return vmInstance_; }
   VMInstanceRef* vmInstance() { return vmInstance_; }
 
-  void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
-    promise_reject_callback_ = callback;
-  }
-
-  void SetFatalErrorHandler(v8::FatalErrorCallback callback) {
-    fatal_error_callback_ = callback;
-  }
-
-  void SetPrepareStackTraceCallback(v8::PrepareStackTraceCallback callback) {
-    prepare_stack_trace_callback_ = callback;
-  }
-
-  void SetAbortOnUncaughtExceptionCallback(
-      v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
-    abort_on_uncaught_exception_callback_ = callback;
-  }
-
-  void AddMessageListenerWithErrorLevel(v8::MessageCallback callback) {
-    LWNODE_DCHECK_NULL(message_callback_);
-    message_callback_ = callback;
-  }
-
   ValueWrap** getGlobal(const int idex);
   ValueWrap* undefined();
   ValueWrap* hole() override;
@@ -216,14 +223,6 @@ class IsolateWrap final : public v8::internal::Isolate {
   GlobalHandles* globalHandles_ = nullptr;
 
   PersistentRefHolder<IsolateWrap> release_lock_;
-
-  v8::PromiseRejectCallback promise_reject_callback_ = nullptr;
-  v8::MessageCallback message_callback_ = nullptr;
-  v8::FatalErrorCallback fatal_error_callback_ = nullptr;
-  v8::PrepareStackTraceCallback prepare_stack_trace_callback_ = nullptr;
-  v8::Isolate::AbortOnUncaughtExceptionCallback
-      abort_on_uncaught_exception_callback_ = nullptr;
-
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
 };
 
