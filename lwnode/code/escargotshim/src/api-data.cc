@@ -246,7 +246,7 @@ bool Value::IsPromise() const {
 }
 
 bool Value::IsModuleNamespaceObject() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isModuleNamespaceObject();
 }
 
 MaybeLocal<String> Value::ToString(Local<Context> context) const {
