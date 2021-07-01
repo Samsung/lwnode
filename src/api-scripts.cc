@@ -401,6 +401,22 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
     return MaybeLocal<Function>();
   }
 
+  if (script_or_module_out != nullptr) {
+    ScriptParserRef* parser = esContext->scriptParser();
+    // note: The script should be the script of the function generated above,
+    // but escargot do not support these api.
+    // We use the script of empty strings instead, as node is used only
+    // to register it in the weak callback.
+    ScriptParserRef::InitializeScriptResult result = parser->initializeScript(
+        lwIsolate->emptyString()->value()->asString(),
+        VAL(*source->resource_name)->value()->asString(),
+        false);
+    LWNODE_CHECK(result.isSuccessful());
+
+    *script_or_module_out =
+        Utils::NewLocal<ScriptOrModule>(lwIsolate->toV8(), result.script.get());
+  }
+
   return Utils::NewLocal<Function>(lwIsolate->toV8(), r.result);
 }
 
