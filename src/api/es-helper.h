@@ -102,6 +102,7 @@ class ObjectRefHelper {
   static void* getInternalPointer(ObjectRef* object, int idx);
 
   static ObjectRef* toObject(ContextRef* context, ValueRef* value);
+  static StringRef* getConstructorName(ContextRef* context, ObjectRef* object);
 
  private:
   static SymbolRef* s_symbolKeyForHiddenValues;
@@ -205,6 +206,14 @@ class ExceptionHelper {
   static ErrorObjectRef* createErrorObject(ContextRef* context,
                                            ErrorObjectRef::Code code,
                                            StringRef* errorMessage);
+};
+
+class StringRefHelper {
+ public:
+  template <size_t N>
+  static bool equalsWithASCIIString(StringRef* esString, const char (&str)[N]) {
+    return esString->equalsWithASCIIString(str, N - 1);
+  }
 };
 
 }  // namespace EscargotShim

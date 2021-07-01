@@ -321,6 +321,30 @@ ObjectRef* ObjectRefHelper::toObject(ContextRef* context, ValueRef* value) {
   return r.result->asObject();
 }
 
+StringRef* ObjectRefHelper::getConstructorName(ContextRef* context,
+                                               ObjectRef* object) {
+  /*
+    TODO: Use Escargot API
+    This function is buggy in some cases.
+    Please check THREADED_TEST(ObjectGetConstructorName)
+  */
+  auto r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ObjectRef* object) -> ValueRef* {
+        auto constructor =
+            object->get(state, StringRef::createFromASCII("constructor"))
+                ->asObject();
+        auto name = constructor->get(state, StringRef::createFromASCII("name"));
+        LWNODE_CHECK(name->isString());
+        return name;
+      },
+      object);
+
+  LWNODE_CHECK(r.isSuccessful());
+
+  return r.result->asString();
+}
+
 static std::string getCodeLine(const std::string& codeString, int errorLine) {
   if (errorLine < 1 || codeString.empty()) {
     return "";

@@ -1356,22 +1356,8 @@ Local<String> v8::Object::GetConstructorName() {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esObject = CVAL(this)->value()->asObject();
-
-  auto r = Evaluator::execute(
-      esContext,
-      [](ExecutionStateRef* state, ObjectRef* object) -> ValueRef* {
-        auto constructor =
-            object->get(state, StringRef::createFromASCII("constructor"))
-                ->asObject();
-        auto name = constructor->get(state, StringRef::createFromASCII("name"));
-        LWNODE_CHECK(name->isString());
-        return name;
-      },
-      esObject);
-
-  LWNODE_CHECK(r.isSuccessful());
-
-  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
+  auto esString = ObjectRefHelper::getConstructorName(esContext, esObject);
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esString);
 }
 
 Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,

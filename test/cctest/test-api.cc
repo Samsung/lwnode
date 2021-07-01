@@ -12917,59 +12917,59 @@ THREADED_TEST(Overriding) {
 // }
 
 
-// THREADED_TEST(ObjectGetConstructorName) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   LocalContext context;
-//   v8::HandleScope scope(isolate);
-//   v8_compile(
-//       "function Parent() {};"
-//       "function Child() {};"
-//       "Child.prototype = new Parent();"
-//       "Child.prototype.constructor = Child;"
-//       "var outer = { inner: (0, function() { }) };"
-//       "var p = new Parent();"
-//       "var c = new Child();"
-//       "var x = new outer.inner();"
-//       "var proto = Child.prototype;")
-//       ->Run(context.local())
-//       .ToLocalChecked();
+THREADED_TEST(ObjectGetConstructorName) {
+  v8::Isolate* isolate = CcTest::isolate();
+  LocalContext context;
+  v8::HandleScope scope(isolate);
+  v8_compile(
+      "function Parent() {};"
+      "function Child() {};"
+      "Child.prototype = new Parent();"
+      "Child.prototype.constructor = Child;"
+      "var outer = { inner: (0, function() { }) };"
+      "var p = new Parent();"
+      "var c = new Child();"
+      "var x = new outer.inner();"
+      "var proto = Child.prototype;")
+      ->Run(context.local())
+      .ToLocalChecked();
 
-//   Local<v8::Value> p =
-//       context->Global()->Get(context.local(), v8_str("p")).ToLocalChecked();
-//   CHECK(p->IsObject() &&
-//         p->ToObject(context.local())
-//             .ToLocalChecked()
-//             ->GetConstructorName()
-//             ->Equals(context.local(), v8_str("Parent"))
-//             .FromJust());
+  Local<v8::Value> p =
+      context->Global()->Get(context.local(), v8_str("p")).ToLocalChecked();
+  CHECK(p->IsObject() &&
+        p->ToObject(context.local())
+            .ToLocalChecked()
+            ->GetConstructorName()
+            ->Equals(context.local(), v8_str("Parent"))
+            .FromJust());
 
-//   Local<v8::Value> c =
-//       context->Global()->Get(context.local(), v8_str("c")).ToLocalChecked();
-//   CHECK(c->IsObject() &&
-//         c->ToObject(context.local())
-//             .ToLocalChecked()
-//             ->GetConstructorName()
-//             ->Equals(context.local(), v8_str("Child"))
-//             .FromJust());
+  Local<v8::Value> c =
+      context->Global()->Get(context.local(), v8_str("c")).ToLocalChecked();
+  CHECK(c->IsObject() &&
+        c->ToObject(context.local())
+            .ToLocalChecked()
+            ->GetConstructorName()
+            ->Equals(context.local(), v8_str("Child"))
+            .FromJust());
 
-//   Local<v8::Value> x =
-//       context->Global()->Get(context.local(), v8_str("x")).ToLocalChecked();
-//   CHECK(x->IsObject() &&
-//         x->ToObject(context.local())
-//             .ToLocalChecked()
-//             ->GetConstructorName()
-//             ->Equals(context.local(), v8_str("outer.inner"))
-//             .FromJust());
+  // Local<v8::Value> x =
+  //     context->Global()->Get(context.local(), v8_str("x")).ToLocalChecked();
+  // CHECK(x->IsObject() &&
+  //       x->ToObject(context.local())
+  //           .ToLocalChecked()
+  //           ->GetConstructorName()
+  //           ->Equals(context.local(), v8_str("outer.inner"))
+  //           .FromJust());
 
-//   Local<v8::Value> child_prototype =
-//       context->Global()->Get(context.local(), v8_str("proto")).ToLocalChecked();
-//   CHECK(child_prototype->IsObject() &&
-//         child_prototype->ToObject(context.local())
-//             .ToLocalChecked()
-//             ->GetConstructorName()
-//             ->Equals(context.local(), v8_str("Parent"))
-//             .FromJust());
-// }
+  // Local<v8::Value> child_prototype =
+  //     context->Global()->Get(context.local(), v8_str("proto")).ToLocalChecked();
+  // CHECK(child_prototype->IsObject() &&
+  //       child_prototype->ToObject(context.local())
+  //           .ToLocalChecked()
+  //           ->GetConstructorName()
+  //           ->Equals(context.local(), v8_str("Parent"))
+  //           .FromJust());
+}
 
 
 // THREADED_TEST(SubclassGetConstructorName) {
