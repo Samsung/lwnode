@@ -1648,52 +1648,52 @@ THREADED_TEST(IsNativeError) {
 }
 
 
-// THREADED_TEST(IsGeneratorFunctionOrObject) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
+THREADED_TEST(IsGeneratorFunctionOrObject) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
 
-//   CompileRun("function *gen() { yield 1; }\nfunction func() {}");
-//   v8::Local<Value> gen = CompileRun("gen");
-//   v8::Local<Value> genObj = CompileRun("gen()");
-//   v8::Local<Value> object = CompileRun("{a:42}");
-//   v8::Local<Value> func = CompileRun("func");
+  CompileRun("function *gen() { yield 1; }\nfunction func() {}");
+  v8::Local<Value> gen = CompileRun("gen");
+  v8::Local<Value> genObj = CompileRun("gen()");
+  v8::Local<Value> object = CompileRun("{a:42}");
+  v8::Local<Value> func = CompileRun("func");
 
-//   CHECK(gen->IsGeneratorFunction());
-//   CHECK(gen->IsFunction());
-//   CHECK(!gen->IsGeneratorObject());
+  CHECK(gen->IsGeneratorFunction());
+  CHECK(gen->IsFunction());
+  CHECK(!gen->IsGeneratorObject());
 
-//   CHECK(!genObj->IsGeneratorFunction());
-//   CHECK(!genObj->IsFunction());
-//   CHECK(genObj->IsGeneratorObject());
+  CHECK(!genObj->IsGeneratorFunction());
+  CHECK(!genObj->IsFunction());
+  CHECK(genObj->IsGeneratorObject());
 
-//   CHECK(!object->IsGeneratorFunction());
-//   CHECK(!object->IsFunction());
-//   CHECK(!object->IsGeneratorObject());
+  CHECK(!object->IsGeneratorFunction());
+  CHECK(!object->IsFunction());
+  CHECK(!object->IsGeneratorObject());
 
-//   CHECK(!func->IsGeneratorFunction());
-//   CHECK(func->IsFunction());
-//   CHECK(!func->IsGeneratorObject());
-// }
+  CHECK(!func->IsGeneratorFunction());
+  CHECK(func->IsFunction());
+  CHECK(!func->IsGeneratorObject());
+}
 
-// THREADED_TEST(IsAsyncFunction) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(IsAsyncFunction) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   CompileRun("async function foo() {}");
-//   v8::Local<Value> foo = CompileRun("foo");
+  CompileRun("async function foo() {}");
+  v8::Local<Value> foo = CompileRun("foo");
 
-//   CHECK(foo->IsAsyncFunction());
-//   CHECK(foo->IsFunction());
-//   CHECK(!foo->IsGeneratorFunction());
-//   CHECK(!foo->IsGeneratorObject());
+  CHECK(foo->IsAsyncFunction());
+  CHECK(foo->IsFunction());
+  CHECK(!foo->IsGeneratorFunction());
+  CHECK(!foo->IsGeneratorObject());
 
-//   CompileRun("function bar() {}");
-//   v8::Local<Value> bar = CompileRun("bar");
+  CompileRun("function bar() {}");
+  v8::Local<Value> bar = CompileRun("bar");
 
-//   CHECK(!bar->IsAsyncFunction());
-//   CHECK(bar->IsFunction());
-// }
+  CHECK(!bar->IsAsyncFunction());
+  CHECK(bar->IsFunction());
+}
 
 THREADED_TEST(ArgumentsObject) {
   LocalContext env;
