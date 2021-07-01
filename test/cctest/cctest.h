@@ -79,6 +79,7 @@ class CcTest {
   static void CollectGarbage();
   static void CollectAllGarbage(v8::Isolate* isolate = nullptr);
   static void PreciseCollectAllGarbage(v8::Isolate* isolate = nullptr);
+  static void InitializeVM();
 
   static v8::ArrayBuffer::Allocator* array_buffer_allocator() {
     return allocator_;
@@ -346,6 +347,20 @@ class InitializeTest : public ::testing::Test {
  public:
   void SetUp();
   void TearDown();
+};
+
+class StaticOneByteResource : public v8::String::ExternalOneByteStringResource {
+ public:
+  explicit StaticOneByteResource(const char* data) : data_(data) {}
+
+  ~StaticOneByteResource() {}
+
+  const char* data() const { return data_; }
+
+  size_t length() const { return strlen(data_); }
+
+ private:
+  const char* data_;
 };
 
 #endif

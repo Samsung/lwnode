@@ -116,6 +116,8 @@ void CcTest::PreciseCollectAllGarbage(v8::Isolate* isolate) {
 #endif
 }
 
+void CcTest::InitializeVM() {}
+
 static inline bool startsWith(const std::string& string,
                               const std::string& prefix) {
   return (string.size() >= prefix.size()) &&
