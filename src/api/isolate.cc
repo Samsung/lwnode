@@ -15,6 +15,7 @@
  */
 
 #include "isolate.h"
+#include "api.h"
 #include "context.h"
 #include "es-helper.h"
 #include "extra-data.h"
@@ -162,14 +163,17 @@ void Isolate::ReportPendingMessages() {
     should_report_exception = getExternalTryCatchOnTop()->is_verbose_;
   }
 
-  // Clear the pending message object early to avoid endless recursion.
-  auto message_obj = pending_message_obj_;
-  clear_pending_message_obj();
-
   // Actually report the message to all message handlers.
-  if (message_obj && should_report_exception) {
-    LWNODE_UNIMPLEMENT;
-    // TODO: report message
+  if (should_report_exception) {
+    v8::HandleScope scope(EscargotShim::IsolateWrap::toV8(this));
+
+    v8::Local<v8::Message> message;
+    v8::Local<v8::Value> exception = v8::Utils::NewLocal<v8::Value>(
+        EscargotShim::IsolateWrap::toV8(this), pending_exception_);
+
+    if (message_callback_ != nullptr) {
+      message_callback_(message, exception);
+    }
   }
 }
 
