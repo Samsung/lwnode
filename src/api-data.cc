@@ -468,7 +468,7 @@ void v8::Promise::CheckCast(Value* that) {
 }
 
 void v8::Promise::Resolver::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsPromise());
 }
 
 void v8::Proxy::CheckCast(Value* that) {
@@ -557,7 +557,7 @@ std::shared_ptr<v8::BackingStore> v8::SharedArrayBuffer::GetBackingStore() {
 }
 
 void v8::ArrayBuffer::CheckCast(Value* that) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(that->IsArrayBuffer());
 }
 
 void v8::ArrayBufferView::CheckCast(Value* that) {
