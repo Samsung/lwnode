@@ -211,7 +211,18 @@ bool Value::IsRegExp() const {
 }
 
 bool Value::IsAsyncFunction() const {
-  LWNODE_RETURN_FALSE;
+  auto esValue = CVAL(this)->value();
+
+  if (esValue->isFunctionObject() == false) {
+    return false;
+  }
+
+  auto esPureContext =
+      ContextRef::create(IsolateWrap::GetCurrent()->vmInstance());
+  auto esString =
+      ObjectRefHelper::getConstructorName(esPureContext, esValue->asObject());
+
+  return StringRefHelper::equalsWithASCIIString(esString, "AsyncFunction");
 }
 
 bool Value::IsGeneratorFunction() const {
