@@ -891,57 +891,57 @@ static const int kDeepOneByteDepth = 100000;
 //   DeleteArray<char>(foo);
 // }
 
-// TEST(Utf8Conversion) {
-//   // Smoke test for converting strings to utf-8.
-//   CcTest::InitializeVM();
-//   v8::HandleScope handle_scope(CcTest::isolate());
-//   // A simple one-byte string
-//   const char* one_byte_string = "abcdef12345";
-//   int len = v8::String::NewFromUtf8(CcTest::isolate(), one_byte_string,
-//                                     v8::NewStringType::kNormal,
-//                                     static_cast<int>(strlen(one_byte_string)))
-//                 .ToLocalChecked()
-//                 ->Utf8Length(CcTest::isolate());
-//   CHECK_EQ(strlen(one_byte_string), len);
-//   // A mixed one-byte and two-byte string
-//   // U+02E4 -> CB A4
-//   // U+0064 -> 64
-//   // U+12E4 -> E1 8B A4
-//   // U+0030 -> 30
-//   // U+3045 -> E3 81 85
-//   const uint16_t mixed_string[] = {0x02E4, 0x0064, 0x12E4, 0x0030, 0x3045};
-//   // The characters we expect to be output
-//   const unsigned char as_utf8[11] = {0xCB, 0xA4, 0x64, 0xE1, 0x8B, 0xA4,
-//   0x30,
-//       0xE3, 0x81, 0x85, 0x00};
-//   // The number of bytes expected to be written for each length
-//   const int lengths[12] = {0, 0, 2, 3, 3, 3, 6, 7, 7, 7, 10, 11};
-//   const int char_lengths[12] = {0, 0, 1, 2, 2, 2, 3, 4, 4, 4, 5, 5};
-//   v8::Local<v8::String> mixed =
-//       v8::String::NewFromTwoByte(CcTest::isolate(), mixed_string,
-//                                  v8::NewStringType::kNormal, 5)
-//           .ToLocalChecked();
-//   CHECK_EQ(10, mixed->Utf8Length(CcTest::isolate()));
-//   // Try encoding the string with all capacities
-//   char buffer[11];
-//   const char kNoChar = static_cast<char>(-1);
-//   for (int i = 0; i <= 11; i++) {
-//     // Clear the buffer before reusing it
-//     for (int j = 0; j < 11; j++)
-//       buffer[j] = kNoChar;
-//     int chars_written;
-//     int written =
-//         mixed->WriteUtf8(CcTest::isolate(), buffer, i, &chars_written);
-//     CHECK_EQ(lengths[i], written);
-//     CHECK_EQ(char_lengths[i], chars_written);
-//     // Check that the contents are correct
-//     for (int j = 0; j < lengths[i]; j++)
-//       CHECK_EQ(as_utf8[j], static_cast<unsigned char>(buffer[j]));
-//     // Check that the rest of the buffer hasn't been touched
-//     for (int j = lengths[i]; j < 11; j++)
-//       CHECK_EQ(kNoChar, buffer[j]);
-//   }
-// }
+TEST(Utf8Conversion) {
+  // Smoke test for converting strings to utf-8.
+  CcTest::InitializeVM();
+  v8::HandleScope handle_scope(CcTest::isolate());
+  // A simple one-byte string
+  const char* one_byte_string = "abcdef12345";
+  int len = v8::String::NewFromUtf8(CcTest::isolate(), one_byte_string,
+                                    v8::NewStringType::kNormal,
+                                    static_cast<int>(strlen(one_byte_string)))
+                .ToLocalChecked()
+                ->Utf8Length(CcTest::isolate());
+  CHECK_EQ(strlen(one_byte_string), len);
+  // A mixed one-byte and two-byte string
+  // U+02E4 -> CB A4
+  // U+0064 -> 64
+  // U+12E4 -> E1 8B A4
+  // U+0030 -> 30
+  // U+3045 -> E3 81 85
+  const uint16_t mixed_string[] = {0x02E4, 0x0064, 0x12E4, 0x0030, 0x3045};
+  // The characters we expect to be output
+  const unsigned char as_utf8[11] = {0xCB, 0xA4, 0x64, 0xE1, 0x8B, 0xA4,
+  0x30,
+      0xE3, 0x81, 0x85, 0x00};
+  // The number of bytes expected to be written for each length
+  const int lengths[12] = {0, 0, 2, 3, 3, 3, 6, 7, 7, 7, 10, 11};
+  const int char_lengths[12] = {0, 0, 1, 2, 2, 2, 3, 4, 4, 4, 5, 5};
+  v8::Local<v8::String> mixed =
+      v8::String::NewFromTwoByte(CcTest::isolate(), mixed_string,
+                                 v8::NewStringType::kNormal, 5)
+          .ToLocalChecked();
+  CHECK_EQ(10, mixed->Utf8Length(CcTest::isolate()));
+  // Try encoding the string with all capacities
+  char buffer[11];
+  const char kNoChar = static_cast<char>(-1);
+  for (int i = 0; i <= 11; i++) {
+    // Clear the buffer before reusing it
+    for (int j = 0; j < 11; j++)
+      buffer[j] = kNoChar;
+    int chars_written;
+    int written =
+        mixed->WriteUtf8(CcTest::isolate(), buffer, i, &chars_written);
+    CHECK_EQ(lengths[i], written);
+    CHECK_EQ(char_lengths[i], chars_written);
+    // Check that the contents are correct
+    for (int j = 0; j < lengths[i]; j++)
+      CHECK_EQ(as_utf8[j], static_cast<unsigned char>(buffer[j]));
+    // Check that the rest of the buffer hasn't been touched
+    for (int j = lengths[i]; j < 11; j++)
+      CHECK_EQ(kNoChar, buffer[j]);
+  }
+}
 
 // TEST(Utf8ConversionPerf) {
 //   // Smoke test for converting strings to utf-8.
@@ -1743,43 +1743,43 @@ TEST(ReplaceInvalidUtf8) {
 //   }
 // }
 
-// TEST(ExternalStringIndexOf) {
-//   CcTest::InitializeVM();
-//   LocalContext context;
-//   v8::HandleScope scope(CcTest::isolate());
+TEST(ExternalStringIndexOf) {
+  CcTest::InitializeVM();
+  LocalContext context;
+  v8::HandleScope scope(CcTest::isolate());
 
-//   const char* raw_string = "abcdefghijklmnopqrstuvwxyz";
-//   v8::Local<v8::String> string =
-//       v8::String::NewExternalOneByte(CcTest::isolate(),
-//                                      new StaticOneByteResource(raw_string))
-//           .ToLocalChecked();
-//   v8::Local<v8::Object> global = context->Global();
-//   global->Set(context.local(), v8_str("external"), string).FromJust();
+  const char* raw_string = "abcdefghijklmnopqrstuvwxyz";
+  v8::Local<v8::String> string =
+      v8::String::NewExternalOneByte(CcTest::isolate(),
+                                     new StaticOneByteResource(raw_string))
+          .ToLocalChecked();
+  v8::Local<v8::Object> global = context->Global();
+  global->Set(context.local(), v8_str("external"), string).FromJust();
 
-//   char source[] = "external.indexOf('%')";
-//   for (size_t i = 0; i < strlen(raw_string); i++) {
-//     source[18] = raw_string[i];
-//     int result_position = static_cast<int>(i);
-//     CHECK_EQ(result_position,
-//              CompileRun(source)->Int32Value(context.local()).FromJust());
-//   }
-//   CHECK_EQ(-1,
-//            CompileRun("external.indexOf('abcdefghijklmnopqrstuvwxyz%%%%%%')")
-//                ->Int32Value(context.local())
-//                .FromJust());
-//   CHECK_EQ(1,
-//            CompileRun("external.indexOf('', 1)")
-//                ->Int32Value(context.local())
-//                .FromJust());
-//   CHECK_EQ(-1,
-//            CompileRun("external.indexOf('a', 1)")
-//                ->Int32Value(context.local())
-//                .FromJust());
-//   CHECK_EQ(-1,
-//            CompileRun("external.indexOf('$')")
-//                ->Int32Value(context.local())
-//                .FromJust());
-// }
+  char source[] = "external.indexOf('%')";
+  for (size_t i = 0; i < strlen(raw_string); i++) {
+    source[18] = raw_string[i];
+    int result_position = static_cast<int>(i);
+    CHECK_EQ(result_position,
+             CompileRun(source)->Int32Value(context.local()).FromJust());
+  }
+  CHECK_EQ(-1,
+           CompileRun("external.indexOf('abcdefghijklmnopqrstuvwxyz%%%%%%')")
+               ->Int32Value(context.local())
+               .FromJust());
+  CHECK_EQ(1,
+           CompileRun("external.indexOf('', 1)")
+               ->Int32Value(context.local())
+               .FromJust());
+  CHECK_EQ(-1,
+           CompileRun("external.indexOf('a', 1)")
+               ->Int32Value(context.local())
+               .FromJust());
+  CHECK_EQ(-1,
+           CompileRun("external.indexOf('$')")
+               ->Int32Value(context.local())
+               .FromJust());
+}
 
 // #define GC_INSIDE_NEW_STRING_FROM_UTF8_SUB_STRING(NAME, STRING)                \
 //   TEST(GCInsideNewStringFromUtf8SubStringWith##NAME) {                         \
