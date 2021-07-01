@@ -163,7 +163,7 @@ TEST(ScriptCompiler_CompileFunctionInContext) {
 }
 
 // --- ArrayBuffer ---
-TEST(DISABLED_ArrayBuffer_New) {
+TEST(ArrayBuffer_New) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -198,7 +198,7 @@ TEST(DISABLED_ArrayBuffer_New) {
 
 static int s_array_buffer_release_pass;
 
-TEST(DISABLED_ArrayBuffer_Release) {
+TEST(ArrayBuffer_Release) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -211,7 +211,7 @@ TEST(DISABLED_ArrayBuffer_Release) {
         VAL(*ab)->value(), [](void* self) { s_array_buffer_release_pass++; });
   }();
 
-  CcTest::CollectGarbage();
+  CcTest::PreciseCollectAllGarbage();
 
   CHECK_GT(s_array_buffer_release_pass, 0);
 
