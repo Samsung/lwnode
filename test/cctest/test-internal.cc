@@ -512,4 +512,23 @@ TEST(internal_Escargot_Extends) {
   CHECK_EQ(r.isSuccessful(), true);
 }
 
+TEST(internal_Escargot_toArrayIndex_Regression) {
+  LocalContext env;
+  auto esContext =
+      IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
+
+  auto esValue = ValueRef::create(-1);
+  uint32_t index = ValueRef::InvalidArrayIndexValue;
+  auto r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, ValueRef* self, uint32_t* index) {
+        *index = self->toArrayIndex(esState);
+        return ValueRef::create(*index);
+      },
+      esValue,
+      &index);
+
+  CHECK_EQ(ValueRef::InvalidArrayIndexValue, index);
+}
+
 #endif
