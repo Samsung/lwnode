@@ -345,8 +345,8 @@ MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
     }
   }
 
-  return Utils::NewLocal<String>(
-      lwIsolate->toV8(), StringRef::createFromASCII(line.data(), line.size()));
+  return String::NewFromUtf8(
+      lwIsolate->toV8(), line.data(), NewStringType::kNormal, line.size());
 }
 
 void Message::PrintCurrentStackTrace(Isolate* isolate, FILE* out) {
