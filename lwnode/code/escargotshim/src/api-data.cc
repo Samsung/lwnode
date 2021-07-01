@@ -215,11 +215,11 @@ bool Value::IsAsyncFunction() const {
 }
 
 bool Value::IsGeneratorFunction() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isGeneratorFunctionObject();
 }
 
 bool Value::IsGeneratorObject() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isGeneratorObject();
 }
 
 bool Value::IsMapIterator() const {
