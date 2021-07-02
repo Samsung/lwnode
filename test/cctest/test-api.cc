@@ -12961,14 +12961,14 @@ THREADED_TEST(ObjectGetConstructorName) {
   //           ->Equals(context.local(), v8_str("outer.inner"))
   //           .FromJust());
 
-  // Local<v8::Value> child_prototype =
-  //     context->Global()->Get(context.local(), v8_str("proto")).ToLocalChecked();
-  // CHECK(child_prototype->IsObject() &&
-  //       child_prototype->ToObject(context.local())
-  //           .ToLocalChecked()
-  //           ->GetConstructorName()
-  //           ->Equals(context.local(), v8_str("Parent"))
-  //           .FromJust());
+  Local<v8::Value> child_prototype =
+      context->Global()->Get(context.local(), v8_str("proto")).ToLocalChecked();
+  CHECK(child_prototype->IsObject() &&
+        child_prototype->ToObject(context.local())
+            .ToLocalChecked()
+            ->GetConstructorName()
+            ->Equals(context.local(), v8_str("Parent"))
+            .FromJust());
 }
 
 
