@@ -331,11 +331,20 @@ StringRef* ObjectRefHelper::getConstructorName(ContextRef* context,
   auto r = Evaluator::execute(
       context,
       [](ExecutionStateRef* state, ObjectRef* object) -> ValueRef* {
-        auto constructor =
-            object->get(state, StringRef::createFromASCII("constructor"))
-                ->asObject();
-        auto name = constructor->get(state, StringRef::createFromASCII("name"));
-        LWNODE_CHECK(name->isString());
+        OptionalRef<ObjectRef> maybeProto = object->getPrototypeObject(state);
+        StringRef* name = StringRef::emptyString();
+
+        if (maybeProto.hasValue()) {
+          auto constructor =
+              maybeProto.value()
+                  ->get(state, StringRef::createFromASCII("constructor"))
+                  ->asObject();
+          name = constructor->get(state, StringRef::createFromASCII("name"))
+                     ->asString();
+
+        } else {
+          LWNODE_LOG_WARN("TODO: ConstructorName isn't found.");
+        }
         return name;
       },
       object);
