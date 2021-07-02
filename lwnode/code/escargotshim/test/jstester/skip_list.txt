@@ -30,6 +30,7 @@ test/parallel/test-async-local-storage-http-multiclients.js
 test/parallel/test-async-wrap-pop-id-during-load.js
 test/parallel/test-async-wrap-promise-after-enabled.js
 test/parallel/test-async-wrap-tlssocket-asyncreset.js
+test/parallel/test-async-wrap-uncaughtexception.js
 test/parallel/test-atomics-wake.js
 test/parallel/test-binding-constants.js
 test/parallel/test-buffer-alloc.js
@@ -44,6 +45,7 @@ test/parallel/test-buffer-constructor-outside-node-modules.js
 test/parallel/test-buffer-failed-alloc-typed-arrays.js
 test/parallel/test-buffer-fill.js
 test/parallel/test-buffer-from.js
+test/parallel/test-buffer-indexof.js
 test/parallel/test-buffer-inspect.js
 test/parallel/test-buffer-new.js
 test/parallel/test-buffer-no-negative-allocation.js
@@ -77,6 +79,8 @@ test/parallel/test-child-process-exec-stdout-stderr-data-string.js
 test/parallel/test-child-process-exec-timeout.js
 test/parallel/test-child-process-execfile-maxbuf.js
 test/parallel/test-child-process-execfile.js
+test/parallel/test-child-process-execfilesync-maxbuf.js
+test/parallel/test-child-process-execsync-maxbuf.js
 test/parallel/test-child-process-exit-code.js
 test/parallel/test-child-process-flush-stdio.js
 test/parallel/test-child-process-fork-and-spawn.js
@@ -94,6 +98,7 @@ test/parallel/test-child-process-fork-ref.js
 test/parallel/test-child-process-fork-stdio-string-variant.js
 test/parallel/test-child-process-fork-stdio.js
 test/parallel/test-child-process-http-socket-leak.js
+test/parallel/test-child-process-ipc-next-tick.js
 test/parallel/test-child-process-ipc.js
 test/parallel/test-child-process-kill.js
 test/parallel/test-child-process-no-deprecation.js
@@ -112,7 +117,10 @@ test/parallel/test-child-process-spawn-typeerror.js
 test/parallel/test-child-process-spawnsync-args.js
 test/parallel/test-child-process-spawnsync-env.js
 test/parallel/test-child-process-spawnsync-kill-signal.js
+test/parallel/test-child-process-spawnsync-maxbuf.js
 test/parallel/test-child-process-spawnsync-shell.js
+test/parallel/test-child-process-spawnsync-timeout.js
+test/parallel/test-child-process-spawnsync-validation-errors.js
 test/parallel/test-child-process-spawnsync.js
 test/parallel/test-child-process-stdin.js
 test/parallel/test-child-process-stdio-big-write-end.js
@@ -132,6 +140,7 @@ test/parallel/test-cli-node-print-help.js
 test/parallel/test-cli-syntax-eval.js
 test/parallel/test-cli-syntax-piped-bad.js
 test/parallel/test-cluster-advanced-serialization.js
+test/parallel/test-cluster-bind-privileged-port.js
 test/parallel/test-cluster-bind-twice.js
 test/parallel/test-cluster-concurrent-disconnect.js
 test/parallel/test-cluster-cwd.js
@@ -164,6 +173,7 @@ test/parallel/test-cluster-server-restart-none.js
 test/parallel/test-cluster-server-restart-rr.js
 test/parallel/test-cluster-setup-master.js
 test/parallel/test-cluster-shared-handle-bind-error.js
+test/parallel/test-cluster-shared-handle-bind-privileged-port.js
 test/parallel/test-cluster-shared-leak.js
 test/parallel/test-cluster-worker-destroy.js
 test/parallel/test-cluster-worker-disconnect-on-error.js
@@ -189,6 +199,8 @@ test/parallel/test-crypto-des3-wrap.js
 test/parallel/test-crypto-dh-leak.js
 test/parallel/test-crypto-dh-stateless.js
 test/parallel/test-crypto-dh.js
+test/parallel/test-crypto-domain.js
+test/parallel/test-crypto-domains.js
 test/parallel/test-crypto-ecb.js
 test/parallel/test-crypto-ecdh-convert-key.js
 test/parallel/test-crypto-fips.js
@@ -220,6 +232,7 @@ test/parallel/test-dgram-bind-fd.js
 test/parallel/test-dgram-close-in-listening.js
 test/parallel/test-dgram-close-is-not-callback.js
 test/parallel/test-dgram-close.js
+test/parallel/test-dgram-cluster-bind-error.js
 test/parallel/test-dgram-connect-send-callback-multi-buffer.js
 test/parallel/test-dgram-connect-send-default-host.js
 test/parallel/test-dgram-connect-send-multi-buffer-copy.js
@@ -229,7 +242,11 @@ test/parallel/test-dgram-error-message-address.js
 test/parallel/test-dgram-exclusive-implicit-bind.js
 test/parallel/test-dgram-implicit-bind.js
 test/parallel/test-dgram-ipv6only.js
+test/parallel/test-dgram-membership.js
+test/parallel/test-dgram-msgsize.js
+test/parallel/test-dgram-multicast-loopback.js
 test/parallel/test-dgram-multicast-set-interface.js
+test/parallel/test-dgram-multicast-setTTL.js
 test/parallel/test-dgram-oob-buffer.js
 test/parallel/test-dgram-send-callback-multi-buffer-empty-address.js
 test/parallel/test-dgram-send-callback-multi-buffer.js
@@ -237,6 +254,8 @@ test/parallel/test-dgram-send-default-host.js
 test/parallel/test-dgram-send-error.js
 test/parallel/test-dgram-send-multi-buffer-copy.js
 test/parallel/test-dgram-send-multi-string-array.js
+test/parallel/test-dgram-setBroadcast.js
+test/parallel/test-dgram-setTTL.js
 test/parallel/test-dgram-socket-buffer-size.js
 test/parallel/test-dgram-udp4.js
 test/parallel/test-dgram-udp6-link-local-address.js
@@ -247,17 +266,25 @@ test/parallel/test-disable-proto-throw.js
 test/parallel/test-dns-cancel-reverse-lookup.js
 test/parallel/test-dns-channel-cancel.js
 test/parallel/test-dns-channel-timeout.js
+test/parallel/test-dns-lookup-promises.js
+test/parallel/test-dns-lookup.js
+test/parallel/test-dns-lookupService.js
+test/parallel/test-dns-memory-error.js
 test/parallel/test-dns-multi-channel.js
 test/parallel/test-dns-resolveany-bad-ancount.js
 test/parallel/test-dns-resolveany.js
 test/parallel/test-dns.js
 test/parallel/test-domain-abort-on-uncaught.js
 test/parallel/test-domain-async-id-map-leak.js
+test/parallel/test-domain-bind-timeout.js
 test/parallel/test-domain-emit-error-handler-stack.js
 test/parallel/test-domain-error-types.js
 test/parallel/test-domain-http-server.js
+test/parallel/test-domain-implicit-binding.js
+test/parallel/test-domain-implicit-fs.js
 test/parallel/test-domain-multi.js
 test/parallel/test-domain-multiple-errors.js
+test/parallel/test-domain-nexttick.js
 test/parallel/test-domain-no-error-handler-abort-on-uncaught-0.js
 test/parallel/test-domain-no-error-handler-abort-on-uncaught-1.js
 test/parallel/test-domain-no-error-handler-abort-on-uncaught-2.js
@@ -271,12 +298,18 @@ test/parallel/test-domain-no-error-handler-abort-on-uncaught-9.js
 test/parallel/test-domain-promise.js
 test/parallel/test-domain-safe-exit.js
 test/parallel/test-domain-set-uncaught-exception-capture-after-load.js
+test/parallel/test-domain-stack-empty-in-process-uncaughtexception.js
+test/parallel/test-domain-stack.js
 test/parallel/test-domain-throw-error-then-throw-from-uncaught-exception-handler.js
 test/parallel/test-domain-thrown-error-handler-stack.js
+test/parallel/test-domain-timer.js
+test/parallel/test-domain-timers-uncaught-exception.js
 test/parallel/test-domain-timers.js
+test/parallel/test-domain-top-level-error-handler-clears-stack.js
 test/parallel/test-domain-top-level-error-handler-throw.js
 test/parallel/test-domain-uncaught-exception.js
 test/parallel/test-domain-with-abort-on-uncaught-exception.js
+test/parallel/test-emit-after-uncaught-exception.js
 test/parallel/test-env-var-no-warnings.js
 test/parallel/test-error-prepare-stack-trace.js
 test/parallel/test-error-reporting.js
@@ -299,6 +332,7 @@ test/parallel/test-eslint-required-modules.js
 test/parallel/test-event-capture-rejections.js
 test/parallel/test-event-on-async-iterator.js
 test/parallel/test-events-uncaught-exception-stack.js
+test/parallel/test-exception-handler.js
 test/parallel/test-file-write-stream.js
 test/parallel/test-file-write-stream2.js
 test/parallel/test-file-write-stream3.js
@@ -332,6 +366,7 @@ test/parallel/test-fs-open-flags.js
 test/parallel/test-fs-open-mode-mask.js
 test/parallel/test-fs-open-no-close.js
 test/parallel/test-fs-open-numeric-flags.js
+test/parallel/test-fs-open.js
 test/parallel/test-fs-opendir.js
 test/parallel/test-fs-options-immutable.js
 test/parallel/test-fs-promises-file-handle-append-file.js
@@ -354,6 +389,7 @@ test/parallel/test-fs-promisified.js
 test/parallel/test-fs-read-stream-autoClose.js
 test/parallel/test-fs-read-stream-fd.js
 test/parallel/test-fs-read-stream.js
+test/parallel/test-fs-readdir-stack-overflow.js
 test/parallel/test-fs-readdir-types.js
 test/parallel/test-fs-readdir-ucs2.js
 test/parallel/test-fs-readdir.js
@@ -363,6 +399,7 @@ test/parallel/test-fs-readfile-flags.js
 test/parallel/test-fs-readfile-pipe-large.js
 test/parallel/test-fs-readfile-pipe.js
 test/parallel/test-fs-readfile-unlink.js
+test/parallel/test-fs-readfile-zero-byte-liar.js
 test/parallel/test-fs-readfile.js
 test/parallel/test-fs-readfilesync-pipe-large.js
 test/parallel/test-fs-readv-promises.js
@@ -382,6 +419,7 @@ test/parallel/test-fs-symlink-dir-junction.js
 test/parallel/test-fs-symlink-dir.js
 test/parallel/test-fs-symlink-longpath.js
 test/parallel/test-fs-symlink.js
+test/parallel/test-fs-sync-fd-leak.js
 test/parallel/test-fs-syncwritestream.js
 test/parallel/test-fs-truncate-clear-file-zero.js
 test/parallel/test-fs-truncate-fd.js
@@ -404,6 +442,7 @@ test/parallel/test-fs-write-file-sync.js
 test/parallel/test-fs-write-file-typedarrays.js
 test/parallel/test-fs-write-file.js
 test/parallel/test-fs-write-reuse-callback.js
+test/parallel/test-fs-write-sigxfsz.js
 test/parallel/test-fs-write-stream-autoclose-option.js
 test/parallel/test-fs-write-stream-change-open.js
 test/parallel/test-fs-write-stream-close-without-callback.js
@@ -427,6 +466,7 @@ test/parallel/test-gc-http-client-timeout.js
 test/parallel/test-gc-net-timeout.js
 test/parallel/test-gc-tls-external-memory.js
 test/parallel/test-global.js
+test/parallel/test-handle-wrap-close-abort.js
 test/parallel/test-handle-wrap-isrefed.js
 test/parallel/test-heapdump-async-hooks-init-promise.js
 test/parallel/test-http-1.0-keep-alive.js
@@ -485,6 +525,7 @@ test/parallel/test-http-client-error-rawbytes.js
 test/parallel/test-http-client-finished.js
 test/parallel/test-http-client-get-url.js
 test/parallel/test-http-client-headers-array.js
+test/parallel/test-http-client-immediate-error.js
 test/parallel/test-http-client-keep-alive-release-before-finish.js
 test/parallel/test-http-client-override-global-agent.js
 test/parallel/test-http-client-parse-error.js
@@ -494,6 +535,7 @@ test/parallel/test-http-client-race.js
 test/parallel/test-http-client-reject-chunked-with-content-length.js
 test/parallel/test-http-client-reject-cr-no-lf.js
 test/parallel/test-http-client-reject-unexpected-agent.js
+test/parallel/test-http-client-req-error-dont-double-fire.js
 test/parallel/test-http-client-response-domain.js
 test/parallel/test-http-client-response-timeout.js
 test/parallel/test-http-client-set-timeout-after-end.js
@@ -522,6 +564,7 @@ test/parallel/test-http-default-encoding.js
 test/parallel/test-http-default-port.js
 test/parallel/test-http-deprecated-urls.js
 test/parallel/test-http-destroyed-socket-write2.js
+test/parallel/test-http-dns-error.js
 test/parallel/test-http-double-content-length.js
 test/parallel/test-http-dump-req-when-res-ends.js
 test/parallel/test-http-end-throw-socket-handling.js
@@ -866,6 +909,7 @@ test/parallel/test-http2-server-rst-stream.js
 test/parallel/test-http2-server-session-destroy.js
 test/parallel/test-http2-server-sessionerror.js
 test/parallel/test-http2-server-set-header.js
+test/parallel/test-http2-server-settimeout-no-callback.js
 test/parallel/test-http2-server-shutdown-before-respond.js
 test/parallel/test-http2-server-shutdown-options-errors.js
 test/parallel/test-http2-server-shutdown-redundant.js
@@ -930,11 +974,13 @@ test/parallel/test-https-hwm.js
 test/parallel/test-https-localaddress-bind-error.js
 test/parallel/test-https-localaddress.js
 test/parallel/test-https-max-headers-count.js
+test/parallel/test-https-options-boolean-check.js
 test/parallel/test-https-pfx.js
 test/parallel/test-https-request-arguments.js
 test/parallel/test-https-resume-after-renew.js
 test/parallel/test-https-server-options-incoming-message.js
 test/parallel/test-https-server-options-server-response.js
+test/parallel/test-https-server-request-timeout.js
 test/parallel/test-https-set-timeout-server.js
 test/parallel/test-https-simple.js
 test/parallel/test-https-slow-headers.js
@@ -953,6 +999,7 @@ test/parallel/test-internal-util-helpers.js
 test/parallel/test-internal-util-weakreference.js
 test/parallel/test-kill-segfault-freebsd.js
 test/parallel/test-listen-fd-cluster.js
+test/parallel/test-listen-fd-ebadf.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
 test/parallel/test-memory-usage.js
 test/parallel/test-module-circular-symlinks.js
@@ -964,6 +1011,7 @@ test/parallel/test-module-multi-extensions.js
 test/parallel/test-module-symlinked-peer-modules.js
 test/parallel/test-net-after-close.js
 test/parallel/test-net-allow-half-open.js
+test/parallel/test-net-better-error-messages-path.js
 test/parallel/test-net-binary.js
 test/parallel/test-net-bind-twice.js
 test/parallel/test-net-buffersize.js
@@ -990,6 +1038,7 @@ test/parallel/test-net-keepalive.js
 test/parallel/test-net-large-string.js
 test/parallel/test-net-listen-after-destroying-stdin.js
 test/parallel/test-net-listen-exclusive-random-ports.js
+test/parallel/test-net-listen-fd0.js
 test/parallel/test-net-listen-ipv6only.js
 test/parallel/test-net-local-address-port.js
 test/parallel/test-net-normalize-args.js
@@ -1053,6 +1102,9 @@ test/parallel/test-pipe-outgoing-message-data-emitted-after-ended.js
 test/parallel/test-pipe-stream.js
 test/parallel/test-pipe-unref.js
 test/parallel/test-pipe-writev.js
+test/parallel/test-policy-dependencies.js
+test/parallel/test-policy-dependency-conditions.js
+test/parallel/test-policy-integrity-flag.js
 test/parallel/test-policy-parse-integrity.js
 test/parallel/test-policy-scopes-dependencies.js
 test/parallel/test-policy-scopes-integrity.js
@@ -1072,6 +1124,7 @@ test/parallel/test-process-env-symbols.js
 test/parallel/test-process-env-windows-error-reset.js
 test/parallel/test-process-env.js
 test/parallel/test-process-euid-egid.js
+test/parallel/test-process-exception-capture-should-abort-on-uncaught-setflagsfromstring.js
 test/parallel/test-process-exception-capture-should-abort-on-uncaught.js
 test/parallel/test-process-exception-capture.js
 test/parallel/test-process-exec-argv.js
@@ -1081,6 +1134,8 @@ test/parallel/test-process-external-stdio-close.js
 test/parallel/test-process-getactivehandles.js
 test/parallel/test-process-getgroups.js
 test/parallel/test-process-kill-null.js
+test/parallel/test-process-kill-pid.js
+test/parallel/test-process-next-tick.js
 test/parallel/test-process-raw-debug.js
 test/parallel/test-process-redirect-warnings-env.js
 test/parallel/test-process-redirect-warnings.js
@@ -1196,19 +1251,29 @@ test/parallel/test-stdout-close-unref.js
 test/parallel/test-stdout-stderr-reading.js
 test/parallel/test-stdout-to-file.js
 test/parallel/test-stream-base-typechecking.js
+test/parallel/test-stream-pipe-error-unhandled.js
 test/parallel/test-stream-pipeline-http2.js
 test/parallel/test-stream-pipeline-process.js
+test/parallel/test-stream-pipeline-uncaught.js
 test/parallel/test-stream-pipeline.js
 test/parallel/test-stream-readable-async-iterators.js
+test/parallel/test-stream-writable-end-cb-uncaught.js
+test/parallel/test-stream2-finish-pipe-error.js
 test/parallel/test-stream2-httpclient-response-end.js
 test/parallel/test-string-decoder-end.js
 test/parallel/test-string-decoder-fuzz.js
 test/parallel/test-string-decoder.js
+test/parallel/test-stringbytes-external.js
 test/parallel/test-sync-io-option.js
 test/parallel/test-tcp-wrap-connect.js
 test/parallel/test-tcp-wrap-listen.js
 test/parallel/test-tick-processor-arguments.js
+test/parallel/test-timers-immediate-queue-throw.js
+test/parallel/test-timers-interval-throw.js
+test/parallel/test-timers-reset-process-domain-on-throw.js
 test/parallel/test-timers-socket-timeout-removes-other-socket-unref-timer.js
+test/parallel/test-timers-uncaught-exception.js
+test/parallel/test-timers-unref-throw-then-ref.js
 test/parallel/test-timers-unrefed-in-callback.js
 test/parallel/test-tls-0-dns-altname.js
 test/parallel/test-tls-addca.js
@@ -1231,6 +1296,8 @@ test/parallel/test-tls-cli-min-version-1.0.js
 test/parallel/test-tls-cli-min-version-1.1.js
 test/parallel/test-tls-cli-min-version-1.2.js
 test/parallel/test-tls-cli-min-version-1.3.js
+test/parallel/test-tls-client-abort.js
+test/parallel/test-tls-client-abort2.js
 test/parallel/test-tls-client-auth.js
 test/parallel/test-tls-client-destroy-soon.js
 test/parallel/test-tls-client-getephemeralkeyinfo.js
@@ -1255,6 +1322,7 @@ test/parallel/test-tls-connect-pipe.js
 test/parallel/test-tls-connect-secure-context.js
 test/parallel/test-tls-connect-simple.js
 test/parallel/test-tls-connect-stream-writes.js
+test/parallel/test-tls-connect-timeout-option.js
 test/parallel/test-tls-delayed-attach-error.js
 test/parallel/test-tls-delayed-attach.js
 test/parallel/test-tls-destroy-stream-12.js
@@ -1267,8 +1335,8 @@ test/parallel/test-tls-ecdh.js
 test/parallel/test-tls-econnreset.js
 test/parallel/test-tls-empty-sni-context.js
 test/parallel/test-tls-enable-keylog-cli.js
-test/parallel/test-tls-enable-trace.js
 test/parallel/test-tls-enable-trace-cli.js
+test/parallel/test-tls-enable-trace.js
 test/parallel/test-tls-env-bad-extra-ca.js
 test/parallel/test-tls-env-extra-ca-file-load.js
 test/parallel/test-tls-env-extra-ca.js
@@ -1283,6 +1351,7 @@ test/parallel/test-tls-getcipher.js
 test/parallel/test-tls-getprotocol.js
 test/parallel/test-tls-handshake-error.js
 test/parallel/test-tls-handshake-exception.js
+test/parallel/test-tls-handshake-nohang.js
 test/parallel/test-tls-hello-parser-failure.js
 test/parallel/test-tls-honorcipherorder.js
 test/parallel/test-tls-inception.js
@@ -1293,7 +1362,9 @@ test/parallel/test-tls-js-stream.js
 test/parallel/test-tls-junk-closes-server.js
 test/parallel/test-tls-junk-server.js
 test/parallel/test-tls-key-mismatch.js
+test/parallel/test-tls-keyengine-unsupported.js
 test/parallel/test-tls-keylog-tlsv13.js
+test/parallel/test-tls-legacy-deprecated.js
 test/parallel/test-tls-max-send-fragment.js
 test/parallel/test-tls-min-max-version.js
 test/parallel/test-tls-multi-key.js
@@ -1308,6 +1379,7 @@ test/parallel/test-tls-no-sslv23.js
 test/parallel/test-tls-no-sslv3.js
 test/parallel/test-tls-ocsp-callback.js
 test/parallel/test-tls-on-empty-socket.js
+test/parallel/test-tls-options-boolean-check.js
 test/parallel/test-tls-over-http-tunnel.js
 test/parallel/test-tls-passphrase.js
 test/parallel/test-tls-pause.js
@@ -1322,6 +1394,7 @@ test/parallel/test-tls-request-timeout.js
 test/parallel/test-tls-retain-handle-no-abort.js
 test/parallel/test-tls-reuse-host-from-socket.js
 test/parallel/test-tls-secure-session.js
+test/parallel/test-tls-securepair-fiftharg.js
 test/parallel/test-tls-securepair-leak.js
 test/parallel/test-tls-securepair-server.js
 test/parallel/test-tls-server-capture-rejection.js
@@ -1338,6 +1411,7 @@ test/parallel/test-tls-set-sigalgs.js
 test/parallel/test-tls-sni-option.js
 test/parallel/test-tls-sni-server-client.js
 test/parallel/test-tls-sni-servername.js
+test/parallel/test-tls-socket-allow-half-open-option.js
 test/parallel/test-tls-socket-close.js
 test/parallel/test-tls-socket-constructor-alpn-options-parsing.js
 test/parallel/test-tls-socket-default-options.js
@@ -1570,6 +1644,7 @@ test/parallel/test-worker.js
 test/parallel/test-worker.mjs
 test/parallel/test-wrap-js-stream-destroy.js
 test/parallel/test-wrap-js-stream-duplex.js
+test/parallel/test-wrap-js-stream-exceptions.js
 test/parallel/test-zlib-brotli-flush.js
 test/parallel/test-zlib-brotli-from-brotli.js
 test/parallel/test-zlib-brotli-from-string.js
