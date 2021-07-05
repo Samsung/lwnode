@@ -19,6 +19,7 @@
 #include "api/engine.h"
 #include "api/utils/cast.h"
 #include "base.h"
+#include "init/v8.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
@@ -29,6 +30,7 @@ namespace v8 {
 void v8::V8::InitializePlatform(Platform* platform) {
   /* NOTHING TO DO */
   LWNODE_CALL_TRACE_GC_START();
+  internal::V8::InitializePlatform(platform);
   LWNODE_CALL_TRACE_GC_END();
 }
 
@@ -36,6 +38,7 @@ void v8::V8::ShutdownPlatform() {
   LWNODE_CALL_TRACE_GC_START();
   MemoryUtil::gc();
   EscargotShim::Platform::Dispose();
+  internal::V8::ShutdownPlatform();
   LWNODE_CALL_TRACE_GC_END();
 }
 
