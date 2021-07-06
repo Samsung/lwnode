@@ -531,4 +531,48 @@ TEST(internal_Escargot_toArrayIndex_Regression) {
   CHECK_EQ(ValueRef::InvalidArrayIndexValue, index);
 }
 
+TEST(DISABLED_internal_Escargot_MapUsingIntegerKey) {
+  LocalContext env;
+  auto esContext =
+      IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
+
+  EvalResultHelper::attachBuiltinPrint(esContext);
+
+  auto r = Evaluator::execute(
+      esContext, [](ExecutionStateRef* esState) -> ValueRef* {
+        auto err_map = MapObjectRef::create(esState);
+        err_map->set(esState,
+                     ValueRef::create(1),
+                     StringRef::createFromUTF8("positive"));
+        err_map->set(esState,
+                     ValueRef::create(-1),
+                     StringRef::createFromUTF8("negative"));
+        return err_map;
+      });
+
+  CHECK_EQ(r.isSuccessful(), true);
+
+  ObjectRefHelper::setProperty(esContext,
+                               esContext->globalObject(),
+                               StringRef::createFromUTF8("err_map"),
+                               r.result->asMapObject());
+  const char* source =
+      R"(
+        function assert(condition, message) {
+          if (!condition) throw new Error(message || 'Assertion failed');
+        }
+
+        for (const element of err_map) {
+          print(element);
+        }
+
+        assert(err_map.get(1) == 'positive');
+        assert(err_map.get(-1) == 'negative');
+      )";
+
+  auto r2 = EvalResultHelper::compileRun(esContext, source);
+
+  CHECK_EQ(true, r2.isSuccessful());
+}
+
 #endif

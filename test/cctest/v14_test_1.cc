@@ -333,3 +333,57 @@ TEST(CopyContentsView) {
              "var a = new DataView(b, 2);");
   TestArrayBufferViewContents(&env);
 }
+
+static void AddPrintFunction(Isolate* isolate, v8::Local<v8::Context> context) {
+  v8::Local<v8::Function> function =
+      v8::FunctionTemplate::New(
+          isolate,
+          [](const FunctionCallbackInfo<Value>& args) -> void {
+            LWNODE_CHECK(args.Length() == 1);
+            String::Utf8Value utf8(args.GetIsolate(), args[0]);
+            printf("%s\n", *utf8);
+          })
+          ->GetFunction(context)
+          .ToLocalChecked();
+
+  context->Global()->Set(context, v8_str("print"), function).Check();
+}
+
+TEST(DISABLED_MapUsingIntegerKey) {
+  LocalContext env;
+  Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  Local<v8::Context> context = isolate->GetCurrentContext();
+
+  AddPrintFunction(isolate, context);
+
+  Local<Map> err_map = Map::New(isolate);
+
+  err_map->Set(context, Integer::New(isolate, 1), v8_str(isolate, "positive"))
+      .ToLocalChecked();
+  err_map->Set(context, Integer::New(isolate, -1), v8_str(isolate, "negative"))
+      .ToLocalChecked();
+
+  v8::Local<v8::Object> global = context->Global();
+
+  global->Set(context, v8_str("err_map"), err_map).Check();
+
+  const char* source =
+      R"(
+        function assert(condition, message) {
+          if (!condition) throw new Error(message || 'Assertion failed');
+        }
+
+        for (const element of err_map) {
+          print(element);
+        }
+
+        assert(err_map.get(1) == 'positive');
+        assert(err_map.get(-1) == 'negative');
+      )";
+
+  v8::TryCatch try_catch(isolate);
+  CompileRun(source);
+
+  CHECK(try_catch.HasCaught() == false);
+}
