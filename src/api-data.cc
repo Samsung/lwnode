@@ -698,18 +698,18 @@ MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Uint32>());
   auto lwContext = VAL(*context)->context();
 
-  uint32_t index = ValueRef::InvalidArrayIndexValue;
+  uint32_t index = ValueRef::InvalidIndex32Value;
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* esState, ValueRef* self, uint32_t* index) {
-        *index = self->toArrayIndex(esState);
+        *index = self->toIndex32(esState);
         return ValueRef::create(*index);
       },
       CVAL(this)->value(),
       &index);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Uint32>());
 
-  if (index == ValueRef::InvalidArrayIndexValue) {
+  if (index == ValueRef::InvalidIndex32Value) {
     return MaybeLocal<Uint32>();
   }
 
@@ -1273,8 +1273,8 @@ MaybeLocal<Array> v8::Object::GetPropertyNames(
                   }
                 }
 
-                auto index = propertyName->tryToUseAsArrayIndex(state);
-                if (index == ValueRef::InvalidArrayIndexValue) {
+                uint32_t index = propertyName->tryToUseAsIndexProperty(state);
+                if (index == ValueRef::InvalidIndex32Value) {
                   if (!(property_filter & PropertyFilter::SKIP_STRINGS)) {
                     pushUniqueValue(
                         propertyNameSet, &strings, propertyName, state);
