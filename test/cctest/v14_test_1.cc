@@ -349,7 +349,7 @@ static void AddPrintFunction(Isolate* isolate, v8::Local<v8::Context> context) {
   context->Global()->Set(context, v8_str("print"), function).Check();
 }
 
-TEST(DISABLED_MapUsingIntegerKey) {
+TEST(MapUsingIntegerKey) {
   LocalContext env;
   Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);

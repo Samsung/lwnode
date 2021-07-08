@@ -531,7 +531,7 @@ TEST(internal_Escargot_toIndex32_Regression) {
   CHECK_EQ(ValueRef::InvalidIndex32Value, index);
 }
 
-TEST(DISABLED_internal_Escargot_MapUsingIntegerKey) {
+TEST(internal_Escargot_MapUsingIntegerKey) {
   LocalContext env;
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
