@@ -512,23 +512,23 @@ TEST(internal_Escargot_Extends) {
   CHECK_EQ(r.isSuccessful(), true);
 }
 
-TEST(internal_Escargot_toArrayIndex_Regression) {
+TEST(internal_Escargot_toIndex32_Regression) {
   LocalContext env;
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
 
   auto esValue = ValueRef::create(-1);
-  uint32_t index = ValueRef::InvalidArrayIndexValue;
+  uint32_t index = ValueRef::InvalidIndex32Value;
   auto r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* esState, ValueRef* self, uint32_t* index) {
-        *index = self->toArrayIndex(esState);
+        *index = self->toIndex32(esState);
         return ValueRef::create(*index);
       },
       esValue,
       &index);
 
-  CHECK_EQ(ValueRef::InvalidArrayIndexValue, index);
+  CHECK_EQ(ValueRef::InvalidIndex32Value, index);
 }
 
 TEST(DISABLED_internal_Escargot_MapUsingIntegerKey) {
