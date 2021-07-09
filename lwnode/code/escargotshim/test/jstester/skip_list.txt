@@ -1504,3 +1504,6 @@ test/parallel/test-zlib-write-after-flush.js
 test/parallel/test-zlib-zero-byte.js
 test/parallel/test-zlib-zero-windowBits.js
 test/parallel/test-zlib.js
+test/parallel/test-fs-write-sigxfsz.js
+test/parallel/test-buffer-pool-untransferable.js
+test/parallel/test-fs-readdir-stack-overflow.js
