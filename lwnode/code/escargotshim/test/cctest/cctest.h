@@ -72,6 +72,7 @@ class CcTest {
   ~CcTest();
 
   static v8::Isolate* isolate();
+  static v8::Local<v8::Object> global();
   static void disposeScope();
   static void disposeIsolate();
   static v8::Context::Scope* contextScope_;

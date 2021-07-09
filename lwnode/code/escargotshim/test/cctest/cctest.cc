@@ -66,6 +66,10 @@ v8::Isolate* CcTest::isolate() {
   return isolate_;
 }
 
+v8::Local<v8::Object> CcTest::global() {
+  return isolate()->GetCurrentContext()->Global();
+}
+
 void CcTest::disposeScope() {
   if (contextScope_ != nullptr) {
     delete contextScope_;
