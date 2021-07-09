@@ -1136,10 +1136,20 @@ MaybeLocal<Promise::Resolver> Promise::Resolver::New(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Promise::Resolver>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  EvalResult r =
-      Evaluator::execute(esContext, [](ExecutionStateRef* state) -> ValueRef* {
-        return PromiseObjectRef::create(state);
-      });
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
+        auto promise = PromiseObjectRef::create(state);
+
+        // NOTE: Update RunPromiseHook to be called from Escargot after Escargot
+        // supports this feature
+        lwIsolate->RunPromiseHook(
+            PromiseHookType::kInit, promise, ValueRef::createUndefined());
+
+        return promise;
+      },
+      lwIsolate);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Promise::Resolver>());
 
   return Utils::NewLocal<Promise::Resolver>(lwIsolate->toV8(), r.result);
@@ -1164,12 +1174,18 @@ Maybe<bool> Promise::Resolver::Resolve(Local<Context> context,
       esContext,
       [](ExecutionStateRef* state,
          PromiseObjectRef* promise,
-         ValueRef* esValue) -> ValueRef* {
+         ValueRef* esValue,
+         EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
+        // NOTE: Update RunPromiseHook to be called from Escargot after Escargot
+        // supports this feature
+        lwIsolate->RunPromiseHook(PromiseHookType::kResolve, promise, esValue);
+
         promise->fulfill(state, esValue);
         return ValueRef::createUndefined();
       },
       self,
-      CVAL(*value)->value());
+      CVAL(*value)->value(),
+      lwIsolate);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(true);
@@ -1189,12 +1205,18 @@ Maybe<bool> Promise::Resolver::Reject(Local<Context> context,
       esContext,
       [](ExecutionStateRef* state,
          PromiseObjectRef* promise,
-         ValueRef* esValue) -> ValueRef* {
+         ValueRef* esValue,
+         EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
+        // NOTE: Update RunPromiseHook to be called from Escargot after Escargot
+        // supports this feature
+        lwIsolate->RunPromiseHook(PromiseHookType::kResolve, promise, esValue);
+
         promise->reject(state, esValue);
         return ValueRef::createUndefined();
       },
       self,
-      CVAL(*value)->value());
+      CVAL(*value)->value(),
+      lwIsolate);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(true);
@@ -2152,7 +2174,7 @@ void Isolate::SetAtomicsWaitCallback(AtomicsWaitCallback callback, void* data) {
 }
 
 void Isolate::SetPromiseHook(PromiseHook hook) {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::fromV8(this)->SetPromiseHook(hook);
 }
 
 void Isolate::SetPromiseRejectCallback(PromiseRejectCallback callback) {

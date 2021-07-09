@@ -16,6 +16,7 @@
 
 #include "isolate.h"
 #include "api.h"
+#include "base.h"
 #include "context.h"
 #include "es-helper.h"
 #include "extra-data.h"
@@ -175,6 +176,18 @@ void Isolate::ReportPendingMessages() {
       message_callback_(message, exception);
     }
   }
+}
+
+void Isolate::RunPromiseHook(PromiseHookType type,
+                             Escargot::PromiseObjectRef* promise,
+                             Escargot::ValueRef* parent) {
+  if (promise_hook_ == nullptr) {
+    return;
+  }
+
+  promise_hook_(type,
+                v8::Utils::ToLocal<Promise>(promise),
+                v8::Utils::ToLocal<Value>(parent));
 }
 
 }  // namespace internal
