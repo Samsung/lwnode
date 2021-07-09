@@ -617,3 +617,58 @@ THREADED_TEST(Int32Number) {
   num = v8::Number::New(isolate, -1);
   CHECK(!num->IsUint32());
 }
+
+class PromiseHookDataCustom {
+ public:
+  int init = 0;
+  int resolve = 0;
+  int before = 0;
+  int after = 0;
+  int parent = 0;
+};
+
+PromiseHookDataCustom* promiseHookData = nullptr;
+
+void PromiseHookCallback(v8::PromiseHookType type,
+                         v8::Local<v8::Promise> promise,
+                         v8::Local<v8::Value> parentPromise) {
+  switch (type) {
+    case v8::PromiseHookType::kInit:
+      promiseHookData->init++;
+      if (!parentPromise->IsUndefined()) {
+        promiseHookData->parent++;
+      }
+      break;
+    case v8::PromiseHookType::kResolve:
+      promiseHookData->resolve++;
+      break;
+    case v8::PromiseHookType::kBefore:
+      break;
+    case v8::PromiseHookType::kAfter:
+      break;
+  }
+}
+
+THREADED_TEST(PromiseHookCustom) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  promiseHookData = new PromiseHookDataCustom();
+  isolate->SetPromiseHook(PromiseHookCallback);
+
+  Local<v8::Promise::Resolver> p1 =
+      v8::Promise::Resolver::New(context.local()).ToLocalChecked();
+  Local<v8::Promise::Resolver> p2 =
+      v8::Promise::Resolver::New(context.local()).ToLocalChecked();
+  CHECK_EQ(promiseHookData->init, 2);
+
+  Local<v8::Promise> p = p1->GetPromise();
+  Local<v8::Promise> r = p2->GetPromise();
+
+  p1->Resolve(context.local(), v8::Integer::New(isolate, 1)).FromJust();
+  CHECK_EQ(promiseHookData->resolve, 1);
+
+  p2->Reject(context.local(), v8::Integer::New(isolate, 2)).FromJust();
+  CHECK_EQ(promiseHookData->resolve, 2);
+}

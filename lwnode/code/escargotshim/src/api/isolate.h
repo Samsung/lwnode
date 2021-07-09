@@ -60,6 +60,12 @@ class Isolate : public gc {
     promise_reject_callback_ = callback;
   }
 
+  void SetPromiseHook(v8::PromiseHook callback) { promise_hook_ = callback; }
+
+  void RunPromiseHook(PromiseHookType type,
+                      Escargot::PromiseObjectRef* promise,
+                      Escargot::ValueRef* parent);
+
   void SetFatalErrorHandler(v8::FatalErrorCallback callback) {
     fatal_error_callback_ = callback;
   }
@@ -90,6 +96,7 @@ class Isolate : public gc {
   bool hasExternalTryCatch();
 
   v8::PromiseRejectCallback promise_reject_callback_{nullptr};
+  v8::PromiseHook promise_hook_{nullptr};
   v8::MessageCallback message_callback_{nullptr};
   v8::FatalErrorCallback fatal_error_callback_{nullptr};
   v8::PrepareStackTraceCallback prepare_stack_trace_callback_{nullptr};
