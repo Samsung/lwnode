@@ -18,8 +18,8 @@
 
 #include "unimplemented.h"
 
-#define VAL(that) reinterpret_cast<ValueWrap*>(that)
-#define CVAL(that) reinterpret_cast<const ValueWrap*>(that)
+#define VAL(that) reinterpret_cast<EscargotShim::ValueWrap*>(that)
+#define CVAL(that) reinterpret_cast<const EscargotShim::ValueWrap*>(that)
 
 #define __TERMINATION_CHECK(lwIsolate, bailout_value)                          \
   if (lwIsolate->IsExecutionTerminating()) {                                   \
