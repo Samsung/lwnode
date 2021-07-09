@@ -64,6 +64,19 @@ by Samsung Research, instead of the default V8 JS engine.
 %build
 gcc --version
 
+%ifarch armv7l
+%define tizen_arch arm
+%endif
+%ifarch aarch64
+%define tizen_arch arm64
+%endif
+%ifarch i686
+%define tizen_arch x32
+%endif
+%ifarch x86_64
+%define tizen_arch x64
+%endif
+
 %if 0%{?asan} == 1
 CFLAGS+="-fsanitize=address -fsanitize-recover=address -U_FORTIFY_SOURCE -fno-omit-frame-pointer -fno-common"
 CXXFLAGS+="-fsanitize=address -fsanitize-recover=address -U_FORTIFY_SOURCE -fno-omit-frame-pointer -fno-common"
@@ -73,13 +86,11 @@ LDFLAGS+="-fsanitize=address"
 echo "Build Configure"
 echo %{build_target}
 
-CONFIG="--without-npm --without-bundled-v8 --without-v8-platform \
-    --without-inspector --without-node-code-cache --without-node-snapshot \
-    --with-intl none  --shared-openssl --shared-zlib \
-    --engine escargot \
-    --ninja"
+./configure --without-npm --without-bundled-v8 \
+            --without-inspector --without-node-code-cache --without-node-snapshot \
+            --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
+            --engine escargot --ninja
 
-./configure $CONFIG
 ninja -C out/Release node
 
 %install
