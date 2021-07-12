@@ -87,6 +87,27 @@ jobs:
       - run: lwnode/build-cctest.sh
       - run: out/cctest/out/Debug/cctest
 
+  build_tizen_6.5:
+    <<: *config
+    steps:
+      - checkout
+      - *check_submodule_status
+      - *restore_submodule_cache
+      - run: git submodule update --init --recursive
+      - *save_submodule_cache
+      - run:
+          name: Build RPMs
+          command: |
+            gbs -c .circleci/gbs.conf build -A armv7l -P profile.t65std --include-all --incremental
+      - run:
+          name: Store artifacts
+          command: |
+            mkdir -p ~/artifacts
+            cp ~/GBS-ROOT/t65std/local/repos/t65std/armv7l/RPMS/*.rpm ~/artifacts
+      - store_artifacts:
+          path: ~/artifacts
+          destination: artifacts
+
 workflows:
     version: 2
     verify_node:
@@ -95,3 +116,6 @@ workflows:
     verify_cctest:
       jobs:
         - cctest
+    verify_build:
+      jobs:
+        - build_tizen_6.5
