@@ -54,15 +54,16 @@ jobs:
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
             --engine escargot --ninja
-            ninja -v -C out/Release node
+            ninja -v -C out/Release lwnode
       - run:
           name: Run basic test
           command: |
-            du -h out/Release/node
-            out/Release/node test/message/hello_world.js
+            du -h out/Release/lwnode
+            out/Release/lwnode test/message/hello_world.js
       - run:
           name: Run node.js TCs (test.py)
-          command: tools/test.py -J -p dots --report --time
+          command: ln -s lwnode out/Release/node;
+                  tools/test.py -J -p dots --report --time
                   --timeout 180 --repeat 1
                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                   test/parallel
@@ -73,7 +74,7 @@ jobs:
       - run:
           name: Run node.js TCs
           command: |
-            ln -sf out/Release/node node
+            ln -sf out/Release/lwnode node
             lwnode/code/escargotshim/test/jstester/jstester.py --process 8
 
   cctest:
