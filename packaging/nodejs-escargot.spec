@@ -113,6 +113,6 @@ rm ./*.list
 %files
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
-%{_libdir}/*
+%{_libdir}/libescargot.so
 %{_bindir}/*
 %license LICENSE.Apache-2.0 LICENSE.BOEHM-GC LICENSE.BSD-3-Clause LICENSE.MIT LICENSE.NodeJS
