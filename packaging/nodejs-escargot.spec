@@ -45,9 +45,9 @@ BuildRequires: pkgconfig(openssl)
 
 # Initialize the variables
 %{!?build_mode: %define build_mode release}
-%{!?build_target: %define build_target node}
+%{!?build_target: %define build_target lwnode}
 %{!?node_engine: %define node_engine escargot}
-%{!?binary_name: %define binary_name nodeescargot}
+%{!?binary_name: %define binary_name lwnode}
 %{!?build_shared_lib: %define build_shared_lib false}
 %{!?build_profile: %define build_profile none}
 
@@ -91,7 +91,7 @@ echo %{build_target}
             --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
             --engine escargot --ninja
 
-ninja -C out/Release node
+ninja -C out/Release lwnode
 
 %install
 rm -rf %{buildroot}

@@ -138,6 +138,9 @@ def get_lwnode_gyp_options():
   else:
     args += (['-Descargot_lib_type=shared_lib'])
 
+  args += ['-Dnode_core_target_name=lwnode']
+  args += ['-Dnode_lib_target_name=liblwnode']
+
   options.verbose = True
   print_verbose("LWNode.js options: [" + " ".join(str(x) for x in args) + "]")
   options.verbose = False
