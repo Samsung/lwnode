@@ -314,8 +314,7 @@ void V8::MakeWeak(i::Address* location,
     LWNODE_RETURN_VOID;  // TODO
   }
 
-  IsolateWrap::GetCurrent()->globalHandles()->MakeWeak(
-      VAL(location), parameter, weak_callback);
+  GlobalHandles::MakeWeak(VAL(location), parameter, weak_callback);
 #else
   LWNODE_RETURN_VOID;
 #endif
@@ -335,7 +334,7 @@ void V8::AnnotateStrongRetainer(i::Address* location, const char* label) {
 
 void V8::DisposeGlobal(i::Address* location) {
   LWNODE_CHECK(IsolateWrap::GetCurrent());
-  IsolateWrap::GetCurrent()->globalHandles()->Destroy(VAL(location));
+  GlobalHandles::Destroy(VAL(location));
 }
 
 void V8::DisposeTracedGlobal(internal::Address* location) {
