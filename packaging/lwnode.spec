@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Name:          nodejs-escargot
+Name:          lwnode
 Summary:       -
 Version:       1.0.0
 Release:       1
@@ -43,12 +43,21 @@ BuildRequires: pkgconfig(openssl)
   %endif
 %endif
 
+##############################################
+# Packages for profiles
+##############################################
+
+%package devel
+Summary:     Development files for Lightweight node.js
+Group:       System/Servers
+Requires:    %{name} = %{version}
+%description devel
+Development files for Lightweight node.js.
+
 # Initialize the variables
-%{!?build_mode: %define build_mode release}
-%{!?build_target: %define build_target lwnode}
+%{!?target: %define target lwnode}
+%{!?target_lib: %define target_lib liblwnode}
 %{!?node_engine: %define node_engine escargot}
-%{!?binary_name: %define binary_name lwnode}
-%{!?build_shared_lib: %define build_shared_lib false}
 %{!?build_profile: %define build_profile none}
 
 
@@ -61,8 +70,18 @@ by Samsung Research, instead of the default V8 JS engine.
 %prep
 %setup -q
 
+
+##############################################
+# Build
+##############################################
+
 %build
 gcc --version
+
+
+##############################################
+## Build rules for each profile
+##############################################
 
 %ifarch armv7l
 %define tizen_arch arm
@@ -83,23 +102,32 @@ CXXFLAGS+="-fsanitize=address -fsanitize-recover=address -U_FORTIFY_SOURCE -fno-
 LDFLAGS+="-fsanitize=address"
 %endif
 
-echo "Build Configure"
-echo %{build_target}
+echo "Building:" %{target}
 
 ./configure --without-npm --without-bundled-v8 \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --engine escargot --ninja
+            --engine escargot --ninja --shared
 
-ninja -C out/Release lwnode
+ninja -C out/Release %{target_lib}
+ninja -C out/Release %{target}
+
+
+##############################################
+## Install
+##############################################
 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
-cp -fr ./out/Release/%{build_target} %{buildroot}%{_bindir}
-cp -fr ./out/Release/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+rm -f ./out/Release/lib/*.tmp ./out/Release/lib/*.TOC
+cp ./out/Release/lib/liblwnode.so* %{buildroot}%{_libdir}
+cp ./out/Release/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+
+# for devel files
+cp ./out/Release/%{target} %{buildroot}%{_bindir}
 
 %clean
 rm ./*.list
@@ -110,9 +138,18 @@ rm ./*.list
 %postun
 /sbin/ldconfig
 
+
+##############################################
+## Packaging rpms
+##############################################
+
 %files
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libescargot.so
-%{_bindir}/*
+%{_libdir}/liblwnode.so*
 %license LICENSE.Apache-2.0 LICENSE.BOEHM-GC LICENSE.BSD-3-Clause LICENSE.MIT LICENSE.NodeJS
+
+%files devel
+%manifest packaging/%{name}.manifest
+%{_bindir}/%{target}
