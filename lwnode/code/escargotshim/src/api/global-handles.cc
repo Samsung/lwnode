@@ -15,6 +15,7 @@
  */
 
 #include <EscargotPublic.h>
+#include <algorithm>
 
 #include "api/isolate.h"
 #include "base.h"
@@ -22,8 +23,39 @@
 
 namespace EscargotShim {
 
-static std::unordered_map<ValueWrap*, std::unique_ptr<GlobalHandles::NodeBlock>>
-    g_WeakValues;
+std::vector<GlobalHandles*> g_globalHandlesVector;
+
+class GlobalWeakHandler {
+ public:
+  void pushBlock(ValueWrap* lwValue,
+                 std::unique_ptr<GlobalHandles::NodeBlock> block) {
+    auto iter = weakValues_.find(lwValue);
+    if (iter != weakValues_.end()) {
+      // TODO
+      LWNODE_CHECK_NOT_REACH_HERE();
+    }
+    weakValues_.emplace(lwValue, std::move(block));
+  }
+
+  std::unique_ptr<GlobalHandles::NodeBlock> popBlock(ValueWrap* lwValue) {
+    auto iter = weakValues_.find(lwValue);
+    if (iter == weakValues_.end()) {
+      return nullptr;
+    }
+    auto nodeBlock = std::move(iter->second);
+    weakValues_.erase(iter);
+
+    return nodeBlock;
+  }
+
+  void dispose() { weakValues_.clear(); }
+
+ private:
+  std::unordered_map<ValueWrap*, std::unique_ptr<GlobalHandles::NodeBlock>>
+      weakValues_;
+};
+
+GlobalWeakHandler g_globalWeakHandler;
 
 GlobalHandles::Node::Node(void* parameter,
                           v8::WeakCallbackInfo<void>::Callback callback)
@@ -77,39 +109,50 @@ void GlobalHandles::NodeBlock::registerWeakCallback(ValueWrap* lwValue) {
     LWNODE_CALL_TRACE_GC_START();
     LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "Call weak callback");
 
-    auto iter = g_WeakValues.find(VAL(self));
-    if (iter == g_WeakValues.end()) {
-      LWNODE_LOG_ERROR("Cannot find weakened value.");
-    }
-
-    auto curNode = iter->second->firstNode();
-    if (!curNode) {
-      LWNODE_LOG_ERROR();
+    auto block = g_globalWeakHandler.popBlock(VAL(self));
+    if (!block) {
+      LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "Cannot invoke callback: %p", self);
       return;
     }
 
-    void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {nullptr,
-                                                               nullptr};
-    v8::WeakCallbackInfo<void> info(
-        iter->second->isolate(), curNode->parameter(), embedderFields, nullptr);
-    curNode->callback()(info);
+    auto curNode = block->firstNode_;
+    if (curNode) {
+      if (curNode->callback()) {
+        void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {nullptr,
+                                                                   nullptr};
+        v8::WeakCallbackInfo<void> info(
+            block->isolate(), curNode->parameter(), embedderFields, nullptr);
+        LWNODE_CHECK_NOT_NULL(block->isolate());
+        LWNODE_CALL_TRACE_ID(
+            GLOBALHANDLES, "Call v8 callback: parm(%p)", curNode->parameter());
+        curNode->callback()(info);
+      }
 
-    if (curNode->nextNode()) {
-      LWNODE_UNIMPLEMENT;  // TODO
+      if (curNode->nextNode()) {
+        LWNODE_UNIMPLEMENT;  // TODO
+      }
     }
-
-    g_WeakValues.erase(iter);
-
     LWNODE_CALL_TRACE_GC_END();
   });
+}
+
+GlobalHandles::GlobalHandles(v8::Isolate* isolate) : isolate_(isolate) {
+  g_globalHandlesVector.push_back(this);
 }
 
 void GlobalHandles::Dispose() {
   LWNODE_CALL_TRACE_ID(GLOBALHANDLES);
   persistentValues_.clear();
+  auto it = std::find(
+      g_globalHandlesVector.begin(), g_globalHandlesVector.end(), this);
 
-  // TODO: need to free the remaining values in the weak map, not clear map.
-  g_WeakValues.clear();
+  if (it != g_globalHandlesVector.end()) {
+    g_globalHandlesVector.erase(it);
+  }
+  // TODO: consider multi isolate
+  if (g_globalHandlesVector.size() == 0) {
+    g_globalWeakHandler.dispose();
+  }
 }
 
 void GlobalHandles::Create(ValueWrap* lwValue) {
@@ -124,6 +167,15 @@ void GlobalHandles::Create(ValueWrap* lwValue) {
 }
 
 void GlobalHandles::Destroy(ValueWrap* lwValue) {
+  for (auto globalHandles : g_globalHandlesVector) {
+    if (globalHandles->destroy(lwValue)) {
+      return;
+    }
+  }
+  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "Cannot destroy: %p", lwValue)
+}
+
+bool GlobalHandles::destroy(ValueWrap* lwValue) {
   auto iter = persistentValues_.find(lwValue);
   if (iter != persistentValues_.end()) {
     if (iter->second == 1) {
@@ -131,26 +183,37 @@ void GlobalHandles::Destroy(ValueWrap* lwValue) {
     } else {
       --iter->second;
     }
-  } else {
-    LWNODE_CALL_TRACE_ID(
-        GLOBALHANDLES, "The value(%p) has already been removed.", lwValue)
+    return true;
   }
+  return false;
 }
 
-bool GlobalHandles::MakeWeak(ValueWrap* lwValue,
+void GlobalHandles::MakeWeak(ValueWrap* lwValue,
+                             void* parameter,
+                             v8::WeakCallbackInfo<void>::Callback callback) {
+  for (auto globalHandles : g_globalHandlesVector) {
+    if (globalHandles->makeWeak(lwValue, parameter, callback)) {
+      return;
+    }
+  }
+  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "Cannot make weak value: %p", lwValue)
+}
+
+bool GlobalHandles::makeWeak(ValueWrap* lwValue,
                              void* parameter,
                              v8::WeakCallbackInfo<void>::Callback callback) {
   auto iter = persistentValues_.find(lwValue);
   if (iter == persistentValues_.end()) {
-    LWNODE_LOG_ERROR("Only Persistent value can be made weak.");
     return false;
   }
-  auto block = std::make_unique<NodeBlock>(isolate_, iter->second);
+
+  auto block =
+      std::make_unique<GlobalHandles::NodeBlock>(isolate_, iter->second);
   block->pushNode(lwValue, new Node(parameter, callback));
-  g_WeakValues.emplace(lwValue, std::move(block));
+  g_globalWeakHandler.pushBlock(lwValue, std::move(block));
 
   persistentValues_.erase(iter);
-  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "The value(%p) was weakened.", lwValue)
+  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "MakeWeak: %p", lwValue)
   return true;
 }
 

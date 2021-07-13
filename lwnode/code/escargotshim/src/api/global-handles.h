@@ -24,13 +24,17 @@ namespace EscargotShim {
 
 class GlobalHandles final : public gc {
  public:
-  GlobalHandles(v8::Isolate* isolate) : isolate_(isolate) {}
-  ~GlobalHandles() = default;
+  GlobalHandles(v8::Isolate* isolate);
 
   void Create(ValueWrap* lwValue);
-  void Destroy(ValueWrap* lwValue);
+  static void Destroy(ValueWrap* lwValue);
+  static void MakeWeak(ValueWrap* lwValue,
+                       void* parameter,
+                       v8::WeakCallbackInfo<void>::Callback callback);
 
-  bool MakeWeak(ValueWrap* lwValue,
+  bool destroy(ValueWrap* lwValue);
+
+  bool makeWeak(ValueWrap* lwValue,
                 void* parameter,
                 v8::WeakCallbackInfo<void>::Callback callback);
 
@@ -57,8 +61,6 @@ class GlobalHandles final : public gc {
 
   class NodeBlock {
    public:
-    enum State { None, Weak, Clear };
-
     NodeBlock(v8::Isolate* isolate, uint32_t count);
 
     ~NodeBlock();
