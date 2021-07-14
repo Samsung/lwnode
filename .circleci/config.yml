@@ -62,8 +62,7 @@ jobs:
             out/Release/lwnode test/message/hello_world.js
       - run:
           name: Run node.js TCs (test.py)
-          command: ln -s lwnode out/Release/node;
-                  tools/test.py -J -p dots --report --time
+          command: tools/test.py -J -p dots --report --time
                   --timeout 180 --repeat 1
                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                   test/parallel
