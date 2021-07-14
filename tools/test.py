@@ -756,8 +756,16 @@ def Execute(args, context, timeout=None, env=None, disable_core_files=False, std
   )
   os.close(fd_out)
   os.close(fd_err)
-  output = open(outname, encoding='utf8').read()
-  errors = open(errname, encoding='utf8').read()
+
+  try:
+    output = open(outname, encoding='utf8').read()
+    errors = open(errname, encoding='utf8').read()
+  except UnicodeDecodeError as error:
+    # @note In old python, UnicodeDecodeError may occur
+    # e.g) Non-ASCII character '\xc3'
+    output = open(outname, encoding='utf8').read()
+    errors = open(errname, encoding='latin-1').read()
+
   CheckedUnlink(outname)
   CheckedUnlink(errname)
 
@@ -900,9 +908,9 @@ class Context(object):
     if self.vm is not None:
       return self.vm
     if arch == 'none':
-      name = 'out/Debug/node' if mode == 'debug' else 'out/Release/node'
+      name = 'out/Debug/lwnode' if mode == 'debug' else 'out/Release/lwnode'
     else:
-      name = 'out/%s.%s/node' % (arch, mode)
+      name = 'out/%s.%s/lwnode' % (arch, mode)
 
     # Currently GYP does not support output_dir for MSVS.
     # http://code.google.com/p/gyp/issues/detail?id=40
@@ -1332,6 +1340,9 @@ def BuildOptions():
   result.add_option("--skip-tests",
       help="Tests that should not be executed (comma-separated)",
       default="")
+  result.add_option("--unsupported-tests",
+      help="Substrings of tests not supported (comma-separated)",
+      default="")
   result.add_option("--warn-unused", help="Report unused rules",
       default=False, action="store_true")
   result.add_option("-j", help="The number of parallel tasks to run",
@@ -1378,6 +1389,8 @@ def ProcessOptions(options):
   options.run = options.run.split(',')
   # Split at commas and filter out all the empty strings.
   options.skip_tests = [test for test in options.skip_tests.split(',') if test]
+  options.unsupported_tests = [test for test in options.unsupported_tests.split(',') if test]
+
   if options.run == [""]:
     options.run = None
   elif len(options.run) != 2:
@@ -1533,14 +1546,58 @@ def WriteFileWithList(filename, textList):
 
 SKIP_LIST_FILENAME="skip_list.gen.txt"
 
-def OuputTestResult(progress, skip_count, options):
+def OuputTestResult(progress, skip_count, excluded_case_paths, options):
   total_count = skip_count + progress.total
   failed_count = len(progress.failed)
   left_count = progress.remaining
   succeed_count = progress.total - failed_count - left_count
+  excluded_count = len(excluded_case_paths)
 
+  failed_case_paths = []
+
+  if failed_count != 0:
+    failed_cmd_with_crash = []
+    failed_cmd_with_timeout = []
+
+    for failed in progress.failed:
+      command = failed.command
+      path = command[-1].split("/")
+      failed_case_path = "%s/%s/%s" % (path[-3], path[-2], path[-1])
+      failed_case_paths.append(failed_case_path)
+      if failed.HasCrashed():
+        failed_cmd_with_crash.append(EscapeCommand(command))
+      else:
+        failed_cmd_with_timeout.append(EscapeCommand(command))
+
+    print()
+    print("=== %i failed command(s)" % failed_count)
+    print("Crash:   %5d" % len(failed_cmd_with_crash))
+    print("Timeout: %5d" % len(failed_cmd_with_timeout))
+    for failed in failed_cmd_with_crash:
+      print("C %s" % failed)
+    print()
+    for failed in failed_cmd_with_timeout:
+      print("T %s" % failed)
+
+  global SKIP_LIST_FILENAME
+  if failed_count:
+    skip_tests = options.skip_tests[:]
+    skip_tests.extend(failed_case_paths)
+    skip_tests.extend(excluded_case_paths)
+    skip_tests = list(set(skip_tests))
+    skip_tests.sort()
+    WriteFileWithList(SKIP_LIST_FILENAME, skip_tests)
+    print()
+    print("=== skip_list is generated.")
+    print("%s" % (os.path.join(os.getcwd() , SKIP_LIST_FILENAME)))
+
+  # report
   print()
-  print("Total: %5d" % total_count)
+
+  if excluded_count == 0:
+    print("Total: %5d" % total_count)
+  else :
+    print("Total: %5d (%d excluded)" % (total_count, excluded_count))
   print(
     "Pass:  %5d (%.2f%%)"
     % (
@@ -1552,31 +1609,6 @@ def OuputTestResult(progress, skip_count, options):
   print("Skip:  %5d" % skip_count)
   if left_count > 0 :
     print("Left:  %5d" % left_count)
-
-  if failed_count != 0:
-    print()
-    print("=== %i failed command(s)" % failed_count)
-
-    failed_cases_paths = []
-
-    for failed in progress.failed:
-      command = failed.command
-      path = command[-1].split("/")
-      failed_cases_path = "%s/%s/%s" % (path[-3], path[-2], path[-1])
-      failed_cases_paths.append(failed_cases_path)
-
-      print("%s %s" % ("C" if failed.HasCrashed() else "T", EscapeCommand(command)))
-
-    global SKIP_LIST_FILENAME
-
-    skip_tests = options.skip_tests[:]
-    skip_tests.extend(failed_cases_paths)
-    skip_tests.sort()
-    WriteFileWithList(SKIP_LIST_FILENAME, skip_tests)
-
-    print()
-    print("=== skip_list is generated.")
-    print("%s" % (os.path.join(os.getcwd() , SKIP_LIST_FILENAME)))
 
 def Main():
   parser = BuildOptions()
@@ -1724,6 +1756,22 @@ def Main():
     else:
       return True
 
+  # preprocessing options.unsupported_tests
+  excluded_case_paths = []
+  if options.unsupported_tests:
+    def remove_unsupported(case):
+      if any((s in case.file) for s in options.unsupported_tests):
+        path = case.file.split(os.path.sep)
+        excluded_case_path = "%s/%s/%s" % (path[-3], path[-2], path[-1])
+        excluded_case_paths.append(excluded_case_path)
+        return False
+      return True;
+
+    all_cases = [
+      test_case for test_case in all_cases if remove_unsupported(test_case)
+    ]
+  # end of preprocessing options.unsupported_tests
+
   cases_to_run = [
     test_case for test_case in all_cases if should_keep(test_case)
   ]
@@ -1762,7 +1810,7 @@ def Main():
       duration = time.time() - start
 
       skip_count = len(all_cases) - len(cases_to_run)
-      OuputTestResult(progress, skip_count, options)
+      OuputTestResult(progress, skip_count, excluded_case_paths, options)
 
     except KeyboardInterrupt:
       print("Interrupted")
