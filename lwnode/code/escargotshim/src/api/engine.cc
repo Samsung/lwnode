@@ -244,25 +244,28 @@ void* GCHeap::getPersistentData(void* address) {
   return nullptr;
 }
 
+typedef void (*formatterFunction)(
+    std::stringstream& stream,
+    const std::pair<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& iter);
+
 static void printAddress(
-    const GCUnorderedMap<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& map) {
-  std::vector<std::string> vector;
+    const GCUnorderedMap<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& map,
+    formatterFunction formatter,
+    const int column = 4) {
   std::stringstream ss;
-  const int row = 5;
+  std::vector<std::string> vector;
   int count = 0;
-  for (auto iter : map) {
-    ss << std::setw(15) << std::right << GC_UNWRAP_POINTER(iter.first) << " ("
-       << "S" << std::setw(3) << iter.second.strong << " W" << std::setw(3)
-       << iter.second.weak << ") ";
-    if (++count % row == 0) {
+  for (const auto& iter : map) {
+    formatter(ss, iter);
+    if (++count % column == 0) {
       vector.push_back(ss.str());
       ss.str("");
     }
   }
-  if (count % row) {
+  if (count % column) {
     vector.push_back(ss.str());
   }
-  for (auto it : vector) {
+  for (const auto& it : vector) {
     LWNODE_LOG_INFO("%s", it.c_str());
   }
 }
@@ -279,10 +282,28 @@ void GCHeap::printStatus() {
 
   LWNODE_LOG_INFO(COLOR_GREEN "----- GCHEAP -----" COLOR_RESET);
   LWNODE_LOG_INFO("[HOLD]");
-  printAddress(persistents_);
+  printAddress(
+      persistents_,
+      [](std::stringstream& stream,
+         const std::pair<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& iter) {
+        stream << std::setw(15) << std::right << GC_UNWRAP_POINTER(iter.first)
+               << " ("
+               << "S" << std::setw(3) << iter.second.strong << " W"
+               << std::setw(3) << iter.second.weak << ") ";
+      });
+
   LWNODE_LOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
   LWNODE_LOG_INFO("[PHANTOM]");
-  printAddress(weakPhantoms_);
+  printAddress(
+      weakPhantoms_,
+      [](std::stringstream& stream,
+         const std::pair<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& iter) {
+        stream << std::setw(15) << std::right << GC_REVEAL_POINTER(iter.first)
+               << " ("
+               << "S" << std::setw(3) << iter.second.strong << " W"
+               << std::setw(3) << iter.second.weak << ") ";
+      });
+
   LWNODE_LOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
 }
 
