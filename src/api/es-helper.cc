@@ -27,9 +27,6 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-#define PRIVATE_SYMBOL_KEY "__hiddenvalues__"
-SymbolRef* ObjectRefHelper::s_symbolKeyForHiddenValues = nullptr;
-
 ObjectRef* ObjectRefHelper::create(ContextRef* context) {
   EvalResult r =
       Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
@@ -37,11 +34,6 @@ ObjectRef* ObjectRefHelper::create(ContextRef* context) {
       });
 
   LWNODE_CHECK(r.isSuccessful());
-
-  if (s_symbolKeyForHiddenValues == nullptr) {
-    s_symbolKeyForHiddenValues =
-        SymbolRef::create(StringRef::createFromASCII(PRIVATE_SYMBOL_KEY));
-  }
 
   return r.result->asObject();
 }
@@ -134,6 +126,33 @@ EvalResult ObjectRefHelper::deleteProperty(ContextRef* context,
       key);
 }
 
+EvalResult ObjectRefHelper::deletePrivateProperty(ContextRef* context,
+                                                  SymbolRef* privateValueSymbol,
+                                                  ObjectRef* object,
+                                                  ValueRef* key) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         SymbolRef* privateValueSymbol,
+         ObjectRef* object,
+         ValueRef* key) -> ValueRef* {
+        ValueRef* privateValuesObj = object->get(state, privateValueSymbol);
+
+        if (privateValuesObj->isUndefined()) {
+          return ValueRef::create(false);
+        }
+
+        return ValueRef::create(
+            privateValuesObj->asObject()->deleteProperty(state, key));
+      },
+      privateValueSymbol,
+      object,
+      key);
+}
+
 EvalResult ObjectRefHelper::defineAccessorProperty(
     ContextRef* context,
     ObjectRef* object,
@@ -196,8 +215,8 @@ EvalResult ObjectRefHelper::setPrototype(ContextRef* context,
       context,
       [](ExecutionStateRef* state,
          ObjectRef* object,
-         ValueRef* param1) -> ValueRef* {
-        return ValueRef::create(object->setPrototype(state, param1));
+         ValueRef* proto) -> ValueRef* {
+        return ValueRef::create(object->setPrototype(state, proto));
       },
       object,
       proto);
@@ -207,46 +226,45 @@ EvalResult ObjectRefHelper::setPrototype(ContextRef* context,
 }
 
 EvalResult ObjectRefHelper::getPrivate(ContextRef* context,
+                                       SymbolRef* privateValueSymbol,
                                        ObjectRef* object,
                                        ValueRef* key) {
-  LWNODE_CHECK_NOT_NULL(s_symbolKeyForHiddenValues);
-
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
+         SymbolRef* privateValueSymbol,
          ObjectRef* object,
-         ValueRef* param1) -> ValueRef* {
+         ValueRef* key) -> ValueRef* {
         ValueRef* hiddenValuesRef =
-            object->get(state, s_symbolKeyForHiddenValues);
+            object->getOwnProperty(state, privateValueSymbol);
 
         if (hiddenValuesRef->isUndefined()) {
           return ValueRef::createUndefined();
         }
 
-        ObjectRef* hiddenValuesObject = hiddenValuesRef->asObject();
-
-        return ValueRef::create(hiddenValuesObject->get(state, param1));
+        return ValueRef::create(hiddenValuesRef->asObject()->get(state, key));
       },
+      privateValueSymbol,
       object,
       key);
 }
 
 EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
+                                       SymbolRef* privateValueSymbol,
                                        ObjectRef* object,
                                        ValueRef* key,
                                        ValueRef* value) {
-  LWNODE_CHECK_NOT_NULL(s_symbolKeyForHiddenValues);
   LWNODE_CHECK(key->isSymbol());
 
   return Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
          ContextRef* context,
+         SymbolRef* privateValueSymbol,
          ObjectRef* object,
          ValueRef* param1,
          ValueRef* param2) -> ValueRef* {
-        ValueRef* hiddenValuesRef =
-            object->get(state, s_symbolKeyForHiddenValues);
+        ValueRef* hiddenValuesRef = object->get(state, privateValueSymbol);
 
         ObjectRef* hiddenValuesObject = nullptr;
 
@@ -258,7 +276,7 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
               defineDataProperty(
                   context,
                   object,
-                  s_symbolKeyForHiddenValues,
+                  privateValueSymbol,
                   ObjectRef::DataPropertyDescriptor(
                       hiddenValuesObject,
                       static_cast<ObjectRef::PresentAttribute>(
@@ -277,6 +295,7 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
         return ValueRef::create(true);
       },
       context,
+      privateValueSymbol,
       object,
       key,
       value);

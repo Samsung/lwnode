@@ -1076,6 +1076,7 @@ Maybe<bool> v8::Object::SetPrivate(Local<Context> context,
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
 
   EvalResult r = ObjectRefHelper::setPrivate(VAL(*context)->context()->get(),
+                                             lwIsolate->privateValuesSymbol(),
                                              VAL(this)->value()->asObject(),
                                              VAL(*key)->value(),
                                              VAL(*value)->value());
@@ -1110,6 +1111,7 @@ MaybeLocal<Value> v8::Object::GetPrivate(Local<Context> context,
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
 
   EvalResult r = ObjectRefHelper::getPrivate(VAL(*context)->context()->get(),
+                                             lwIsolate->privateValuesSymbol(),
                                              VAL(this)->value()->asObject(),
                                              VAL(*key)->value());
 
@@ -1412,7 +1414,16 @@ Maybe<bool> v8::Object::Delete(Local<Context> context, Local<Value> key) {
 
 Maybe<bool> v8::Object::DeletePrivate(Local<Context> context,
                                       Local<Private> key) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r =
+      ObjectRefHelper::deletePrivateProperty(VAL(*context)->context()->get(),
+                                             lwIsolate->privateValuesSymbol(),
+                                             VAL(this)->value()->asObject(),
+                                             VAL(*key)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  return Just(r.result->asBoolean());
 }
 
 Maybe<bool> v8::Object::Has(Local<Context> context, Local<Value> key) {
@@ -1430,6 +1441,7 @@ Maybe<bool> v8::Object::HasPrivate(Local<Context> context, Local<Private> key) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
 
   EvalResult r = ObjectRefHelper::getPrivate(VAL(*context)->context()->get(),
+                                             lwIsolate->privateValuesSymbol(),
                                              VAL(this)->value()->asObject(),
                                              VAL(*key)->value());
 
