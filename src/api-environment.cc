@@ -1314,25 +1314,58 @@ void Promise::MarkAsHandled() {
 }
 
 Local<Value> Proxy::GetTarget() {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esSelf = CVAL(this)->value()->asProxyObject();
+  auto target = esSelf->target();
+  if (target) {
+    return Utils::NewLocal<Value>(lwIsolate->toV8(), target);
+  }
+
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::createNull());
 }
 
 Local<Value> Proxy::GetHandler() {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esSelf = CVAL(this)->value()->asProxyObject();
+
+  auto handler = esSelf->handler();
+  if (handler) {
+    return Utils::NewLocal<Value>(lwIsolate->toV8(), handler);
+  }
+
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), ValueRef::createNull());
 }
 
 bool Proxy::IsRevoked() {
-  LWNODE_RETURN_FALSE;
+  auto esSelf = CVAL(this)->value()->asProxyObject();
+  return esSelf->isRevoked();
 }
 
 void Proxy::Revoke() {
-  LWNODE_UNIMPLEMENT;
+  auto esSelf = CVAL(this)->value()->asProxyObject();
+  esSelf->revoke();
 }
 
 MaybeLocal<Proxy> Proxy::New(Local<Context> context,
                              Local<Object> local_target,
-                             Local<Object> local_handler){
-    LWNODE_RETURN_LOCAL(Proxy)}
+                             Local<Object> local_handler) {
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Proxy>());
+  auto lwContext = VAL(*context)->context();
+
+  EvalResult r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state,
+         ValueRef* target,
+         ValueRef* handler) -> ValueRef* {
+        return ProxyObjectRef::create(
+            state, target->asObject(), handler->asObject());
+      },
+      CVAL(*local_target)->value(),
+      CVAL(*local_handler)->value());
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<Proxy>(lwIsolate->toV8(), r.result);
+}
 
 CompiledWasmModule::CompiledWasmModule(
     std::shared_ptr<internal::wasm::NativeModule> native_module,
