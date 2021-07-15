@@ -60,9 +60,11 @@ class ObjectRefHelper {
                                    ValueRef* key);
 
   static EvalResult getPrivate(ContextRef* context,
+                               SymbolRef* privateValueSymbol,
                                ObjectRef* object,
                                ValueRef* key);
   static EvalResult setPrivate(ContextRef* context,
+                               SymbolRef* privateValueSymbol,
                                ObjectRef* object,
                                ValueRef* key,
                                ValueRef* value);
@@ -70,6 +72,11 @@ class ObjectRefHelper {
   static EvalResult deleteProperty(ContextRef* context,
                                    ObjectRef* object,
                                    ValueRef* key);
+
+  static EvalResult deletePrivateProperty(ContextRef* context,
+                                          SymbolRef* privateValueSymbol,
+                                          ObjectRef* object,
+                                          ValueRef* key);
 
   static EvalResult defineDataProperty(
       ContextRef* context,
@@ -105,7 +112,6 @@ class ObjectRefHelper {
   static StringRef* getConstructorName(ContextRef* context, ObjectRef* object);
 
  private:
-  static SymbolRef* s_symbolKeyForHiddenValues;
 };
 
 class ObjectTemplateRefHelper {

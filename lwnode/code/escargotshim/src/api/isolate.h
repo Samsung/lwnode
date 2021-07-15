@@ -119,6 +119,8 @@ typedef gc GCManagedObject;
 
 class IsolateWrap final : public v8::internal::Isolate {
  public:
+  const std::string PRIVATE_VALUES = "__private_values__";
+
   static IsolateWrap* New();
   void Initialize(const v8::Isolate::CreateParams& params);
   void Dispose();
@@ -206,6 +208,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   void lock_gc_release() { release_lock_.reset(this); }
   void unlock_gc_release() { release_lock_.release(); }
 
+  SymbolRef* privateValuesSymbol() { return privateValuesSymbol_.get(); }
+
  private:
   IsolateWrap();
 
@@ -215,6 +219,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   GCUnorderedSet<BackingStoreRef*> backingStores_;
   GCVector<HandleScopeWrap*> handleScopes_;
   GCVector<ContextWrap*> contextScopes_;
+
+  PersistentRefHolder<SymbolRef> privateValuesSymbol_;
   GCVector<Escargot::SymbolRef*> privateSymbols_;
 
   // Isolate Scope
