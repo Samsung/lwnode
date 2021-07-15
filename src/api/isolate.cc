@@ -212,13 +212,16 @@ IsolateWrap::IsolateWrap() {
   // NOTE: check lock_gc_release(); is needed (and where)
   // lock_gc_release();
   Memory::gcRegisterFinalizer(this, [](void* self) {
-    LWNODE_CALL_TRACE("free: %p", self);
-    reinterpret_cast<IsolateWrap*>(self)->globalHandles()->Dispose();
-    reinterpret_cast<IsolateWrap*>(self)->hiddenValuesSymbol_.release();
-    LWNODE_CALL_TRACE_GC_START();
-    // NOTE: Called when this IsolateWrap is deallocated by gc
-    LWNODE_CALL_TRACE_GC_END();
+    reinterpret_cast<IsolateWrap*>(self)->~IsolateWrap();
   });
+}
+
+IsolateWrap::~IsolateWrap() {
+  LWNODE_CALL_TRACE("free: %p", this);
+  globalHandles_->Dispose();
+  LWNODE_CALL_TRACE_GC_START();
+  // NOTE: Called when this IsolateWrap is deallocated by gc
+  LWNODE_CALL_TRACE_GC_END();
 }
 
 IsolateWrap* IsolateWrap::New() {

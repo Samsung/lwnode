@@ -119,6 +119,8 @@ typedef gc GCManagedObject;
 
 class IsolateWrap final : public v8::internal::Isolate {
  public:
+  virtual ~IsolateWrap();
+
   const std::string PRIVATE_VALUES = "__private_values__";
 
   static IsolateWrap* New();
