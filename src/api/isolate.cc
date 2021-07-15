@@ -201,7 +201,7 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
 THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
 IsolateWrap::IsolateWrap() {
-  LWNODE_CALL_TRACE("malc: %p", this);
+  LWNODE_CALL_TRACE_ID(ISOWRAP, "malc: %p", this);
 
   globalHandles_ = new GlobalHandles(toV8());
 
@@ -217,7 +217,7 @@ IsolateWrap::IsolateWrap() {
 }
 
 IsolateWrap::~IsolateWrap() {
-  LWNODE_CALL_TRACE("free: %p", this);
+  LWNODE_CALL_TRACE_ID(ISOWRAP, "free: %p", this);
   globalHandles_->Dispose();
   LWNODE_CALL_TRACE_GC_START();
   // NOTE: Called when this IsolateWrap is deallocated by gc
@@ -340,7 +340,7 @@ void IsolateWrap::pushHandleScope(HandleScopeWrap* handleScope) {
 void IsolateWrap::popHandleScope(v8Scope_t* handleScope) {
   LWNODE_CHECK(handleScopes_.back()->v8Scope() == handleScope);
 
-  LWNODE_CALL_TRACE();
+  LWNODE_CALL_TRACE_ID(ISOWRAP);
   // TODO: remove the following line and simply pop the last
   handleScopes_.back()->clear();
 
@@ -371,7 +371,7 @@ bool IsolateWrap::isCurrentScopeSealed() {
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  LWNODE_CALL_TRACE("%p", context);
+  LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", context);
 
   if (contextScopes_.size() && (contextScopes_.back() != context)) {
     LWNODE_DLOG_WARN(R"(multiple contexts exist:
@@ -379,7 +379,7 @@ contextScopes_.back() != context means that we need to support multiple
 contexts. In Node.js at this time, one main Context associated with the
 Environment instance is used for most Node.js features (except writing
 MessagePort objects.) So, on purpose, we don't store Object's creation
-context which is related to Object::CreateContext().
+context which is related to Object::CreationContext().
 @note: we may ignore this warning if cctest not related runs.)");
   }
 
@@ -388,7 +388,7 @@ context which is related to Object::CreateContext().
 
 void IsolateWrap::popContext(ContextWrap* context) {
   LWNODE_CHECK(contextScopes_.back() == context);
-  LWNODE_CALL_TRACE("%p", context);
+  LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", context);
   contextScopes_.pop_back();
 }
 
@@ -402,7 +402,7 @@ ContextWrap* IsolateWrap::GetCurrentContext() {
 }
 
 void IsolateWrap::addEternal(GCManagedObject* value) {
-  LWNODE_CALL_TRACE("%p", value);
+  LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", value);
   eternals_.push_back(value);
 }
 
@@ -416,7 +416,7 @@ void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
 
 SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
   // @check replace this container if this function is called a lot.
-  LWNODE_CALL_TRACE();
+  LWNODE_CALL_TRACE_ID(ISOWRAP);
 
   for (size_t i = 0; i < privateSymbols_.size(); i++) {
     if (privateSymbols_[i]->description()->equals(esString)) {

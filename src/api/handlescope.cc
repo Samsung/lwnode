@@ -20,6 +20,7 @@
 #include "utils/misc.h"
 
 #include <algorithm>
+#include <sstream>
 
 namespace EscargotShim {
 
@@ -36,7 +37,7 @@ HandleScopeWrap::HandleScopeWrap(v8::EscapableHandleScope* scope,
     : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
-  LWNODE_CALL_TRACE("%p", value);
+  LWNODE_CALL_TRACE_ID(HDLSCOPE, "%p -> %p | %p", value, v8scope_, this);
 
   handles_.push_back(value);
 }
@@ -52,12 +53,29 @@ bool HandleScopeWrap::remove(HandleWrap* value) {
 }
 
 void HandleScopeWrap::clear() {
-  if (Flags::isTraceCallEnabled()) {
-    for (auto it = handles_.begin(); it != handles_.end(); it++) {
-      LWNODE_CALL_TRACE("%p", *it);
+  LWNODE_CALL_TRACE_ID(HDLSCOPE);
+  if (Flags::isTraceCallEnabled("HDLSCOPE")) {
+    std::stringstream ss;
+    std::vector<std::string> vector;
+
+    const int column = 10;
+    int count = 0;
+    for (const auto& it : handles_) {
+      ss << it << " ";
+      if (++count % column == 0) {
+        vector.push_back(ss.str());
+        ss.str("");
+      }
+    }
+    if (count % column) {
+      vector.push_back(ss.str());
+    }
+
+    LWNODE_CALL_TRACE_LOG("%p contains %d handles:", this, count);
+    for (const auto& it : vector) {
+      LWNODE_CALL_TRACE_LOG("%s", it.c_str());
     }
   }
-
   handles_.clear();
 }
 

@@ -298,7 +298,7 @@ i::Address* V8::CopyGlobalReference(i::Address* from) {
 }
 
 void V8::MoveGlobalReference(internal::Address** from, internal::Address** to) {
-  LWNODE_RETURN_VOID;
+  // Nothing to do for this
 }
 
 void V8::MoveTracedGlobalReference(internal::Address** from,
