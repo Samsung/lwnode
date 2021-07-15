@@ -1115,34 +1115,34 @@ THREADED_PROFILED_TEST(FunctionTemplate) {
   // TestFunctionTemplateAccessor(construct_callback, Return239Callback);
 }
 
-// static void FunctionCallbackForProxyTest(
-//     const v8::FunctionCallbackInfo<Value>& info) {
-//   info.GetReturnValue().Set(info.This());
-// }
+static void FunctionCallbackForProxyTest(
+    const v8::FunctionCallbackInfo<Value>& info) {
+  info.GetReturnValue().Set(info.This());
+}
 
-// THREADED_TEST(FunctionTemplateWithProxy) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(FunctionTemplateWithProxy) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<v8::FunctionTemplate> function_template =
-//       v8::FunctionTemplate::New(isolate, FunctionCallbackForProxyTest);
-//   v8::Local<v8::Function> function =
-//       function_template->GetFunction(env.local()).ToLocalChecked();
-//   CHECK((*env)->Global()->Set(env.local(), v8_str("f"), function).FromJust());
-//   v8::Local<v8::Value> proxy =
-//       CompileRun("var proxy = new Proxy({}, {}); proxy");
-//   CHECK(proxy->IsProxy());
+  v8::Local<v8::FunctionTemplate> function_template =
+      v8::FunctionTemplate::New(isolate, FunctionCallbackForProxyTest);
+  v8::Local<v8::Function> function =
+      function_template->GetFunction(env.local()).ToLocalChecked();
+  CHECK((*env)->Global()->Set(env.local(), v8_str("f"), function).FromJust());
+  v8::Local<v8::Value> proxy =
+      CompileRun("var proxy = new Proxy({}, {}); proxy");
+  CHECK(proxy->IsProxy());
 
-//   v8::Local<v8::Value> result = CompileRun("f(proxy)");
-//   CHECK(result->Equals(env.local(), (*env)->Global()).FromJust());
+  v8::Local<v8::Value> result = CompileRun("f(proxy)");
+  CHECK(result->Equals(env.local(), (*env)->Global()).FromJust());
 
-//   result = CompileRun("f.call(proxy)");
-//   CHECK(result->Equals(env.local(), proxy).FromJust());
+  result = CompileRun("f.call(proxy)");
+  CHECK(result->Equals(env.local(), proxy).FromJust());
 
-//   result = CompileRun("Reflect.apply(f, proxy, [1])");
-//   CHECK(result->Equals(env.local(), proxy).FromJust());
-// }
+  result = CompileRun("Reflect.apply(f, proxy, [1])");
+  CHECK(result->Equals(env.local(), proxy).FromJust());
+}
 
 static void SimpleCallback(const v8::FunctionCallbackInfo<v8::Value>& info) {
   // ApiTestFuzzer::Fuzz();
@@ -25336,28 +25336,28 @@ THREADED_TEST(ReceiverConversionForAccessors) {
 // }
 
 
-// TEST(Proxy) {
-//   LocalContext context;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::Object> target = CompileRun("({})").As<v8::Object>();
-//   v8::Local<v8::Object> handler = CompileRun("({})").As<v8::Object>();
+TEST(Proxy) {
+  LocalContext context;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Object> target = CompileRun("({})").As<v8::Object>();
+  v8::Local<v8::Object> handler = CompileRun("({})").As<v8::Object>();
 
-//   v8::Local<v8::Proxy> proxy =
-//       v8::Proxy::New(context.local(), target, handler).ToLocalChecked();
-//   CHECK(proxy->IsProxy());
-//   CHECK(!target->IsProxy());
-//   CHECK(!proxy->IsRevoked());
-//   CHECK(proxy->GetTarget()->SameValue(target));
-//   CHECK(proxy->GetHandler()->SameValue(handler));
+  v8::Local<v8::Proxy> proxy =
+      v8::Proxy::New(context.local(), target, handler).ToLocalChecked();
+  CHECK(proxy->IsProxy());
+  CHECK(!target->IsProxy());
+  CHECK(!proxy->IsRevoked());
+  CHECK(proxy->GetTarget()->SameValue(target));
+  CHECK(proxy->GetHandler()->SameValue(handler));
 
-//   proxy->Revoke();
-//   CHECK(proxy->IsProxy());
-//   CHECK(!target->IsProxy());
-//   CHECK(proxy->IsRevoked());
-//   CHECK(proxy->GetTarget()->IsNull());
-//   CHECK(proxy->GetHandler()->IsNull());
-// }
+  proxy->Revoke();
+  CHECK(proxy->IsProxy());
+  CHECK(!target->IsProxy());
+  CHECK(proxy->IsRevoked());
+  CHECK(proxy->GetTarget()->IsNull());
+  CHECK(proxy->GetHandler()->IsNull());
+}
 
 // WeakCallCounterAndPersistent<Value>* CreateGarbageWithWeakCallCounter(
 //     v8::Isolate* isolate, WeakCallCounter* counter) {
