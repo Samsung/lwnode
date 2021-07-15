@@ -2048,7 +2048,9 @@ Local<Value> Symbol::Description() const {
 }
 
 Local<Value> Private::Name() const {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esDescription = CVAL(this)->value()->asSymbol()->description();
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription);
 }
 
 template <typename T, typename F>
