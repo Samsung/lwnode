@@ -188,7 +188,11 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
         std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
         std::string token;
         while (std::getline(ss, token, ',')) {
-          Flags::setTraceCallId(token);
+          if (token.find('-') == 0) {
+            Flags::setNagativeTraceCallId(token.substr(1));
+          } else {
+            Flags::setTraceCallId(token);
+          }
         }
       }
     } else if (strEquals("--internal-log", arg)) {

@@ -157,7 +157,11 @@ int main(int argc, char* argv[]) {
         std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
         std::string token;
         while (std::getline(ss, token, ',')) {
-          EscargotShim::Flags::setTraceCallId(token);
+          if (token.find('-') == 0) {
+            EscargotShim::Flags::setNagativeTraceCallId(token.substr(1));
+          } else {
+            EscargotShim::Flags::setTraceCallId(token);
+          }
         }
       }
     } else if (startsWith(arg, std::string("--trace-gc"))) {

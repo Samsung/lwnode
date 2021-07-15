@@ -20,6 +20,7 @@ namespace EscargotShim {
 
 flag_t Flags::s_flags = FlagType::Empty;
 std::set<std::string> Flags::s_trace_ids;
+std::set<std::string> Flags::s_negative_trace_ids;
 
 bool Flags::isTraceCallEnabled(std::string id) {
   if (!(s_flags & FlagType::TraceCall)) {
@@ -28,6 +29,12 @@ bool Flags::isTraceCallEnabled(std::string id) {
 
   if (!s_trace_ids.empty()) {
     if (s_trace_ids.find(id) == s_trace_ids.end()) {
+      return false;
+    }
+  }
+
+  if (!s_negative_trace_ids.empty()) {
+    if (s_negative_trace_ids.find(id) != s_negative_trace_ids.end()) {
       return false;
     }
   }
