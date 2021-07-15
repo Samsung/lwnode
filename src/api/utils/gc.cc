@@ -259,6 +259,10 @@ void MemoryUtil::gc() {
   LWNODE_CALL_TRACE_GC_END();
 }
 
+void MemoryUtil::gcInvokeFinalizers() {
+  GC_invoke_finalizers();
+}
+
 void MemoryUtil::gcEndStatsTrace() {
   Memory::setGCEventListener(nullptr);
 }
@@ -308,4 +312,9 @@ void MemoryUtil::gcRegisterFinalizer(EscargotShim::ValueWrap* ptr,
 void MemoryUtil::gcUnregisterFinalizer(Escargot::ValueRef* ptr,
                                        GCAllocatedMemoryFinalizer callback) {
   Escargot::Memory::gcUnregisterFinalizer(ptr->asObject(), callback);
+}
+
+void MemoryUtil::gcRegisterFinalizer(
+    void* gcPtr, GCAllocatedMemoryFinalizerWithData callback, void* data) {
+  REGISTER_FINALIZER(gcPtr, callback, data);
 }

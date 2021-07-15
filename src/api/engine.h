@@ -62,6 +62,43 @@ class Platform : public PlatformRef {
   v8::ArrayBuffer::Allocator* allocator_ = nullptr;
 };
 
+#define GC_HEAP_TRACE_ONLY
+
+class GCHeap : public gc {
+ public:
+  void GlobalizeReference(void* address, void* data);
+  void DisposeGlobal(void* address);
+  void MakeWeak(void* address);
+  void MakeWeak(void* location,
+                void* parameter,
+                v8::WeakCallbackInfo<void>::Callback weak_callback,
+                v8::WeakCallbackType type);
+  void ClearWeak(void* address);
+  void disposePhantomWeak(void* address);
+  bool isTraced(void* address);
+  void* getPersistentData(void* address);
+  void printStatus();
+
+  typedef GC_word GC_heap_pointer;
+  struct AddressInfo {
+    AddressInfo(int strong_, int weak_, void* data_ = nullptr) {
+      strong = strong_;
+      weak = weak_;
+      data = data_;
+    }
+    int strong = 0;
+    int weak = 0;
+    void* data = nullptr;
+  };
+
+ private:
+  void notifyUpdate(void* address);
+
+  GCUnorderedMap<GC_heap_pointer, AddressInfo> persistents_;
+  GCUnorderedMap<GC_heap_pointer, AddressInfo> weakPhantoms_;
+  bool isStatusPrinted = false;
+};
+
 class Engine {
  public:
   static bool Initialize();
@@ -73,6 +110,8 @@ class Engine {
   static void unregisterExternalString(
       v8::String::ExternalStringResourceBase* v8Str);
 
+  GCHeap* gcHeap() { return gcHeap_.get(); }
+
  private:
   Engine() = default;
   void initialize();
@@ -81,5 +120,7 @@ class Engine {
 
   static std::unordered_set<v8::String::ExternalStringResourceBase*>
       s_externalStrings;
+
+  PersistentRefHolder<GCHeap> gcHeap_;
 };
 }  // namespace EscargotShim

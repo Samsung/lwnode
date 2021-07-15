@@ -1908,6 +1908,10 @@ bool Isolate::InContext() {
 }
 
 void Isolate::ClearKeptObjects() {
+#if !defined(GC_HEAP_TRACE_ONLY)
+  MemoryUtil::gc();
+  MemoryUtil::gcInvokeFinalizers();
+#endif
   LWNODE_RETURN_VOID;
 }
 
