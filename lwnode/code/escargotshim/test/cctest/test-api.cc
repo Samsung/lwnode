@@ -3368,190 +3368,191 @@ THREADED_TEST(SymbolTemplateProperties) {
 }
 
 
-// THREADED_TEST(PrivatePropertiesOnProxies) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(PrivatePropertiesOnProxies) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<v8::Object> target = CompileRun("({})").As<v8::Object>();
-//   v8::Local<v8::Object> handler = CompileRun("({})").As<v8::Object>();
+  v8::Local<v8::Object> target = CompileRun("({})").As<v8::Object>();
+  v8::Local<v8::Object> handler = CompileRun("({})").As<v8::Object>();
 
-//   v8::Local<v8::Proxy> proxy =
-//       v8::Proxy::New(env.local(), target, handler).ToLocalChecked();
+  v8::Local<v8::Proxy> proxy =
+      v8::Proxy::New(env.local(), target, handler).ToLocalChecked();
 
-//   v8::Local<v8::Private> priv1 = v8::Private::New(isolate);
-//   v8::Local<v8::Private> priv2 =
-//       v8::Private::New(isolate, v8_str("my-private"));
+  v8::Local<v8::Private> priv1 = v8::Private::New(isolate);
+  v8::Local<v8::Private> priv2 =
+      v8::Private::New(isolate, v8_str("my-private"));
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   CHECK(priv2->Name()
-//             ->Equals(env.local(),
-//                      v8::String::NewFromUtf8Literal(isolate, "my-private"))
-//             .FromJust());
+  CHECK(priv2->Name()
+            ->Equals(env.local(),
+                     v8::String::NewFromUtf8Literal(isolate, "my-private"))
+            .FromJust());
 
-//   // Make sure delete of a non-existent private symbol property works.
-//   proxy->DeletePrivate(env.local(), priv1).FromJust();
-//   CHECK(!proxy->HasPrivate(env.local(), priv1).FromJust());
+  // Make sure delete of a non-existent private symbol property works.
+  proxy->DeletePrivate(env.local(), priv1).FromJust();
+  CHECK(!proxy->HasPrivate(env.local(), priv1).FromJust());
 
-//   CHECK(proxy->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 1503))
-//             .FromJust());
-//   CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK_EQ(1503, proxy->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK(proxy->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 2002))
-//             .FromJust());
-//   CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
+  CHECK(proxy->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 1503))
+            .FromJust());
+  CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
+  CHECK_EQ(1503, proxy->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(proxy->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 2002))
+            .FromJust());
+  CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
+  CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
 
-//   CHECK_EQ(0u,
-//            proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
-//   unsigned num_props =
-//       proxy->GetPropertyNames(env.local()).ToLocalChecked()->Length();
-//   CHECK(proxy
-//             ->Set(env.local(), v8::String::NewFromUtf8Literal(isolate, "bla"),
-//                   v8::Integer::New(isolate, 20))
-//             .FromJust());
-//   CHECK_EQ(1u,
-//            proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
-//   CHECK_EQ(num_props + 1,
-//            proxy->GetPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(0u,
+           proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  unsigned num_props =
+      proxy->GetPropertyNames(env.local()).ToLocalChecked()->Length();
+  CHECK(proxy
+            ->Set(env.local(), v8::String::NewFromUtf8Literal(isolate, "bla"),
+                  v8::Integer::New(isolate, 20))
+            .FromJust());
+  CHECK_EQ(1u,
+           proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(num_props + 1,
+           proxy->GetPropertyNames(env.local()).ToLocalChecked()->Length());
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   // Add another property and delete it afterwards to force the object in
-//   // slow case.
-//   CHECK(proxy->SetPrivate(env.local(), priv2, v8::Integer::New(isolate, 2008))
-//             .FromJust());
-//   CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2008, proxy->GetPrivate(env.local(), priv2)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(1u,
-//            proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  // Add another property and delete it afterwards to force the object in
+  // slow case.
+  CHECK(proxy->SetPrivate(env.local(), priv2, v8::Integer::New(isolate, 2008))
+            .FromJust());
+  CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2008, proxy->GetPrivate(env.local(), priv2)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(1u,
+           proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 
-//   CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK(proxy->HasPrivate(env.local(), priv2).FromJust());
-//   CHECK(proxy->DeletePrivate(env.local(), priv2).FromJust());
-//   CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK(!proxy->HasPrivate(env.local(), priv2).FromJust());
-//   CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(1u,
-//            proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
+  CHECK(proxy->HasPrivate(env.local(), priv2).FromJust());
 
-//   // Private properties are not inherited (for the time being).
-//   v8::Local<v8::Object> child = v8::Object::New(isolate);
-//   CHECK(child->SetPrototype(env.local(), proxy).FromJust());
-//   CHECK(!child->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK_EQ(0u,
-//            child->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
-// }
+  CHECK(proxy->DeletePrivate(env.local(), priv2).FromJust());
+  CHECK(proxy->HasPrivate(env.local(), priv1).FromJust());
+  CHECK(!proxy->HasPrivate(env.local(), priv2).FromJust());
+  CHECK_EQ(2002, proxy->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(1u,
+           proxy->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+
+  // Private properties are not inherited (for the time being).
+  v8::Local<v8::Object> child = v8::Object::New(isolate);
+  CHECK(child->SetPrototype(env.local(), proxy).FromJust());
+  CHECK(!child->HasPrivate(env.local(), priv1).FromJust());
+  CHECK_EQ(0u,
+           child->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+}
 
 
-// THREADED_TEST(PrivateProperties) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(PrivateProperties) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//   v8::Local<v8::Private> priv1 = v8::Private::New(isolate);
-//   v8::Local<v8::Private> priv2 =
-//       v8::Private::New(isolate, v8_str("my-private"));
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  v8::Local<v8::Private> priv1 = v8::Private::New(isolate);
+  v8::Local<v8::Private> priv2 =
+      v8::Private::New(isolate, v8_str("my-private"));
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   CHECK(priv2->Name()
-//             ->Equals(env.local(),
-//                      v8::String::NewFromUtf8Literal(isolate, "my-private"))
-//             .FromJust());
+  CHECK(priv2->Name()
+            ->Equals(env.local(),
+                     v8::String::NewFromUtf8Literal(isolate, "my-private"))
+            .FromJust());
 
-//   // Make sure delete of a non-existent private symbol property works.
-//   obj->DeletePrivate(env.local(), priv1).FromJust();
-//   CHECK(!obj->HasPrivate(env.local(), priv1).FromJust());
+  // Make sure delete of a non-existent private symbol property works.
+  obj->DeletePrivate(env.local(), priv1).FromJust();
+  CHECK(!obj->HasPrivate(env.local(), priv1).FromJust());
 
-//   CHECK(obj->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 1503))
-//             .FromJust());
-//   CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK_EQ(1503, obj->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK(obj->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 2002))
-//             .FromJust());
-//   CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
+  CHECK(obj->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 1503))
+            .FromJust());
+  CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
+  CHECK_EQ(1503, obj->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(obj->SetPrivate(env.local(), priv1, v8::Integer::New(isolate, 2002))
+            .FromJust());
+  CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
 
-//   CHECK_EQ(0u,
-//            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
-//   unsigned num_props =
-//       obj->GetPropertyNames(env.local()).ToLocalChecked()->Length();
-//   CHECK(obj->Set(env.local(), v8::String::NewFromUtf8Literal(isolate, "bla"),
-//                  v8::Integer::New(isolate, 20))
-//             .FromJust());
-//   CHECK_EQ(1u,
-//            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
-//   CHECK_EQ(num_props + 1,
-//            obj->GetPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(0u,
+           obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  unsigned num_props =
+      obj->GetPropertyNames(env.local()).ToLocalChecked()->Length();
+  CHECK(obj->Set(env.local(), v8::String::NewFromUtf8Literal(isolate, "bla"),
+                 v8::Integer::New(isolate, 20))
+            .FromJust());
+  CHECK_EQ(1u,
+           obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK_EQ(num_props + 1,
+           obj->GetPropertyNames(env.local()).ToLocalChecked()->Length());
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   // Add another property and delete it afterwards to force the object in
-//   // slow case.
-//   CHECK(obj->SetPrivate(env.local(), priv2, v8::Integer::New(isolate, 2008))
-//             .FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2008, obj->GetPrivate(env.local(), priv2)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(1u,
-//            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  // Add another property and delete it afterwards to force the object in
+  // slow case.
+  CHECK(obj->SetPrivate(env.local(), priv2, v8::Integer::New(isolate, 2008))
+            .FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2008, obj->GetPrivate(env.local(), priv2)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(1u,
+           obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 
-//   CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK(obj->HasPrivate(env.local(), priv2).FromJust());
-//   CHECK(obj->DeletePrivate(env.local(), priv2).FromJust());
-//   CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK(!obj->HasPrivate(env.local(), priv2).FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(1u,
-//            obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+  CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
+  CHECK(obj->HasPrivate(env.local(), priv2).FromJust());
+  CHECK(obj->DeletePrivate(env.local(), priv2).FromJust());
+  CHECK(obj->HasPrivate(env.local(), priv1).FromJust());
+  CHECK(!obj->HasPrivate(env.local(), priv2).FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), priv1)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(1u,
+           obj->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
 
-//   // Private properties are not inherited (for the time being).
-//   v8::Local<v8::Object> child = v8::Object::New(isolate);
-//   CHECK(child->SetPrototype(env.local(), obj).FromJust());
-//   CHECK(!child->HasPrivate(env.local(), priv1).FromJust());
-//   CHECK_EQ(0u,
-//            child->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
-// }
+  // Private properties are not inherited (for the time being).
+  v8::Local<v8::Object> child = v8::Object::New(isolate);
+  CHECK(child->SetPrototype(env.local(), obj).FromJust());
+  CHECK(!child->HasPrivate(env.local(), priv1).FromJust());
+  CHECK_EQ(0u,
+           child->GetOwnPropertyNames(env.local()).ToLocalChecked()->Length());
+}
 
 
 // THREADED_TEST(GlobalSymbols) {
@@ -3628,7 +3629,7 @@ static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
 
 
 // THREADED_TEST(GlobalPrivates) {
-//   i::FLAG_allow_natives_syntax = true;
+//   // i::FLAG_allow_natives_syntax = true;
 //   LocalContext env;
 //   v8::Isolate* isolate = env->GetIsolate();
 //   v8::HandleScope scope(isolate);
@@ -3651,124 +3652,124 @@ static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
 //   CHECK(!obj->Has(env.local(), intern).FromJust());
 // }
 
-// THREADED_TEST(HiddenProperties) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(HiddenProperties) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<v8::Object> obj = v8::Object::New(env->GetIsolate());
-//   v8::Local<v8::Private> key =
-//       v8::Private::ForApi(isolate, v8_str("api-test::hidden-key"));
-//   v8::Local<v8::String> empty = v8_str("");
-//   v8::Local<v8::String> prop_name = v8_str("prop_name");
+  v8::Local<v8::Object> obj = v8::Object::New(env->GetIsolate());
+  v8::Local<v8::Private> key =
+      v8::Private::ForApi(isolate, v8_str("api-test::hidden-key"));
+  v8::Local<v8::String> empty = v8_str("");
+  v8::Local<v8::String> prop_name = v8_str("prop_name");
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   // Make sure delete of a non-existent hidden value works
-//   obj->DeletePrivate(env.local(), key).FromJust();
+  // Make sure delete of a non-existent hidden value works
+  obj->DeletePrivate(env.local(), key).FromJust();
 
-//   CHECK(obj->SetPrivate(env.local(), key, v8::Integer::New(isolate, 1503))
-//             .FromJust());
-//   CHECK_EQ(1503, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK(obj->SetPrivate(env.local(), key, v8::Integer::New(isolate, 2002))
-//             .FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
+  CHECK(obj->SetPrivate(env.local(), key, v8::Integer::New(isolate, 1503))
+            .FromJust());
+  CHECK_EQ(1503, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(obj->SetPrivate(env.local(), key, v8::Integer::New(isolate, 2002))
+            .FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   // Make sure we do not find the hidden property.
-//   CHECK(!obj->Has(env.local(), empty).FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK(obj->Get(env.local(), empty).ToLocalChecked()->IsUndefined());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK(
-//       obj->Set(env.local(), empty, v8::Integer::New(isolate, 2003)).FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2003, obj->Get(env.local(), empty)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
+  // Make sure we do not find the hidden property.
+  CHECK(!obj->Has(env.local(), empty).FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(obj->Get(env.local(), empty).ToLocalChecked()->IsUndefined());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(
+      obj->Set(env.local(), empty, v8::Integer::New(isolate, 2003)).FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2003, obj->Get(env.local(), empty)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   // Add another property and delete it afterwards to force the object in
-//   // slow case.
-//   CHECK(obj->Set(env.local(), prop_name, v8::Integer::New(isolate, 2008))
-//             .FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2008, obj->Get(env.local(), prop_name)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   CHECK(obj->Delete(env.local(), prop_name).FromJust());
-//   CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
+  // Add another property and delete it afterwards to force the object in
+  // slow case.
+  CHECK(obj->Set(env.local(), prop_name, v8::Integer::New(isolate, 2008))
+            .FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2008, obj->Get(env.local(), prop_name)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  CHECK(obj->Delete(env.local(), prop_name).FromJust());
+  CHECK_EQ(2002, obj->GetPrivate(env.local(), key)
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
 
-//   CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
 
-//   CHECK(obj->SetPrivate(env.local(), key, v8::Integer::New(isolate, 2002))
-//             .FromJust());
-//   CHECK(obj->DeletePrivate(env.local(), key).FromJust());
-//   CHECK(!obj->HasPrivate(env.local(), key).FromJust());
-// }
+  CHECK(obj->SetPrivate(env.local(), key, v8::Integer::New(isolate, 2002))
+            .FromJust());
+  CHECK(obj->DeletePrivate(env.local(), key).FromJust());
+  CHECK(!obj->HasPrivate(env.local(), key).FromJust());
+}
 
 
-// THREADED_TEST(Regress97784) {
-//   // Regression test for crbug.com/97784
-//   // Messing with the Object.prototype should not have effect on
-//   // hidden properties.
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
+THREADED_TEST(Regress97784) {
+  // Regression test for crbug.com/97784
+  // Messing with the Object.prototype should not have effect on
+  // hidden properties.
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
 
-//   v8::Local<v8::Object> obj = v8::Object::New(env->GetIsolate());
-//   v8::Local<v8::Private> key =
-//       v8::Private::New(env->GetIsolate(), v8_str("hidden"));
+  v8::Local<v8::Object> obj = v8::Object::New(env->GetIsolate());
+  v8::Local<v8::Private> key =
+      v8::Private::New(env->GetIsolate(), v8_str("hidden"));
 
-//   CompileRun(
-//       "set_called = false;"
-//       "Object.defineProperty("
-//       "    Object.prototype,"
-//       "    'hidden',"
-//       "    {get: function() { return 45; },"
-//       "     set: function() { set_called = true; }})");
+  CompileRun(
+      "set_called = false;"
+      "Object.defineProperty("
+      "    Object.prototype,"
+      "    'hidden',"
+      "    {get: function() { return 45; },"
+      "     set: function() { set_called = true; }})");
 
-//   CHECK(!obj->HasPrivate(env.local(), key).FromJust());
-//   // Make sure that the getter and setter from Object.prototype is not invoked.
-//   // If it did we would have full access to the hidden properties in
-//   // the accessor.
-//   CHECK(
-//       obj->SetPrivate(env.local(), key, v8::Integer::New(env->GetIsolate(), 42))
-//           .FromJust());
-//   ExpectFalse("set_called");
-//   CHECK_EQ(42, obj->GetPrivate(env.local(), key)
-//                    .ToLocalChecked()
-//                    ->Int32Value(env.local())
-//                    .FromJust());
-// }
+  CHECK(!obj->HasPrivate(env.local(), key).FromJust());
+  // Make sure that the getter and setter from Object.prototype is not invoked.
+  // If it did we would have full access to the hidden properties in
+  // the accessor.
+  CHECK(
+      obj->SetPrivate(env.local(), key, v8::Integer::New(env->GetIsolate(), 42))
+          .FromJust());
+  ExpectFalse("set_called");
+  CHECK_EQ(42, obj->GetPrivate(env.local(), key)
+                   .ToLocalChecked()
+                   ->Int32Value(env.local())
+                   .FromJust());
+}
 
 
 // THREADED_TEST(External) {
