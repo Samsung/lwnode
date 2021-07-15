@@ -48,9 +48,13 @@ class LWNODE_EXPORT Flags {
   static bool isInternalLogEnabled() { return s_flags & FlagType::InternalLog; }
 
   static void setTraceCallId(std::string id) { s_trace_ids.insert(id); }
+  static void setNagativeTraceCallId(std::string id) {
+    s_negative_trace_ids.insert(id);
+  }
 
  private:
   static std::set<std::string> s_trace_ids;
+  static std::set<std::string> s_negative_trace_ids;
   static flag_t s_flags;
 };
 
