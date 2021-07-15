@@ -48,6 +48,7 @@ test/parallel/test-buffer-new.js
 test/parallel/test-buffer-no-negative-allocation.js
 test/parallel/test-buffer-over-max-length.js
 test/parallel/test-buffer-parent-property.js
+test/parallel/test-buffer-pool-untransferable.js
 test/parallel/test-buffer-safe-unsafe.js
 test/parallel/test-buffer-sharedarraybuffer.js
 test/parallel/test-buffer-slice.js
@@ -303,6 +304,7 @@ test/parallel/test-fs-promises-file-handle-truncate.js
 test/parallel/test-fs-promises-file-handle-write.js
 test/parallel/test-fs-promises.js
 test/parallel/test-fs-read-stream.js
+test/parallel/test-fs-readdir-stack-overflow.js
 test/parallel/test-fs-readfile-error.js
 test/parallel/test-fs-readfile-pipe-large.js
 test/parallel/test-fs-readfile-pipe.js
@@ -313,6 +315,7 @@ test/parallel/test-fs-watch-encoding.js
 test/parallel/test-fs-watch.js
 test/parallel/test-fs-watchfile-ref-unref.js
 test/parallel/test-fs-write-reuse-callback.js
+test/parallel/test-fs-write-sigxfsz.js
 test/parallel/test-fs-write-stream-patch-open.js
 test/parallel/test-fs-write-sync.js
 test/parallel/test-fs-write.js
@@ -845,6 +848,7 @@ test/parallel/test-internal-util-helpers.js
 test/parallel/test-internal-util-weakreference.js
 test/parallel/test-kill-segfault-freebsd.js
 test/parallel/test-listen-fd-cluster.js
+test/parallel/test-listen-fd-detached.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
 test/parallel/test-memory-usage.js
 test/parallel/test-module-create-require.js
@@ -1504,6 +1508,3 @@ test/parallel/test-zlib-write-after-flush.js
 test/parallel/test-zlib-zero-byte.js
 test/parallel/test-zlib-zero-windowBits.js
 test/parallel/test-zlib.js
-test/parallel/test-fs-write-sigxfsz.js
-test/parallel/test-buffer-pool-untransferable.js
-test/parallel/test-fs-readdir-stack-overflow.js

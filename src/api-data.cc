@@ -1615,6 +1615,9 @@ Local<v8::Object> v8::Object::Clone() {
 
 Local<v8::Context> v8::Object::CreationContext() {
   auto lwIsolate = IsolateWrap::GetCurrent();
+  LWNODE_DCHECK_MSG(lwIsolate->getNumberOfContexts() == 1,
+                    "%zu",
+                    lwIsolate->getNumberOfContexts());
   return v8::Utils::NewLocal(lwIsolate->toV8(), lwIsolate->GetCurrentContext());
 }
 
