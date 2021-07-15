@@ -173,6 +173,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   void popContext(ContextWrap* context);
   bool InContext();
   ContextWrap* GetCurrentContext();
+  size_t getNumberOfContexts();
 
   // Eternal
   void addEternal(GCManagedObject* value);

@@ -386,6 +386,14 @@ context which is related to Object::CreationContext().
   contextScopes_.push_back(context);
 }
 
+size_t IsolateWrap::getNumberOfContexts() {
+  GCUnorderedSet<ContextWrap*> uniqueContexts;
+  for (const auto& val : contextScopes_) {
+    uniqueContexts.insert(val);
+  }
+  return uniqueContexts.size();
+};
+
 void IsolateWrap::popContext(ContextWrap* context) {
   LWNODE_CHECK(contextScopes_.back() == context);
   LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", context);
