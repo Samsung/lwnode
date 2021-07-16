@@ -405,21 +405,20 @@ MaybeLocal<String> JSON::Stringify(Local<Context> context,
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
   auto lwContext = CVAL(*context)->context();
 
-  if (!gap.IsEmpty()) {
-    LWNODE_UNIMPLEMENT;
-  }
-
+  StringRef* esGap = gap.IsEmpty() ? StringRef::emptyString()
+                                   : CVAL(*gap)->value()->asString();
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* state,
          ValueRef* jsonObject,
          StringRef* gap) -> ValueRef* {
         auto fn = state->context()->globalObject()->jsonStringify();
-        auto str = fn->call(state, ValueRef::createUndefined(), 1, &jsonObject);
+        ValueRef* params[] = {jsonObject, ValueRef::createNull(), gap};
+        auto str = fn->call(state, ValueRef::createUndefined(), 3, params);
         return str;
       },
       CVAL(*json_object)->value(),
-      StringRef::emptyString());
+      esGap);
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<String>());
 
   return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
