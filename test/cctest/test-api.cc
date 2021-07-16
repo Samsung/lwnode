@@ -1976,10 +1976,10 @@ THREADED_TEST(Boolean) {
 }
 
 
-// static void DummyCallHandler(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   args.GetReturnValue().Set(v8_num(13.4));
-// }
+static void DummyCallHandler(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  args.GetReturnValue().Set(v8_num(13.4));
+}
 
 
 // static void GetM(Local<String> name,
@@ -18879,23 +18879,23 @@ TEST(RegExp) {
 }
 
 
-// THREADED_TEST(Equals) {
-//   LocalContext localContext;
-//   v8::HandleScope handleScope(localContext->GetIsolate());
+THREADED_TEST(Equals) {
+  LocalContext localContext;
+  v8::HandleScope handleScope(localContext->GetIsolate());
 
-//   v8::Local<v8::Object> globalProxy = localContext->Global();
-//   v8::Local<Value> global = globalProxy->GetPrototype();
+  v8::Local<v8::Object> globalProxy = localContext->Global();
+  v8::Local<Value> global = globalProxy->GetPrototype();
 
-//   CHECK(global->StrictEquals(global));
-//   CHECK(!global->StrictEquals(globalProxy));
-//   CHECK(!globalProxy->StrictEquals(global));
-//   CHECK(globalProxy->StrictEquals(globalProxy));
+  CHECK(global->StrictEquals(global));
+  CHECK(!global->StrictEquals(globalProxy));
+  CHECK(!globalProxy->StrictEquals(global));
+  CHECK(globalProxy->StrictEquals(globalProxy));
 
-//   CHECK(global->Equals(localContext.local(), global).FromJust());
-//   CHECK(!global->Equals(localContext.local(), globalProxy).FromJust());
-//   CHECK(!globalProxy->Equals(localContext.local(), global).FromJust());
-//   CHECK(globalProxy->Equals(localContext.local(), globalProxy).FromJust());
-// }
+  CHECK(global->Equals(localContext.local(), global).FromJust());
+  CHECK(!global->Equals(localContext.local(), globalProxy).FromJust());
+  CHECK(!globalProxy->Equals(localContext.local(), global).FromJust());
+  CHECK(globalProxy->Equals(localContext.local(), globalProxy).FromJust());
+}
 
 
 static void Getter(v8::Local<v8::Name> property,
@@ -20891,57 +20891,57 @@ TEST(HasOwnProperty) {
 // }
 
 
-// THREADED_TEST(Regress157124) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   Local<Object> obj = templ->NewInstance(context.local()).ToLocalChecked();
-//   obj->GetIdentityHash();
-//   obj->DeletePrivate(context.local(),
-//                      v8::Private::ForApi(isolate, v8_str("Bug")))
-//       .FromJust();
-// }
+THREADED_TEST(Regress157124) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  Local<Object> obj = templ->NewInstance(context.local()).ToLocalChecked();
+  obj->GetIdentityHash();
+  obj->DeletePrivate(context.local(),
+                     v8::Private::ForApi(isolate, v8_str("Bug")))
+      .FromJust();
+}
 
 
-// THREADED_TEST(Regress2535) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   Local<Value> set_value = CompileRun("new Set();");
-//   Local<Object> set_object(Local<Object>::Cast(set_value));
-//   CHECK_EQ(0, set_object->InternalFieldCount());
-//   Local<Value> map_value = CompileRun("new Map();");
-//   Local<Object> map_object(Local<Object>::Cast(map_value));
-//   CHECK_EQ(0, map_object->InternalFieldCount());
-// }
+THREADED_TEST(Regress2535) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  Local<Value> set_value = CompileRun("new Set();");
+  Local<Object> set_object(Local<Object>::Cast(set_value));
+  CHECK_EQ(0, set_object->InternalFieldCount());
+  Local<Value> map_value = CompileRun("new Map();");
+  Local<Object> map_object(Local<Object>::Cast(map_value));
+  CHECK_EQ(0, map_object->InternalFieldCount());
+}
 
 
-// THREADED_TEST(Regress2746) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   Local<Object> obj = Object::New(isolate);
-//   Local<v8::Private> key = v8::Private::New(isolate, v8_str("key"));
-//   CHECK(
-//       obj->SetPrivate(context.local(), key, v8::Undefined(isolate)).FromJust());
-//   Local<Value> value = obj->GetPrivate(context.local(), key).ToLocalChecked();
-//   CHECK(!value.IsEmpty());
-//   CHECK(value->IsUndefined());
-// }
+THREADED_TEST(Regress2746) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  Local<Object> obj = Object::New(isolate);
+  Local<v8::Private> key = v8::Private::New(isolate, v8_str("key"));
+  CHECK(
+      obj->SetPrivate(context.local(), key, v8::Undefined(isolate)).FromJust());
+  Local<Value> value = obj->GetPrivate(context.local(), key).ToLocalChecked();
+  CHECK(!value.IsEmpty());
+  CHECK(value->IsUndefined());
+}
 
 
-// THREADED_TEST(Regress260106) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   Local<FunctionTemplate> templ = FunctionTemplate::New(isolate,
-//                                                         DummyCallHandler);
-//   CompileRun("for (var i = 0; i < 128; i++) Object.prototype[i] = 0;");
-//   Local<Function> function =
-//       templ->GetFunction(context.local()).ToLocalChecked();
-//   CHECK(!function.IsEmpty());
-//   CHECK(function->IsFunction());
-// }
+THREADED_TEST(Regress260106) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  Local<FunctionTemplate> templ = FunctionTemplate::New(isolate,
+                                                        DummyCallHandler);
+  CompileRun("for (var i = 0; i < 128; i++) Object.prototype[i] = 0;");
+  Local<Function> function =
+      templ->GetFunction(context.local()).ToLocalChecked();
+  CHECK(!function.IsEmpty());
+  CHECK(function->IsFunction());
+}
 
 THREADED_TEST(JSONParseObject) {
   LocalContext context;
