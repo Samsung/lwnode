@@ -382,13 +382,47 @@ void V8::InternalFieldOutOfBounds(int index) {
 
 MaybeLocal<Value> JSON::Parse(Local<Context> context,
                               Local<String> json_string) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+  auto lwContext = CVAL(*context)->context();
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state, ValueRef* jsonString) -> ValueRef* {
+        auto fn = state->context()->globalObject()->jsonParse();
+        auto parsed =
+            fn->call(state, ValueRef::createUndefined(), 1, &jsonString);
+        return parsed;
+      },
+      CVAL(*json_string)->value());
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+
+  return Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
 }
 
 MaybeLocal<String> JSON::Stringify(Local<Context> context,
                                    Local<Value> json_object,
                                    Local<String> gap) {
-  LWNODE_RETURN_LOCAL(String);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
+  auto lwContext = CVAL(*context)->context();
+
+  if (!gap.IsEmpty()) {
+    LWNODE_UNIMPLEMENT;
+  }
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state,
+         ValueRef* jsonObject,
+         StringRef* gap) -> ValueRef* {
+        auto fn = state->context()->globalObject()->jsonStringify();
+        auto str = fn->call(state, ValueRef::createUndefined(), 1, &jsonObject);
+        return str;
+      },
+      CVAL(*json_object)->value(),
+      StringRef::emptyString());
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<String>());
+
+  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
 }
 
 }  // namespace v8

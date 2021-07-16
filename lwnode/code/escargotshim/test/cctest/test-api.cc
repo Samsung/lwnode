@@ -20943,27 +20943,27 @@ TEST(HasOwnProperty) {
 //   CHECK(function->IsFunction());
 // }
 
-// THREADED_TEST(JSONParseObject) {
-//   LocalContext context;
-//   HandleScope scope(context->GetIsolate());
-//   Local<Value> obj =
-//       v8::JSON::Parse(context.local(), v8_str("{\"x\":42}")).ToLocalChecked();
-//   Local<Object> global = context->Global();
-//   global->Set(context.local(), v8_str("obj"), obj).FromJust();
-//   ExpectString("JSON.stringify(obj)", "{\"x\":42}");
-// }
+THREADED_TEST(JSONParseObject) {
+  LocalContext context;
+  HandleScope scope(context->GetIsolate());
+  Local<Value> obj =
+      v8::JSON::Parse(context.local(), v8_str("{\"x\":42}")).ToLocalChecked();
+  Local<Object> global = context->Global();
+  global->Set(context.local(), v8_str("obj"), obj).FromJust();
+  ExpectString("JSON.stringify(obj)", "{\"x\":42}");
+}
 
-// THREADED_TEST(JSONParseNumber) {
-//   LocalContext context;
-//   HandleScope scope(context->GetIsolate());
-//   Local<Value> obj =
-//       v8::JSON::Parse(context.local(), v8_str("42")).ToLocalChecked();
-//   Local<Object> global = context->Global();
-//   global->Set(context.local(), v8_str("obj"), obj).FromJust();
-//   ExpectString("JSON.stringify(obj)", "42");
-// }
+THREADED_TEST(JSONParseNumber) {
+  LocalContext context;
+  HandleScope scope(context->GetIsolate());
+  Local<Value> obj =
+      v8::JSON::Parse(context.local(), v8_str("42")).ToLocalChecked();
+  Local<Object> global = context->Global();
+  global->Set(context.local(), v8_str("obj"), obj).FromJust();
+  ExpectString("JSON.stringify(obj)", "42");
+}
 
-// namespace {
+namespace {
 // void TestJSONParseArray(Local<Context> context, const char* input_str,
 //                         const char* expected_output_str,
 //                         i::ElementsKind expected_elements_kind) {
@@ -21000,19 +21000,19 @@ TEST(HasOwnProperty) {
 //                      i::PACKED_ELEMENTS);
 // }
 
-// THREADED_TEST(JSONStringifyObject) {
-//   LocalContext context;
-//   HandleScope scope(context->GetIsolate());
-//   Local<Value> value =
-//       v8::JSON::Parse(context.local(), v8_str("{\"x\":42}")).ToLocalChecked();
-//   Local<Object> obj = value->ToObject(context.local()).ToLocalChecked();
-//   Local<Object> global = context->Global();
-//   global->Set(context.local(), v8_str("obj"), obj).FromJust();
-//   Local<String> json =
-//       v8::JSON::Stringify(context.local(), obj).ToLocalChecked();
-//   v8::String::Utf8Value utf8(context->GetIsolate(), json);
-//   ExpectString("JSON.stringify(obj)", *utf8);
-// }
+THREADED_TEST(JSONStringifyObject) {
+  LocalContext context;
+  HandleScope scope(context->GetIsolate());
+  Local<Value> value =
+      v8::JSON::Parse(context.local(), v8_str("{\"x\":42}")).ToLocalChecked();
+  Local<Object> obj = value->ToObject(context.local()).ToLocalChecked();
+  Local<Object> global = context->Global();
+  global->Set(context.local(), v8_str("obj"), obj).FromJust();
+  Local<String> json =
+      v8::JSON::Stringify(context.local(), obj).ToLocalChecked();
+  v8::String::Utf8Value utf8(context->GetIsolate(), json);
+  ExpectString("JSON.stringify(obj)", *utf8);
+}
 
 // THREADED_TEST(JSONStringifyObjectWithGap) {
 //   LocalContext context;
@@ -21135,7 +21135,7 @@ TEST(HasOwnProperty) {
 //     CHECK(CompileRun("JSON.stringify({ 'a' : other, 'b' : ['c'] })").IsEmpty());
 //     CHECK(CompileRun("JSON.stringify([other, 'b', 'c'])").IsEmpty());
 //   }
-// }
+}
 
 
 // bool access_check_fail_thrown = false;
