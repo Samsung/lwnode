@@ -9935,12 +9935,12 @@ THREADED_TEST(DeleteAccessor) {
 //   CHECK_EQ(42, g_echo_value);  // Make sure we didn't call the setter.
 // }
 
-// static bool AccessAlwaysBlocked(Local<v8::Context> accessing_context,
-//                                 Local<v8::Object> global,
-//                                 Local<v8::Value> data) {
-//   i::PrintF("Access blocked.\n");
-//   return false;
-// }
+static bool AccessAlwaysBlocked(Local<v8::Context> accessing_context,
+                                Local<v8::Object> global,
+                                Local<v8::Value> data) {
+  // i::PrintF("Access blocked.\n");
+  return false;
+}
 
 // static bool AccessAlwaysAllowed(Local<v8::Context> accessing_context,
 //                                 Local<v8::Object> global,
@@ -20978,7 +20978,7 @@ namespace {
 //   global->Set(context, v8_str("obj"), obj).FromJust();
 //   ExpectString("JSON.stringify(obj)", expected_output_str);
 // }
-// }  // namespace
+}  // namespace
 
 // THREADED_TEST(JSONParseArray) {
 //   LocalContext context;
@@ -21014,19 +21014,19 @@ THREADED_TEST(JSONStringifyObject) {
   ExpectString("JSON.stringify(obj)", *utf8);
 }
 
-// THREADED_TEST(JSONStringifyObjectWithGap) {
-//   LocalContext context;
-//   HandleScope scope(context->GetIsolate());
-//   Local<Value> value =
-//       v8::JSON::Parse(context.local(), v8_str("{\"x\":42}")).ToLocalChecked();
-//   Local<Object> obj = value->ToObject(context.local()).ToLocalChecked();
-//   Local<Object> global = context->Global();
-//   global->Set(context.local(), v8_str("obj"), obj).FromJust();
-//   Local<String> json =
-//       v8::JSON::Stringify(context.local(), obj, v8_str("*")).ToLocalChecked();
-//   v8::String::Utf8Value utf8(context->GetIsolate(), json);
-//   ExpectString("JSON.stringify(obj, null,  '*')", *utf8);
-// }
+THREADED_TEST(JSONStringifyObjectWithGap) {
+  LocalContext context;
+  HandleScope scope(context->GetIsolate());
+  Local<Value> value =
+      v8::JSON::Parse(context.local(), v8_str("{\"x\":42}")).ToLocalChecked();
+  Local<Object> obj = value->ToObject(context.local()).ToLocalChecked();
+  Local<Object> global = context->Global();
+  global->Set(context.local(), v8_str("obj"), obj).FromJust();
+  Local<String> json =
+      v8::JSON::Stringify(context.local(), obj, v8_str("*")).ToLocalChecked();
+  v8::String::Utf8Value utf8(context->GetIsolate(), json);
+  ExpectString("JSON.stringify(obj, null,  '*')", *utf8);
+}
 
 // #if V8_OS_POSIX
 // class ThreadInterruptTest {
@@ -21092,9 +21092,9 @@ THREADED_TEST(JSONStringifyObject) {
 // #endif  // V8_OS_POSIX
 
 
-// void UnreachableCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   UNREACHABLE();
-// }
+void UnreachableCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // UNREACHABLE();
+}
 
 
 // TEST(JSONStringifyAccessCheck) {
@@ -21135,7 +21135,7 @@ THREADED_TEST(JSONStringifyObject) {
 //     CHECK(CompileRun("JSON.stringify({ 'a' : other, 'b' : ['c'] })").IsEmpty());
 //     CHECK(CompileRun("JSON.stringify([other, 'b', 'c'])").IsEmpty());
 //   }
-}
+// }
 
 
 // bool access_check_fail_thrown = false;
