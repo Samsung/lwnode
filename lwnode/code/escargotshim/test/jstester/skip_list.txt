@@ -1089,6 +1089,7 @@ test/parallel/test-stream-pipeline-http2.js
 test/parallel/test-stream-pipeline-process.js
 test/parallel/test-stream-pipeline.js
 test/parallel/test-stream-readable-async-iterators.js
+test/parallel/test-stream-wrap-drain.js
 test/parallel/test-stream2-httpclient-response-end.js
 test/parallel/test-string-decoder-end.js
 test/parallel/test-string-decoder-fuzz.js
@@ -1148,6 +1149,7 @@ test/parallel/test-tls-delayed-attach-error.js
 test/parallel/test-tls-delayed-attach.js
 test/parallel/test-tls-destroy-stream-12.js
 test/parallel/test-tls-destroy-stream.js
+test/parallel/test-tls-destroy-whilst-write.js
 test/parallel/test-tls-dhe.js
 test/parallel/test-tls-disable-renegotiation.js
 test/parallel/test-tls-ecdh-auto.js
