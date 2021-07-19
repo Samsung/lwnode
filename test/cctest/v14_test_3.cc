@@ -643,8 +643,10 @@ void PromiseHookCallback(v8::PromiseHookType type,
       promiseHookData->resolve++;
       break;
     case v8::PromiseHookType::kBefore:
+      promiseHookData->before++;
       break;
     case v8::PromiseHookType::kAfter:
+      promiseHookData->after++;
       break;
   }
 }
@@ -671,4 +673,6 @@ THREADED_TEST(PromiseHookCustom) {
 
   p2->Reject(context.local(), v8::Integer::New(isolate, 2)).FromJust();
   CHECK_EQ(promiseHookData->resolve, 2);
+
+  delete promiseHookData;
 }
