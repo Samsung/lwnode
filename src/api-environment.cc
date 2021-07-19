@@ -1515,22 +1515,10 @@ Local<ArrayBuffer> v8::ArrayBuffer::New(
 
 std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
-  API_ENTER_NO_EXCEPTION(isolate);
-  auto lwContext = lwIsolate->GetCurrentContext();
+  auto lwIsolate = IsolateWrap::GetCurrent();
 
-  BackingStoreRef* esBackingStore = nullptr;
-  EvalResult r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState,
-         BackingStoreRef** backingStore,
-         size_t byteLength) -> ValueRef* {
-        *backingStore = BackingStoreRef::create(byteLength);
-        return ValueRef::createNull();
-      },
-      &esBackingStore,
-      byte_length);
-  LWNODE_CHECK(esBackingStore);
-
+  BackingStoreRef* esBackingStore =
+      BackingStoreRef::create(lwIsolate->vmInstance(), byte_length);
   lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(
