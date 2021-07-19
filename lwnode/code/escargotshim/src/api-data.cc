@@ -525,28 +525,15 @@ void v8::BackingStore::EmptyDeleter(void* data,
 }
 
 std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
-  auto lwContext = IsolateWrap::GetCurrent()->GetCurrentContext();
-  auto self = CVAL(this)->value()->asArrayBufferObject();
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esSelf = CVAL(this)->value()->asArrayBufferObject();
 
   BackingStoreRef* esBackingStore = nullptr;
-  EvalResult r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState,
-         ArrayBufferObjectRef* arrayBuffer,
-         BackingStoreRef** backingStore) -> ValueRef* {
-        auto v = arrayBuffer->backingStore();
-
-        if (v.hasValue()) {
-          *backingStore = v.value();
-        } else {
-          *backingStore = BackingStoreRef::create(0);
-        }
-
-        return ValueRef::createNull();
-      },
-      self,
-      &esBackingStore);
-  LWNODE_CHECK(esBackingStore);
+  if (esSelf->backingStore().hasValue()) {
+    esBackingStore = esSelf->backingStore().value();
+  } else {
+    esBackingStore = BackingStoreRef::create(lwIsolate->vmInstance(), 0);
+  }
 
   return std::shared_ptr<v8::BackingStore>(
       reinterpret_cast<v8::BackingStore*>(esBackingStore));
