@@ -16140,36 +16140,39 @@ TEST(PromiseHook) {
   CompileRun("var p = new Promise(() => {});");
 
   auto init_promise = global->Get(context, v8_str("init")).ToLocalChecked();
-  // CHECK(GetPromise("p")->Equals(env.local(), init_promise).FromJust());
-  // auto init_promise_obj = v8::Local<v8::Promise>::Cast(init_promise);
-  // CHECK_EQ(init_promise_obj->State(), v8::Promise::PromiseState::kPending);
-  // CHECK(!init_promise_obj->HasHandler());
+  CHECK(GetPromise("p")->Equals(env.local(), init_promise).FromJust());
+  auto init_promise_obj = v8::Local<v8::Promise>::Cast(init_promise);
+  CHECK_EQ(init_promise_obj->State(), v8::Promise::PromiseState::kPending);
+  CHECK(!init_promise_obj->HasHandler());
 
-  // promise_hook_data->Reset();
-  // promise_hook_data->promise_hook_value = "fulfilled";
-  // const char* source =
-  //     "var resolve, value = ''; \n"
-  //     "var p = new Promise(r => resolve = r); \n";
+  promise_hook_data->Reset();
+  promise_hook_data->promise_hook_value = "fulfilled";
+  const char* source =
+      "var resolve, value = ''; \n"
+      "var p = new Promise(r => resolve = r); \n";
 
-  // CompileRun(source);
-  // init_promise = global->Get(context, v8_str("init")).ToLocalChecked();
-  // CHECK(GetPromise("p")->Equals(env.local(), init_promise).FromJust());
-  // CHECK_EQ(1, promise_hook_data->promise_hook_count);
-  // CHECK_EQ(0, promise_hook_data->parent_promise_count);
+  CompileRun(source);
+  init_promise = global->Get(context, v8_str("init")).ToLocalChecked();
+  CHECK(GetPromise("p")->Equals(env.local(), init_promise).FromJust());
+  CHECK_EQ(1, promise_hook_data->promise_hook_count);
+  CHECK_EQ(0, promise_hook_data->parent_promise_count);
 
-  // CompileRun("var p1 = p.then(() => { value = 'fulfilled'; }); \n");
-  // init_promise = global->Get(context, v8_str("init")).ToLocalChecked();
-  // auto parent_promise = global->Get(context, v8_str("parent")).ToLocalChecked();
-  // CHECK(GetPromise("p1")->Equals(env.local(), init_promise).FromJust());
-  // CHECK(GetPromise("p")->Equals(env.local(), parent_promise).FromJust());
-  // CHECK_EQ(2, promise_hook_data->promise_hook_count);
-  // CHECK_EQ(1, promise_hook_data->parent_promise_count);
+  CompileRun("var p1 = p.then(() => { value = 'fulfilled'; }); \n");
+  init_promise = global->Get(context, v8_str("init")).ToLocalChecked();
+  auto parent_promise = global->Get(context, v8_str("parent")).ToLocalChecked();
+  CHECK(GetPromise("p1")->Equals(env.local(), init_promise).FromJust());
+  CHECK(GetPromise("p")->Equals(env.local(), parent_promise).FromJust());
+  CHECK_EQ(2, promise_hook_data->promise_hook_count);
+  CHECK_EQ(1, promise_hook_data->parent_promise_count);
 
-  // CompileRun("resolve(); \n");
-  // auto resolve_promise =
-  //     global->Get(context, v8_str("resolve")).ToLocalChecked();
-  // auto before_promise = global->Get(context, v8_str("before")).ToLocalChecked();
-  // auto after_promise = global->Get(context, v8_str("after")).ToLocalChecked();
+  CompileRun("resolve(); \n");
+  auto resolve_promise =
+      global->Get(context, v8_str("resolve")).ToLocalChecked();
+  auto before_promise = global->Get(context, v8_str("before")).ToLocalChecked();
+  auto after_promise = global->Get(context, v8_str("after")).ToLocalChecked();
+
+  auto p = GetPromise("p1");
+
   // CHECK(GetPromise("p1")->Equals(env.local(), before_promise).FromJust());
   // CHECK(GetPromise("p1")->Equals(env.local(), after_promise).FromJust());
   // CHECK(GetPromise("p1")->Equals(env.local(), resolve_promise).FromJust());

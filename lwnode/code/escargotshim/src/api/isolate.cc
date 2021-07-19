@@ -181,7 +181,7 @@ void Isolate::ReportPendingMessages() {
 void Isolate::RunPromiseHook(PromiseHookType type,
                              Escargot::PromiseObjectRef* promise,
                              Escargot::ValueRef* parent) {
-  if (promise_hook_ == nullptr) {
+  if (!promise_hook_ || !promise) {
     return;
   }
 
@@ -518,4 +518,19 @@ void IsolateWrap::onFatalError(const char* location, const char* message) {
   }
 }
 
+void IsolateWrap::SetPromiseHook(v8::PromiseHook callback) {
+  auto lwIsolate = GetCurrent();
+
+  promise_hook_ = callback;
+
+  auto fn = [](ExecutionStateRef* state,
+               VMInstanceRef::PromiseHookType type,
+               PromiseObjectRef* promise,
+               ValueRef* parent) {
+    IsolateWrap::GetCurrent()->RunPromiseHook(
+        (v8::PromiseHookType)type, promise, parent);
+  };
+
+  lwIsolate->vmInstance()->registerPromiseHook(fn);
+}
 }  // namespace EscargotShim

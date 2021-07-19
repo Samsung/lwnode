@@ -60,8 +60,6 @@ class Isolate : public gc {
     promise_reject_callback_ = callback;
   }
 
-  void SetPromiseHook(v8::PromiseHook callback) { promise_hook_ = callback; }
-
   void RunPromiseHook(PromiseHookType type,
                       Escargot::PromiseObjectRef* promise,
                       Escargot::ValueRef* parent);
@@ -212,6 +210,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   void unlock_gc_release() { release_lock_.release(); }
 
   SymbolRef* privateValuesSymbol() { return privateValuesSymbol_.get(); }
+
+  void SetPromiseHook(v8::PromiseHook callback);
 
  private:
   IsolateWrap();
