@@ -4,11 +4,19 @@
     'escargot_dir%': 'deps/escargot',
     "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
     'build_asan%': '<(build_asan)',
+    'target_arch%': '<(target_arch)',
+#    'escargot_arch%': 'x64',
     'conditions': [
       ['escargot_lib_type=="shared_lib"', {
         'lib_ext': '.so'
       }, {
         'lib_ext': '.a'
+      }],
+      ['target_arch=="arm64"', {
+        'target_arch': 'aarch64'
+      }],
+      ['target_arch=="x32"', {
+        'target_arch': 'i686'
       }],
     ],
   },
