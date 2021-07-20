@@ -198,6 +198,8 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   GlobalHandles* globalHandles() { return globalHandles_; }
 
+  void CollectGarbage();
+
   void SetPendingExceptionAndMessage(
       ValueRef* exception,
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData)

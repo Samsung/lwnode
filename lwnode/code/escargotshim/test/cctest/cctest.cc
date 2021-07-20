@@ -105,7 +105,7 @@ void CcTest::CollectGarbage() {
 void CcTest::CollectAllGarbage(v8::Isolate* isolate) {
 #if defined(CCTEST_ENGINE_ESCARGOT)
   if (isolate) {
-    printf("(!) gc per isolate isn't supported yet.");
+    printf("(!) gc per isolate isn't supported yet.\n");
   }
   MemoryUtil::gcFull();
 #endif
@@ -114,7 +114,9 @@ void CcTest::CollectAllGarbage(v8::Isolate* isolate) {
 void CcTest::PreciseCollectAllGarbage(v8::Isolate* isolate) {
 #if defined(CCTEST_ENGINE_ESCARGOT)
   if (isolate) {
-    printf("(!) gc per isolate isn't supported yet.");
+    printf("(!) gc per isolate isn't supported yet.\n");
+    isolate->RequestGarbageCollectionForTesting(
+        v8::Isolate::kFullGarbageCollection);
   }
   MemoryUtil::gcFull();
 #endif

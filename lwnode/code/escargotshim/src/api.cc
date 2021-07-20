@@ -317,28 +317,33 @@ void V8::MakeWeak(i::Address* location,
                   WeakCallbackType type) {
   LWNODE_CALL_TRACE();
 
-  Engine::current()->gcHeap()->MakeWeak(
-      location, parameter, weak_callback, type);
-
 #if defined(LWNODE_ENABLE_EXPERIMENTAL)
   if (type != WeakCallbackType::kParameter) {
     LWNODE_RETURN_VOID;  // TODO
   }
-
   GlobalHandles::MakeWeak(VAL(location), parameter, weak_callback);
 #else
-  LWNODE_RETURN_VOID;
+  Engine::current()->gcHeap()->MakeWeak(
+      location, parameter, weak_callback, type);
 #endif
 }
 
 void V8::MakeWeak(i::Address** location_addr) {
+#if defined(LWNODE_ENABLE_EXPERIMENTAL)
+  GlobalHandles::MakeWeak(
+      VAL(*location_addr), reinterpret_cast<void*>(location_addr), nullptr);
+#endif
   LWNODE_RETURN_VOID;
 }
 
 void* V8::ClearWeak(i::Address* location) {
   LWNODE_CALL_TRACE();
+#if defined(LWNODE_ENABLE_EXPERIMENTAL)
+  return GlobalHandles::ClearWeakness(VAL(location));
+#else
   Engine::current()->gcHeap()->ClearWeak(location);
   LWNODE_RETURN_NULLPTR;
+#endif
 }
 
 void V8::AnnotateStrongRetainer(i::Address* location, const char* label) {

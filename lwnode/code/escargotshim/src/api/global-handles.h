@@ -31,12 +31,18 @@ class GlobalHandles final : public gc {
   static void MakeWeak(ValueWrap* lwValue,
                        void* parameter,
                        v8::WeakCallbackInfo<void>::Callback callback);
+  static void* ClearWeakness(ValueWrap* lwValue);
+
+  size_t PostGarbageCollectionProcessing(
+      /*const v8::GCCallbackFlags gc_callback_flags*/);
 
   bool destroy(ValueWrap* lwValue);
 
   bool makeWeak(ValueWrap* lwValue,
                 void* parameter,
                 v8::WeakCallbackInfo<void>::Callback callback);
+
+  bool clearWeak(ValueWrap* lwValue);
 
   size_t handles_count();
 
@@ -49,43 +55,41 @@ class GlobalHandles final : public gc {
 
     Node(const Node&) = delete;
 
-    Node* nextNode() { return nextNode_; }
     void* parameter() { return parameter_; }
     v8::WeakCallbackInfo<void>::Callback callback() { return callback_; }
 
    private:
-    Node* nextNode_{nullptr};
     void* parameter_{nullptr};
     v8::WeakCallbackInfo<void>::Callback callback_;
   };
 
   class NodeBlock {
    public:
-    NodeBlock(v8::Isolate* isolate, uint32_t count);
+    NodeBlock(v8::Isolate* isolate, ValueWrap* value, uint32_t count);
 
     ~NodeBlock();
 
     NodeBlock(const NodeBlock&) = delete;
 
-    bool increaseUsage();
-
-    bool decreaseUsage();
-
-    uint32_t usage() { return usedNodes_; }
+    uint32_t usedNodes() { return usedNodes_; }
 
     Node* firstNode() { return firstNode_; }
     void setFirstNode(Node* node) { firstNode_ = node; }
 
-    Node* pushNode(ValueWrap* lwValue, Node* node);
+    Node* pushNode(Node* node);
 
-    void registerWeakCallback(ValueWrap* lwValue);
+    void registerWeakCallback();
+
+    void releaseValue();
 
     v8::Isolate* isolate() { return isolate_; }
 
    private:
     v8::Isolate* isolate_{nullptr};
+    ValueWrap* value_{nullptr};
     uint32_t usedNodes_{0};
     Node* firstNode_{nullptr};
+    Escargot::PersistentRefHolder<ValueWrap> holder_;
   };
 
  private:

@@ -446,6 +446,10 @@ void IsolateWrap::ClearPendingExceptionAndMessage() {
   clear_pending_message_obj();
 }
 
+void IsolateWrap::CollectGarbage() {
+  globalHandles_->PostGarbageCollectionProcessing();
+}
+
 void IsolateWrap::SetPendingExceptionAndMessage(
     ValueRef* exception,
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
