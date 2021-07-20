@@ -13431,7 +13431,7 @@ TEST(WeakCallbackApi) {
     handle->SetWeak<v8::Persistent<v8::Object>>(
         handle, WeakApiCallback, v8::WeakCallbackType::kParameter);
   }
-  CcTest::PreciseCollectAllGarbage();
+  CcTest::PreciseCollectAllGarbage(isolate);
   // Verify disposed.
   CHECK_EQ(initial_handles, globals->handles_count());
 }

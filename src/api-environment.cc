@@ -1997,7 +1997,7 @@ void Isolate::RequestInterrupt(InterruptCallback callback, void* data) {
 }
 
 void Isolate::RequestGarbageCollectionForTesting(GarbageCollectionType type) {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::GetCurrent()->CollectGarbage();
 }
 
 Isolate* Isolate::GetCurrent() {
