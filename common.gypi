@@ -173,7 +173,7 @@
             }],
           ],
         },
-        'cflags': [ '-O3' ],
+        'cflags': [ '-Os' ],
         'conditions': [
           ['OS=="linux"', {
             'conditions': [
