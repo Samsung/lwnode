@@ -7,7 +7,7 @@
     'build_asan%': '0',
   },
   'target_defaults': {
-    'defines': [],
+    'defines': [ 'LWNODE=1' ],
     'cflags!': [ '-Wno-error' ],
     'cflags': [
       '-Wall', '-Wextra', '-Werror', '-ggdb',

@@ -1686,6 +1686,11 @@ MaybeLocal<Object> Function::NewInstanceWithSideEffectType(
   LWNODE_RETURN_LOCAL(Object);
 }
 
+static inline std::string toStdStringWithoutException(ContextRef* context,
+                                                      ValueRef* esValue) {
+  return esValue->toStringWithoutException(context)->toStdUTF8String();
+}
+
 MaybeLocal<v8::Value> Function::Call(Local<Context> context,
                                      v8::Local<v8::Value> recv,
                                      int argc,
@@ -1693,7 +1698,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
   LWNODE_CHECK(CVAL(this)->value()->isCallable());
 
-  auto lwContext = VAL(*context)->context();
+  auto esContext = VAL(*context)->context()->get();
 
   GCVector<ValueRef*> arguments;
   for (int i = 0; i < argc; i++) {
@@ -1701,7 +1706,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
   }
 
   auto r = Evaluator::execute(
-      lwContext->get(),
+      esContext,
       [](ExecutionStateRef* state,
          ValueRef* self,
          ValueRef* receiver,
@@ -1714,7 +1719,35 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
       arguments.size(),
       arguments.data());
 
-  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+  if (!r.isSuccessful()) {
+    LWNODE_DLOG_ERROR("Evaluate");
+    LWNODE_DLOG_RAW("Internal:\n  this: %p (es: %p)\n  recv: %p (es: %p)",
+                    this,
+                    CVAL(this)->value(),
+                    *recv,
+                    CVAL(*recv)->value());
+
+    LWNODE_DLOG_RAW("  arguments (%d):", argc);
+    for (int i = 0; i < argc; i++) {
+      auto esValue = VAL(*argv[i])->value();
+      LWNODE_DLOG_RAW("  [%d] %p (es: %p) %s",
+                      i,
+                      *argv[i],
+                      esValue,
+                      toStdStringWithoutException(esContext, esValue).c_str());
+    }
+
+    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\nResource:\n  %s\n%s",
+                    TRACE_ARGS2,
+                    "N/A",
+                    EvalResultHelper::getErrorString(
+                        lwIsolate->GetCurrentContext()->get(), r)
+                        .c_str());
+
+    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+    lwIsolate->ReportPendingMessages();
+    return MaybeLocal<Value>();
+  }
 
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }

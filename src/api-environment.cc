@@ -2003,6 +2003,7 @@ void Isolate::Initialize(Isolate* isolate,
 }
 
 Isolate* Isolate::New(const Isolate::CreateParams& params) {
+  LWNODE_CALL_TRACE();
   Isolate* isolate = Allocate();
   Initialize(isolate, params);
   return isolate;
@@ -2021,10 +2022,12 @@ void Isolate::DiscardThreadSpecificMetadata() {
 }
 
 void Isolate::Enter() {
+  LWNODE_CALL_TRACE();
   IsolateWrap::fromV8(this)->Enter();
 }
 
 void Isolate::Exit() {
+  LWNODE_CALL_TRACE();
   IsolateWrap::fromV8(this)->Exit();
 }
 

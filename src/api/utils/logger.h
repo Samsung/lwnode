@@ -83,7 +83,8 @@ class IndentCounter {
   } while (0);
 #endif
 
-#define LWNODE_LOG_INFO(fmt, ...) LWNODE_LOG_RAW("INFO " fmt, ##__VA_ARGS__);
+#define LWNODE_LOG_INFO(fmt, ...)                                              \
+  LWNODE_LOG_RAW("INFO " fmt COLOR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
   LWNODE_LOG_RAW(COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);

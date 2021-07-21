@@ -230,6 +230,7 @@ IsolateWrap* IsolateWrap::New() {
 }
 
 void IsolateWrap::Dispose() {
+  LWNODE_CALL_TRACE_ID(ISOWRAP);
   LWNODE_CALL_TRACE_GC_START();
   // NOTE: check unlock_gc_release(); is needed (and where)
   // unlock_gc_release();
@@ -348,6 +349,7 @@ void IsolateWrap::popHandleScope(v8Scope_t* handleScope) {
 }
 
 void IsolateWrap::addHandleToCurrentScope(HandleWrap* value) {
+  LWNODE_CALL_TRACE("%p", value);
   LWNODE_CHECK(handleScopes_.size() >= 1);
   handleScopes_.back()->add(value);
 }
@@ -371,7 +373,11 @@ bool IsolateWrap::isCurrentScopeSealed() {
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", context);
+  LWNODE_CALL_TRACE_ID(ISOWRAP,
+                       "%p (%zu -> %zu)",
+                       context,
+                       contextScopes_.size(),
+                       contextScopes_.size() + 1);
 
   if (contextScopes_.size() && (contextScopes_.back() != context)) {
     LWNODE_DLOG_WARN(R"(multiple contexts exist:
@@ -396,7 +402,11 @@ size_t IsolateWrap::getNumberOfContexts() {
 
 void IsolateWrap::popContext(ContextWrap* context) {
   LWNODE_CHECK(contextScopes_.back() == context);
-  LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", context);
+  LWNODE_CALL_TRACE_ID(ISOWRAP,
+                       "%p (%zu -> %zu)",
+                       context,
+                       contextScopes_.size(),
+                       contextScopes_.size() - 1);
   contextScopes_.pop_back();
 }
 
