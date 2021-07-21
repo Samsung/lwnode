@@ -38,7 +38,7 @@ void HandleScope::Initialize(Isolate* isolate) {
 
 HandleScope::~HandleScope() {
   LWNODE_CALL_TRACE_UNINDENT();
-  LWNODE_CALL_TRACE();
+  LWNODE_CALL_TRACE("%p", this);
   IsolateWrap::fromV8(isolate_)->popHandleScope(this);
 }
 
@@ -79,7 +79,23 @@ i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
 
   LWNODE_CHECK(handle->isValid());
 
-  lwIsolate->addHandleToCurrentScope(handle);
+  switch (handle->location()) {
+    case HandleWrap::Location::Local:
+      lwIsolate->addHandleToCurrentScope(handle);
+      return reinterpret_cast<i::Address*>(handle);
+
+    case HandleWrap::Location::Strong:
+    case HandleWrap::Location::Weak: {
+      auto cloned = handle->clone(HandleWrap::Location::Local);
+      lwIsolate->addHandleToCurrentScope(cloned);
+      return reinterpret_cast<i::Address*>(cloned);
+    }
+
+    default:
+      break;
+  }
+
+  LWNODE_CHECK_NOT_REACH_HERE();
 
   return reinterpret_cast<i::Address*>(value);
 }
@@ -146,10 +162,12 @@ void SealHandleScope::operator delete[](void*, size_t) {
 }
 
 void Context::Enter() {
+  LWNODE_CALL_TRACE("%s", VAL(this)->getHandleInfoString().c_str());
   VAL(this)->context()->Enter();
 }
 
 void Context::Exit() {
+  LWNODE_CALL_TRACE();
   VAL(this)->context()->Exit();
 }
 

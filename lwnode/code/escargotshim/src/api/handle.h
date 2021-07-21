@@ -26,18 +26,26 @@ class ContextWrap;
 class IsolateWrap;
 class ModuleWrap;
 class ExternalStringWrap;
+class GCHeap;
 
 class HandleWrap : public gc {
  public:
   enum Type : uint8_t {
+    NotPresent = 0,
     JsValue = 101,
     Context,
     ObjectTemplate,
     FunctionTemplate,
     Script,
     Module,
-    // NotPresent should be at last
-    NotPresent,
+    EndOfType,
+  };
+
+  enum Location : uint8_t {
+    Local = 0,
+    Strong,
+    Weak,
+    NearDeath,
   };
 
   enum ValueType : uint8_t {
@@ -46,13 +54,22 @@ class HandleWrap : public gc {
   };
 
   uint8_t type() const;
+  uint8_t valueType() const;
   bool isValid() const;
+  bool isStrongOrWeak() const;
+  uint8_t location() const;
+  HandleWrap* clone(Location location = Local);
+  std::string getHandleInfoString();
+  static HandleWrap* as(void* address);
 
  protected:
   HandleWrap() = default;
-  void* holder_ = nullptr;
+  void copy(HandleWrap* that, Location location);
+
+  void* val_ = nullptr;
   uint8_t type_ = Type::NotPresent;
   uint8_t valueType_ = ValueType::None;  // TODO: remove this variable
+  uint8_t location_ = Location::Local;
 };
 
 class ValueWrap : public HandleWrap {
@@ -97,6 +114,37 @@ class ValueWrap : public HandleWrap {
   ValueWrap(void* ptr,
             HandleWrap::Type type,
             HandleWrap::ValueType valueType = HandleWrap::ValueType::None);
+  ValueWrap() = default;
+};
+
+class PersistentWrap : public ValueWrap {
+ public:
+  static void* GlobalizeReference(v8::Isolate* isolate, void* address);
+  static void DisposeGlobal(void* address);
+  static void MakeWeak(void* address,
+                       void* parameter,
+                       v8::WeakCallbackInfo<void>::Callback weak_callback);
+  static void* ClearWeak(void* address);
+
+  static PersistentWrap* as(void* address);
+  std::string getPersistentInfoString();
+  void invokeFinalizer();
+
+ private:
+  PersistentWrap(ValueWrap* ptr);
+
+  void dispose();
+  void makeWeak(void* parameter,
+                v8::WeakCallbackInfo<void>::Callback weak_callback);
+  void* clearWeak();
+  void* getTracingAddress();
+
+  ValueWrap* holder_{nullptr};
+  v8::Isolate* v8Isolate_{nullptr};
+  v8::WeakCallbackInfo<void>::Callback weak_callback_{nullptr};
+  void* parameter_{nullptr};
+  bool isFinalizerCalled{false};
+  friend class GCHeap;
 };
 
 }  // namespace EscargotShim

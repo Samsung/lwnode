@@ -37,7 +37,11 @@ HandleScopeWrap::HandleScopeWrap(v8::EscapableHandleScope* scope,
     : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
 
 void HandleScopeWrap::add(HandleWrap* value) {
-  LWNODE_CALL_TRACE_ID(HDLSCOPE, "%p -> %p | %p", value, v8scope_, this);
+  LWNODE_CALL_TRACE_ID(HDLSCOPE,
+                       "%s --> %p (lw: %p)",
+                       value->getHandleInfoString().c_str(),
+                       v8scope_,
+                       this);
 
   handles_.push_back(value);
 }

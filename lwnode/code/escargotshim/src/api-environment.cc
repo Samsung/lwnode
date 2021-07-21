@@ -1882,10 +1882,6 @@ bool Isolate::InContext() {
 }
 
 void Isolate::ClearKeptObjects() {
-#if !defined(GC_HEAP_TRACE_ONLY)
-  MemoryUtil::gc();
-  MemoryUtil::gcInvokeFinalizers();
-#endif
   LWNODE_RETURN_VOID;
 }
 
@@ -2479,9 +2475,7 @@ void MicrotasksScope::PerformCheckpoint(Isolate* v8_isolate) {
   auto lwIsolate = IsolateWrap::fromV8(v8_isolate);
   auto vmInstance = lwIsolate->vmInstance();
 
-  if (vmInstance->hasPendingJob() == false) {
-    return;
-  }
+  GCHeap::ProcessingHoldScope scope;
 
   while (vmInstance->hasPendingJob()) {
     auto r = vmInstance->executePendingJob();
