@@ -117,6 +117,8 @@ static ValueRef* FunctionTemplateNativeFunction(
   if (!fnData->checkSignature(state, thisValue)) {
     IsolateWrap::GetCurrent()->ScheduleThrow(TypeErrorObjectRef::create(
         state, StringRef::createFromASCII("Illegal invocation")));
+    LWNODE_DLOG_ERROR("Signature mismatch!");
+    return ValueRef::createUndefined();
   }
 
   Local<Value> result;
