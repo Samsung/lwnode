@@ -4307,55 +4307,55 @@ THREADED_TEST(GlobalHandle) {
 // }
 
 
-// THREADED_TEST(GlobalHandleUpcast) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<String> local = v8::Local<String>::New(isolate, v8_str("str"));
-//   v8::Persistent<String> global_string(isolate, local);
-//   v8::Persistent<Value>& global_value =
-//       v8::Persistent<Value>::Cast(global_string);
-//   CHECK(v8::Local<v8::Value>::New(isolate, global_value)->IsString());
-//   CHECK(global_string == v8::Persistent<String>::Cast(global_value));
-//   global_string.Reset();
-// }
+THREADED_TEST(GlobalHandleUpcast) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<String> local = v8::Local<String>::New(isolate, v8_str("str"));
+  v8::Persistent<String> global_string(isolate, local);
+  v8::Persistent<Value>& global_value =
+      v8::Persistent<Value>::Cast(global_string);
+  CHECK(v8::Local<v8::Value>::New(isolate, global_value)->IsString());
+  CHECK(global_string == v8::Persistent<String>::Cast(global_value));
+  global_string.Reset();
+}
 
 
-// THREADED_TEST(HandleEquality) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::Persistent<String> global1;
-//   v8::Persistent<String> global2;
-//   {
-//     v8::HandleScope scope(isolate);
-//     global1.Reset(isolate, v8_str("str"));
-//     global2.Reset(isolate, v8_str("str2"));
-//   }
-//   CHECK(global1 == global1);
-//   CHECK(!(global1 != global1));
-//   {
-//     v8::HandleScope scope(isolate);
-//     Local<String> local1 = Local<String>::New(isolate, global1);
-//     Local<String> local2 = Local<String>::New(isolate, global2);
+THREADED_TEST(HandleEquality) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::Persistent<String> global1;
+  v8::Persistent<String> global2;
+  {
+    v8::HandleScope scope(isolate);
+    global1.Reset(isolate, v8_str("str"));
+    global2.Reset(isolate, v8_str("str2"));
+  }
+  CHECK(global1 == global1);
+  CHECK(!(global1 != global1));
+  {
+    v8::HandleScope scope(isolate);
+    Local<String> local1 = Local<String>::New(isolate, global1);
+    Local<String> local2 = Local<String>::New(isolate, global2);
 
-//     CHECK(global1 == local1);
-//     CHECK(!(global1 != local1));
-//     CHECK(local1 == global1);
-//     CHECK(!(local1 != global1));
+    CHECK(global1 == local1);
+    CHECK(!(global1 != local1));
+    CHECK(local1 == global1);
+    CHECK(!(local1 != global1));
 
-//     CHECK(!(global1 == local2));
-//     CHECK(global1 != local2);
-//     CHECK(!(local2 == global1));
-//     CHECK(local2 != global1);
+    CHECK(!(global1 == local2));
+    CHECK(global1 != local2);
+    CHECK(!(local2 == global1));
+    CHECK(local2 != global1);
 
-//     CHECK(!(local1 == local2));
-//     CHECK(local1 != local2);
+    CHECK(!(local1 == local2));
+    CHECK(local1 != local2);
 
-//     Local<String> anotherLocal1 = Local<String>::New(isolate, global1);
-//     CHECK(local1 == anotherLocal1);
-//     CHECK(!(local1 != anotherLocal1));
-//   }
-//   global1.Reset();
-//   global2.Reset();
-// }
+    Local<String> anotherLocal1 = Local<String>::New(isolate, global1);
+    CHECK(local1 == anotherLocal1);
+    CHECK(!(local1 != anotherLocal1));
+  }
+  global1.Reset();
+  global2.Reset();
+}
 
 THREADED_TEST(HandleEqualityPrimitives) {
   v8::HandleScope scope(CcTest::isolate());

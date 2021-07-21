@@ -17,6 +17,7 @@
 #include "engine.h"
 #include <iomanip>
 #include <sstream>
+#include "handle.h"
 #include "utils/logger.h"
 #include "utils/misc.h"
 #include "utils/string.h"
@@ -81,142 +82,106 @@ void Platform::hostImportModuleDynamically(ContextRef* relatedContext,
 }
 
 // --- G C H e a p ---
-#if !defined(GC_HEAP_TRACE_ONLY)
+
 #define GC_WRAP_PERSISTENT_POINTER(p) (GC_heap_pointer)(p)
-#define GC_UNWRAP_POINTER(p) ((void*)p)
-#else
-#define GC_WRAP_PERSISTENT_POINTER(p) GC_HIDE_POINTER(p)
-#define GC_UNWRAP_POINTER(p) ((void*)GC_HIDE_POINTER(p))
-#endif
+#define GC_UNWRAP_PERSISTENT_POINTER(p) ((void*)p)
+#define GC_WRAP_WEAK_POINTER(p) (GC_heap_pointer)(p)
+#define GC_UNWRAP_WEAK_POINTER(p) ((void*)p)
 
 /*
-  @note gc heap tracing lifetime
-
-  a) The types of heap tracing are strong, weak and phantom weak.
-  b) Every persitent is created as strong type at the registration.
-     Following flow is considered:
-
-     i)   strong <-> weak <-> phantom weak -> (finalizer) -> nullptr
-     ii)  strong -> nullptr
-     iii) phantom weak -> strong
-
-  If weak counter is 1, then the pointer will be phantom weak which is
-  collectable for GC.
+  state diagram:
+  FREE -> STRONG <-> WEAK -> (Post GC Processing) -> { STRONG, WEAK, FREE }
 */
 
-void GCHeap::GlobalizeReference(void* address, void* data) {
-  LWNODE_CALL_TRACE("address %p, data %p", address, data);
+void GCHeap::acquire(void* address, Kind kind, void* data) {
+  LWNODE_CALL_TRACE_ID(
+      GCHEAP,
+      "%s kind %u data %p",
+      PersistentWrap::as(address)->getPersistentInfoString().c_str(),
+      kind,
+      data);
+
   auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
   if (iter != persistents_.end()) {
-    iter->second.strong++;
-    iter->second.weak--;
-    iter->second.weak = std::max(iter->second.weak, 0);
-    // no-progress handling weak phantoms
+    if (kind == STRONG) iter->second.strong++;
+    if (kind == WEAK) iter->second.weak++;
   } else {
-    auto iter = weakPhantoms_.find(GC_HIDE_POINTER(address));
+    auto iter = weakPhantoms_.find(GC_WRAP_WEAK_POINTER(address));
     if (iter != weakPhantoms_.end()) {
-      // move phantom weak to strong
       AddressInfo info = iter->second;
 
       LWNODE_CHECK(info.strong == 0);
-      LWNODE_CHECK(info.weak == 1);
-      info.strong++;
-      info.weak--;
+      LWNODE_CHECK(info.weak != 0);
+
+      if (kind == STRONG) iter->second.strong++;
+      if (kind == WEAK) iter->second.weak++;
 
       persistents_.emplace(GC_WRAP_PERSISTENT_POINTER(address), info);
       weakPhantoms_.erase(iter);
-      // no-progress handling weak phantoms
     } else {
       persistents_.emplace(GC_WRAP_PERSISTENT_POINTER(address),
                            AddressInfo(1, 0, data));
     }
   }
-  notifyUpdate(address);
+  postUpdate(address);
 }
 
-void GCHeap::DisposeGlobal(void* address) {
-  LWNODE_CALL_TRACE("address %p", address);
+void GCHeap::release(void* address, Kind kind) {
+  LWNODE_CALL_TRACE_ID(
+      GCHEAP,
+      "%s kind %u",
+      PersistentWrap::as(address)->getPersistentInfoString().c_str(),
+      kind);
+
   auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
   if (iter != persistents_.end()) {
-    iter->second.strong--;
+    if (kind == STRONG) iter->second.strong--;
+    if (kind == WEAK) iter->second.weak--;
+
     iter->second.strong = std::max(iter->second.strong, 0);
+    iter->second.weak = std::max(iter->second.weak, 0);
 
     // progress handling weak phantoms
     if (iter->second.strong == 0) {
-      if (iter->second.weak == 0) {
-        persistents_.erase(iter);
-      } else if (iter->second.weak <= 1) {
-        weakPhantoms_.emplace(GC_HIDE_POINTER(address), iter->second);
-        persistents_.erase(iter);
+      if (iter->second.weak > 0) {
+        weakPhantoms_.emplace(GC_WRAP_WEAK_POINTER(address), iter->second);
       }
-    }
-  }
-  notifyUpdate(address);
-}
-
-void GCHeap::MakeWeak(void* address) {
-  LWNODE_CALL_TRACE("address %p", address);
-  auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
-  if (iter != persistents_.end()) {
-    iter->second.strong--;
-    iter->second.strong = std::max(iter->second.strong, 0);
-    iter->second.weak++;
-
-    // progress handling weak phantoms
-    if (iter->second.strong == 0 && iter->second.weak <= 1) {
-      weakPhantoms_.emplace(GC_HIDE_POINTER(address), iter->second);
-      persistents_.erase(iter);
-    }
-  } else {
-    auto iter = weakPhantoms_.find(GC_HIDE_POINTER(address));
-    if (iter != weakPhantoms_.end()) {
-      // move phantom weak to weak
-      AddressInfo info = iter->second;
-
-      LWNODE_CHECK(info.strong == 0);
-      LWNODE_CHECK(info.weak == 1);
-      info.weak++;
-
-      persistents_.emplace(GC_WRAP_PERSISTENT_POINTER(address), info);
-      weakPhantoms_.erase(iter);
-    } else {
-      LWNODE_CHECK(false);  // assumes this doesn't happen. let's see.
-    }
-  }
-
-  notifyUpdate(address);
-}
-
-void GCHeap::ClearWeak(void* address) {
-  LWNODE_CALL_TRACE("address %p", address);
-  // 1. handle persistents_ and weakPhantoms_
-  auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
-  if (iter != persistents_.end()) {
-    // guard: ClearWeak can be called even if no weak reference exist.
-    if (iter->second.weak > 0) {
-      iter->second.weak--;
-    }
-
-    // progress handling weak phantoms
-    if (iter->second.strong <= 0 && iter->second.weak <= 1) {
-      weakPhantoms_.emplace(GC_HIDE_POINTER(address), iter->second);
       persistents_.erase(iter);
     }
   }
-
-  // 2. ensure clearing finalizer bound to this address
-  MemoryUtil::gcRegisterFinalizer(address, nullptr, nullptr);
-
-  notifyUpdate(address);
+  postUpdate(address);
 }
 
-void GCHeap::disposePhantomWeak(void* address) {
-  LWNODE_CALL_TRACE("address %p", address);
-  auto iter = weakPhantoms_.find(GC_HIDE_POINTER(address));
-  if (iter != weakPhantoms_.end()) {
-    weakPhantoms_.erase(iter);
+void GCHeap::postGarbageCollectionProcessing() {
+  if (isOnPostGarbageCollectionProcessing_ ||
+      ProcessingHoldScope::isSkipProcessing()) {
+    return;
   }
-  notifyUpdate(address);
+
+  LWNODE_CALL_TRACE_ID(
+      GCHEAP, "last: %zu, current: %zu", stat_.weak, weakPhantoms_.size());
+  if (stat_.weak == weakPhantoms_.size()) {
+    return;
+  }
+  isOnPostGarbageCollectionProcessing_ = true;
+
+  // 1. move weaks to process post task.
+  GCVector<HeapSegment> weaks;
+  weaks.reserve(weakPhantoms_.size());
+  for (const HeapSegment& it : weakPhantoms_) {
+    weaks.push_back(it);
+  }
+  weakPhantoms_.clear();
+
+  // 2. invoke finalizers
+  for (const auto& iter : weaks) {
+    PersistentWrap* persistent =
+        PersistentWrap::as(GC_UNWRAP_PERSISTENT_POINTER(iter.first));
+    persistent->invokeFinalizer();
+  }
+
+  stat_.weak = weakPhantoms_.size();
+  isOnPostGarbageCollectionProcessing_ = false;
 }
 
 bool GCHeap::isTraced(void* address) {
@@ -225,28 +190,29 @@ bool GCHeap::isTraced(void* address) {
     return true;
   }
 
-  if (weakPhantoms_.find(GC_HIDE_POINTER(address)) != weakPhantoms_.end()) {
+  if (weakPhantoms_.find(GC_WRAP_WEAK_POINTER(address)) !=
+      weakPhantoms_.end()) {
     return true;
   }
+
   return false;
 }
 
-void* GCHeap::getPersistentData(void* address) {
-  auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
-  if (iter != persistents_.end()) {
-    return iter->second.data;
+void GCHeap::disposePhantomWeak(void* address) {
+  LWNODE_CALL_TRACE_ID(
+      GCHEAP,
+      "%s",
+      PersistentWrap::as(address)->getPersistentInfoString().c_str());
+  stat_.freed++;
+  auto iter = weakPhantoms_.find(GC_WRAP_WEAK_POINTER(address));
+  if (iter != weakPhantoms_.end()) {
+    weakPhantoms_.erase(iter);
   }
-
-  auto iterWeak = weakPhantoms_.find(GC_HIDE_POINTER(address));
-  if (iterWeak != weakPhantoms_.end()) {
-    return iterWeak->second.data;
-  }
-  return nullptr;
+  postUpdate(address);
 }
 
-typedef void (*formatterFunction)(
-    std::stringstream& stream,
-    const std::pair<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& iter);
+typedef void (*formatterFunction)(std::stringstream& stream,
+                                  const GCHeap::HeapSegment& iter);
 
 static void printAddress(
     const GCUnorderedMap<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& map,
@@ -270,94 +236,74 @@ static void printAddress(
   }
 }
 
-void GCHeap::printStatus() {
-  if (isStatusPrinted) {
-    return;
-  }
-  isStatusPrinted = true;
-
-  if (persistents_.size() == 0 && weakPhantoms_.size() == 0) {
+void GCHeap::printStatus(bool forcePrint) {
+  if (Flags::isTraceCallEnabled("GCHEAP") == false) {
     return;
   }
 
-  LWNODE_LOG_INFO(COLOR_GREEN "----- GCHEAP -----" COLOR_RESET);
-  LWNODE_LOG_INFO("[HOLD]");
-  printAddress(
-      persistents_,
-      [](std::stringstream& stream,
-         const std::pair<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& iter) {
-        stream << std::setw(15) << std::right << GC_UNWRAP_POINTER(iter.first)
-               << " ("
-               << "S" << std::setw(3) << iter.second.strong << " W"
-               << std::setw(3) << iter.second.weak << ") ";
-      });
-
-  LWNODE_LOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
-  LWNODE_LOG_INFO("[PHANTOM]");
-  printAddress(
-      weakPhantoms_,
-      [](std::stringstream& stream,
-         const std::pair<GCHeap::GC_heap_pointer, GCHeap::AddressInfo>& iter) {
-        stream << std::setw(15) << std::right << GC_REVEAL_POINTER(iter.first)
-               << " ("
-               << "S" << std::setw(3) << iter.second.strong << " W"
-               << std::setw(3) << iter.second.weak << ") ";
-      });
-
-  LWNODE_LOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
-}
-
-void GCHeap::notifyUpdate(void* address) {
-  isStatusPrinted = false;
-}
-
-void GCHeap::MakeWeak(void* location,
-                      void* parameter,
-                      v8::WeakCallbackInfo<void>::Callback weak_callback,
-                      v8::WeakCallbackType type) {
-  LWNODE_CALL_TRACE("address %p", location);
-
-  if (type != v8::WeakCallbackType::kParameter) {
-    LWNODE_CHECK(false);
+  if (!forcePrint && isStatePrinted_) {
+    return;
   }
 
-#if !defined(GC_HEAP_TRACE_ONLY)
-  // 1. register the given finalizer
-  struct Params {
-    v8::Isolate* isolate;
-    void* parameter;
-    v8::WeakCallbackInfo<void>::Callback weak_callback;
-  };
+  isStatePrinted_ = true;
 
-  Params* params = new Params();
+  if (!forcePrint || (persistents_.size() == 0 && weakPhantoms_.size() == 0)) {
+    return;
+  }
 
-  LWNODE_CHECK(isTraced(location));
+  LWNODE_DLOG_INFO(COLOR_GREEN "----- GCHEAP -----" COLOR_RESET);
+  LWNODE_DLOG_INFO("[STAT]");
+  LWNODE_DLOG_INFO("     freed: %zu", stat_.freed);
+  LWNODE_DLOG_INFO("    strong: %zu", persistents_.size());
+  LWNODE_DLOG_INFO("      weak: %zu", weakPhantoms_.size());
+  LWNODE_DLOG_INFO("[HOLD]");
+  printAddress(persistents_,
+               [](std::stringstream& stream, const HeapSegment& iter) {
+                 stream << std::setw(15) << std::right
+                        << GC_UNWRAP_PERSISTENT_POINTER(iter.first) << " ("
+                        << "S" << std::setw(3) << iter.second.strong << " W"
+                        << std::setw(3) << iter.second.weak << ") ";
+               });
 
-  v8::Isolate* v8Isolate =
-      reinterpret_cast<v8::Isolate*>(getPersistentData(location));
+  LWNODE_DLOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
+  LWNODE_DLOG_INFO("[PHANTOM]");
+  printAddress(weakPhantoms_,
+               [](std::stringstream& stream, const HeapSegment& iter) {
+                 stream << std::setw(15) << std::right
+                        << GC_UNWRAP_WEAK_POINTER(iter.first) << " ("
+                        << "S" << std::setw(3) << iter.second.strong << " W"
+                        << std::setw(3) << iter.second.weak << ") ";
+               });
 
-  LWNODE_CHECK_NOT_NULL(v8Isolate);
+  LWNODE_DLOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
+}
 
-  params->isolate = v8Isolate;
-  params->parameter = parameter;
-  params->weak_callback = weak_callback;
+void GCHeap::postUpdate(void* address) {
+  isStatePrinted_ = false;
+}
 
-  MemoryUtil::gcRegisterFinalizer(
-      location,
-      [](void* address, void* data) {
-        Engine::current()->gcHeap()->disposePhantomWeak(address);
-        Params* params = (Params*)data;
-        void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {};
-        v8::WeakCallbackInfo<void> info(
-            params->isolate, params->parameter, embedderFields, nullptr);
-        params->weak_callback(info);
-        delete params;
-      },
-      params);
-#endif
+void GCHeap::processGCEvent() {
+  auto gcHeap = Engine::current()->gcHeap();
+  gcHeap->printStatus();
+  gcHeap->postGarbageCollectionProcessing();
+}
 
-  // 2. make this location as weak type
-  MakeWeak(location);
+std::vector<GCHeap::ProcessingHoldScope*>
+    GCHeap::ProcessingHoldScope::s_processingHoldScopes_;
+
+GCHeap::ProcessingHoldScope::ProcessingHoldScope() {
+  s_processingHoldScopes_.push_back(this);
+}
+
+GCHeap::ProcessingHoldScope::~ProcessingHoldScope() {
+  s_processingHoldScopes_.pop_back();
+}
+
+bool GCHeap::ProcessingHoldScope::isSkipProcessing() {
+  if (s_processingHoldScopes_.empty()) {
+    return false;
+  }
+  return true;
 }
 
 // --- E n g i n e ---
@@ -365,11 +311,13 @@ void GCHeap::MakeWeak(void* location,
 static Engine* s_engine;
 std::unordered_set<v8::String::ExternalStringResourceBase*>
     Engine::s_externalStrings;
+static Engine::State s_state = Engine::Freed;
 
 bool Engine::Initialize() {
   if (s_engine == nullptr) {
     s_engine = new Engine();
     s_engine->initialize();
+    s_state = Running;
   }
   return true;
 }
@@ -381,7 +329,7 @@ bool Engine::Dispose() {
     delete s_engine;
     s_engine = nullptr;
   }
-
+  s_state = Freed;
   LWNODE_CALL_TRACE_GC_END();
   return true;
 }
@@ -403,23 +351,23 @@ void Engine::initialize() {
 
   Globals::initialize();
   Memory::setGCFrequency(GC_FREE_SPACE_DIVISOR);
-  gcHeap_.reset(new GCHeap());
+  gcHeap_.reset(GCHeap::create());
 
-  if (Flags::isTraceCallEnabled("HEAP")) {
-    Memory::setGCEventListener([]() {
-      // this is invoked at GC_EVENT_RECLAIM_END phase
-      Engine::current()->gcHeap()->printStatus();
-    });
-  }
+#if defined(GC_HEAP_TRACE_ONLY)
+  // this is invoked at GC_EVENT_RECLAIM_END phase
+  Memory::setGCEventListener(GCHeap::processGCEvent);
+#endif
 
   auto flags = Flags::get();
   if (Flags::isTraceGCEnabled()) {
-    MemoryUtil::gcStartStatsTrace();
+    LWNODE_DLOG_WARN("temporary blocked for postGarbageCollectionProcessing");
+    // MemoryUtil::gcStartStatsTrace();
   }
 }
 
 void Engine::dispose() {
   LWNODE_CALL_TRACE_GC_START();
+  s_state = OnDestroy;
 
   Memory::setGCEventListener(nullptr);
 
@@ -435,6 +383,10 @@ void Engine::dispose() {
 Engine* Engine::current() {
   LWNODE_CHECK(s_engine);
   return s_engine;
+}
+
+Engine::State Engine::getState() {
+  return s_state;
 }
 
 void Engine::registerExternalString(

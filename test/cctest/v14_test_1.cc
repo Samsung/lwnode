@@ -387,3 +387,34 @@ TEST(MapUsingIntegerKey) {
 
   CHECK(try_catch.HasCaught() == false);
 }
+
+static bool isWeakApiCallbackCalled = false;
+static void WeakApiCallback(
+    const v8::WeakCallbackInfo<Persistent<v8::Object>>& data) {
+  data.GetParameter()->Reset();
+  delete data.GetParameter();
+  isWeakApiCallbackCalled = true;
+}
+
+TEST(DISABLED_WeakCallback_Invoked_by_CollectGarbage) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  {
+    v8::HandleScope scope(isolate);
+
+    v8::Local<v8::Object> obj = v8::Object::New(isolate);
+    CHECK(
+        obj->Set(context.local(), v8_str("key"), v8::Integer::New(isolate, 231))
+            .FromJust());
+
+    v8::Persistent<v8::Object>* handle =
+        new v8::Persistent<v8::Object>(isolate, obj);
+
+    handle->SetWeak<v8::Persistent<v8::Object>>(
+        handle, WeakApiCallback, v8::WeakCallbackType::kParameter);
+  }
+
+  CcTest::CollectGarbage();
+
+  CHECK_EQ(isWeakApiCallbackCalled, true);
+}

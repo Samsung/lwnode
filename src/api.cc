@@ -281,8 +281,13 @@ void ResourceConstraints::set_max_semi_space_size_in_kb(size_t limit_in_kb) {
 i::Address* V8::GlobalizeReference(i::Isolate* isolate, i::Address* obj) {
   LWNODE_CALL_TRACE();
   LWNODE_CHECK(isolate);
+#if defined(GC_HEAP_TRACE_ONLY)
+  auto persistent = PersistentWrap::GlobalizeReference(
+      reinterpret_cast<Isolate*>(isolate), obj);
+  return reinterpret_cast<i::Address*>(persistent);
+#endif
+
   IsolateWrap::fromV8(isolate)->globalHandles()->Create(VAL(obj));
-  Engine::current()->gcHeap()->GlobalizeReference(obj, isolate);
   return obj;
 }
 
@@ -317,14 +322,16 @@ void V8::MakeWeak(i::Address* location,
                   WeakCallbackType type) {
   LWNODE_CALL_TRACE();
 
+#if defined(GC_HEAP_TRACE_ONLY)
+  PersistentWrap::MakeWeak(location, parameter, weak_callback);
+  return;
+#endif
+
 #if defined(LWNODE_ENABLE_EXPERIMENTAL)
   if (type != WeakCallbackType::kParameter) {
     LWNODE_RETURN_VOID;  // TODO
   }
   GlobalHandles::MakeWeak(VAL(location), parameter, weak_callback);
-#else
-  Engine::current()->gcHeap()->MakeWeak(
-      location, parameter, weak_callback, type);
 #endif
 }
 
@@ -338,10 +345,13 @@ void V8::MakeWeak(i::Address** location_addr) {
 
 void* V8::ClearWeak(i::Address* location) {
   LWNODE_CALL_TRACE();
+#if defined(GC_HEAP_TRACE_ONLY)
+  return PersistentWrap::ClearWeak(location);
+#endif
+
 #if defined(LWNODE_ENABLE_EXPERIMENTAL)
   return GlobalHandles::ClearWeakness(VAL(location));
 #else
-  Engine::current()->gcHeap()->ClearWeak(location);
   LWNODE_RETURN_NULLPTR;
 #endif
 }
@@ -352,8 +362,12 @@ void V8::AnnotateStrongRetainer(i::Address* location, const char* label) {
 
 void V8::DisposeGlobal(i::Address* location) {
   LWNODE_CALL_TRACE();
+#if defined(GC_HEAP_TRACE_ONLY)
+  PersistentWrap::DisposeGlobal(location);
+  return;
+#endif
+
   GlobalHandles::Destroy(VAL(location));
-  Engine::current()->gcHeap()->DisposeGlobal(location);
 }
 
 void V8::DisposeTracedGlobal(internal::Address* location) {

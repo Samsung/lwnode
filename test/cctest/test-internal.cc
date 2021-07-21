@@ -106,7 +106,7 @@ UNINITIALIZED_TEST(internal_GCObject1) {
     GC_TRACE_ADD_POINTER(object);
   }();
 
-  CcTest::CollectGarbage();
+  CcTest::CollectAllGarbage();
 
   CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 0);
 }
@@ -128,7 +128,7 @@ UNINITIALIZED_TEST(internal_GCObject2) {
     CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 2);
   }();
 
-  CcTest::CollectGarbage();
+  CcTest::CollectAllGarbage();
 
   CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 0);
 }

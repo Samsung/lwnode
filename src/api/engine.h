@@ -62,24 +62,14 @@ class Platform : public PlatformRef {
   v8::ArrayBuffer::Allocator* allocator_ = nullptr;
 };
 
-#define GC_HEAP_TRACE_ONLY
-
 class GCHeap : public gc {
  public:
-  void GlobalizeReference(void* address, void* data);
-  void DisposeGlobal(void* address);
-  void MakeWeak(void* address);
-  void MakeWeak(void* location,
-                void* parameter,
-                v8::WeakCallbackInfo<void>::Callback weak_callback,
-                v8::WeakCallbackType type);
-  void ClearWeak(void* address);
-  void disposePhantomWeak(void* address);
-  bool isTraced(void* address);
-  void* getPersistentData(void* address);
-  void printStatus();
+  enum Kind {
+    FREE = 0,
+    STRONG,
+    WEAK,
+  };
 
-  typedef GC_word GC_heap_pointer;
   struct AddressInfo {
     AddressInfo(int strong_, int weak_, void* data_ = nullptr) {
       strong = strong_;
@@ -90,13 +80,44 @@ class GCHeap : public gc {
     int weak = 0;
     void* data = nullptr;
   };
+  typedef GC_word GC_heap_pointer;
+  typedef std::pair<GC_heap_pointer, AddressInfo> HeapSegment;
+
+  void acquire(void* address, Kind kind, void* data);
+  void release(void* address, Kind kind);
+  void disposePhantomWeak(void* address);
+  bool isTraced(void* address);
+  void printStatus(bool forcePrint = false);
+
+  class ProcessingHoldScope {
+   public:
+    ProcessingHoldScope();
+    ~ProcessingHoldScope();
+
+    static bool isSkipProcessing();
+
+   private:
+    static std::vector<ProcessingHoldScope*> s_processingHoldScopes_;
+  };
+
+  void postGarbageCollectionProcessing();
+  static void processGCEvent();
+
+  static GCHeap* create() { return new GCHeap(); }
 
  private:
-  void notifyUpdate(void* address);
+  void postUpdate(void* address);
 
   GCUnorderedMap<GC_heap_pointer, AddressInfo> persistents_;
   GCUnorderedMap<GC_heap_pointer, AddressInfo> weakPhantoms_;
-  bool isStatusPrinted = false;
+  bool isStatePrinted_ = false;
+  bool isOnPostGarbageCollectionProcessing_ = false;
+  struct Stat {
+    size_t freed = 0;
+    size_t weak = 0;
+  };
+
+  Stat stat_;
 };
 
 class Engine {
@@ -111,6 +132,14 @@ class Engine {
       v8::String::ExternalStringResourceBase* v8Str);
 
   GCHeap* gcHeap() { return gcHeap_.get(); }
+
+  enum State {
+    Freed,
+    Running,
+    OnDestroy,
+  };
+
+  static State getState();
 
  private:
   Engine() = default;
