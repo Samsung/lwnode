@@ -1974,7 +1974,10 @@ if options.compile_commands_json:
 # pass the leftover positional arguments to GYP
 gyp_args += args
 # @lwnode
-gyp_args += get_lwnode_gyp_options()
+if options.without_bundled_v8:
+  gyp_args += get_lwnode_gyp_options()
+else:
+  gyp_args += ['-Dlwnode='+ 'false']
 # @end of lwnode
 
 if warn.warned and not options.verbose:
