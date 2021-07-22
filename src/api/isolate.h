@@ -194,6 +194,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   bool isHole(const ValueWrap* wrap) override;
   bool isHole(const Escargot::ValueRef* ref) override;
 
+  SymbolRef* createPrivateSymbol(StringRef* name);
   SymbolRef* getPrivateSymbol(StringRef* esString);
 
   GlobalHandles* globalHandles() { return globalHandles_; }
