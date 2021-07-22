@@ -10,7 +10,7 @@
     'defines': [],
     'cflags!': [ '-Wno-error' ],
     'cflags': [
-      '-Wall', '-Wextra', '-Werror',
+      '-Wall', '-Wextra', '-Werror', '-ggdb',
       '-Wno-unused-variable',
       '-Wno-unused-function',
       '-Wno-unused-but-set-variable',
@@ -20,11 +20,11 @@
     },
     'configurations': {
       'Debug': {
-        'cflags': [ '-g', '-O0', '-Werror' ],
+        'cflags': [ '-O0' ],
       },
       'Release': {
         'defines': ['NDEBUG'],
-        'cflags': [ '-Wfatal-errors' ],
+        'cflags': [ '-Wfatal-errors', '-Os' ],
       },
     },
     'conditions': [
@@ -39,7 +39,7 @@
             '-Wl,-z,relro,-z,now',
           ],
           'cflags': [
-            '-g', '-O0',
+            '-ggdb', '-Os',
             '-fPIC', '-fPIE',
             '-fstack-protector-strong',
             '-D_FORTIFY_SOURCE=2',
