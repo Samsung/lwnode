@@ -1141,12 +1141,6 @@ MaybeLocal<Promise::Resolver> Promise::Resolver::New(Local<Context> context) {
       [](ExecutionStateRef* state,
          EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
         auto promise = PromiseObjectRef::create(state);
-
-        // NOTE: Update RunPromiseHook to be called from Escargot after Escargot
-        // supports this feature
-        lwIsolate->RunPromiseHook(
-            PromiseHookType::kInit, promise, ValueRef::createUndefined());
-
         return promise;
       },
       lwIsolate);
@@ -1176,10 +1170,6 @@ Maybe<bool> Promise::Resolver::Resolve(Local<Context> context,
          PromiseObjectRef* promise,
          ValueRef* esValue,
          EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
-        // NOTE: Update RunPromiseHook to be called from Escargot after Escargot
-        // supports this feature
-        lwIsolate->RunPromiseHook(PromiseHookType::kResolve, promise, esValue);
-
         promise->fulfill(state, esValue);
         return ValueRef::createUndefined();
       },
@@ -1207,10 +1197,6 @@ Maybe<bool> Promise::Resolver::Reject(Local<Context> context,
          PromiseObjectRef* promise,
          ValueRef* esValue,
          EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
-        // NOTE: Update RunPromiseHook to be called from Escargot after Escargot
-        // supports this feature
-        lwIsolate->RunPromiseHook(PromiseHookType::kResolve, promise, esValue);
-
         promise->reject(state, esValue);
         return ValueRef::createUndefined();
       },
