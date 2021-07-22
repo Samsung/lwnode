@@ -3628,29 +3628,29 @@ static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
 // }
 
 
-// THREADED_TEST(GlobalPrivates) {
-//   // i::FLAG_allow_natives_syntax = true;
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(GlobalPrivates) {
+  // i::FLAG_allow_natives_syntax = true;
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<String> name = v8_str("my-private");
-//   v8::Local<v8::Private> glob = v8::Private::ForApi(isolate, name);
-//   v8::Local<v8::Object> obj = v8::Object::New(isolate);
-//   CHECK(obj->SetPrivate(env.local(), glob, v8::Integer::New(isolate, 3))
-//             .FromJust());
+  v8::Local<String> name = v8_str("my-private");
+  v8::Local<v8::Private> glob = v8::Private::ForApi(isolate, name);
+  v8::Local<v8::Object> obj = v8::Object::New(isolate);
+  CHECK(obj->SetPrivate(env.local(), glob, v8::Integer::New(isolate, 3))
+            .FromJust());
 
-//   v8::Local<v8::Private> glob2 = v8::Private::ForApi(isolate, name);
-//   CHECK(obj->HasPrivate(env.local(), glob2).FromJust());
+  v8::Local<v8::Private> glob2 = v8::Private::ForApi(isolate, name);
+  CHECK(obj->HasPrivate(env.local(), glob2).FromJust());
 
-//   v8::Local<v8::Private> priv = v8::Private::New(isolate, name);
-//   CHECK(!obj->HasPrivate(env.local(), priv).FromJust());
+  v8::Local<v8::Private> priv = v8::Private::New(isolate, name);
+  CHECK(!obj->HasPrivate(env.local(), priv).FromJust());
 
-//   CompileRun("var intern = %CreatePrivateSymbol('my-private')");
-//   v8::Local<Value> intern =
-//       env->Global()->Get(env.local(), v8_str("intern")).ToLocalChecked();
-//   CHECK(!obj->Has(env.local(), intern).FromJust());
-// }
+  // CompileRun("var intern = %CreatePrivateSymbol('my-private')");
+  // v8::Local<Value> intern =
+  //     env->Global()->Get(env.local(), v8_str("intern")).ToLocalChecked();
+  // CHECK(!obj->Has(env.local(), intern).FromJust());
+}
 
 THREADED_TEST(HiddenProperties) {
   LocalContext env;
@@ -25450,14 +25450,14 @@ TEST(SetIntegrityLevel) {
   CHECK(is_frozen->BooleanValue(isolate));
 }
 
-// TEST(PrivateForApiIsNumber) {
-//   LocalContext context;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
+TEST(PrivateForApiIsNumber) {
+  LocalContext context;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
 
-//   // Shouldn't crash.
-//   v8::Private::ForApi(isolate, v8_str("42"));
-// }
+  // Shouldn't crash.
+  v8::Private::ForApi(isolate, v8_str("42"));
+}
 
 // THREADED_TEST(ImmutableProto) {
 //   LocalContext context;

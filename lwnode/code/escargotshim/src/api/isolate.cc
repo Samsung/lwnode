@@ -432,8 +432,29 @@ void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
   backingStores_.erase(value);
 }
 
+SymbolRef* IsolateWrap::createPrivateSymbol(StringRef* name) {
+  // FIXME: Use a set
+  auto newSymbol = SymbolRef::create(name);
+  bool found = false;
+  for (size_t i = 0; i < privateSymbols_.size(); i++) {
+    if (privateSymbols_[i]->description()->equals(name)) {
+      privateSymbols_[i] = newSymbol;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    privateSymbols_.push_back(newSymbol);
+    LWNODE_DLOG_INFO("malc: private symbol: %s",
+                     name->toStdUTF8String().c_str());
+  }
+
+  return newSymbol;
+}
+
 SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
-  // @check replace this container if this function is called a lot.
+  // FIXME: Use a set
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
   for (size_t i = 0; i < privateSymbols_.size(); i++) {
@@ -442,13 +463,7 @@ SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
     }
   }
 
-  auto newSymbol = SymbolRef::create(esString);
-  privateSymbols_.push_back(newSymbol);
-
-  LWNODE_DLOG_INFO("malc: private symbol: %s",
-                   esString->toStdUTF8String().c_str());
-
-  return newSymbol;
+  return createPrivateSymbol(esString);
 }
 
 void IsolateWrap::ClearPendingExceptionAndMessage() {

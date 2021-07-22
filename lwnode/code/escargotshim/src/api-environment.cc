@@ -1800,7 +1800,7 @@ Local<Private> v8::Private::New(Isolate* isolate, Local<String> name) {
   // @todo For now, we ignore the private attribute and use a normal Symbol
   // instead.
 
-  SymbolRef* esSymbol = lwIsolate->getPrivateSymbol(esName);
+  SymbolRef* esSymbol = lwIsolate->createPrivateSymbol(esName);
 
   return Utils::NewLocal<Private>(isolate, esSymbol);
 }
