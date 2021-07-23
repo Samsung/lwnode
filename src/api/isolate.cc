@@ -432,20 +432,53 @@ void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
   backingStores_.erase(value);
 }
 
-SymbolRef* IsolateWrap::createPrivateSymbol(StringRef* name) {
+SymbolRef* IsolateWrap::createApiSymbol(StringRef* name) {
   // FIXME: Use a set
   auto newSymbol = SymbolRef::create(name);
   bool found = false;
-  for (size_t i = 0; i < privateSymbols_.size(); i++) {
-    if (privateSymbols_[i]->description()->equals(name)) {
-      privateSymbols_[i] = newSymbol;
+  for (size_t i = 0; i < apiSymbols_.size(); i++) {
+    if (apiSymbols_[i]->description()->equals(name)) {
+      apiSymbols_[i] = newSymbol;
       found = true;
       break;
     }
   }
 
   if (!found) {
-    privateSymbols_.push_back(newSymbol);
+    apiSymbols_.push_back(newSymbol);
+    LWNODE_DLOG_INFO("malc: api symbol: %s", name->toStdUTF8String().c_str());
+  }
+
+  return newSymbol;
+}
+
+SymbolRef* IsolateWrap::getApiSymbol(StringRef* name) {
+  // FIXME: Use a set
+  LWNODE_CALL_TRACE_ID(ISOWRAP);
+
+  for (size_t i = 0; i < apiSymbols_.size(); i++) {
+    if (apiSymbols_[i]->description()->equals(name)) {
+      return apiSymbols_[i];
+    }
+  }
+
+  return createApiSymbol(name);
+}
+
+SymbolRef* IsolateWrap::createApiPrivateSymbol(StringRef* name) {
+  // FIXME: Use a set
+  auto newSymbol = SymbolRef::create(name);
+  bool found = false;
+  for (size_t i = 0; i < apiPrivateSymbols_.size(); i++) {
+    if (apiPrivateSymbols_[i]->description()->equals(name)) {
+      apiPrivateSymbols_[i] = newSymbol;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    apiPrivateSymbols_.push_back(newSymbol);
     LWNODE_DLOG_INFO("malc: private symbol: %s",
                      name->toStdUTF8String().c_str());
   }
@@ -453,17 +486,17 @@ SymbolRef* IsolateWrap::createPrivateSymbol(StringRef* name) {
   return newSymbol;
 }
 
-SymbolRef* IsolateWrap::getPrivateSymbol(StringRef* esString) {
+SymbolRef* IsolateWrap::getApiPrivateSymbol(StringRef* name) {
   // FIXME: Use a set
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
-  for (size_t i = 0; i < privateSymbols_.size(); i++) {
-    if (privateSymbols_[i]->description()->equals(esString)) {
-      return privateSymbols_[i];
+  for (size_t i = 0; i < apiPrivateSymbols_.size(); i++) {
+    if (apiPrivateSymbols_[i]->description()->equals(name)) {
+      return apiPrivateSymbols_[i];
     }
   }
 
-  return createPrivateSymbol(esString);
+  return createApiPrivateSymbol(name);
 }
 
 void IsolateWrap::ClearPendingExceptionAndMessage() {

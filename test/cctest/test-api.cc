@@ -3555,30 +3555,30 @@ THREADED_TEST(PrivateProperties) {
 }
 
 
-// THREADED_TEST(GlobalSymbols) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+THREADED_TEST(GlobalSymbols) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   v8::Local<String> name = v8_str("my-symbol");
-//   v8::Local<v8::Symbol> glob = v8::Symbol::For(isolate, name);
-//   v8::Local<v8::Symbol> glob2 = v8::Symbol::For(isolate, name);
-//   CHECK(glob2->SameValue(glob));
+  v8::Local<String> name = v8_str("my-symbol");
+  v8::Local<v8::Symbol> glob = v8::Symbol::For(isolate, name);
+  v8::Local<v8::Symbol> glob2 = v8::Symbol::For(isolate, name);
+  CHECK(glob2->SameValue(glob));
 
-//   v8::Local<v8::Symbol> glob_api = v8::Symbol::ForApi(isolate, name);
-//   v8::Local<v8::Symbol> glob_api2 = v8::Symbol::ForApi(isolate, name);
-//   CHECK(glob_api2->SameValue(glob_api));
-//   CHECK(!glob_api->SameValue(glob));
+  v8::Local<v8::Symbol> glob_api = v8::Symbol::ForApi(isolate, name);
+  v8::Local<v8::Symbol> glob_api2 = v8::Symbol::ForApi(isolate, name);
+  CHECK(glob_api2->SameValue(glob_api));
+  CHECK(!glob_api->SameValue(glob));
 
-//   v8::Local<v8::Symbol> sym = v8::Symbol::New(isolate, name);
-//   CHECK(!sym->SameValue(glob));
+  v8::Local<v8::Symbol> sym = v8::Symbol::New(isolate, name);
+  CHECK(!sym->SameValue(glob));
 
-//   CompileRun("var sym2 = Symbol.for('my-symbol')");
-//   v8::Local<Value> sym2 =
-//       env->Global()->Get(env.local(), v8_str("sym2")).ToLocalChecked();
-//   CHECK(sym2->SameValue(glob));
-//   CHECK(!sym2->SameValue(glob_api));
-// }
+  CompileRun("var sym2 = Symbol.for('my-symbol')");
+  v8::Local<Value> sym2 =
+      env->Global()->Get(env.local(), v8_str("sym2")).ToLocalChecked();
+  CHECK(sym2->SameValue(glob));
+  CHECK(!sym2->SameValue(glob_api));
+}
 
 // THREADED_TEST(GlobalSymbolsNoContext) {
 //   v8::Isolate* isolate = CcTest::isolate();
