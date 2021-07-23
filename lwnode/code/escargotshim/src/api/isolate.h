@@ -194,8 +194,11 @@ class IsolateWrap final : public v8::internal::Isolate {
   bool isHole(const ValueWrap* wrap) override;
   bool isHole(const Escargot::ValueRef* ref) override;
 
-  SymbolRef* createPrivateSymbol(StringRef* name);
-  SymbolRef* getPrivateSymbol(StringRef* esString);
+  SymbolRef* createApiSymbol(StringRef* name);
+  SymbolRef* getApiSymbol(StringRef* name);
+
+  SymbolRef* createApiPrivateSymbol(StringRef* name);
+  SymbolRef* getApiPrivateSymbol(StringRef* name);
 
   GlobalHandles* globalHandles() { return globalHandles_; }
 
@@ -227,7 +230,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   GCVector<ContextWrap*> contextScopes_;
 
   PersistentRefHolder<SymbolRef> privateValuesSymbol_;
-  GCVector<Escargot::SymbolRef*> privateSymbols_;
+  GCVector<SymbolRef*> apiSymbols_;
+  GCVector<SymbolRef*> apiPrivateSymbols_;
 
   // Isolate Scope
   static THREAD_LOCAL IsolateWrap* s_currentIsolate;

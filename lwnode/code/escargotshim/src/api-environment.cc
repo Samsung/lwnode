@@ -1758,7 +1758,12 @@ Local<Symbol> v8::Symbol::For(Isolate* isolate, Local<String> name) {
 }
 
 Local<Symbol> v8::Symbol::ForApi(Isolate* isolate, Local<String> name) {
-  LWNODE_RETURN_LOCAL(Symbol);
+  API_ENTER_NO_EXCEPTION(isolate);
+
+  SymbolRef* esSymbol =
+      lwIsolate->getApiSymbol(VAL(*name)->value()->asString());
+
+  return Utils::NewLocal<Symbol>(isolate, esSymbol);
 }
 
 #define WELL_KNOWN_SYMBOLS(V)                                                  \
@@ -1800,7 +1805,7 @@ Local<Private> v8::Private::New(Isolate* isolate, Local<String> name) {
   // @todo For now, we ignore the private attribute and use a normal Symbol
   // instead.
 
-  SymbolRef* esSymbol = lwIsolate->createPrivateSymbol(esName);
+  SymbolRef* esSymbol = lwIsolate->createApiPrivateSymbol(esName);
 
   return Utils::NewLocal<Private>(isolate, esSymbol);
 }
@@ -1809,7 +1814,7 @@ Local<Private> v8::Private::ForApi(Isolate* isolate, Local<String> name) {
   API_ENTER_NO_EXCEPTION(isolate);
 
   SymbolRef* esSymbol =
-      lwIsolate->getPrivateSymbol(VAL(*name)->value()->asString());
+      lwIsolate->getApiPrivateSymbol(VAL(*name)->value()->asString());
 
   return Utils::NewLocal<Private>(isolate, esSymbol);
 }
