@@ -282,7 +282,7 @@ void MemoryUtil::prettyBytes(char* buf,
   };
   uint s = 0;
   double c = bytes;
-  while (c >= 1024 && s < 7) {
+  while (c >= 1024 && s < 7 - 1) {
     c /= 1024;
     s++;
   }
