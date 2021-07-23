@@ -10084,14 +10084,14 @@ static bool AccessAlwaysBlocked(Local<v8::Context> accessing_context,
 // }
 
 
-// static int access_count = 0;
+static int access_count = 0;
 
-// static bool AccessCounter(Local<v8::Context> accessing_context,
-//                           Local<v8::Object> accessed_object,
-//                           Local<v8::Value> data) {
-//   access_count++;
-//   return true;
-// }
+static bool AccessCounter(Local<v8::Context> accessing_context,
+                          Local<v8::Object> accessed_object,
+                          Local<v8::Value> data) {
+  access_count++;
+  return true;
+}
 
 
 // // This one is too easily disturbed by other tests.
@@ -23275,63 +23275,63 @@ TEST(RejectedPromiseReFulfill) {
 // }
 
 
-// TEST(Regress411877) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   v8::Local<v8::ObjectTemplate> object_template =
-//       v8::ObjectTemplate::New(isolate);
-//   object_template->SetAccessCheckCallback(AccessCounter);
+TEST(Regress411877) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::ObjectTemplate> object_template =
+      v8::ObjectTemplate::New(isolate);
+  object_template->SetAccessCheckCallback(AccessCounter);
 
-//   v8::Local<Context> context = Context::New(isolate);
-//   v8::Context::Scope context_scope(context);
+  v8::Local<Context> context = Context::New(isolate);
+  v8::Context::Scope context_scope(context);
 
-//   CHECK(context->Global()
-//             ->Set(context, v8_str("o"),
-//                   object_template->NewInstance(context).ToLocalChecked())
-//             .FromJust());
-//   CompileRun("Object.getOwnPropertyNames(o)");
-// }
-
-
-// TEST(GetHiddenPropertyTableAfterAccessCheck) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   v8::Local<v8::ObjectTemplate> object_template =
-//       v8::ObjectTemplate::New(isolate);
-//   object_template->SetAccessCheckCallback(AccessCounter);
-
-//   v8::Local<Context> context = Context::New(isolate);
-//   v8::Context::Scope context_scope(context);
-
-//   v8::Local<v8::Object> obj =
-//       object_template->NewInstance(context).ToLocalChecked();
-//   obj->Set(context, v8_str("key"), v8_str("value")).FromJust();
-//   obj->Delete(context, v8_str("key")).FromJust();
-
-//   obj->SetPrivate(context, v8::Private::New(isolate, v8_str("hidden key 2")),
-//                   v8_str("hidden value 2"))
-//       .FromJust();
-// }
+  CHECK(context->Global()
+            ->Set(context, v8_str("o"),
+                  object_template->NewInstance(context).ToLocalChecked())
+            .FromJust());
+  CompileRun("Object.getOwnPropertyNames(o)");
+}
 
 
-// TEST(Regress411793) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
-//   v8::Local<v8::ObjectTemplate> object_template =
-//       v8::ObjectTemplate::New(isolate);
-//   object_template->SetAccessCheckCallback(AccessCounter);
+TEST(GetHiddenPropertyTableAfterAccessCheck) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::ObjectTemplate> object_template =
+      v8::ObjectTemplate::New(isolate);
+  object_template->SetAccessCheckCallback(AccessCounter);
 
-//   v8::Local<Context> context = Context::New(isolate);
-//   v8::Context::Scope context_scope(context);
+  v8::Local<Context> context = Context::New(isolate);
+  v8::Context::Scope context_scope(context);
 
-//   CHECK(context->Global()
-//             ->Set(context, v8_str("o"),
-//                   object_template->NewInstance(context).ToLocalChecked())
-//             .FromJust());
-//   CompileRun(
-//       "Object.defineProperty(o, 'key', "
-//       "    { get: function() {}, set: function() {} });");
-// }
+  v8::Local<v8::Object> obj =
+      object_template->NewInstance(context).ToLocalChecked();
+  obj->Set(context, v8_str("key"), v8_str("value")).FromJust();
+  obj->Delete(context, v8_str("key")).FromJust();
+
+  obj->SetPrivate(context, v8::Private::New(isolate, v8_str("hidden key 2")),
+                  v8_str("hidden value 2"))
+      .FromJust();
+}
+
+
+TEST(Regress411793) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::ObjectTemplate> object_template =
+      v8::ObjectTemplate::New(isolate);
+  object_template->SetAccessCheckCallback(AccessCounter);
+
+  v8::Local<Context> context = Context::New(isolate);
+  v8::Context::Scope context_scope(context);
+
+  CHECK(context->Global()
+            ->Set(context, v8_str("o"),
+                  object_template->NewInstance(context).ToLocalChecked())
+            .FromJust());
+  CompileRun(
+      "Object.defineProperty(o, 'key', "
+      "    { get: function() {}, set: function() {} });");
+}
 
 // class TestSourceStream : public v8::ScriptCompiler::ExternalSourceStream {
 //  public:
