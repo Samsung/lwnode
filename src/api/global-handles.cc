@@ -98,6 +98,10 @@ GlobalHandles::Node* GlobalHandles::NodeBlock::pushNode(Node* node) {
   } else {
     // TODO
     LWNODE_DLOG_WARN("The weak callback is registered several times.");
+    if (node) {
+      delete node;
+      return nullptr;
+    }
   }
 
   return node;

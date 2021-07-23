@@ -320,6 +320,7 @@ Local<External> v8::External::New(Isolate* isolate, void* value) {
 void* External::Value() const {
   auto esObject = CVAL(this)->value()->asObject();
 
+  LWNODE_CHECK(ObjectRefHelper::getExtraData(esObject));
   auto externalObjectData =
       ObjectRefHelper::getExtraData(esObject)->asExternalObjectData();
 

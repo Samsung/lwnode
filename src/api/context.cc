@@ -31,7 +31,8 @@ static void evalJavaScript(ContextRef* context,
   ScriptParserRef::InitializeScriptResult scriptResult =
       context->scriptParser()->initializeScript(
           StringRef::createExternalFromASCII(buffer, bufferSize),
-          StringRef::createFromASCII(name, sizeof(name)));
+          StringRef::createFromASCII(name,
+                                     strnlen(name, v8::String::kMaxLength)));
   LWNODE_CHECK_MSG(scriptResult.isSuccessful(),
                    "Cannot parser %s: %s",
                    name,

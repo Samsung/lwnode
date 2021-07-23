@@ -1211,9 +1211,9 @@ class V8_EXPORT HandleScope {
   void operator delete(void*, size_t);
   void operator delete[](void*, size_t);
 
-  internal::Isolate* isolate_;
-  internal::Address* prev_next_;
-  internal::Address* prev_limit_;
+  internal::Isolate* isolate_ = nullptr;
+  internal::Address* prev_next_ = nullptr;
+  internal::Address* prev_limit_ = nullptr;
 
   // Local::New uses CreateHandle with an Isolate* parameter.
   template<class F> friend class Local;
@@ -1262,7 +1262,7 @@ class V8_EXPORT EscapableHandleScope : public HandleScope {
   void operator delete[](void*, size_t);
 
   internal::Address* Escape(internal::Address* escape_value);
-  internal::Address* escape_slot_;
+  internal::Address* escape_slot_ = nullptr;
 };
 
 /**
@@ -1286,9 +1286,9 @@ class V8_EXPORT SealHandleScope {
   void operator delete(void*, size_t);
   void operator delete[](void*, size_t);
 
-  internal::Isolate* const isolate_;
-  internal::Address* prev_limit_;
-  int prev_sealed_level_;
+  internal::Isolate* const isolate_ = nullptr;
+  internal::Address* prev_limit_ = nullptr;
+  int prev_sealed_level_ = 0;
 };
 
 
@@ -2384,7 +2384,7 @@ class V8_EXPORT ValueSerializer {
 
  private:
   struct PrivateData;
-  PrivateData* private_;
+  PrivateData* private_ = nullptr;
 };
 
 /**
@@ -2481,7 +2481,7 @@ class V8_EXPORT ValueDeserializer {
 
  private:
   struct PrivateData;
-  PrivateData* private_;
+  PrivateData* private_ = nullptr;
 };
 
 
@@ -7038,7 +7038,7 @@ class V8_EXPORT Extension {  // NOLINT
  private:
   const char* name_;
   size_t source_length_;  // expected to initialize before source_
-  String::ExternalOneByteStringResource* source_;
+  String::ExternalOneByteStringResource* source_ = nullptr;
   int dep_count_;
   const char** deps_;
   bool auto_enable_;
@@ -7699,8 +7699,8 @@ class V8_EXPORT HeapStatistics {
   bool does_zap_garbage_;
   size_t number_of_native_contexts_;
   size_t number_of_detached_contexts_;
-  size_t total_global_handles_size_;
-  size_t used_global_handles_size_;
+  size_t total_global_handles_size_ = 0;
+  size_t used_global_handles_size_ = 0;
 
   friend class V8;
   friend class Isolate;
@@ -8347,7 +8347,7 @@ class V8_EXPORT Isolate {
 
    private:
     OnFailure on_failure_;
-    void* internal_;
+    void* internal_ = nullptr;
   };
 
 
@@ -8366,9 +8366,9 @@ class V8_EXPORT Isolate {
         const AllowJavascriptExecutionScope&) = delete;
 
    private:
-    void* internal_throws_;
-    void* internal_assert_;
-    void* internal_dump_;
+    void* internal_throws_ = nullptr;
+    void* internal_assert_ = nullptr;
+    void* internal_dump_ = nullptr;
   };
 
   /**
@@ -8388,9 +8388,9 @@ class V8_EXPORT Isolate {
         const SuppressMicrotaskExecutionScope&) = delete;
 
    private:
-    internal::Isolate* const isolate_;
-    internal::MicrotaskQueue* const microtask_queue_;
-    internal::Address previous_stack_height_;
+    internal::Isolate* const isolate_ = nullptr;
+    internal::MicrotaskQueue* const microtask_queue_ = nullptr;
+    internal::Address previous_stack_height_ = 0;
 
     friend class internal::ThreadLocalTop;
   };
@@ -8409,7 +8409,7 @@ class V8_EXPORT Isolate {
     SafeForTerminationScope& operator=(const SafeForTerminationScope&) = delete;
 
    private:
-    internal::Isolate* isolate_;
+    internal::Isolate* isolate_ = nullptr;
     bool prev_value_;
   };
 
@@ -9986,7 +9986,7 @@ class V8_EXPORT SnapshotCreator {
   size_t AddData(Local<Context> context, internal::Address object);
   size_t AddData(internal::Address object);
 
-  void* data_;
+  void* data_ = nullptr;
 };
 
 /**
@@ -10260,7 +10260,7 @@ class V8_EXPORT TryCatch {
   TryCatch* next_;
   void* exception_;
   void* message_obj_;
-  void* js_stack_comparable_address_;
+  void* js_stack_comparable_address_ = nullptr;
   bool is_verbose_ : 1;
   bool can_continue_ : 1;
   bool capture_message_ : 1;

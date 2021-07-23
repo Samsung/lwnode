@@ -1050,7 +1050,7 @@ class V8_EXPORT CodeEventHandler {
   CodeEventHandler();
   CodeEventHandler(const CodeEventHandler&);
   CodeEventHandler& operator=(const CodeEventHandler&);
-  void* internal_listener_;
+  void* internal_listener_ = nullptr;
 };
 
 }  // namespace v8
