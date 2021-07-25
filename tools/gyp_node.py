@@ -34,6 +34,14 @@ def run_gyp(args):
 
   args.append('--depth=' + node_root)
 
+# @lwnode
+  if '-Dnode_core_target_name=lwnode' not in args:
+    global output_dir
+    output_dir = os.path.join(output_dir, 'v8')
+    args.extend(['--generator-output', output_dir])
+    args.extend(['-Goutput_dir=' + output_dir])
+# @end of lwnode
+
   # There's a bug with windows which doesn't allow this feature.
   if sys.platform != 'win32' and 'ninja' not in args:
     # Tell gyp to write the Makefiles into output_dir
