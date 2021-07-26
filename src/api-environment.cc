@@ -783,9 +783,9 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
 Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
   API_ENTER_NO_EXCEPTION(isolate);
   auto lwContext = lwIsolate->GetCurrentContext();
-  uint64_t len = length;
-  if (length < 0) {
-    len = 0;
+  uint64_t len = 0;
+  if (length > 0) {
+    len = length;
   }
 
   auto r = Evaluator::execute(

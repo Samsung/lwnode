@@ -10699,9 +10699,9 @@ class V8_EXPORT Locker {
  private:
   void Initialize(Isolate* isolate);
 
-  bool has_lock_;
-  bool top_level_;
-  internal::Isolate* isolate_;
+  bool has_lock_ = false;
+  bool top_level_ = true;
+  internal::Isolate* isolate_ = nullptr;
 };
 
 /**
