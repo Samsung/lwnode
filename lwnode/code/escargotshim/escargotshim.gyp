@@ -57,6 +57,7 @@
         'src/api/global-handles.cc',
         'src/api/function.cc',
         'src/api/object.cc',
+        'src/api/serializer.cc',
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [
