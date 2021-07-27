@@ -41,57 +41,69 @@ Maybe<uint32_t> ValueSerializer::Delegate::GetWasmModuleTransferId(
 void* ValueSerializer::Delegate::ReallocateBufferMemory(void* old_buffer,
                                                         size_t size,
                                                         size_t* actual_size) {
-  LWNODE_RETURN_NULLPTR;
+  *actual_size = size;
+  return realloc(old_buffer, size);
 }
 
 void ValueSerializer::Delegate::FreeBufferMemory(void* buffer) {
-  LWNODE_UNIMPLEMENT;
+  return free(buffer);
 }
 
-// struct ValueSerializer::PrivateData {
-//   LWNODE_UNIMPLEMENT;
-// };
+struct ValueSerializer::PrivateData {
+  explicit PrivateData(Isolate* i, ValueSerializer::Delegate* delegate)
+      : isolate(i), serializer(i, delegate) {}
+  Isolate* isolate;
+  EscargotShim::ValueSerializer serializer;
+};
 
 ValueSerializer::ValueSerializer(Isolate* isolate)
     : ValueSerializer(isolate, nullptr) {
   LWNODE_UNIMPLEMENT;
 }
 
-ValueSerializer::ValueSerializer(Isolate* isolate, Delegate* delegate) {
-  LWNODE_UNIMPLEMENT;
-}
-// : private_(
-//       new PrivateData(reinterpret_cast<i::Isolate*>(isolate),
-//       delegate)) {}
+ValueSerializer::ValueSerializer(Isolate* isolate, Delegate* delegate)
+    : private_(new PrivateData(isolate, delegate)) {}
 
 ValueSerializer::~ValueSerializer() {
-  LWNODE_UNIMPLEMENT;
+  delete private_;
 }
 
 void ValueSerializer::WriteHeader() {
-  LWNODE_UNIMPLEMENT;
+  private_->serializer.WriteHeader();
 }
 
 void ValueSerializer::SetTreatArrayBufferViewsAsHostObjects(bool mode) {}
 
 Maybe<bool> ValueSerializer::WriteValue(Local<Context> context,
-                                        Local<Value> value){
-    LWNODE_RETURN_MAYBE(bool)}
+                                        Local<Value> value) {
+  bool result = private_->serializer.WriteValue(CVAL(*value)->value());
+  return Just(result);
+}
 
 std::pair<uint8_t*, size_t> ValueSerializer::Release() {
   return std::make_pair(nullptr, 0);
 }
 
 void ValueSerializer::TransferArrayBuffer(uint32_t transfer_id,
-                                          Local<ArrayBuffer> array_buffer) {}
+                                          Local<ArrayBuffer> array_buffer) {
+  LWNODE_RETURN_VOID;
+}
 
-void ValueSerializer::WriteUint32(uint32_t value) {}
+void ValueSerializer::WriteUint32(uint32_t value) {
+  LWNODE_RETURN_VOID;
+}
 
-void ValueSerializer::WriteUint64(uint64_t value) {}
+void ValueSerializer::WriteUint64(uint64_t value) {
+  LWNODE_RETURN_VOID;
+}
 
-void ValueSerializer::WriteDouble(double value) {}
+void ValueSerializer::WriteDouble(double value) {
+  LWNODE_RETURN_VOID;
+}
 
-void ValueSerializer::WriteRawBytes(const void* source, size_t length) {}
+void ValueSerializer::WriteRawBytes(const void* source, size_t length) {
+  LWNODE_RETURN_VOID;
+}
 
 MaybeLocal<Object> ValueDeserializer::Delegate::ReadHostObject(
     Isolate* v8_isolate){LWNODE_RETURN_LOCAL(Object)}
@@ -109,21 +121,29 @@ struct ValueDeserializer::PrivateData {};
 ValueDeserializer::ValueDeserializer(Isolate* isolate,
                                      const uint8_t* data,
                                      size_t size)
-    : ValueDeserializer(isolate, data, size, nullptr) {}
+    : ValueDeserializer(isolate, data, size, nullptr) {
+  LWNODE_RETURN_VOID;
+}
 
 ValueDeserializer::ValueDeserializer(Isolate* isolate,
                                      const uint8_t* data,
                                      size_t size,
-                                     Delegate* delegate) {}
+                                     Delegate* delegate) {
+  LWNODE_RETURN_VOID;
+}
 
-ValueDeserializer::~ValueDeserializer() {}
+ValueDeserializer::~ValueDeserializer() {
+  LWNODE_RETURN_VOID;
+}
 
 Maybe<bool> ValueDeserializer::ReadHeader(Local<Context> context) {
   LWNODE_RETURN_MAYBE(bool)
 }
 
 void ValueDeserializer::SetSupportsLegacyWireFormat(
-    bool supports_legacy_wire_format) {}
+    bool supports_legacy_wire_format) {
+  LWNODE_RETURN_VOID;
+}
 
 uint32_t ValueDeserializer::GetWireFormatVersion() const {
   LWNODE_RETURN_0;
@@ -134,10 +154,14 @@ MaybeLocal<Value> ValueDeserializer::ReadValue(Local<Context> context) {
 }
 
 void ValueDeserializer::TransferArrayBuffer(uint32_t transfer_id,
-                                            Local<ArrayBuffer> array_buffer) {}
+                                            Local<ArrayBuffer> array_buffer) {
+  LWNODE_RETURN_VOID;
+}
 
 void ValueDeserializer::TransferSharedArrayBuffer(
-    uint32_t transfer_id, Local<SharedArrayBuffer> shared_array_buffer) {}
+    uint32_t transfer_id, Local<SharedArrayBuffer> shared_array_buffer) {
+  LWNODE_RETURN_VOID;
+}
 
 bool ValueDeserializer::ReadUint32(uint32_t* value) {
   LWNODE_RETURN_FALSE;
