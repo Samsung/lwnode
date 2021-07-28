@@ -513,7 +513,8 @@ std::unique_ptr<v8::BackingStore> v8::BackingStore::Reallocate(
     v8::Isolate* isolate,
     std::unique_ptr<v8::BackingStore> backing_store,
     size_t byte_length) {
-  LWNODE_UNIMPLEMENT;
+  auto self = reinterpret_cast<BackingStoreRef*>(backing_store.get());
+  self->reallocate(IsolateWrap::fromV8(isolate)->vmInstance(), byte_length);
   return backing_store;
 }
 
