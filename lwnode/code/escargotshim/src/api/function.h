@@ -40,7 +40,7 @@ class FunctionCallbackInfoWrap : public v8::FunctionCallbackInfo<v8::Value> {
   HandleWrap** toWrapperArgs(ValueRef* thisValue, int argc, ValueRef** argv);
 
  private:
-  HandleWrap** m_args{nullptr};
+  HandleWrap** m_args;
   HandleWrap* m_implicitArgs[T::kArgsLength];
 };
 
