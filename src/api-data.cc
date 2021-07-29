@@ -514,7 +514,7 @@ std::unique_ptr<v8::BackingStore> v8::BackingStore::Reallocate(
     std::unique_ptr<v8::BackingStore> backing_store,
     size_t byte_length) {
   auto self = reinterpret_cast<BackingStoreRef*>(backing_store.get());
-  self->reallocate(IsolateWrap::fromV8(isolate)->vmInstance(), byte_length);
+  self->reallocate(byte_length);
   return backing_store;
 }
 
@@ -533,7 +533,7 @@ std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
   if (esSelf->backingStore().hasValue()) {
     esBackingStore = esSelf->backingStore().value();
   } else {
-    esBackingStore = BackingStoreRef::create(lwIsolate->vmInstance(), 0);
+    esBackingStore = BackingStoreRef::create(0);
   }
 
   return std::shared_ptr<v8::BackingStore>(
@@ -2080,13 +2080,13 @@ void String::ExternalStringResourceBase::operator delete(void* ptr) {
 Local<Value> Symbol::Description() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esDescription = CVAL(this)->value()->asSymbol()->description();
-  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription);
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription.get());
 }
 
 Local<Value> Private::Name() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto esDescription = CVAL(this)->value()->asSymbol()->description();
-  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription);
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription.get());
 }
 
 template <typename T, typename F>

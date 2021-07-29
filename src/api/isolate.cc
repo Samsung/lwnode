@@ -294,7 +294,7 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   auto platform = Platform::GetInstance();
   platform->setAllocator(array_buffer_allocator());
 
-  vmInstance_ = VMInstanceRef::create(platform);
+  vmInstance_ = VMInstanceRef::create();
   vmInstance_->setOnVMInstanceDelete([](VMInstanceRef* instance) {
     // Do Nothing
     LWNODE_CALL_TRACE_GC_START();
