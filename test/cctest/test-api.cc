@@ -1353,38 +1353,38 @@ THREADED_PROFILED_TEST(SimpleCallback) {
 // }
 
 
-// THREADED_TEST(FunctionTemplateSetLength) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   {
-//     Local<v8::FunctionTemplate> fun_templ =
-//         v8::FunctionTemplate::New(isolate, handle_callback, Local<v8::Value>(),
-//                                   Local<v8::Signature>(), 23);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//     Local<Script> script = v8_compile("obj.length");
-//     CHECK_EQ(23, v8_run_int32value(script));
-//   }
-//   {
-//     Local<v8::FunctionTemplate> fun_templ =
-//         v8::FunctionTemplate::New(isolate, handle_callback);
-//     fun_templ->SetLength(22);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//     Local<Script> script = v8_compile("obj.length");
-//     CHECK_EQ(22, v8_run_int32value(script));
-//   }
-//   {
-//     // Without setting length it defaults to 0.
-//     Local<v8::FunctionTemplate> fun_templ =
-//         v8::FunctionTemplate::New(isolate, handle_callback);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//     Local<Script> script = v8_compile("obj.length");
-//     CHECK_EQ(0, v8_run_int32value(script));
-//   }
-// }
+THREADED_TEST(FunctionTemplateSetLength) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  {
+    Local<v8::FunctionTemplate> fun_templ =
+        v8::FunctionTemplate::New(isolate, handle_callback, Local<v8::Value>(),
+                                  Local<v8::Signature>(), 23);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+    Local<Script> script = v8_compile("obj.length");
+    CHECK_EQ(23, v8_run_int32value(script));
+  }
+  {
+    Local<v8::FunctionTemplate> fun_templ =
+        v8::FunctionTemplate::New(isolate, handle_callback);
+    fun_templ->SetLength(22);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+    Local<Script> script = v8_compile("obj.length");
+    CHECK_EQ(22, v8_run_int32value(script));
+  }
+  {
+    // Without setting length it defaults to 0.
+    Local<v8::FunctionTemplate> fun_templ =
+        v8::FunctionTemplate::New(isolate, handle_callback);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+    Local<Script> script = v8_compile("obj.length");
+    CHECK_EQ(0, v8_run_int32value(script));
+  }
+}
 
 
 static void* expected_ptr;

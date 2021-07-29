@@ -232,7 +232,8 @@ Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
 }
 
 void FunctionTemplate::SetLength(int length) {
-  LWNODE_RETURN_VOID;
+  FunctionTemplateRef* self = CVAL(this)->ftpl();
+  self->setLength(length);
 }
 
 void FunctionTemplate::SetClassName(Local<String> name) {
