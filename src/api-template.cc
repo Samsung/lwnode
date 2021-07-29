@@ -121,6 +121,11 @@ static ValueRef* FunctionTemplateNativeFunction(
     return ValueRef::createUndefined();
   }
 
+  if (ObjectRefHelper::getExtraData(thisValue->asObject())) {
+    auto objectData = ObjectRefHelper::getExtraData(thisValue->asObject());
+    ObjectRefHelper::setExtraData(thisValue->asObject(), objectData->clone());
+  }
+
   Local<Value> result;
   if (fnData->callback()) {
     FunctionCallbackInfoWrap info(fnData->isolate(),
@@ -138,9 +143,11 @@ static ValueRef* FunctionTemplateNativeFunction(
   if (newTarget.hasValue()) {
     return thisValue;
   }
+
   if (!result.IsEmpty()) {
     return VAL(*result)->value();
   }
+
   return ValueRef::createUndefined();
 }
 
@@ -693,7 +700,11 @@ MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esObjectTemplate = CVAL(this)->otpl();
 
-  return Utils::NewLocal<Function>(lwIsolate->toV8(),
-                                   esObjectTemplate->instantiate(esContext));
+  auto newObject = esObjectTemplate->instantiate(esContext);
+  if (ObjectRefHelper::getExtraData(newObject)) {
+    auto objectData = ObjectRefHelper::getExtraData(newObject);
+    ObjectRefHelper::setExtraData(newObject, objectData->clone());
+  }
+  return Utils::NewLocal<Object>(lwIsolate->toV8(), newObject);
 }
 }  // namespace v8

@@ -69,6 +69,21 @@ void* ObjectData::internalField(int idx) {
   return m_internalFields->get(idx);
 }
 
+ObjectData* ObjectData::clone() {
+  auto newData = new ObjectData();
+
+  // copy internalField
+  auto count = internalFieldCount();
+  if (count > 0) {
+    newData->setInternalFieldCount(count);
+  }
+  for (int i = 0; i < count; i++) {
+    newData->setInternalField(i, internalField(i));
+  }
+
+  return newData;
+}
+
 bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
                                   ValueRef* thisValue) {
   if (m_signature == nullptr) {

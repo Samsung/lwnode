@@ -39,6 +39,8 @@ class ObjectData : public gc {
   virtual bool isExternalObjectData() const { return false; }
   virtual bool isExceptionObjectData() const { return false; }
 
+  ObjectData* clone();
+
   // InternalFields
   int internalFieldCount();
   void setInternalFieldCount(int size);
