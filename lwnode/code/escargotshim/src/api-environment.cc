@@ -1504,8 +1504,7 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
   auto lwIsolate = IsolateWrap::GetCurrent();
 
-  BackingStoreRef* esBackingStore =
-      BackingStoreRef::create(lwIsolate->vmInstance(), byte_length);
+  BackingStoreRef* esBackingStore = BackingStoreRef::create(byte_length);
   lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(

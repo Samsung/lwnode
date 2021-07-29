@@ -161,7 +161,7 @@ UNINITIALIZED_TEST(InitializeAndDisposeOnce) {
 
 
 // Tests that call v8::V8::Dispose() cannot be threaded.
-UNINITIALIZED_TEST(InitializeAndDisposeMultiple) {
+UNINITIALIZED_TEST(DISABLED_InitializeAndDisposeMultiple) {
   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());
   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Initialize());
   for (int i = 0; i < 3; ++i) CHECK(v8::V8::Dispose());

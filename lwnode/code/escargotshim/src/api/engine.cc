@@ -37,8 +37,7 @@ Platform* Platform::GetInstance() {
 
 void Platform::Dispose() {
   LWNODE_CALL_TRACE_GC_START();
-  delete s_platform;
-  s_platform = nullptr;
+  // s_platform is freed in Escargot::PlatformBridge
   LWNODE_CALL_TRACE_GC_END();
 }
 
@@ -349,7 +348,7 @@ void Engine::initialize() {
   mallopt(M_MMAP_MAX, 1024 * 1024);
 #endif
 
-  Globals::initialize();
+  Globals::initialize(Platform::GetInstance());
   Memory::setGCFrequency(GC_FREE_SPACE_DIVISOR);
   gcHeap_.reset(GCHeap::create());
 
