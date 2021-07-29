@@ -68,8 +68,9 @@ HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
       string1 // the beginning of the arguments array
   */
 
-  m_args = reinterpret_cast<HandleWrap**>(
-      Escargot::Memory::gcMalloc(sizeof(HandleWrap*) * (argc + 1)));
+  m_args =
+      reinterpret_cast<HandleWrap**>(Escargot::Memory::gcMallocUncollectable(
+          sizeof(HandleWrap*) * (argc + 1)));
 
 #ifdef V8_REVERSE_JSARGS
 #error "Not implement V8_REVERSE_JSARGS"
