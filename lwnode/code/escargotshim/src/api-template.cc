@@ -60,7 +60,9 @@ void Template::Set(v8::Local<Name> name,
 
 void Template::SetPrivate(v8::Local<Private> name,
                           v8::Local<Data> value,
-                          v8::PropertyAttribute attribute) {}
+                          v8::PropertyAttribute attribute) {
+  LWNODE_RETURN_VOID;
+}
 
 void Template::SetAccessorProperty(v8::Local<v8::Name> name,
                                    v8::Local<FunctionTemplate> getter,
@@ -121,9 +123,11 @@ static ValueRef* FunctionTemplateNativeFunction(
     return ValueRef::createUndefined();
   }
 
-  if (ObjectRefHelper::getExtraData(thisValue->asObject())) {
-    auto objectData = ObjectRefHelper::getExtraData(thisValue->asObject());
-    ObjectRefHelper::setExtraData(thisValue->asObject(), objectData->clone());
+  auto thisObject = thisValue->asObject();
+  if (newTarget.hasValue() && ObjectRefHelper::hasExtraData(thisObject)) {
+    LWNODE_DCHECK(newTarget.value() == callee.value());
+    auto objectData = ObjectRefHelper::getExtraData(thisObject);
+    ObjectRefHelper::setExtraData(thisObject, objectData->clone());
   }
 
   Local<Value> result;
@@ -694,7 +698,9 @@ bool ObjectTemplate::IsImmutableProto() {
   LWNODE_RETURN_FALSE;
 }
 
-void ObjectTemplate::SetImmutableProto() {}
+void ObjectTemplate::SetImmutableProto() {
+  LWNODE_RETURN_VOID;
+}
 
 MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<v8::Object>());
