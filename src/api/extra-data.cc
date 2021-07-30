@@ -78,6 +78,7 @@ ObjectData* ObjectData::clone() {
     newData->setInternalFieldCount(count);
   }
   for (int i = 0; i < count; i++) {
+    LWNODE_DCHECK(IsolateWrap::GetCurrent()->undefined() == internalField(i));
     newData->setInternalField(i, internalField(i));
   }
 
