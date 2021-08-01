@@ -27,6 +27,8 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
+// --- ObjectRefHelper ---
+
 ObjectRef* ObjectRefHelper::create(ContextRef* context) {
   EvalResult r =
       Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
@@ -308,19 +310,14 @@ bool ObjectRefHelper::hasExtraData(ObjectRef* object) {
   return false;
 }
 
-void ObjectRefHelper::setExtraData(
-    ObjectRef* object,
-    ObjectData* data,
-    Memory::GCAllocatedMemoryFinalizer callback) {
-  if (object->extraData()) {
+void ObjectRefHelper::setExtraData(ObjectRef* object,
+                                   ObjectData* data,
+                                   bool isForceReplace) {
+  if (isForceReplace == false && object->extraData()) {
     LWNODE_DLOG_WARN("extra data already exists. it will be removed.");
   }
 
   object->setExtraData(data);
-
-  if (callback) {
-    MemoryUtil::gcRegisterFinalizer(object, callback);
-  }
 }
 
 ObjectData* ObjectRefHelper::getExtraData(ObjectRef* object) {
@@ -586,6 +583,8 @@ void* ObjectRefHelper::getInternalPointer(ObjectRef* object, int idx) {
   return data->internalField(idx);
 }
 
+// --- ObjectTemplateRefHelper ---
+
 void ObjectTemplateRefHelper::setInstanceExtraData(ObjectTemplateRef* otpl,
                                                    ObjectData* data) {
   LWNODE_CHECK_NOT_NULL(data);
@@ -627,6 +626,8 @@ int ObjectTemplateRefHelper::getInternalFieldCount(ObjectTemplateRef* otpl) {
   return data->internalFieldCount();
 }
 
+// --- FunctionTemplateRefHelper ---
+
 void FunctionTemplateRefHelper::setInstanceExtraData(FunctionTemplateRef* ftpl,
                                                      FunctionData* data) {
   LWNODE_CHECK_NOT_NULL(data);
@@ -640,6 +641,8 @@ FunctionData* FunctionTemplateRefHelper::getInstanceExtraData(
   auto data = ftpl->instanceExtraData();
   return reinterpret_cast<FunctionData*>(data);
 }
+
+// --- ExceptionHelper ---
 
 ValueWrap* ExceptionHelper::wrapException(ValueRef* exception) {
   return ValueWrap::createValue(exception);

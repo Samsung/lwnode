@@ -90,13 +90,11 @@ class ObjectRefHelper {
       ValueRef* propertyName,
       const ObjectRef::AccessorPropertyDescriptor& descriptor);
 
-  static void setExtraData(
-      ObjectRef* object,
-      ObjectData* data,
-      Memory::GCAllocatedMemoryFinalizer callback = nullptr);
+  static void setExtraData(ObjectRef* object,
+                           ObjectData* data,
+                           bool isForceReplace = false);
   static bool hasExtraData(ObjectRef* object);
   static ObjectData* getExtraData(ObjectRef* object);
-  static ObjectData* createExtraDataIfNotExist(ObjectRef* object);
 
   static void setInternalFieldCount(ObjectRef* object, int size);
   static int getInternalFieldCount(ObjectRef* object);
@@ -112,15 +110,18 @@ class ObjectRefHelper {
   static StringRef* getConstructorName(ContextRef* context, ObjectRef* object);
 
  private:
+  static ObjectData* createExtraDataIfNotExist(ObjectRef* object);
 };
 
 class ObjectTemplateRefHelper {
  public:
   static void setInstanceExtraData(ObjectTemplateRef* otpl, ObjectData* data);
   static ObjectData* getInstanceExtraData(ObjectTemplateRef* otpl);
-  static ObjectData* createInstanceExtraDataIfNotExist(ObjectTemplateRef* otpl);
   static void setInternalFieldCount(ObjectTemplateRef* otpl, int size);
   static int getInternalFieldCount(ObjectTemplateRef* otpl);
+
+ private:
+  static ObjectData* createInstanceExtraDataIfNotExist(ObjectTemplateRef* otpl);
 };
 
 class FunctionTemplateRefHelper {
