@@ -18,6 +18,8 @@
 #include "api/utils.h"
 #include "base.h"
 
+#include <sstream>
+
 using namespace Escargot;
 using namespace EscargotShim;
 
@@ -2150,30 +2152,66 @@ int v8::Object::InternalFieldCount() {
       CVAL(this)->value()->asObject());
 }
 
+static std::string toExtraDataString(const void* target,
+                                     int index,
+                                     const void* field) {
+  std::ostringstream oss;
+  ObjectData* data =
+      ObjectRefHelper::getExtraData(CVAL(target)->value()->asObject());
+
+  oss << CVAL(target)->getHandleInfoString();
+  oss << " fields (" << data << ")";
+  oss << " [" << index << "]";
+
+  if (field && CVAL(field)->isValid()) {
+    oss << " " << CVAL(field)->getHandleInfoString();
+  } else {
+    oss << " " << field;
+  }
+  return oss.str();
+}
+
 Local<Value> v8::Object::SlowGetInternalField(int index) {
   auto lwValue =
       ObjectRefHelper::getInternalField(CVAL(this)->value()->asObject(), index);
+
+  LWNODE_CALL_TRACE_ID(
+      OBJDATA, "%s", toExtraDataString(this, index, lwValue).c_str());
+
   return Utils::ToLocal<Value>(lwValue);
 }
 
 void v8::Object::SetInternalField(int index, v8::Local<Value> value) {
+  LWNODE_CALL_TRACE_ID(
+      OBJDATA, "%s", toExtraDataString(this, index, *value).c_str());
+
   ObjectRefHelper::setInternalField(
       CVAL(this)->value()->asObject(), index, VAL(*value));
 }
 
 void* v8::Object::SlowGetAlignedPointerFromInternalField(int index) {
-  return ObjectRefHelper::getInternalPointer(CVAL(this)->value()->asObject(),
-                                             index);
+  void* field = ObjectRefHelper::getInternalPointer(
+      CVAL(this)->value()->asObject(), index);
+
+  LWNODE_CALL_TRACE_ID(
+      OBJDATA, "%s", toExtraDataString(this, index, field).c_str());
+
+  return field;
 }
 
 void v8::Object::SetAlignedPointerInInternalField(int index, void* value) {
+  LWNODE_CALL_TRACE_ID(
+      OBJDATA, "%s", toExtraDataString(this, index, value).c_str());
+
   ObjectRefHelper::setInternalPointer(
       CVAL(this)->value()->asObject(), index, value);
 }
 
 void v8::Object::SetAlignedPointerInInternalFields(int argc,
                                                    int indices[],
-                                                   void* values[]) {}
+                                                   void* values[]) {
+  LWNODE_RETURN_VOID;
+}
 
 // static void* ExternalValue(i::Object obj) {
 //   // Obscure semantics for undefined, but somehow checked in our unit

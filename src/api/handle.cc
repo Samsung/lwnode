@@ -73,11 +73,13 @@ HandleWrap* HandleWrap::as(void* address) {
   return p;
 }
 
-std::string HandleWrap::getHandleInfoString() {
+std::string HandleWrap::getHandleInfoString() const {
   std::stringstream ss;
-  ss << "(addr: " << this << " es: " << val_
-     << " loc: " << std::to_string(location_)
-     << " type: " << std::to_string(type_) << ")";
+  ss << "(addr: " << this << " es: " << val_;
+  if (location_ != Location::Local) {
+    ss << " loc: " << std::to_string(location_);
+  }
+  ss << " type: " << std::to_string(type_) << ")";
   return ss.str();
 }
 

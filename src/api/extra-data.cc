@@ -30,6 +30,22 @@ static inline bool checkOutofBounds(ObjectData* data, int idx) {
   return idx >= data->internalFieldCount() || idx < 0;
 }
 
+static std::string toObjectDataString(const ObjectData* data,
+                                      int index,
+                                      const void* field) {
+  std::ostringstream oss;
+
+  oss << " fields (" << data << ")";
+  oss << " [" << index << "]";
+
+  if (field && CVAL(field)->isValid()) {
+    oss << " " << CVAL(field)->getHandleInfoString();
+  } else {
+    oss << " " << field;
+  }
+  return oss.str();
+}
+
 int ObjectData::internalFieldCount() {
   if (m_internalFields == nullptr) {
     return 0;
@@ -38,14 +54,17 @@ int ObjectData::internalFieldCount() {
 }
 
 void ObjectData::setInternalFieldCount(int size) {
+  LWNODE_CALL_TRACE_ID(OBJDATA, "%d", size);
+
   // TODO: throw internal error
   if (size <= 0) {
     LWNODE_DLOG_ERROR("InternalField: The size is negative");
     return;
   }
+
   m_internalFields = new GCContainer<void*>(size);
   for (int i = 0; i < size; i++) {
-    m_internalFields->set(i, IsolateWrap::GetCurrent()->undefined());
+    setInternalField(i, IsolateWrap::GetCurrent()->undefined());
   }
 }
 
@@ -56,6 +75,10 @@ void ObjectData::setInternalField(int idx, void* lwValue) {
     LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
     return;
   }
+
+  LWNODE_CALL_TRACE_ID(
+      OBJDATA, "%s", toObjectDataString(this, idx, lwValue).c_str());
+
   m_internalFields->set(idx, lwValue);
 }
 
@@ -66,11 +89,19 @@ void* ObjectData::internalField(int idx) {
     LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
     return nullptr;
   }
-  return m_internalFields->get(idx);
+
+  void* field = m_internalFields->get(idx);
+
+  LWNODE_CALL_TRACE_ID(
+      OBJDATA, "%s", toObjectDataString(this, idx, field).c_str());
+
+  return field;
 }
 
 ObjectData* ObjectData::clone() {
   auto newData = new ObjectData();
+
+  LWNODE_CALL_TRACE_ID(OBJDATA, "%p clone: %p", this, newData);
 
   // copy internalField
   auto count = internalFieldCount();

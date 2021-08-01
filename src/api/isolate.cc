@@ -249,6 +249,7 @@ void IsolateWrap::set_array_buffer_allocator_shared(
 }
 
 void IsolateWrap::InitializeGlobalSlots() {
+  LWNODE_CALL_TRACE_ID(ISOWRAP);
   globalSlot_[internal::Internals::kUndefinedValueRootIndex] =
       EscargotShim::ValueWrap::createValue(ValueRef::createUndefined());
   globalSlot_[internal::Internals::kTheHoleValueRootIndex] =
@@ -349,7 +350,7 @@ void IsolateWrap::popHandleScope(v8Scope_t* handleScope) {
 }
 
 void IsolateWrap::addHandleToCurrentScope(HandleWrap* value) {
-  LWNODE_CALL_TRACE("%p", value);
+  LWNODE_CALL_TRACE_ID(ISOWRAP, "%p", value);
   LWNODE_CHECK(handleScopes_.size() >= 1);
   handleScopes_.back()->add(value);
 }
