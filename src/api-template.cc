@@ -127,7 +127,7 @@ static ValueRef* FunctionTemplateNativeFunction(
   if (newTarget.hasValue() && ObjectRefHelper::hasExtraData(thisObject)) {
     LWNODE_DCHECK(newTarget.value() == callee.value());
     auto objectData = ObjectRefHelper::getExtraData(thisObject);
-    ObjectRefHelper::setExtraData(thisObject, objectData->clone());
+    ObjectRefHelper::setExtraData(thisObject, objectData->clone(), true);
   }
 
   Local<Value> result;
@@ -704,13 +704,13 @@ void ObjectTemplate::SetImmutableProto() {
 
 MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<v8::Object>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esContext = VAL(*context)->context()->get();
   auto esObjectTemplate = CVAL(this)->otpl();
 
   auto newObject = esObjectTemplate->instantiate(esContext);
   if (ObjectRefHelper::getExtraData(newObject)) {
     auto objectData = ObjectRefHelper::getExtraData(newObject);
-    ObjectRefHelper::setExtraData(newObject, objectData->clone());
+    ObjectRefHelper::setExtraData(newObject, objectData->clone(), true);
   }
   return Utils::NewLocal<Object>(lwIsolate->toV8(), newObject);
 }
