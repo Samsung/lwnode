@@ -59,7 +59,7 @@ class HandleWrap : public gc {
   bool isStrongOrWeak() const;
   uint8_t location() const;
   HandleWrap* clone(Location location = Local);
-  std::string getHandleInfoString();
+  std::string getHandleInfoString() const;
   static HandleWrap* as(void* address);
 
  protected:
