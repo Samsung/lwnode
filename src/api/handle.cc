@@ -41,7 +41,7 @@ uint8_t HandleWrap::location() const {
 }
 
 bool HandleWrap::isValid() const {
-  return (type_ > Type::NotPresent && type_ < Type::EndOfType);
+  return (type_ >= Type::JsValue && type_ < Type::EndOfType);
 }
 
 bool HandleWrap::isStrongOrWeak() const {
