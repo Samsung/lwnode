@@ -1209,6 +1209,13 @@
     {
       'target_name': 'cctest',
       'type': 'executable',
+      'includes': [
+        'lwnode/test/node/cctest.gypi'
+      ],
+    },
+    {
+      'target_name': 'cctest8',
+      'type': 'executable',
 
       'dependencies': [
         '<(node_lib_target_name)',
