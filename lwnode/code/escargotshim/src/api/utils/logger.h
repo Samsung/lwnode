@@ -22,25 +22,25 @@
 
 #include "flags.h"
 
-#define COLOR_RESET "\033[0m"
-#define COLOR_DIM "\033[0;2m"
-#define COLOR_RED "\033[0;31m"
-#define COLOR_GREEN "\033[0;32m"
-#define COLOR_GREY "\033[0;37m"
-#define COLOR_BLACK "\033[0;30m"
-#define COLOR_YELLOW "\033[0;33m"
-#define COLOR_BLUE "\033[0;34m"
-#define COLOR_MAGENTA "\033[0;35m"
-#define COLOR_CYAN "\033[0;36m"
-#define COLOR_DARKGREY "\033[01;30m"
-#define COLOR_BRED "\033[01;31m"
-#define COLOR_BYELLOW "\033[01;33m"
-#define COLOR_BBLUE "\033[01;34m"
-#define COLOR_BMAGENTA "\033[01;35m"
-#define COLOR_BCYAN "\033[01;36m"
-#define COLOR_BGREEN "\033[01;32m"
-#define COLOR_WHITE "\033[01;37m"
-#define COLOR_REDBG "\033[0;41m"
+#define CLR_RESET "\033[0m"
+#define CLR_DIM "\033[0;2m"
+#define CLR_RED "\033[0;31m"
+#define CLR_GREEN "\033[0;32m"
+#define CLR_GREY "\033[0;37m"
+#define CLR_BLACK "\033[0;30m"
+#define CLR_YELLOW "\033[0;33m"
+#define CLR_BLUE "\033[0;34m"
+#define CLR_MAGENTA "\033[0;35m"
+#define CLR_CYAN "\033[0;36m"
+#define CLR_DARKGREY "\033[01;30m"
+#define CLR_BRED "\033[01;31m"
+#define CLR_BYELLOW "\033[01;33m"
+#define CLR_BBLUE "\033[01;34m"
+#define CLR_BMAGENTA "\033[01;35m"
+#define CLR_BCYAN "\033[01;36m"
+#define CLR_BGREEN "\033[01;32m"
+#define CLR_WHITE "\033[01;37m"
+#define CLR_REDBG "\033[0;41m"
 
 std::string getPrettyFunctionName(const std::string fullname);
 std::string createCodeLocation(const char* functionName,
@@ -84,24 +84,24 @@ class IndentCounter {
 #endif
 
 #define LWNODE_LOG_INFO(fmt, ...)                                              \
-  LWNODE_LOG_RAW("INFO " fmt COLOR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_RAW("INFO " fmt CLR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
-  LWNODE_LOG_RAW(COLOR_YELLOW "WARN " fmt COLOR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_RAW(CLR_YELLOW "WARN " fmt CLR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
-  LWNODE_LOG_RAW(COLOR_BRED "ERROR " fmt COLOR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_RAW(CLR_BRED "ERROR " fmt CLR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_UNIMPLEMENT                                                     \
-  LWNODE_LOG_RAW(COLOR_RED "UNIMPLEMENTED " TRACE_FMT COLOR_RESET, TRACE_ARGS2);
+  LWNODE_LOG_RAW(CLR_RED "UNIMPLEMENTED " TRACE_FMT CLR_RESET, TRACE_ARGS2);
 
 #define LWNODE_UNIMPLEMENT_IGNORED                                             \
-  LWNODE_LOG_RAW(COLOR_DIM "UNIMPLEMENTED (IGNORED) " TRACE_FMT COLOR_RESET,   \
+  LWNODE_LOG_RAW(CLR_DIM "UNIMPLEMENTED (IGNORED) " TRACE_FMT CLR_RESET,       \
                  TRACE_ARGS2);
 
 #define LWNODE_UNIMPLEMENT_WORKAROUND                                          \
-  LWNODE_LOG_RAW(COLOR_DIM                                                     \
-                 "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT COLOR_RESET,      \
+  LWNODE_LOG_RAW(CLR_DIM                                                       \
+                 "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT CLR_RESET,        \
                  TRACE_ARGS2);
 
 // conditional loggers
