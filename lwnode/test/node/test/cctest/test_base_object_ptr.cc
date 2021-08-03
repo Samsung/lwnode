@@ -87,7 +87,7 @@ TEST_F(BaseObjectPtrTest, Undetached) {
   EXPECT_EQ(env->base_object_count(), 1);
 }
 
-TEST_F(BaseObjectPtrTest, GCWeak) {
+TEST_F(BaseObjectPtrTest, DISABLED_GCWeak) {
   const HandleScope handle_scope(isolate_);
   const Argv argv;
   Env env_{handle_scope, argv};

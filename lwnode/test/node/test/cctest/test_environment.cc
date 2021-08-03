@@ -232,7 +232,7 @@ TEST_F(EnvironmentTest, AtExitRunsJS) {
   EXPECT_TRUE(called_at_exit_js);
 }
 
-TEST_F(EnvironmentTest, MultipleEnvironmentsPerIsolate) {
+TEST_F(EnvironmentTest, DISABLED_MultipleEnvironmentsPerIsolate) {
   const v8::HandleScope handle_scope(isolate_);
   const Argv argv;
   // Only one of the Environments can have default flags and own the inspector.
@@ -249,7 +249,7 @@ TEST_F(EnvironmentTest, MultipleEnvironmentsPerIsolate) {
   EXPECT_TRUE(called_cb_2);
 }
 
-TEST_F(EnvironmentTest, NoEnvironmentSanity) {
+TEST_F(EnvironmentTest, DISABLED_NoEnvironmentSanity) {
   const v8::HandleScope handle_scope(isolate_);
   v8::Local<v8::Context> context = v8::Context::New(isolate_);
   EXPECT_EQ(node::Environment::GetCurrent(context), nullptr);
@@ -262,7 +262,7 @@ TEST_F(EnvironmentTest, NoEnvironmentSanity) {
   EXPECT_EQ(node::Environment::GetCurrent(isolate_), nullptr);
 }
 
-TEST_F(EnvironmentTest, NonNodeJSContext) {
+TEST_F(EnvironmentTest, DISABLED_NonNodeJSContext) {
   const v8::HandleScope handle_scope(isolate_);
   const Argv argv;
   Env test_env {handle_scope, argv};
@@ -346,7 +346,7 @@ TEST_F(EnvironmentTest, SetImmediateCleanup) {
 
 static char hello[] = "hello";
 
-TEST_F(EnvironmentTest, BufferWithFreeCallbackIsDetached) {
+TEST_F(EnvironmentTest, DISABLED_BufferWithFreeCallbackIsDetached) {
   // Test that a Buffer allocated with a free callback is detached after
   // its callback has been called.
   const v8::HandleScope handle_scope(isolate_);
@@ -534,7 +534,7 @@ TEST_F(EnvironmentTest, ExitHandlerTest) {
   EXPECT_EQ(callback_calls, 1);
 }
 
-TEST_F(EnvironmentTest, SetImmediateMicrotasks) {
+TEST_F(EnvironmentTest, DISABLED_SetImmediateMicrotasks) {
   int called = 0;
 
   {

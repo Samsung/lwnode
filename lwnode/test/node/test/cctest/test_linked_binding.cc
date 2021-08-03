@@ -158,7 +158,7 @@ static napi_module local_linked_napi_id = {
   {0},
 };
 
-TEST_F(LinkedBindingTest, LocallyDefinedLinkedBindingNapiInstanceDataTest) {
+TEST_F(LinkedBindingTest, DISABLED_LocallyDefinedLinkedBindingNapiInstanceDataTest) {
   const v8::HandleScope handle_scope(isolate_);
   int* instance_data = nullptr;
 
