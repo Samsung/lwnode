@@ -48,6 +48,7 @@ skip_dirs = [
     'lwnode/code/escargotshim/test/cctest/gtest',
     'lwnode/code/escargotshim/src/libplatform',
     'lwnode/code/tizen',
+    'lwnode/test',
     'CMakeFiles',
     '.git',
     'out'
