@@ -73,6 +73,8 @@
           'include',
           '.',
         ],
+        'cflags_cc!': ['-fno-exceptions'],
+        'cflags_cc': ['-fexceptions'],
       },
       'conditions': [
         ['OS == "linux"', {
