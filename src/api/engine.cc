@@ -250,7 +250,7 @@ void GCHeap::printStatus(bool forcePrint) {
     return;
   }
 
-  LWNODE_DLOG_INFO(COLOR_GREEN "----- GCHEAP -----" COLOR_RESET);
+  LWNODE_DLOG_INFO(CLR_GREEN "----- GCHEAP -----" CLR_RESET);
   LWNODE_DLOG_INFO("[STAT]");
   LWNODE_DLOG_INFO("     freed: %zu", stat_.freed);
   LWNODE_DLOG_INFO("    strong: %zu", persistents_.size());
@@ -264,7 +264,7 @@ void GCHeap::printStatus(bool forcePrint) {
                         << std::setw(3) << iter.second.weak << ") ";
                });
 
-  LWNODE_DLOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
+  LWNODE_DLOG_INFO(CLR_GREEN "------------------" CLR_RESET);
   LWNODE_DLOG_INFO("[PHANTOM]");
   printAddress(weakPhantoms_,
                [](std::stringstream& stream, const HeapSegment& iter) {
@@ -274,7 +274,7 @@ void GCHeap::printStatus(bool forcePrint) {
                         << std::setw(3) << iter.second.weak << ") ";
                });
 
-  LWNODE_DLOG_INFO(COLOR_GREEN "------------------" COLOR_RESET);
+  LWNODE_DLOG_INFO(CLR_GREEN "------------------" CLR_RESET);
 }
 
 void GCHeap::postUpdate(void* address) {

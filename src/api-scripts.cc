@@ -443,7 +443,7 @@ uint32_t ScriptCompiler::CachedDataVersionTag() {
 #ifndef NDEBUG
 static size_t s_track_data_size;
 #define TRACK_MSG_FMT                                                          \
-  "total size of new CachedData: " COLOR_GREEN "%zuB" COLOR_RESET
+  "total size of new CachedData: " CLR_GREEN "%zuB" CLR_RESET
 #endif
 
 ScriptCompiler::CachedData* ScriptCompiler::CreateCodeCache(

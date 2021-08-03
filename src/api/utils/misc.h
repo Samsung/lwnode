@@ -41,7 +41,7 @@
 
 /* CHECK */
 // Use CHECK when abort should occurs if the condition fails
-#define CHECK_FMT COLOR_REDBG "CHECK FAILED" COLOR_RESET " "
+#define CHECK_FMT CLR_REDBG "CHECK FAILED" CLR_RESET " "
 
 #define _LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                 \
   LWNODE_LOG_RAW(CHECK_FMT msg "\n\t " TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);  \
@@ -79,7 +79,7 @@
 
 #define FIRST_ARG(N, ...) N
 #define LEFT_ARGS(N, ...) , ##__VA_ARGS__
-#define TRACE_TAG_FMT COLOR_DIM "TRACE (%-10s)"
+#define TRACE_TAG_FMT CLR_DIM "TRACE (%-10s)"
 #define TRACE_TAG_ARG(id) std::string(id).substr(0, 10).c_str()
 #define COUNTER_FMT "%s"
 #define COUNTER_ARG(id) IndentCounter::getString(id).c_str()
@@ -88,8 +88,8 @@
   IndentCounter __counter(#id);                                                \
   if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
     LWNODE_DLOG_RAW(TRACE_TAG_FMT " " COUNTER_FMT TRACE_FMT                    \
-                                  " " COLOR_RESET FIRST_ARG(__VA_ARGS__)       \
-                                      COLOR_RESET,                             \
+                                  " " CLR_RESET FIRST_ARG(__VA_ARGS__)         \
+                                      CLR_RESET,                               \
                     TRACE_TAG_ARG(#id),                                        \
                     COUNTER_ARG(#id),                                          \
                     TRACE_ARGS2 LEFT_ARGS(__VA_ARGS__));                       \
@@ -98,8 +98,8 @@
 #define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
   if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
     LWNODE_DLOG_RAW(TRACE_TAG_FMT                                              \
-                    " " COUNTER_FMT COLOR_RESET FIRST_ARG(__VA_ARGS__)         \
-                        COLOR_RESET,                                           \
+                    " " COUNTER_FMT CLR_RESET FIRST_ARG(__VA_ARGS__)           \
+                        CLR_RESET,                                             \
                     TRACE_TAG_ARG(#id),                                        \
                     COUNTER_ARG(#id) LEFT_ARGS(__VA_ARGS__));                  \
   }

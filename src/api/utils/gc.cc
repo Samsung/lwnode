@@ -25,7 +25,7 @@ using namespace Escargot;
 #define LOG_HANDLER(msg, ...)                                                  \
   do {                                                                         \
     if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
-      LWNODE_LOG_RAW(COLOR_DIM msg COLOR_RESET, ##__VA_ARGS__);                \
+      LWNODE_LOG_RAW(CLR_DIM msg CLR_RESET, ##__VA_ARGS__);                    \
     }                                                                          \
   } while (0)
 
@@ -100,11 +100,11 @@ void GCTracer::printState() {
 
   for (const auto& it : registeredAddress_) {
     if (it.deallocated) {
-      LOG_HANDLER(COLOR_MAGENTA "deallocated: %s (%p)",
+      LOG_HANDLER(CLR_MAGENTA "deallocated: %s (%p)",
                   it.description.c_str(),
                   TO_GCPTR(it.ptr));
     } else {
-      LOG_HANDLER(COLOR_YELLOW "backtrace of %s (%p):\n",
+      LOG_HANDLER(CLR_YELLOW "backtrace of %s (%p):\n",
                   it.description.c_str(),
                   TO_GCPTR(it.ptr));
 
