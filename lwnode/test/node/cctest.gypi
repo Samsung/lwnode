@@ -10,6 +10,9 @@
     'node_dtrace_header',
     'node_dtrace_ustack',
     'node_dtrace_provider',
+    # lwnode
+    '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
+    '<(lwnode_jsengine_path)/escargot.gyp:escargot',
   ],
 
   'include_dirs': [
@@ -20,13 +23,14 @@
     '../../../deps/uv/include',
     '../../../deps/uvwasi/include',
     'test/cctest',
+    # lwnode
+    '../../../<(lwnode_jsengine_path)/src',
   ],
 
   'defines': [
     'NODE_ARCH="<(target_arch)"',
     'NODE_PLATFORM="<(OS)"',
     'NODE_WANT_INTERNALS=1',
-    'LWNODE=1',
   ],
 
   'sources': [

@@ -31,19 +31,53 @@
 #include <uv.h>
 #include "gtest.h"
 
-#ifdef ARDUINO
-void setup() {
-  testing::InitGoogleTest();
+#include "node_test_fixture.h"
+
+static inline bool startsWith(const std::string& string,
+                              const std::string& prefix) {
+  return (string.size() >= prefix.size()) &&
+         (string.compare(0, prefix.size(), prefix) == 0);
 }
 
-void loop() { RUN_ALL_TESTS(); }
+void lwnode_parse_args(int argc, char* argv[]) {
+  for (int i = 1; i < argc; i++) {
+    std::string arg(argv[i]);
 
-#else
+    if (startsWith(arg, std::string("-f="))) {
+      std::string f =
+          std::string("*") + arg.substr(strlen("-f=")) + std::string("*");
+      ::testing::GTEST_FLAG(filter) = f.c_str();
+#if defined(LWNODE)
+    } else if (startsWith(arg, std::string("--trace-call"))) {
+      EscargotShim::Flags::add(EscargotShim::FlagType::TraceCall);
+      NodeZeroIsolateTestFixture::is_trace_call_enabled_ = true;
+
+      std::string str(arg);
+      std::string::size_type pos = str.find_first_of('=');
+      if (std::string::npos != pos) {
+        std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+          if (token.find('-') == 0) {
+            EscargotShim::Flags::setNagativeTraceCallId(token.substr(1));
+          } else {
+            EscargotShim::Flags::setTraceCallId(token);
+          }
+        }
+      }
+    } else if (startsWith(arg, std::string("--trace-gc"))) {
+      EscargotShim::Flags::add(EscargotShim::FlagType::TraceGC);
+#endif
+    } else {
+      printf("unknown options: %s\n", argv[i]);
+    }
+  }
+}
 
 GTEST_API_ int main(int argc, char **argv) {
+  lwnode_parse_args(argc, argv);
   argv = uv_setup_args(argc, argv);
   printf("Running main() from %s\n", __FILE__);
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
-#endif

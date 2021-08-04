@@ -11,6 +11,7 @@
 #include "util-inl.h"
 #include "v8.h"
 #include "libplatform/libplatform.h"
+#include "internal-api.h"
 
 struct Argv {
  public:
@@ -61,6 +62,8 @@ using TracingAgentUniquePtr = std::unique_ptr<node::tracing::Agent>;
 using NodePlatformUniquePtr = std::unique_ptr<node::NodePlatform>;
 
 class NodeZeroIsolateTestFixture : public ::testing::Test {
+ public:
+  static bool is_trace_call_enabled_;
  protected:
   static ArrayBufferUniquePtr allocator;
   static TracingAgentUniquePtr tracing_agent;
