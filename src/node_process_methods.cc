@@ -463,6 +463,9 @@ static void InitializeProcessMethods(Local<Object> target,
   env->SetMethod(target, "reallyExit", ReallyExit);
   env->SetMethodNoSideEffect(target, "uptime", Uptime);
   env->SetMethod(target, "patchProcessObject", PatchProcessObject);
+#ifdef LWNODE
+  LWNode::InitializeProcessMethods(target, context);
+#endif
 }
 
 }  // namespace node
