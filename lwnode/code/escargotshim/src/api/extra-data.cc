@@ -64,7 +64,7 @@ void ObjectData::setInternalFieldCount(int size) {
 
   m_internalFields = new GCContainer<void*>(size);
   for (int i = 0; i < size; i++) {
-    setInternalField(i, IsolateWrap::GetCurrent()->undefined());
+    setInternalField(i, nullptr);
   }
 }
 
@@ -91,9 +91,10 @@ void* ObjectData::internalField(int idx) {
   }
 
   void* field = m_internalFields->get(idx);
-
-  LWNODE_CALL_TRACE_ID(
-      OBJDATA, "%s", toObjectDataString(this, idx, field).c_str());
+  if (field) {
+    LWNODE_CALL_TRACE_ID(
+        OBJDATA, "%s", toObjectDataString(this, idx, field).c_str());
+  }
 
   return field;
 }
@@ -109,7 +110,7 @@ ObjectData* ObjectData::clone() {
     newData->setInternalFieldCount(count);
   }
   for (int i = 0; i < count; i++) {
-    LWNODE_DCHECK(IsolateWrap::GetCurrent()->undefined() == internalField(i));
+    LWNODE_DCHECK(internalField(i) == nullptr);
     newData->setInternalField(i, internalField(i));
   }
 

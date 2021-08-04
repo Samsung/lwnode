@@ -615,6 +615,7 @@ void ObjectRefHelper::setInternalField(ObjectRef* object,
                                        InternalField* lwValue) {
   auto data = getExtraData(object);
   LWNODE_CHECK_NOT_NULL(data);
+
   data->setInternalField(idx, lwValue);
 }
 
@@ -622,7 +623,12 @@ InternalField* ObjectRefHelper::getInternalField(ObjectRef* object, int idx) {
   auto data = getExtraData(object);
   LWNODE_CHECK_NOT_NULL(data);
 
-  return reinterpret_cast<InternalField*>(data->internalField(idx));
+  auto field = reinterpret_cast<InternalField*>(data->internalField(idx));
+  if (!field) {
+    return IsolateWrap::GetCurrent()->undefined();
+  }
+
+  return field;
 }
 
 void ObjectRefHelper::setInternalPointer(ObjectRef* object,
@@ -635,10 +641,12 @@ void ObjectRefHelper::setInternalPointer(ObjectRef* object,
 }
 
 void* ObjectRefHelper::getInternalPointer(ObjectRef* object, int idx) {
-  auto data = getExtraData(object);
-  LWNODE_CHECK_NOT_NULL(data);
+  auto extraData = getExtraData(object);
+  LWNODE_CHECK_NOT_NULL(extraData);
 
-  return data->internalField(idx);
+  auto data = extraData->internalField(idx);
+
+  return data;
 }
 
 // --- ObjectTemplateRefHelper ---
