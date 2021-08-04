@@ -43,27 +43,36 @@ thread_local int s_indentCount = 0;
 thread_local int s_deltaCount = 0;
 thread_local std::set<std::string> s_counterIds;
 
+#define FORCE_ENABLE_INDENT_ID "NODE"
+
+static bool isIndentIdEnabled(std::string id) {
+  if (id == FORCE_ENABLE_INDENT_ID) {
+    return true;
+  }
+  return EscargotShim::Flags::isTraceCallEnabled(id);
+}
+
 void IndentCounter::indent(std::string id) {
-  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) return;
+  if (isIndentIdEnabled(id) == false) return;
   s_deltaCount++;
 }
 
 void IndentCounter::unIndent(std::string id) {
-  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) return;
+  if (isIndentIdEnabled(id) == false) return;
   s_deltaCount--;
 }
 
 IndentCounter::IndentCounter(std::string id) {
   id_ = id;
 
-  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) return;
+  if (isIndentIdEnabled(id) == false) return;
 
   s_indentCount++;
   s_counterIds.insert(id);
 }
 
 IndentCounter::~IndentCounter() {
-  if (EscargotShim::Flags::isTraceCallEnabled(id_) == false) return;
+  if (isIndentIdEnabled(id_) == false) return;
 
   s_indentCount--;
   s_counterIds.erase(id_);
