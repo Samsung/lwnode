@@ -17,6 +17,7 @@
       'include_dirs': [
         'src',
         'include',
+        'include/lwnode',
         '.',
         '<(SHARED_INTERMEDIATE_DIR)',
       ],
@@ -58,6 +59,7 @@
         'src/api/function.cc',
         'src/api/object.cc',
         'src/api/serializer.cc',
+        'src/lwnode.cc',
       ],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [
@@ -71,6 +73,7 @@
         ],
         'include_dirs': [
           'src/api/utils/logger',
+          'include/lwnode',
           'include',
           '.',
         ],

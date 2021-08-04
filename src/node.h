@@ -64,6 +64,12 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
+
+#ifdef LWNODE
+#include "lwnode.h"
+#include "trace.h"
+#endif
+
 #include "v8.h"  // NOLINT(build/include_order)
 #if (__GNUC__ >= 8) && !defined(__clang__)
 #pragma GCC diagnostic pop

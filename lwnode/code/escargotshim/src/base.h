@@ -18,6 +18,10 @@
 
 #include "unimplemented.h"
 
+namespace EscargotShim {
+class ValueWrap;
+}
+
 #define VAL(that) reinterpret_cast<EscargotShim::ValueWrap*>(that)
 #define CVAL(that) reinterpret_cast<const EscargotShim::ValueWrap*>(that)
 
