@@ -20,9 +20,7 @@
 
 // internals
 #include "api/handle.h"
-#include "api/utils/flags.h"
 #include "api/utils/gc.h"
-#include "api/utils/logger.h"
 #include "api/utils/misc.h"
 
 namespace e = EscargotShim;

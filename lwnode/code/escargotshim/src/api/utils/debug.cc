@@ -19,7 +19,7 @@
 #include <execinfo.h>
 #endif
 #include "debug.h"
-#include "logger.h"
+#include "misc.h"
 
 namespace EscargotShim {
 
