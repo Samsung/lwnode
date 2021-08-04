@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "api/utils/logger.h"
+#include "api/utils/misc.h"
 
 #define LWNODE_RETURN_VOID                                                     \
   LWNODE_UNIMPLEMENT;                                                          \

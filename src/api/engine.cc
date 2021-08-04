@@ -18,7 +18,6 @@
 #include <iomanip>
 #include <sstream>
 #include "handle.h"
-#include "utils/logger.h"
 #include "utils/misc.h"
 #include "utils/string.h"
 

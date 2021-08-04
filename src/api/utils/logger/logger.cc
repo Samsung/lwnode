@@ -15,6 +15,7 @@
  */
 
 #include "logger.h"
+#include <assert.h>
 #include <regex>
 #include <set>
 #include <sstream>

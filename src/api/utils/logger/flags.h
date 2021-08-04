@@ -19,7 +19,11 @@
 #include <cstdint>
 #include <set>
 #include <string>
-#include "compiler.h"
+
+#if !defined(LWNODE_EXPORT)
+#define LWNODE_EXPORT __attribute__((visibility("default")))
+#define LWNODE_LOCAL __attribute__((visibility("hidden")))
+#endif
 
 namespace EscargotShim {
 

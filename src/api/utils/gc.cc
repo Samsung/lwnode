@@ -17,8 +17,7 @@
 #include "gc.h"
 #include <EscargotPublic.h>
 #include <GCUtil.h>
-#include "flags.h"
-#include "logger.h"
+#include "misc.h"
 
 using namespace Escargot;
 
