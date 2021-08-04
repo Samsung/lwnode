@@ -130,7 +130,6 @@ static ValueRef* FunctionTemplateNativeFunction(
 
   auto thisObject = thisValue->asObject();
   if (newTarget.hasValue() && ObjectRefHelper::hasExtraData(thisObject)) {
-    LWNODE_DCHECK(newTarget.value() == callee.value());
     auto objectData = ObjectRefHelper::getExtraData(thisObject);
     ObjectRefHelper::setExtraData(thisObject, objectData->clone(), true);
   }
