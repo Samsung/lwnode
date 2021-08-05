@@ -40,17 +40,19 @@
 #define __DLOG_EVAL_EXCEPTION(eval_result)
 #endif
 
-#define API_ENTER(isolate, bailout_value)                                      \
-  LWNODE_CALL_TRACE();                                                         \
+#define __CALL_TRACE_ID(id, ...) LWNODE_CALL_TRACE_ID(id)
+
+#define API_ENTER(isolate, bailout_value, ...)                                 \
+  __CALL_TRACE_ID(__VA_ARGS__ __VA_OPT__(, ) COMMON);                          \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);                       \
   __TERMINATION_CHECK(lwIsolate, bailout_value)
 
-#define API_ENTER_NO_EXCEPTION(isolate)                                        \
-  LWNODE_CALL_TRACE();                                                         \
+#define API_ENTER_NO_EXCEPTION(isolate, ...)                                   \
+  __CALL_TRACE_ID(__VA_ARGS__ __VA_OPT__(, ) COMMON);                          \
   IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);
 
-#define API_ENTER_WITH_CONTEXT(local_context, bailout_value)                   \
-  LWNODE_CALL_TRACE();                                                         \
+#define API_ENTER_WITH_CONTEXT(local_context, bailout_value, ...)              \
+  __CALL_TRACE_ID(__VA_ARGS__ __VA_OPT__(, ) COMMON);                          \
   IsolateWrap* lwIsolate = local_context.IsEmpty()                             \
                                ? IsolateWrap::GetCurrent()                     \
                                : VAL(*local_context)->context()->GetIsolate(); \
