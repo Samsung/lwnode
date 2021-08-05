@@ -28,8 +28,7 @@
 #define COUNTER_FMT "%s"
 #define COUNTER_ARG(id) IndentCounter::getString(id).c_str()
 
-#define LWNODE_CALL_TRACE_ID(id, ...)                                          \
-  IndentCounter __counter(#id);                                                \
+#define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
   if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
     LWNODE_DLOG_RAW(TRACE_TAG_FMT " " COUNTER_FMT TRACE_FMT                    \
                                   " " CLR_RESET FIRST_ARG(__VA_ARGS__)         \
@@ -39,14 +38,9 @@
                     TRACE_ARGS2 LEFT_ARGS(__VA_ARGS__));                       \
   }
 
-#define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
-  if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
-    LWNODE_DLOG_RAW(TRACE_TAG_FMT                                              \
-                    " " COUNTER_FMT CLR_RESET FIRST_ARG(__VA_ARGS__)           \
-                        CLR_RESET,                                             \
-                    TRACE_TAG_ARG(#id),                                        \
-                    COUNTER_ARG(#id) LEFT_ARGS(__VA_ARGS__));                  \
-  }
+#define LWNODE_CALL_TRACE_ID(id, ...)                                          \
+  IndentCounter __counter(#id);                                                \
+  LWNODE_CALL_TRACE_ID_LOG(id, __VA_ARGS__)
 
 #define LWNODE_CALL_TRACE_ID_INDENT(id) IndentCounter::indent(#id);
 #define LWNODE_CALL_TRACE_ID_UNINDENT(id) IndentCounter::unIndent(#id);
