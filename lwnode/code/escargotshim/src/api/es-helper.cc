@@ -388,6 +388,36 @@ static std::string getCodeLine(const std::string& codeString, int errorLine) {
   return result;
 }
 
+static std::string getCallStackString(
+    const GCManagedVector<Evaluator::StackTraceData>& traceData) {
+  std::ostringstream oss;
+  const std::string separator = "  ";
+  size_t maxPrintStackSize = std::min(5, (int)traceData.size());
+
+  oss << "Call Stack:" << std::endl;
+  for (size_t i = 0; i < maxPrintStackSize; ++i) {
+    const auto& iter = traceData[i];
+    const auto& resourceName = iter.src->toStdUTF8String();
+    const auto& codeString = iter.sourceCode->toStdUTF8String();
+    const int errorLine = iter.loc.line;
+    const int errorColumn = iter.loc.column;
+
+    auto sourceOnStack = getCodeLine(codeString, errorLine);
+
+    // Trim left spaces
+    auto pos = sourceOnStack.find_first_not_of(' ');
+    auto errorCodeLine =
+        sourceOnStack.substr(pos != std::string::npos ? pos : 0);
+
+    oss << separator << i << ": " << (errorCodeLine == "" ? "?" : errorCodeLine)
+        << " ";
+    oss << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
+        << ":" << errorColumn << ")" << std::endl;
+  }
+
+  return oss.str();
+}
+
 std::string EvalResultHelper::getErrorString(
     ContextRef* context, const Evaluator::EvaluatorResult& result) {
   const auto& traceData = result.stackTraceData;
@@ -431,28 +461,7 @@ std::string EvalResultHelper::getErrorString(
       }
     }
 
-    size_t maxPrintStackSize = std::min(5, (int)traceData.size());
-
-    oss << "Call Stack:" << std::endl;
-    for (size_t i = 0; i < maxPrintStackSize; ++i) {
-      const auto& iter = traceData[i];
-      const auto& resourceName = iter.src->toStdUTF8String();
-      const auto& codeString = iter.sourceCode->toStdUTF8String();
-      const int errorLine = iter.loc.line;
-      const int errorColumn = iter.loc.column;
-
-      auto sourceOnStack = getCodeLine(codeString, errorLine);
-
-      // Trim left spaces
-      auto pos = sourceOnStack.find_first_not_of(' ');
-      auto errorCodeLine =
-          sourceOnStack.substr(pos != std::string::npos ? pos : 0);
-
-      oss << separator << i << ": "
-          << (errorCodeLine == "" ? "?" : errorCodeLine) << " ";
-      oss << "(" << (resourceName == "" ? "?" : resourceName) << ":"
-          << errorLine << ":" << errorColumn << ")" << std::endl;
-    }
+    oss << getCallStackString(traceData);
   }
 
   return oss.str();
@@ -472,16 +481,24 @@ Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
         context, compileResult.parseErrorCode, compileResult.parseErrorMessage);
 
     LWNODE_LOG_ERROR(
-        "%s", result.resultOrErrorToString(context)->toStdUTF8String().c_str());
+        "Compile: %s",
+        result.resultOrErrorToString(context)->toStdUTF8String().c_str());
     return result;
   }
 
-  return Evaluator::execute(
+  auto r = Evaluator::execute(
       context,
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
         return script->execute(state);
       },
       compileResult.script.get());
+
+  if (r.isSuccessful() == false) {
+    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",
+                    TRACE_ARGS2,
+                    EvalResultHelper::getErrorString(context, r).c_str());
+  }
+  return r;
 }
 
 void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
@@ -491,17 +508,47 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
                                 ValueRef** argv,
                                 bool isConstructCall) -> ValueRef* {
     if (argc > 0) {
-      if (argv[0]->isSymbol()) {
-        puts(argv[0]
-                 ->asSymbol()
-                 ->symbolDescriptiveString()
-                 ->toStdUTF8String()
-                 .c_str());
-      } else {
-        puts(argv[0]->toString(state)->toStdUTF8String().c_str());
+      std::stringstream ss;
+
+      for (size_t i = 0; i < argc; ++i) {
+        if (argv[0]->isSymbol()) {
+          ss << argv[i]
+                    ->asSymbol()
+                    ->symbolDescriptiveString()
+                    ->toStdUTF8String();
+        } else {
+          ss << argv[i]
+                    ->toStringWithoutException(state->context())
+                    ->toStdUTF8String();
+        }
+        ss << " ";
       }
-    } else {
-      puts("undefined");
+
+      LWNODE_DLOG_RAW("%s", ss.str().c_str());
+    }
+    return ValueRef::createUndefined();
+  };
+
+  static auto builtinPrintAddress = [](ExecutionStateRef* state,
+                                       ValueRef* thisValue,
+                                       size_t argc,
+                                       ValueRef** argv,
+                                       bool isConstructCall) -> ValueRef* {
+    if (argc > 0) {
+      std::stringstream ss;
+
+      for (size_t i = 0; i < argc; ++i) {
+        if (argv[i]->isString()) {
+          ss << argv[i]
+                    ->toStringWithoutException(state->context())
+                    ->toStdUTF8String();
+        } else {
+          ss << CLR_DIM << "(" << argv[i] << ")" << CLR_RESET;
+        }
+        ss << " ";
+      }
+
+      LWNODE_DLOG_RAW("%s", ss.str().c_str());
     }
     return ValueRef::createUndefined();
   };
@@ -509,20 +556,31 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
   Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
     ContextRef* context = state->context();
 
-    FunctionObjectRef::NativeFunctionInfo info(
-        AtomicStringRef::create(context, "print"),
-        builtinPrint,
-        1,
-        true,
-        false);
+    auto esPrint =
+        FunctionObjectRef::create(state,
+                                  FunctionObjectRef::NativeFunctionInfo(
+                                      AtomicStringRef::emptyAtomicString(),
+                                      builtinPrint,
+                                      1,
+                                      true,
+                                      false));
 
-    context->globalObject()->defineDataProperty(
+    esPrint->defineDataProperty(
         state,
-        StringRef::createFromASCII("print"),
-        FunctionObjectRef::create(state, info),
+        StringRef::createFromASCII("ptr"),
+        FunctionObjectRef::create(state,
+                                  FunctionObjectRef::NativeFunctionInfo(
+                                      AtomicStringRef::emptyAtomicString(),
+                                      builtinPrintAddress,
+                                      1,
+                                      true,
+                                      false)),
         true,
         true,
         true);
+
+    context->globalObject()->defineDataProperty(
+        state, StringRef::createFromASCII("print"), esPrint, true, true, true);
 
     return ValueRef::createUndefined();
   });
@@ -630,6 +688,7 @@ int ObjectTemplateRefHelper::getInternalFieldCount(ObjectTemplateRef* otpl) {
 
 void FunctionTemplateRefHelper::setInstanceExtraData(FunctionTemplateRef* ftpl,
                                                      FunctionData* data) {
+  LWNODE_CALL_TRACE_ID(OBJDATA, "es: %p data: %p", ftpl, data);
   LWNODE_CHECK_NOT_NULL(data);
   LWNODE_CHECK_NULL(ftpl->instanceExtraData());
 
@@ -639,6 +698,7 @@ void FunctionTemplateRefHelper::setInstanceExtraData(FunctionTemplateRef* ftpl,
 FunctionData* FunctionTemplateRefHelper::getInstanceExtraData(
     FunctionTemplateRef* ftpl) {
   auto data = ftpl->instanceExtraData();
+  LWNODE_CALL_TRACE_ID(OBJDATA, "es: %p data: %p", ftpl, data);
   return reinterpret_cast<FunctionData*>(data);
 }
 
