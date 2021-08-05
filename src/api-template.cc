@@ -116,6 +116,11 @@ static ValueRef* FunctionTemplateNativeFunction(
   LWNODE_DCHECK_NOT_NULL(callee->extraData());
   auto fnData = FunctionData::toFunctionData(callee->extraData());
 
+  LWNODE_CALL_TRACE_ID(TEMPLATE,
+                       "es: %p newTarget: %s",
+                       thisValue,
+                       strBool(newTarget.hasValue()));
+
   if (!fnData->checkSignature(state, thisValue)) {
     IsolateWrap::GetCurrent()->ScheduleThrow(TypeErrorObjectRef::create(
         state, StringRef::createFromASCII("Illegal invocation")));
@@ -132,6 +137,7 @@ static ValueRef* FunctionTemplateNativeFunction(
 
   Local<Value> result;
   if (fnData->callback()) {
+    LWNODE_CALL_TRACE_ID(TEMPLATE, "> Call JS callback");
     FunctionCallbackInfoWrap info(fnData->isolate(),
                                   thisValue,
                                   thisValue,
@@ -171,7 +177,7 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
     LWNODE_ONCE(LWNODE_DLOG_WARN("@ignored/SideEffectType::kHasSideEffect"));
   }
 
-  API_ENTER_NO_EXCEPTION(isolate);
+  API_ENTER_NO_EXCEPTION(isolate, TEMPLATE);
   bool isConstructor = false;
   if (behavior == ConstructorBehavior::kAllow) {
     isConstructor = true;
@@ -273,7 +279,7 @@ void FunctionTemplate::RemovePrototype() {
 }
 
 MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>());
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>(), TEMPLATE);
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esFunctionTemplate = CVAL(this)->ftpl();
 
@@ -312,7 +318,7 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
 
 Local<ObjectTemplate> ObjectTemplate::New(
     Isolate* isolate, v8::Local<FunctionTemplate> constructor) {
-  API_ENTER_NO_EXCEPTION(isolate);
+  API_ENTER_NO_EXCEPTION(isolate, TEMPLATE);
 
   return Utils::NewLocal(isolate, ObjectTemplateRef::create());
 }
@@ -703,7 +709,7 @@ void ObjectTemplate::SetImmutableProto() {
 }
 
 MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<v8::Object>());
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<v8::Object>(), TEMPLATE);
   auto esContext = VAL(*context)->context()->get();
   auto esObjectTemplate = CVAL(this)->otpl();
 
