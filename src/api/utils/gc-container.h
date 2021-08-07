@@ -17,6 +17,7 @@
 #pragma once
 
 #include <EscargotPublic.h>
+#include <cassert>
 #include <cstdarg>
 
 #include "gc.h"
@@ -27,7 +28,7 @@ class GCContainer : public gc {
  public:
   GCContainer() {}
 
-  explicit GCContainer(const size_t size, ...) {
+  explicit GCContainer(const size_t size, const size_t argc = 0, ...) {
     if (size) {
       buffer_ = (T*)Escargot::Memory::gcMalloc(sizeof(T) * size);
       size_ = size;
@@ -35,9 +36,10 @@ class GCContainer : public gc {
         new (&buffer_[i]) T();
       }
 
+      assert(argc <= size);
       std::va_list args;
-      va_start(args, size);
-      for (size_t i = 0; i < size; ++i) {
+      va_start(args, argc);
+      for (size_t i = 0; i < argc; ++i) {
         buffer_[i] = va_arg(args, T);
       }
       va_end(args);
