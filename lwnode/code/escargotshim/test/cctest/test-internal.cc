@@ -213,7 +213,8 @@ UNINITIALIZED_TEST(internal_GCContainer) {
 
   [&holder]() {
     auto obj = new ObjectBasic();
-    GCContainer<ObjectBasic*>* vector = new GCContainer<ObjectBasic*>(1, obj);
+    GCContainer<ObjectBasic*>* vector =
+        new GCContainer<ObjectBasic*>(1, 1, obj);
 
     holder.reset(vector);
 
