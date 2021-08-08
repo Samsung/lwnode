@@ -576,4 +576,255 @@ TEST(internal_Escargot_MapUsingIntegerKey) {
   CHECK_EQ(true, r2.isSuccessful());
 }
 
+class ObjectDataBase : public gc {
+ public:
+  virtual bool isConfigureData() = 0;
+};
+
+class ConfigureData : public ObjectDataBase {
+ public:
+  virtual bool isConfigureData() { return true; };
+  ConfigureData(size_t count) { internalFieldCount_ = count; }
+  size_t internalFieldCount() { return internalFieldCount_; }
+
+ private:
+  size_t internalFieldCount_{0};
+};
+
+class InternalFieldData : public ObjectDataBase {
+ public:
+  virtual bool isConfigureData() { return false; };
+
+  void*& operator[](const size_t index) {
+    LWNODE_CHECK(isConfigureData() == false);
+    return internalFields_[index];
+  }
+
+  ValueRef* internalFields(const size_t index) {
+    LWNODE_CHECK(isConfigureData() == false);
+    void* p = internalFields_[index];
+    if (p == nullptr) {
+      return ValueRef::createUndefined();
+    }
+    return reinterpret_cast<ValueRef*>(p);
+  }
+
+  bool setInternalFields(size_t index, ValueRef* value) {
+    LWNODE_CHECK(isConfigureData() == false);
+    internalFields_[index] = value;
+    return true;
+  }
+
+  static InternalFieldData* create(ConfigureData* config) {
+    return new InternalFieldData(config);
+  }
+
+ private:
+  InternalFieldData(ConfigureData* config)
+      : internalFields_(
+            std::move(GCContainer<void*>(config->internalFieldCount()))) {}
+
+  GCContainer<void*> internalFields_;
+};
+
+enum InternalFields {
+  kSlot,
+  kInternalFieldCount,
+};
+
+static void mixinProtoMethod(FunctionTemplateRef* ft) {
+  ObjectTemplateRef* esPrototypeTemplate = ft->prototypeTemplate();
+
+  esPrototypeTemplate->set(
+      TemplatePropertyNameRef(StringRef::createFromUTF8("isStreamBase")),
+      ValueRef::create(true),
+      true,
+      true,
+      true);
+
+  {
+    // v8::ObjectTemplate::PrototypeTemplate()->SetAccessor
+    bool isActsLikeJSGetterSetter = true;
+
+    esPrototypeTemplate->setNativeDataAccessorProperty(
+        StringRef::createFromUTF8("onread"),
+        new ObjectRef::NativeDataAccessorPropertyData(
+            true,
+            true,
+            true,
+            // getter
+            [](ExecutionStateRef* state,
+               ObjectRef* self,
+               ValueRef* receiver,
+               ObjectRef::NativeDataAccessorPropertyData* propertyData)
+                -> ValueRef* {
+              InternalFieldData* data = reinterpret_cast<InternalFieldData*>(
+                  receiver->asObject()->extraData());
+              LWNODE_DLOG_INFO(
+                  "GET: receiver: %p data: %p self: %p", receiver, data, self);
+
+              if (!data) {
+                return ValueRef::createUndefined();
+              }
+              return data->internalFields(InternalFields::kSlot);
+            },
+            // setter
+            [](ExecutionStateRef* state,
+               ObjectRef* self,
+               ValueRef* receiver,
+               ObjectRef::NativeDataAccessorPropertyData* propertyData,
+               ValueRef* setterInputData) -> bool {
+              InternalFieldData* data = reinterpret_cast<InternalFieldData*>(
+                  receiver->asObject()->extraData());
+              LWNODE_DLOG_INFO(
+                  "SET: receiver: %p data: %p self: %p", receiver, data, self);
+
+              if (!data) {
+                return false;
+              }
+              return data->setInternalFields(
+                  InternalFields::kSlot, setterInputData->asFunctionObject());
+            }),
+        isActsLikeJSGetterSetter);
+  }
+}
+
+typedef void (*MethodSetter)(FunctionTemplateRef* ft);
+
+static FunctionTemplateRef* createFunctionTemplate(
+    ContextRef* esContext,
+    std::string name,
+    bool isConstructor,
+    FunctionTemplateRef* parent = nullptr,
+    MethodSetter methodSetter = nullptr) {
+  auto esFunctionTemplate = FunctionTemplateRef::create(
+      AtomicStringRef::create(esContext, name.c_str(), name.length()),
+      0,
+      false,
+      isConstructor,
+      [](ExecutionStateRef* state,
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        if (newTarget.hasValue()) {
+          auto thisObject = thisValue->asObject();
+          auto configureData =
+              reinterpret_cast<ConfigureData*>(thisObject->extraData());
+
+          if (configureData) {
+            // replace configure data with instance data
+            LWNODE_CHECK(configureData->isConfigureData());
+            thisObject->setExtraData(InternalFieldData::create(configureData));
+          }
+
+          LWNODE_DLOG_INFO("NEW: thisValue: %p data: %p",
+                           thisValue,
+                           thisObject->extraData());
+
+          return thisValue;
+        }
+
+        Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
+            state->resolveCallee();
+
+        return ValueRef::createUndefined();
+      });
+
+  esFunctionTemplate->instanceTemplate()->setInstanceExtraData(
+      new ConfigureData(InternalFields::kInternalFieldCount));
+
+  if (parent) {
+    esFunctionTemplate->inherit(parent);
+  }
+
+  if (methodSetter) {
+    methodSetter(esFunctionTemplate);
+  }
+
+  return esFunctionTemplate;
+}
+
+TEST(DISABLED_Escargot_InlineCache_Regression) {
+  LocalContext env;
+
+  auto esContext =
+      IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
+  EvalResultHelper::attachBuiltinPrint(esContext);
+
+  auto esFunctionTemplate = createFunctionTemplate(
+      esContext,
+      "Pipe",
+      true,
+      createFunctionTemplate(
+          esContext,
+          "StreamWrap",
+          true,
+          createFunctionTemplate(esContext, "HandleWrap", true),
+          mixinProtoMethod));
+
+  ObjectRefHelper::setProperty(
+      esContext,
+      esContext->globalObject(),
+      StringRef::createFromUTF8("Pipe"),
+      // instantiate (v8::FunctionTemplate::GetFunction)
+      esFunctionTemplate->instantiate(esContext));
+
+  const char* source =
+      R"(
+        function assert(condition, message) {
+          if (!condition) throw new Error(message || 'Assertion failed');
+        }
+
+        assert(Pipe != undefined);
+        print.ptr('Pipe', Pipe);
+
+        function onRead() {
+          assert(onRead.pipe_being_test == this);
+          print.ptr('pipe', this,'onRead called');
+        }
+
+        print.ptr('onRead', onRead);
+        print('-'.repeat(60));
+
+        let pipe = new Pipe();
+        print.ptr('pipe', pipe);
+
+        assert(pipe.__proto__ == Pipe.prototype);
+        assert(pipe.__proto__.__proto__.constructor.name == 'StreamWrap');
+        assert(pipe.__proto__.__proto__.__proto__.constructor.name == 'HandleWrap');
+        assert(pipe.isStreamBase == true);
+
+        // crash should not occur on the lines commented
+        // for (let i=0; i<5; i++) {
+        //   pipe.onread = onRead;
+        // }
+
+        pipe.onread = onRead;
+        assert(pipe.onread == onRead);
+
+        onRead.pipe_being_test = pipe;
+        pipe.onread();
+
+        print('-'.repeat(60));
+
+        function test() {
+          // @note In order to induce escargot's inline cache, calling
+          // the following setter should be called inside a function defined.
+          let pipe = new Pipe();
+          pipe.onread = onRead;
+        }
+
+        test();
+        test();
+        test();
+        test();
+        test(); // crash should not occur on this line
+      )";
+
+  auto r = EvalResultHelper::compileRun(esContext, source);
+
+  CHECK_EQ(true, r.isSuccessful());
+}
+
 #endif
