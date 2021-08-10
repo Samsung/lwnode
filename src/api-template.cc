@@ -370,6 +370,7 @@ void ObjectTemplate::SetAccessor(v8::Local<String> name,
                                  v8::Local<AccessorSignature> signature,
                                  SideEffectType getter_side_effect_type,
                                  SideEffectType setter_side_effect_type) {
+  // @note AccessControl is not considered.
   ObjectTemplateUtils::SetAccessor(CVAL(this)->otpl(),
                                    IsolateWrap::GetCurrent(),
                                    name,
@@ -388,6 +389,7 @@ void ObjectTemplate::SetAccessor(v8::Local<Name> name,
                                  v8::Local<AccessorSignature> signature,
                                  SideEffectType getter_side_effect_type,
                                  SideEffectType setter_side_effect_type) {
+  // @note AccessControl is not considered.
   ObjectTemplateUtils::SetAccessor(CVAL(this)->otpl(),
                                    IsolateWrap::GetCurrent(),
                                    name,
@@ -504,6 +506,20 @@ void ObjectTemplate::SetHandler(
       handlerConfiguration->m_namedPropertyHandler.query(v8PropertyName, info);
       Local<Value> ret = info.GetReturnValue().Get();
       if (info.hasReturnValue()) {
+        bool hasNone = (handlerConfiguration->m_namedPropertyHandler.flags ==
+                        PropertyHandlerFlags::kNone);
+        bool hasNoSideEffect =
+            (static_cast<int>(
+                 handlerConfiguration->m_namedPropertyHandler.flags) &
+             static_cast<int>(PropertyHandlerFlags::kHasNoSideEffect));
+
+        if (hasNone) {
+          return TemplatePropertyAttribute::TemplatePropertyAttributeExist;
+        } else if (hasNoSideEffect) {
+          return TemplatePropertyAttribute::TemplatePropertyAttributeEnumerable;
+        } else {
+          LWNODE_UNIMPLEMENT;
+        }
         return TemplatePropertyAttribute::TemplatePropertyAttributeExist;
       }
 
