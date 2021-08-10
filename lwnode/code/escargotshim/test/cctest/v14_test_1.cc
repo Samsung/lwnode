@@ -418,3 +418,86 @@ TEST(DISABLED_WeakCallback_Invoked_by_CollectGarbage) {
 
   CHECK_EQ(isWeakApiCallbackCalled, true);
 }
+
+static void EnvGetter(Local<Name> name,
+                      const PropertyCallbackInfo<Value>& info) {
+  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+
+  if (name->Equals(context, v8_str("p1")).FromJust()) {
+    info.GetReturnValue().Set(v8_num(1));
+  } else if (name->Equals(context, v8_str("p2")).FromJust()) {
+    info.GetReturnValue().Set(v8_num(2));
+  } else if (name->Equals(context, v8_str("p3")).FromJust()) {
+    info.GetReturnValue().Set(v8_num(3));
+  }
+}
+
+static void EnvQuery(Local<Name> name,
+                     const PropertyCallbackInfo<Integer>& info) {
+  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+  if (name->Equals(context, v8_str("p1")).FromJust()) {
+    info.GetReturnValue().Set(1);
+  } else if (name->Equals(context, v8_str("p2")).FromJust()) {
+    info.GetReturnValue().Set(2);
+  }
+}
+
+static void EnvEnumerator(const v8::PropertyCallbackInfo<v8::Array>& info) {
+  v8::Local<v8::Array> result = v8::Array::New(info.GetIsolate());
+  result->Set(info.GetIsolate()->GetCurrentContext(), 0, v8_str("p1"))
+      .FromJust();
+  result->Set(info.GetIsolate()->GetCurrentContext(), 1, v8_str("p2"))
+      .FromJust();
+  result->Set(info.GetIsolate()->GetCurrentContext(), 2, v8_str("p3"))
+      .FromJust();
+  info.GetReturnValue().Set(result);
+}
+
+TEST(EnvQueryHandler) {
+  LocalContext env;
+  Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  Local<v8::Context> context = isolate->GetCurrentContext();
+  Local<ObjectTemplate> object_template = ObjectTemplate::New(isolate);
+  object_template->SetHandler(NamedPropertyHandlerConfiguration(
+      EnvGetter,
+      nullptr,
+      EnvQuery,
+      nullptr,
+      EnvEnumerator,
+      Local<Value>(),
+      PropertyHandlerFlags::kHasNoSideEffect));
+
+  CHECK(context->Global()
+            ->Set(context,
+                  v8_str("env"),
+                  object_template->NewInstance(context).ToLocalChecked())
+            .FromJust());
+
+  const char* source =
+      R"(
+        function assert(condition, message) {
+          if (!condition) throw new Error(message || 'Assertion failed');
+        }
+        function getKeys(value, showHidden) {
+          // from lib/internal/util/inspect.js
+          let keys; const symbols = Object.getOwnPropertySymbols(value);
+          if (showHidden) { keys = Object.getOwnPropertyNames(value);
+            if (symbols.length !== 0) keys.push(...symbols);
+          } else { keys = Object.keys(value);
+            if (symbols.length !== 0) {
+              const filter = (key) => Object.prototype.propertyIsEnumerable(value, key);
+              keys.push(...symbols.filter(filter));
+            }
+          }
+          return keys;
+        }
+        assert(env.p1 == 1); assert(env.p2 == 2); assert(env.p3 == 3);
+        assert(getKeys(env,false).length == 2);
+        assert(getKeys(env,true).length == 3);
+      )";
+
+  v8::TryCatch try_catch(isolate);
+  CompileRun(source);
+  CHECK(try_catch.HasCaught() == false);
+}
