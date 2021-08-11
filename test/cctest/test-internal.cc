@@ -745,7 +745,7 @@ static FunctionTemplateRef* createFunctionTemplate(
   return esFunctionTemplate;
 }
 
-TEST(DISABLED_Escargot_InlineCache_Regression) {
+TEST(Escargot_InlineCache_Regression) {
   LocalContext env;
 
   auto esContext =
@@ -796,9 +796,9 @@ TEST(DISABLED_Escargot_InlineCache_Regression) {
         assert(pipe.isStreamBase == true);
 
         // crash should not occur on the lines commented
-        // for (let i=0; i<5; i++) {
-        //   pipe.onread = onRead;
-        // }
+        for (let i=0; i<5; i++) {
+          pipe.onread = onRead;
+        }
 
         pipe.onread = onRead;
         assert(pipe.onread == onRead);
