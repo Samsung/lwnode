@@ -162,6 +162,15 @@ TEST(ScriptCompiler_CompileFunctionInContext) {
   CHECK(expected->Equals(context, result).FromJust());
 }
 
+TEST(ContextEquals) {
+  LocalContext env;
+  Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  Local<v8::Context> context = isolate->GetCurrentContext();
+
+  CHECK(env.local() == context);
+}
+
 // --- ArrayBuffer ---
 TEST(ArrayBuffer_New) {
   LocalContext env;

@@ -58,17 +58,24 @@ static bool createGlobals(ContextRef* context) {
   return true;
 }
 
-ContextWrap::ContextWrap(IsolateWrap* isolate) {
-  isolate_ = isolate;
-  context_ = ContextRef::create(isolate->vmInstance());
+// ContextWrap
 
-  createGlobals(context_);
+ContextWrap::ContextWrap(IsolateWrap* isolate, ContextRef* contextToUse) {
+  isolate_ = isolate;
+  if (contextToUse) {
+    context_ = contextToUse;
+  } else {
+    context_ = ContextRef::create(isolate->vmInstance());
+    createGlobals(context_);
+  }
+
+  val_ = context_;
+  type_ = Type::Context;
 }
 
-ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
+ContextWrap* ContextWrap::New(IsolateWrap* isolate, ContextRef* contextToUse) {
   LWNODE_CHECK_NOT_NULL(isolate);
-  auto context = new ContextWrap(isolate);
-  return context;
+  return new ContextWrap(isolate, contextToUse);
 }
 
 void ContextWrap::Enter() {

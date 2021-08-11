@@ -119,12 +119,12 @@ ValueRef* ValueWrap::value() const {
 }
 
 ValueWrap* ValueWrap::createContext(ContextWrap* lwContext) {
-  return new ValueWrap(lwContext, Type::Context);
+  return lwContext;
 };
 
 ContextWrap* ValueWrap::context() const {
   LWNODE_CHECK(type_ == Type::Context);
-  return reinterpret_cast<ContextWrap*>(val_);
+  return reinterpret_cast<ContextWrap*>(const_cast<ValueWrap*>(this));
 }
 
 ValueWrap* ValueWrap::createScript(ScriptRef* esScript) {
