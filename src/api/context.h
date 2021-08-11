@@ -17,18 +17,18 @@
 #pragma once
 
 #include <EscargotPublic.h>
-#include "utils/gc.h"
+#include "api/handle.h"
 
 namespace EscargotShim {
 
 class IsolateWrap;
-class ValueWrap;
 
 typedef GCUnorderedMap<int, void*> EmbedderDataMap;
 
-class ContextWrap : public gc {
+class ContextWrap : public ValueWrap {
  public:
-  static ContextWrap* New(IsolateWrap* isolate);
+  static ContextWrap* New(IsolateWrap* isolate,
+                          Escargot::ContextRef* contextToUse = nullptr);
 
   void Enter();
   void Exit();
@@ -52,7 +52,8 @@ class ContextWrap : public gc {
  private:
   EmbedderDataMap* embedder_data_{nullptr};
 
-  ContextWrap(IsolateWrap* isolate);
+  ContextWrap(IsolateWrap* isolate,
+              Escargot::ContextRef* contextToUse = nullptr);
   void setEmbedderData(int index, void* value);
   void* getEmbedderData(int index);
 
