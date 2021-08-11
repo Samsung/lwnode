@@ -39,6 +39,7 @@ class Isolate : public gc {
 
   Escargot::ValueRef* scheduled_exception();
   bool has_scheduled_exception();
+  void set_scheduled_exception(Escargot::ValueRef* exception_obj);
   void clear_scheduled_exception();
 
   Escargot::ObjectRef* pending_exception();
@@ -211,6 +212,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   void ClearPendingExceptionAndMessage();
 
   void onFatalError(const char* location, const char* message);
+
+  void Throw(Escargot::ExecutionStateRef* state);
 
   void lock_gc_release() { release_lock_.reset(this); }
   void unlock_gc_release() { release_lock_.release(); }
