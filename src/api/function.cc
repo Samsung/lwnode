@@ -110,7 +110,7 @@ PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
           reinterpret_cast<v8::internal::Address*>(m_implicitArgs)) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
   // m_implicitArgs[F::kShouldThrowOnErrorIndex]; // TODO
-  m_implicitArgs[F::kHolderIndex] = lwIsolate->hole();
+  m_implicitArgs[F::kHolderIndex] = ValueWrap::createValue(holder);
   m_implicitArgs[F::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
   // m_implicitArgs[F::kReturnValueDefaultValueIndex]; // TODO
   m_implicitArgs[F::kReturnValueIndex] = lwIsolate->defaultReturnValue();
