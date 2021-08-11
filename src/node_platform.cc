@@ -430,7 +430,9 @@ void NodePlatform::AddIsolateFinishedCallback(Isolate* isolate,
 void NodePlatform::Shutdown() {
   if (has_shut_down_) return;
   has_shut_down_ = true;
-  worker_thread_task_runner_->Shutdown();
+  if (worker_thread_task_runner_) { // @lwnode
+    worker_thread_task_runner_->Shutdown();
+  }
 
   {
     Mutex::ScopedLock lock(per_isolate_mutex_);
@@ -477,6 +479,7 @@ void PerIsolatePlatformData::RunForegroundTask(uv_timer_t* handle) {
 void NodePlatform::DrainTasks(Isolate* isolate) {
   std::shared_ptr<PerIsolatePlatformData> per_isolate = ForNodeIsolate(isolate);
   if (!per_isolate) return;
+  if (!worker_thread_task_runner_) return; // @lwnode
 
   do {
     // Worker tasks aren't associated with an Isolate.
