@@ -247,7 +247,7 @@ TEST(internal_Escargot_ShadowObject) {
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
 
-  EvalResultHelper::attachBuiltinPrint(esContext);
+  EvalResultHelper::attachBuiltinPrint(esContext, esContext->globalObject());
 
   auto esFunctionTemplate = FunctionTemplateRef::create(
       AtomicStringRef::emptyAtomicString(),
@@ -407,7 +407,7 @@ TEST(internal_Escargot_Extends) {
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
 
-  EvalResultHelper::attachBuiltinPrint(esContext);
+  EvalResultHelper::attachBuiltinPrint(esContext, esContext->globalObject());
 
   auto esFunctionTemplate = FunctionTemplateRef::create(
       AtomicStringRef::create(esContext, "ContextifyScript"),
@@ -537,7 +537,7 @@ TEST(internal_Escargot_MapUsingIntegerKey) {
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
 
-  EvalResultHelper::attachBuiltinPrint(esContext);
+  EvalResultHelper::attachBuiltinPrint(esContext, esContext->globalObject());
 
   auto r = Evaluator::execute(
       esContext, [](ExecutionStateRef* esState) -> ValueRef* {
@@ -750,7 +750,7 @@ TEST(Escargot_InlineCache_Regression) {
 
   auto esContext =
       IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
-  EvalResultHelper::attachBuiltinPrint(esContext);
+  EvalResultHelper::attachBuiltinPrint(esContext, esContext->globalObject());
 
   auto esFunctionTemplate = createFunctionTemplate(
       esContext,

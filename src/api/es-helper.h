@@ -198,12 +198,15 @@ class ArrayBufferHelper {
 
 class EvalResultHelper {
  public:
-  static void attachBuiltinPrint(ContextRef* context);
+  static void attachBuiltinPrint(ContextRef* context, ObjectRef* target);
   static Evaluator::EvaluatorResult compileRun(ContextRef* context,
                                                const char* source,
                                                bool isModule = false);
   static std::string getErrorString(
       ContextRef* context, const Evaluator::EvaluatorResult& eval_result);
+  static std::string getCallStackString(
+      const GCManagedVector<Evaluator::StackTraceData>& traceData,
+      size_t maxStackSize = 5);
 };
 
 class ExceptionHelper {
