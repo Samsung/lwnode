@@ -1585,7 +1585,7 @@ size_t v8::ArrayBufferView::CopyContents(void* dest, size_t byte_length) {
 }
 
 bool v8::ArrayBufferView::HasBuffer() const {
-  ArrayBufferObjectRef* esArrayBufferObject =
+  ArrayBufferRef* esArrayBufferObject =
       CVAL(this)->value()->asArrayBufferView()->buffer();
   return esArrayBufferObject != nullptr;
 }
