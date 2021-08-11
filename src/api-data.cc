@@ -1755,7 +1755,9 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
   return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
-void Function::SetName(v8::Local<v8::String> name) {}
+void Function::SetName(v8::Local<v8::String> name) {
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+}
 
 Local<Value> Function::GetName() const {
   LWNODE_RETURN_LOCAL(Value);
