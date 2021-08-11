@@ -31,7 +31,6 @@ test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
 test/parallel/test-buffer-constructor-outside-node-modules.js
 test/parallel/test-buffer-failed-alloc-typed-arrays.js
-test/parallel/test-buffer-fill.js
 test/parallel/test-buffer-from.js
 test/parallel/test-buffer-new.js
 test/parallel/test-buffer-no-negative-allocation.js

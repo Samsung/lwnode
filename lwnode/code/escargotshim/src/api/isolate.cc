@@ -54,6 +54,8 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* value) {
   // using v8:tryCatch, etc. In this case, we should not do any exception
   // handling.
 
+  set_scheduled_exception(value);
+
   // Note: No stack data exist
   GCManagedVector<Escargot::Evaluator::StackTraceData> stackTraceData;
   SetPendingExceptionAndMessage(value, stackTraceData);
@@ -88,6 +90,10 @@ Escargot::ValueRef* Isolate::scheduled_exception() {
 bool Isolate::has_scheduled_exception() {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   return !isHole(scheduled_exception_);
+}
+
+void Isolate::set_scheduled_exception(Escargot::ValueRef* exception_obj) {
+  scheduled_exception_ = exception_obj;
 }
 
 void Isolate::clear_scheduled_exception() {
@@ -524,6 +530,18 @@ void IsolateWrap::SetPendingExceptionAndMessage(
   // pending_message_obj: v8::Message isn't created. Instead v8::Message
   // uses `stackTraceData.stackTraces()` directly to make a result requested.
   set_pending_message_obj(nullptr);
+}
+
+void IsolateWrap::Throw(Escargot::ExecutionStateRef* state) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  LWNODE_DCHECK(has_scheduled_exception());
+
+  auto exception = scheduled_exception();
+  clear_scheduled_exception();
+  if (hasExternalTryCatch()) {
+    return;
+  }
+  state->throwException(exception);
 }
 
 ValueWrap** IsolateWrap::getGlobal(const int index) {
