@@ -388,11 +388,12 @@ static std::string getCodeLine(const std::string& codeString, int errorLine) {
   return result;
 }
 
-static std::string getCallStackString(
-    const GCManagedVector<Evaluator::StackTraceData>& traceData) {
+std::string EvalResultHelper::getCallStackString(
+    const GCManagedVector<Evaluator::StackTraceData>& traceData,
+    size_t maxStackSize) {
   std::ostringstream oss;
   const std::string separator = "  ";
-  size_t maxPrintStackSize = std::min(5, (int)traceData.size());
+  size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
 
   oss << "Call Stack:" << std::endl;
   for (size_t i = 0; i < maxPrintStackSize; ++i) {
@@ -501,7 +502,8 @@ Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
   return r;
 }
 
-void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
+void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
+                                          ObjectRef* target) {
   static auto builtinPrint = [](ExecutionStateRef* state,
                                 ValueRef* thisValue,
                                 size_t argc,
@@ -511,7 +513,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
       std::stringstream ss;
 
       for (size_t i = 0; i < argc; ++i) {
-        if (argv[0]->isSymbol()) {
+        if (argv[i]->isSymbol()) {
           ss << argv[i]
                     ->asSymbol()
                     ->symbolDescriptiveString()
@@ -553,37 +555,75 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context) {
     return ValueRef::createUndefined();
   };
 
-  Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
-    ContextRef* context = state->context();
+  static auto builtinPrintCallStack = [](ExecutionStateRef* state,
+                                         ValueRef* thisValue,
+                                         size_t argc,
+                                         ValueRef** argv,
+                                         bool isConstructCall) -> ValueRef* {
+    size_t maxStackSize = 5;
 
-    auto esPrint =
-        FunctionObjectRef::create(state,
-                                  FunctionObjectRef::NativeFunctionInfo(
-                                      AtomicStringRef::emptyAtomicString(),
-                                      builtinPrint,
-                                      1,
-                                      true,
-                                      false));
+    if (argc == 1 && argv[0]->isUInt32()) {
+      maxStackSize = argv[0]->toUint32(state);
+    }
 
-    esPrint->defineDataProperty(
-        state,
-        StringRef::createFromASCII("ptr"),
-        FunctionObjectRef::create(state,
-                                  FunctionObjectRef::NativeFunctionInfo(
-                                      AtomicStringRef::emptyAtomicString(),
-                                      builtinPrintAddress,
-                                      1,
-                                      true,
-                                      false)),
-        true,
-        true,
-        true);
-
-    context->globalObject()->defineDataProperty(
-        state, StringRef::createFromASCII("print"), esPrint, true, true, true);
+    LWNODE_DLOG_RAW(
+        "%s",
+        getCallStackString(state->computeStackTraceData(), maxStackSize)
+            .c_str());
 
     return ValueRef::createUndefined();
-  });
+  };
+
+  Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ObjectRef* target) -> ValueRef* {
+        auto esPrint =
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          builtinPrint,
+                                          1,
+                                          true,
+                                          false));
+
+        esPrint->defineDataProperty(
+            state,
+            StringRef::createFromASCII("ptr"),
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          builtinPrintAddress,
+                                          1,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        esPrint->defineDataProperty(
+            state,
+            StringRef::createFromASCII("stack"),
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          builtinPrintCallStack,
+                                          1,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        target->defineDataProperty(state,
+                                   StringRef::createFromASCII("print"),
+                                   esPrint,
+                                   true,
+                                   true,
+                                   true);
+
+        return ValueRef::createUndefined();
+      },
+      target);
 }
 
 ObjectData* ObjectRefHelper::createExtraDataIfNotExist(ObjectRef* object) {
