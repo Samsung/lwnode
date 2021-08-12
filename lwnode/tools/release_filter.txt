@@ -3,7 +3,6 @@ P /.github
 P /.circleci
 
 - /lwnode/tools
-- /lwnode/code/escargotshim/tool
 - /lwnode/code/escargotshim/sample
 - /lwnode/code/escargotshim/test
 - /out
@@ -12,7 +11,6 @@ P /.circleci
 - /deps/npm
 - /deps/zlib
 - /deps/openssl
-- /deps/gtest
 - /tools/node_modules
 - /tools/gyp/tools/Xcode
 + /lib/internal/test
