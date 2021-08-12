@@ -1605,10 +1605,26 @@ Local<v8::Object> v8::Object::Clone() {
 
 Local<v8::Context> v8::Object::CreationContext() {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  LWNODE_DCHECK_MSG(lwIsolate->getNumberOfContexts() == 1,
-                    "%zu",
-                    lwIsolate->getNumberOfContexts());
-  return v8::Utils::NewLocal(lwIsolate->toV8(), lwIsolate->GetCurrentContext());
+  auto esSelf = CVAL(this)->value()->asObject();
+
+  auto esVal = esSelf->creationContext();
+  if (!esVal.hasValue()) {
+    return Local<v8::Context>();
+  }
+
+  auto globalObjectData =
+      ObjectRefHelper::getExtraData(esVal.get()->globalObject())
+          ->asGlobalObjectData();
+
+  LWNODE_CHECK(globalObjectData->internalFieldCount() == 1);
+
+  auto lwCreationContext =
+      reinterpret_cast<ContextWrap*>(globalObjectData->internalField(0));
+
+  return v8::Local<v8::Context>::New(
+      lwIsolate->toV8(),
+      reinterpret_cast<v8::Context*>(
+          EscargotShim::ValueWrap::createContext(lwCreationContext)));
 }
 
 int v8::Object::GetIdentityHash() {

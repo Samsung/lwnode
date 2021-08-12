@@ -23,6 +23,7 @@
 
 namespace EscargotShim {
 class ExternalObjectData;
+class GlobalObjectData;
 class ValueWrap;
 class BackingStoreWrap;
 
@@ -35,9 +36,15 @@ class ObjectData : public gc {
     return reinterpret_cast<ExternalObjectData*>(this);
   }
 
+  GlobalObjectData* asGlobalObjectData() {
+    LWNODE_CHECK(isGlobalObjectData());
+    return reinterpret_cast<GlobalObjectData*>(this);
+  }
+
   virtual bool isFunctionData() const { return false; }
   virtual bool isExternalObjectData() const { return false; }
   virtual bool isExceptionObjectData() const { return false; }
+  virtual bool isGlobalObjectData() const { return false; }
 
   ObjectData* clone();
 
@@ -130,6 +137,11 @@ class ExceptionObjectData : public ObjectData {
 
  private:
   GCVector<StackTraceData*> stackTraces_;
+};
+
+class GlobalObjectData : public ObjectData {
+ public:
+  bool isGlobalObjectData() const override { return true; }
 };
 
 }  // namespace EscargotShim
