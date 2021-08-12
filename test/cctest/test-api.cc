@@ -1982,30 +1982,30 @@ static void DummyCallHandler(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 
-// static void GetM(Local<String> name,
-//                  const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(876));
-// }
+static void GetM(Local<String> name,
+                 const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  info.GetReturnValue().Set(v8_num(876));
+}
 
 
-// THREADED_TEST(GlobalPrototype) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::FunctionTemplate> func_templ =
-//       v8::FunctionTemplate::New(isolate);
-//   func_templ->PrototypeTemplate()->Set(
-//       isolate, "dummy", v8::FunctionTemplate::New(isolate, DummyCallHandler));
-//   v8::Local<ObjectTemplate> templ = func_templ->InstanceTemplate();
-//   templ->Set(isolate, "x", v8_num(200));
-//   templ->SetAccessor(v8_str("m"), GetM);
-//   LocalContext env(nullptr, templ);
-//   v8::Local<Script> script(v8_compile("dummy()"));
-//   v8::Local<Value> result(script->Run(env.local()).ToLocalChecked());
-//   CHECK_EQ(13.4, result->NumberValue(env.local()).FromJust());
-//   CHECK_EQ(200, v8_run_int32value(v8_compile("x")));
-//   CHECK_EQ(876, v8_run_int32value(v8_compile("m")));
-// }
+THREADED_TEST(GlobalPrototype) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::FunctionTemplate> func_templ =
+      v8::FunctionTemplate::New(isolate);
+  func_templ->PrototypeTemplate()->Set(
+      isolate, "dummy", v8::FunctionTemplate::New(isolate, DummyCallHandler));
+  v8::Local<ObjectTemplate> templ = func_templ->InstanceTemplate();
+  templ->Set(isolate, "x", v8_num(200));
+  templ->SetAccessor(v8_str("m"), GetM);
+  LocalContext env(nullptr, templ);
+  v8::Local<Script> script(v8_compile("dummy()"));
+  v8::Local<Value> result(script->Run(env.local()).ToLocalChecked());
+  CHECK_EQ(13.4, result->NumberValue(env.local()).FromJust());
+  CHECK_EQ(200, v8_run_int32value(v8_compile("x")));
+  CHECK_EQ(876, v8_run_int32value(v8_compile("m")));
+}
 
 
 THREADED_TEST(ObjectTemplate) {
@@ -4942,230 +4942,230 @@ THREADED_TEST(Array) {
 }
 
 
-// void HandleF(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   v8::EscapableHandleScope scope(args.GetIsolate());
-//   ApiTestFuzzer::Fuzz();
-//   Local<v8::Array> result = v8::Array::New(args.GetIsolate(), args.Length());
-//   for (int i = 0; i < args.Length(); i++) {
-//     CHECK(result->Set(CcTest::isolate()->GetCurrentContext(), i, args[i])
-//               .FromJust());
-//   }
-//   args.GetReturnValue().Set(scope.Escape(result));
-// }
+void HandleF(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  v8::EscapableHandleScope scope(args.GetIsolate());
+  // ApiTestFuzzer::Fuzz();
+  Local<v8::Array> result = v8::Array::New(args.GetIsolate(), args.Length());
+  for (int i = 0; i < args.Length(); i++) {
+    CHECK(result->Set(CcTest::isolate()->GetCurrentContext(), i, args[i])
+              .FromJust());
+  }
+  args.GetReturnValue().Set(scope.Escape(result));
+}
 
 
-// THREADED_TEST(Vector) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
-//   global->Set(v8_str("f"), v8::FunctionTemplate::New(isolate, HandleF));
-//   LocalContext context(nullptr, global);
+THREADED_TEST(Vector) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
+  global->Set(v8_str("f"), v8::FunctionTemplate::New(isolate, HandleF));
+  LocalContext context(nullptr, global);
 
-//   const char* fun = "f()";
-//   Local<v8::Array> a0 = CompileRun(fun).As<v8::Array>();
-//   CHECK_EQ(0u, a0->Length());
+  const char* fun = "f()";
+  Local<v8::Array> a0 = CompileRun(fun).As<v8::Array>();
+  CHECK_EQ(0u, a0->Length());
 
-//   const char* fun2 = "f(11)";
-//   Local<v8::Array> a1 = CompileRun(fun2).As<v8::Array>();
-//   CHECK_EQ(1u, a1->Length());
-//   CHECK_EQ(11, a1->Get(context.local(), 0)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
+  const char* fun2 = "f(11)";
+  Local<v8::Array> a1 = CompileRun(fun2).As<v8::Array>();
+  CHECK_EQ(1u, a1->Length());
+  CHECK_EQ(11, a1->Get(context.local(), 0)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
 
-//   const char* fun3 = "f(12, 13)";
-//   Local<v8::Array> a2 = CompileRun(fun3).As<v8::Array>();
-//   CHECK_EQ(2u, a2->Length());
-//   CHECK_EQ(12, a2->Get(context.local(), 0)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(13, a2->Get(context.local(), 1)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
+  const char* fun3 = "f(12, 13)";
+  Local<v8::Array> a2 = CompileRun(fun3).As<v8::Array>();
+  CHECK_EQ(2u, a2->Length());
+  CHECK_EQ(12, a2->Get(context.local(), 0)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(13, a2->Get(context.local(), 1)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
 
-//   const char* fun4 = "f(14, 15, 16)";
-//   Local<v8::Array> a3 = CompileRun(fun4).As<v8::Array>();
-//   CHECK_EQ(3u, a3->Length());
-//   CHECK_EQ(14, a3->Get(context.local(), 0)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(15, a3->Get(context.local(), 1)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(16, a3->Get(context.local(), 2)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
+  const char* fun4 = "f(14, 15, 16)";
+  Local<v8::Array> a3 = CompileRun(fun4).As<v8::Array>();
+  CHECK_EQ(3u, a3->Length());
+  CHECK_EQ(14, a3->Get(context.local(), 0)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(15, a3->Get(context.local(), 1)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(16, a3->Get(context.local(), 2)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
 
-//   const char* fun5 = "f(17, 18, 19, 20)";
-//   Local<v8::Array> a4 = CompileRun(fun5).As<v8::Array>();
-//   CHECK_EQ(4u, a4->Length());
-//   CHECK_EQ(17, a4->Get(context.local(), 0)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(18, a4->Get(context.local(), 1)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(19, a4->Get(context.local(), 2)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(20, a4->Get(context.local(), 3)
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-// }
+  const char* fun5 = "f(17, 18, 19, 20)";
+  Local<v8::Array> a4 = CompileRun(fun5).As<v8::Array>();
+  CHECK_EQ(4u, a4->Length());
+  CHECK_EQ(17, a4->Get(context.local(), 0)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(18, a4->Get(context.local(), 1)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(19, a4->Get(context.local(), 2)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(20, a4->Get(context.local(), 3)
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+}
 
 
-// THREADED_TEST(FunctionCall) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   CompileRun(
-//       "function Foo() {"
-//       "  var result = [];"
-//       "  for (var i = 0; i < arguments.length; i++) {"
-//       "    result.push(arguments[i]);"
-//       "  }"
-//       "  return result;"
-//       "}"
-//       "function ReturnThisSloppy() {"
-//       "  return this;"
-//       "}"
-//       "function ReturnThisStrict() {"
-//       "  'use strict';"
-//       "  return this;"
-//       "}");
-//   Local<Function> Foo = Local<Function>::Cast(
-//       context->Global()->Get(context.local(), v8_str("Foo")).ToLocalChecked());
-//   Local<Function> ReturnThisSloppy = Local<Function>::Cast(
-//       context->Global()
-//           ->Get(context.local(), v8_str("ReturnThisSloppy"))
-//           .ToLocalChecked());
-//   Local<Function> ReturnThisStrict = Local<Function>::Cast(
-//       context->Global()
-//           ->Get(context.local(), v8_str("ReturnThisStrict"))
-//           .ToLocalChecked());
+THREADED_TEST(FunctionCall) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  CompileRun(
+      "function Foo() {"
+      "  var result = [];"
+      "  for (var i = 0; i < arguments.length; i++) {"
+      "    result.push(arguments[i]);"
+      "  }"
+      "  return result;"
+      "}"
+      "function ReturnThisSloppy() {"
+      "  return this;"
+      "}"
+      "function ReturnThisStrict() {"
+      "  'use strict';"
+      "  return this;"
+      "}");
+  Local<Function> Foo = Local<Function>::Cast(
+      context->Global()->Get(context.local(), v8_str("Foo")).ToLocalChecked());
+  Local<Function> ReturnThisSloppy = Local<Function>::Cast(
+      context->Global()
+          ->Get(context.local(), v8_str("ReturnThisSloppy"))
+          .ToLocalChecked());
+  Local<Function> ReturnThisStrict = Local<Function>::Cast(
+      context->Global()
+          ->Get(context.local(), v8_str("ReturnThisStrict"))
+          .ToLocalChecked());
 
-//   v8::Local<Value>* args0 = nullptr;
-//   Local<v8::Array> a0 = Local<v8::Array>::Cast(
-//       Foo->Call(context.local(), Foo, 0, args0).ToLocalChecked());
-//   CHECK_EQ(0u, a0->Length());
+  v8::Local<Value>* args0 = nullptr;
+  Local<v8::Array> a0 = Local<v8::Array>::Cast(
+      Foo->Call(context.local(), Foo, 0, args0).ToLocalChecked());
+  CHECK_EQ(0u, a0->Length());
 
-//   v8::Local<Value> args1[] = {v8_num(1.1)};
-//   Local<v8::Array> a1 = Local<v8::Array>::Cast(
-//       Foo->Call(context.local(), Foo, 1, args1).ToLocalChecked());
-//   CHECK_EQ(1u, a1->Length());
-//   CHECK_EQ(1.1, a1->Get(context.local(), v8::Integer::New(isolate, 0))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
+  v8::Local<Value> args1[] = {v8_num(1.1)};
+  Local<v8::Array> a1 = Local<v8::Array>::Cast(
+      Foo->Call(context.local(), Foo, 1, args1).ToLocalChecked());
+  CHECK_EQ(1u, a1->Length());
+  CHECK_EQ(1.1, a1->Get(context.local(), v8::Integer::New(isolate, 0))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
 
-//   v8::Local<Value> args2[] = {v8_num(2.2), v8_num(3.3)};
-//   Local<v8::Array> a2 = Local<v8::Array>::Cast(
-//       Foo->Call(context.local(), Foo, 2, args2).ToLocalChecked());
-//   CHECK_EQ(2u, a2->Length());
-//   CHECK_EQ(2.2, a2->Get(context.local(), v8::Integer::New(isolate, 0))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
-//   CHECK_EQ(3.3, a2->Get(context.local(), v8::Integer::New(isolate, 1))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
+  v8::Local<Value> args2[] = {v8_num(2.2), v8_num(3.3)};
+  Local<v8::Array> a2 = Local<v8::Array>::Cast(
+      Foo->Call(context.local(), Foo, 2, args2).ToLocalChecked());
+  CHECK_EQ(2u, a2->Length());
+  CHECK_EQ(2.2, a2->Get(context.local(), v8::Integer::New(isolate, 0))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
+  CHECK_EQ(3.3, a2->Get(context.local(), v8::Integer::New(isolate, 1))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
 
-//   v8::Local<Value> args3[] = {v8_num(4.4), v8_num(5.5), v8_num(6.6)};
-//   Local<v8::Array> a3 = Local<v8::Array>::Cast(
-//       Foo->Call(context.local(), Foo, 3, args3).ToLocalChecked());
-//   CHECK_EQ(3u, a3->Length());
-//   CHECK_EQ(4.4, a3->Get(context.local(), v8::Integer::New(isolate, 0))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
-//   CHECK_EQ(5.5, a3->Get(context.local(), v8::Integer::New(isolate, 1))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
-//   CHECK_EQ(6.6, a3->Get(context.local(), v8::Integer::New(isolate, 2))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
+  v8::Local<Value> args3[] = {v8_num(4.4), v8_num(5.5), v8_num(6.6)};
+  Local<v8::Array> a3 = Local<v8::Array>::Cast(
+      Foo->Call(context.local(), Foo, 3, args3).ToLocalChecked());
+  CHECK_EQ(3u, a3->Length());
+  CHECK_EQ(4.4, a3->Get(context.local(), v8::Integer::New(isolate, 0))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
+  CHECK_EQ(5.5, a3->Get(context.local(), v8::Integer::New(isolate, 1))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
+  CHECK_EQ(6.6, a3->Get(context.local(), v8::Integer::New(isolate, 2))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
 
-//   v8::Local<Value> args4[] = {v8_num(7.7), v8_num(8.8), v8_num(9.9),
-//                               v8_num(10.11)};
-//   Local<v8::Array> a4 = Local<v8::Array>::Cast(
-//       Foo->Call(context.local(), Foo, 4, args4).ToLocalChecked());
-//   CHECK_EQ(4u, a4->Length());
-//   CHECK_EQ(7.7, a4->Get(context.local(), v8::Integer::New(isolate, 0))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
-//   CHECK_EQ(8.8, a4->Get(context.local(), v8::Integer::New(isolate, 1))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
-//   CHECK_EQ(9.9, a4->Get(context.local(), v8::Integer::New(isolate, 2))
-//                     .ToLocalChecked()
-//                     ->NumberValue(context.local())
-//                     .FromJust());
-//   CHECK_EQ(10.11, a4->Get(context.local(), v8::Integer::New(isolate, 3))
-//                       .ToLocalChecked()
-//                       ->NumberValue(context.local())
-//                       .FromJust());
+  v8::Local<Value> args4[] = {v8_num(7.7), v8_num(8.8), v8_num(9.9),
+                              v8_num(10.11)};
+  Local<v8::Array> a4 = Local<v8::Array>::Cast(
+      Foo->Call(context.local(), Foo, 4, args4).ToLocalChecked());
+  CHECK_EQ(4u, a4->Length());
+  CHECK_EQ(7.7, a4->Get(context.local(), v8::Integer::New(isolate, 0))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
+  CHECK_EQ(8.8, a4->Get(context.local(), v8::Integer::New(isolate, 1))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
+  CHECK_EQ(9.9, a4->Get(context.local(), v8::Integer::New(isolate, 2))
+                    .ToLocalChecked()
+                    ->NumberValue(context.local())
+                    .FromJust());
+  CHECK_EQ(10.11, a4->Get(context.local(), v8::Integer::New(isolate, 3))
+                      .ToLocalChecked()
+                      ->NumberValue(context.local())
+                      .FromJust());
 
-//   Local<v8::Value> r1 =
-//       ReturnThisSloppy
-//           ->Call(context.local(), v8::Undefined(isolate), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r1->StrictEquals(context->Global()));
-//   Local<v8::Value> r2 =
-//       ReturnThisSloppy->Call(context.local(), v8::Null(isolate), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r2->StrictEquals(context->Global()));
-//   Local<v8::Value> r3 =
-//       ReturnThisSloppy->Call(context.local(), v8_num(42), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r3->IsNumberObject());
-//   CHECK_EQ(42.0, r3.As<v8::NumberObject>()->ValueOf());
-//   Local<v8::Value> r4 =
-//       ReturnThisSloppy->Call(context.local(), v8_str("hello"), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r4->IsStringObject());
-//   CHECK(r4.As<v8::StringObject>()->ValueOf()->StrictEquals(v8_str("hello")));
-//   Local<v8::Value> r5 =
-//       ReturnThisSloppy->Call(context.local(), v8::True(isolate), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r5->IsBooleanObject());
-//   CHECK(r5.As<v8::BooleanObject>()->ValueOf());
+  Local<v8::Value> r1 =
+      ReturnThisSloppy
+          ->Call(context.local(), v8::Undefined(isolate), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r1->StrictEquals(context->Global()));
+  Local<v8::Value> r2 =
+      ReturnThisSloppy->Call(context.local(), v8::Null(isolate), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r2->StrictEquals(context->Global()));
+  Local<v8::Value> r3 =
+      ReturnThisSloppy->Call(context.local(), v8_num(42), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r3->IsNumberObject());
+  CHECK_EQ(42.0, r3.As<v8::NumberObject>()->ValueOf());
+  Local<v8::Value> r4 =
+      ReturnThisSloppy->Call(context.local(), v8_str("hello"), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r4->IsStringObject());
+  CHECK(r4.As<v8::StringObject>()->ValueOf()->StrictEquals(v8_str("hello")));
+  Local<v8::Value> r5 =
+      ReturnThisSloppy->Call(context.local(), v8::True(isolate), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r5->IsBooleanObject());
+  CHECK(r5.As<v8::BooleanObject>()->ValueOf());
 
-//   Local<v8::Value> r6 =
-//       ReturnThisStrict
-//           ->Call(context.local(), v8::Undefined(isolate), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r6->IsUndefined());
-//   Local<v8::Value> r7 =
-//       ReturnThisStrict->Call(context.local(), v8::Null(isolate), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r7->IsNull());
-//   Local<v8::Value> r8 =
-//       ReturnThisStrict->Call(context.local(), v8_num(42), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r8->StrictEquals(v8_num(42)));
-//   Local<v8::Value> r9 =
-//       ReturnThisStrict->Call(context.local(), v8_str("hello"), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r9->StrictEquals(v8_str("hello")));
-//   Local<v8::Value> r10 =
-//       ReturnThisStrict->Call(context.local(), v8::True(isolate), 0, nullptr)
-//           .ToLocalChecked();
-//   CHECK(r10->StrictEquals(v8::True(isolate)));
-// }
+  Local<v8::Value> r6 =
+      ReturnThisStrict
+          ->Call(context.local(), v8::Undefined(isolate), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r6->IsUndefined());
+  Local<v8::Value> r7 =
+      ReturnThisStrict->Call(context.local(), v8::Null(isolate), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r7->IsNull());
+  Local<v8::Value> r8 =
+      ReturnThisStrict->Call(context.local(), v8_num(42), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r8->StrictEquals(v8_num(42)));
+  Local<v8::Value> r9 =
+      ReturnThisStrict->Call(context.local(), v8_str("hello"), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r9->StrictEquals(v8_str("hello")));
+  Local<v8::Value> r10 =
+      ReturnThisStrict->Call(context.local(), v8::True(isolate), 0, nullptr)
+          .ToLocalChecked();
+  CHECK(r10->StrictEquals(v8::True(isolate)));
+}
 
 
 THREADED_TEST(ConstructCall) {
@@ -5304,56 +5304,56 @@ THREADED_TEST(ConversionNumber) {
 }
 
 
-// THREADED_TEST(isNumberType) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   // Very large number.
-//   CompileRun("var obj = Math.pow(2,32) * 1237;");
-//   Local<Value> obj =
-//       env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(!obj->IsInt32());
-//   CHECK(!obj->IsUint32());
-//   // Large negative number.
-//   CompileRun("var obj = -1234567890123;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(!obj->IsInt32());
-//   CHECK(!obj->IsUint32());
-//   // Small positive integer.
-//   CompileRun("var obj = 42;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(obj->IsInt32());
-//   CHECK(obj->IsUint32());
-//   // Negative integer.
-//   CompileRun("var obj = -37;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(obj->IsInt32());
-//   CHECK(!obj->IsUint32());
-//   // Positive non-int32 integer.
-//   CompileRun("var obj = 0x81234567;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(!obj->IsInt32());
-//   CHECK(obj->IsUint32());
-//   // Fraction.
-//   CompileRun("var obj = 42.3;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(!obj->IsInt32());
-//   CHECK(!obj->IsUint32());
-//   // Large negative fraction.
-//   CompileRun("var obj = -5726623061.75;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(!obj->IsInt32());
-//   CHECK(!obj->IsUint32());
-//   // Positive zero
-//   CompileRun("var obj = 0.0;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(obj->IsInt32());
-//   CHECK(obj->IsUint32());
-//   // Negative zero
-//   CompileRun("var obj = -0.0;");
-//   obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
-//   CHECK(!obj->IsInt32());
-//   CHECK(!obj->IsUint32());
-// }
+THREADED_TEST(isNumberType) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  // Very large number.
+  CompileRun("var obj = Math.pow(2,32) * 1237;");
+  Local<Value> obj =
+      env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(!obj->IsInt32());
+  CHECK(!obj->IsUint32());
+  // Large negative number.
+  CompileRun("var obj = -1234567890123;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(!obj->IsInt32());
+  CHECK(!obj->IsUint32());
+  // Small positive integer.
+  CompileRun("var obj = 42;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(obj->IsInt32());
+  CHECK(obj->IsUint32());
+  // Negative integer.
+  CompileRun("var obj = -37;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(obj->IsInt32());
+  CHECK(!obj->IsUint32());
+  // Positive non-int32 integer.
+  CompileRun("var obj = 0x81234567;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(!obj->IsInt32());
+  CHECK(obj->IsUint32());
+  // Fraction.
+  CompileRun("var obj = 42.3;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(!obj->IsInt32());
+  CHECK(!obj->IsUint32());
+  // Large negative fraction.
+  CompileRun("var obj = -5726623061.75;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(!obj->IsInt32());
+  CHECK(!obj->IsUint32());
+  // Positive zero
+  CompileRun("var obj = 0.0;");
+  obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  CHECK(obj->IsInt32());
+  CHECK(obj->IsUint32());
+  // // Negative zero
+  // CompileRun("var obj = -0.0;");
+  // obj = env->Global()->Get(env.local(), v8_str("obj")).ToLocalChecked();
+  // CHECK(!obj->IsInt32());
+  // CHECK(!obj->IsUint32());
+}
 
 THREADED_TEST(IntegerType) {
   LocalContext env;
@@ -7864,37 +7864,37 @@ void StoringErrorCallback(const char* location, const char* message) {
 //   }
 // }
 
-// v8::Local<Function> args_fun;
+v8::Local<Function> args_fun;
 
 
-// static void ArgumentsTestCallback(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   v8::Isolate* isolate = args.GetIsolate();
-//   Local<Context> context = isolate->GetCurrentContext();
-//   CHECK_EQ(3, args.Length());
-//   CHECK(v8::Integer::New(isolate, 1)->Equals(context, args[0]).FromJust());
-//   CHECK(v8::Integer::New(isolate, 2)->Equals(context, args[1]).FromJust());
-//   CHECK(v8::Integer::New(isolate, 3)->Equals(context, args[2]).FromJust());
-//   CHECK(v8::Undefined(isolate)->Equals(context, args[3]).FromJust());
-//   v8::HandleScope scope(args.GetIsolate());
-//   CcTest::CollectAllGarbage();
-// }
+static void ArgumentsTestCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  v8::Isolate* isolate = args.GetIsolate();
+  Local<Context> context = isolate->GetCurrentContext();
+  CHECK_EQ(3, args.Length());
+  CHECK(v8::Integer::New(isolate, 1)->Equals(context, args[0]).FromJust());
+  CHECK(v8::Integer::New(isolate, 2)->Equals(context, args[1]).FromJust());
+  CHECK(v8::Integer::New(isolate, 3)->Equals(context, args[2]).FromJust());
+  CHECK(v8::Undefined(isolate)->Equals(context, args[3]).FromJust());
+  v8::HandleScope scope(args.GetIsolate());
+  CcTest::CollectAllGarbage();
+}
 
 
-// THREADED_TEST(Arguments) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> global = ObjectTemplate::New(isolate);
-//   global->Set(v8_str("f"),
-//               v8::FunctionTemplate::New(isolate, ArgumentsTestCallback));
-//   LocalContext context(nullptr, global);
-//   args_fun = context->Global()
-//                  ->Get(context.local(), v8_str("f"))
-//                  .ToLocalChecked()
-//                  .As<Function>();
-//   v8_compile("f(1, 2, 3)")->Run(context.local()).ToLocalChecked();
-// }
+THREADED_TEST(Arguments) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> global = ObjectTemplate::New(isolate);
+  global->Set(v8_str("f"),
+              v8::FunctionTemplate::New(isolate, ArgumentsTestCallback));
+  LocalContext context(nullptr, global);
+  args_fun = context->Global()
+                 ->Get(context.local(), v8_str("f"))
+                 .ToLocalChecked()
+                 .As<Function>();
+  v8_compile("f(1, 2, 3)")->Run(context.local()).ToLocalChecked();
+}
 
 
 // static int p_getter_count;
@@ -10214,43 +10214,43 @@ static bool AccessCounter(Local<v8::Context> accessing_context,
 // THREADED_TEST(Version) { v8::V8::GetVersion(); }
 
 
-// static void InstanceFunctionCallback(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   args.GetReturnValue().Set(v8_num(12));
-// }
+static void InstanceFunctionCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  args.GetReturnValue().Set(v8_num(12));
+}
 
 
-// THREADED_TEST(InstanceProperties) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
+THREADED_TEST(InstanceProperties) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
-//   Local<ObjectTemplate> instance = t->InstanceTemplate();
+  Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
+  Local<ObjectTemplate> instance = t->InstanceTemplate();
 
-//   instance->Set(v8_str("x"), v8_num(42));
-//   instance->Set(v8_str("f"),
-//                 v8::FunctionTemplate::New(isolate, InstanceFunctionCallback));
+  instance->Set(v8_str("x"), v8_num(42));
+  instance->Set(v8_str("f"),
+                v8::FunctionTemplate::New(isolate, InstanceFunctionCallback));
 
-//   Local<Value> o = t->GetFunction(context.local())
-//                        .ToLocalChecked()
-//                        ->NewInstance(context.local())
-//                        .ToLocalChecked();
+  Local<Value> o = t->GetFunction(context.local())
+                       .ToLocalChecked()
+                       ->NewInstance(context.local())
+                       .ToLocalChecked();
 
-//   CHECK(context->Global()->Set(context.local(), v8_str("i"), o).FromJust());
-//   Local<Value> value = CompileRun("i.x");
-//   CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
+  CHECK(context->Global()->Set(context.local(), v8_str("i"), o).FromJust());
+  Local<Value> value = CompileRun("i.x");
+  CHECK_EQ(42, value->Int32Value(context.local()).FromJust());
 
-//   value = CompileRun("i.f()");
-//   CHECK_EQ(12, value->Int32Value(context.local()).FromJust());
-// }
+  value = CompileRun("i.f()");
+  CHECK_EQ(12, value->Int32Value(context.local()).FromJust());
+}
 
 
-// static void GlobalObjectInstancePropertiesGet(
-//     Local<Name> key, const v8::PropertyCallbackInfo<v8::Value>&) {
-//   ApiTestFuzzer::Fuzz();
-// }
+static void GlobalObjectInstancePropertiesGet(
+    Local<Name> key, const v8::PropertyCallbackInfo<v8::Value>&) {
+  // ApiTestFuzzer::Fuzz();
+}
 
 // static int script_execution_count = 0;
 // static void ScriptExecutionCallback(v8::Isolate* isolate,
@@ -10310,62 +10310,62 @@ static bool AccessCounter(Local<v8::Context> accessing_context,
 //   }
 // }
 
-// THREADED_TEST(GlobalObjectInstanceProperties) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
+THREADED_TEST(GlobalObjectInstanceProperties) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   Local<Value> global_object;
+  Local<Value> global_object;
 
-//   Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
-//   t->InstanceTemplate()->SetHandler(
-//       v8::NamedPropertyHandlerConfiguration(GlobalObjectInstancePropertiesGet));
-//   Local<ObjectTemplate> instance_template = t->InstanceTemplate();
-//   instance_template->Set(v8_str("x"), v8_num(42));
-//   instance_template->Set(v8_str("f"),
-//                          v8::FunctionTemplate::New(isolate,
-//                                                    InstanceFunctionCallback));
+  Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
+  t->InstanceTemplate()->SetHandler(
+      v8::NamedPropertyHandlerConfiguration(GlobalObjectInstancePropertiesGet));
+  Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+  instance_template->Set(v8_str("x"), v8_num(42));
+  instance_template->Set(v8_str("f"),
+                         v8::FunctionTemplate::New(isolate,
+                                                   InstanceFunctionCallback));
 
-//   // The script to check how TurboFan compiles missing global function
-//   // invocations.  function g is not defined and should throw on call.
-//   const char* script =
-//       "function wrapper(call) {"
-//       "  var x = 0, y = 1;"
-//       "  for (var i = 0; i < 1000; i++) {"
-//       "    x += i * 100;"
-//       "    y += i * 100;"
-//       "  }"
-//       "  if (call) g();"
-//       "}"
-//       "for (var i = 0; i < 17; i++) wrapper(false);"
-//       "var thrown = 0;"
-//       "try { wrapper(true); } catch (e) { thrown = 1; };"
-//       "thrown";
+  // The script to check how TurboFan compiles missing global function
+  // invocations.  function g is not defined and should throw on call.
+  const char* script =
+      "function wrapper(call) {"
+      "  var x = 0, y = 1;"
+      "  for (var i = 0; i < 1000; i++) {"
+      "    x += i * 100;"
+      "    y += i * 100;"
+      "  }"
+      "  if (call) g();"
+      "}"
+      "for (var i = 0; i < 17; i++) wrapper(false);"
+      "var thrown = 0;"
+      "try { wrapper(true); } catch (e) { thrown = 1; };"
+      "thrown";
 
-//   {
-//     LocalContext env(nullptr, instance_template);
-//     // Hold on to the global object so it can be used again in another
-//     // environment initialization.
-//     global_object = env->Global();
+  {
+    LocalContext env(nullptr, instance_template);
+    // Hold on to the global object so it can be used again in another
+    // environment initialization.
+    global_object = env->Global();
 
-//     Local<Value> value = CompileRun("x");
-//     CHECK_EQ(42, value->Int32Value(env.local()).FromJust());
-//     value = CompileRun("f()");
-//     CHECK_EQ(12, value->Int32Value(env.local()).FromJust());
-//     value = CompileRun(script);
-//     CHECK_EQ(1, value->Int32Value(env.local()).FromJust());
-//   }
+    Local<Value> value = CompileRun("x");
+    CHECK_EQ(42, value->Int32Value(env.local()).FromJust());
+    value = CompileRun("f()");
+    CHECK_EQ(12, value->Int32Value(env.local()).FromJust());
+    value = CompileRun(script);
+    CHECK_EQ(1, value->Int32Value(env.local()).FromJust());
+  }
 
-//   {
-//     // Create new environment reusing the global object.
-//     LocalContext env(nullptr, instance_template, global_object);
-//     Local<Value> value = CompileRun("x");
-//     CHECK_EQ(42, value->Int32Value(env.local()).FromJust());
-//     value = CompileRun("f()");
-//     CHECK_EQ(12, value->Int32Value(env.local()).FromJust());
-//     value = CompileRun(script);
-//     CHECK_EQ(1, value->Int32Value(env.local()).FromJust());
-//   }
-// }
+  {
+    // Create new environment reusing the global object.
+    LocalContext env(nullptr, instance_template, global_object);
+    Local<Value> value = CompileRun("x");
+    CHECK_EQ(42, value->Int32Value(env.local()).FromJust());
+    value = CompileRun("f()");
+    CHECK_EQ(12, value->Int32Value(env.local()).FromJust());
+    value = CompileRun(script);
+    CHECK_EQ(1, value->Int32Value(env.local()).FromJust());
+  }
+}
 
 THREADED_TEST(ObjectGetOwnPropertyNames) {
   LocalContext context;
@@ -10452,45 +10452,45 @@ THREADED_TEST(ObjectGetOwnPropertyNames) {
   CHECK(concat_found && starts_with_found);
 }
 
-// THREADED_TEST(CallKnownGlobalReceiver) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope handle_scope(isolate);
+THREADED_TEST(CallKnownGlobalReceiver) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   Local<Value> global_object;
+  Local<Value> global_object;
 
-//   Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
-//   Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+  Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate);
+  Local<ObjectTemplate> instance_template = t->InstanceTemplate();
 
-//   // The script to check that we leave global object not
-//   // global object proxy on stack when we deoptimize from inside
-//   // arguments evaluation.
-//   // To provoke error we need to both force deoptimization
-//   // from arguments evaluation and to force CallIC to take
-//   // CallIC_Miss code path that can't cope with global proxy.
-//   const char* script =
-//       "function bar(x, y) { try { } finally { } }"
-//       "function baz(x) { try { } finally { } }"
-//       "function bom(x) { try { } finally { } }"
-//       "function foo(x) { bar([x], bom(2)); }"
-//       "for (var i = 0; i < 10000; i++) foo(1);"
-//       "foo";
+  // The script to check that we leave global object not
+  // global object proxy on stack when we deoptimize from inside
+  // arguments evaluation.
+  // To provoke error we need to both force deoptimization
+  // from arguments evaluation and to force CallIC to take
+  // CallIC_Miss code path that can't cope with global proxy.
+  const char* script =
+      "function bar(x, y) { try { } finally { } }"
+      "function baz(x) { try { } finally { } }"
+      "function bom(x) { try { } finally { } }"
+      "function foo(x) { bar([x], bom(2)); }"
+      "for (var i = 0; i < 10000; i++) foo(1);"
+      "foo";
 
-//   Local<Value> foo;
-//   {
-//     LocalContext env(nullptr, instance_template);
-//     // Hold on to the global object so it can be used again in another
-//     // environment initialization.
-//     global_object = env->Global();
-//     foo = CompileRun(script);
-//   }
+  Local<Value> foo;
+  {
+    LocalContext env(nullptr, instance_template);
+    // Hold on to the global object so it can be used again in another
+    // environment initialization.
+    global_object = env->Global();
+    foo = CompileRun(script);
+  }
 
-//   {
-//     // Create new environment reusing the global object.
-//     LocalContext env(nullptr, instance_template, global_object);
-//     CHECK(env->Global()->Set(env.local(), v8_str("foo"), foo).FromJust());
-//     CompileRun("foo()");
-//   }
-// }
+  {
+    // Create new environment reusing the global object.
+    LocalContext env(nullptr, instance_template, global_object);
+    CHECK(env->Global()->Set(env.local(), v8_str("foo"), foo).FromJust());
+    CompileRun("foo()");
+  }
+}
 
 
 static void ShadowFunctionCallback(
