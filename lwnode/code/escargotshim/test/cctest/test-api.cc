@@ -18968,111 +18968,111 @@ TEST(NamedEnumeratorAndForIn) {
 // }
 
 
-// static void InstallContextId(v8::Local<Context> context, int id) {
-//   Context::Scope scope(context);
-//   CHECK(CompileRun("Object.prototype")
-//             .As<Object>()
-//             ->Set(context, v8_str("context_id"),
-//                   v8::Integer::New(context->GetIsolate(), id))
-//             .FromJust());
-// }
+static void InstallContextId(v8::Local<Context> context, int id) {
+  Context::Scope scope(context);
+  CHECK(CompileRun("Object.prototype")
+            .As<Object>()
+            ->Set(context, v8_str("context_id"),
+                  v8::Integer::New(context->GetIsolate(), id))
+            .FromJust());
+}
 
 
-// static void CheckContextId(v8::Local<Object> object, int expected) {
-//   v8::Local<v8::Context> context = CcTest::isolate()->GetCurrentContext();
-//   CHECK_EQ(expected, object->Get(context, v8_str("context_id"))
-//                          .ToLocalChecked()
-//                          ->Int32Value(context)
-//                          .FromJust());
-// }
+static void CheckContextId(v8::Local<Object> object, int expected) {
+  v8::Local<v8::Context> context = CcTest::isolate()->GetCurrentContext();
+  CHECK_EQ(expected, object->Get(context, v8_str("context_id"))
+                         .ToLocalChecked()
+                         ->Int32Value(context)
+                         .FromJust());
+}
 
 
-// THREADED_TEST(CreationContext) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   HandleScope handle_scope(isolate);
-//   Local<Context> context1 = Context::New(isolate);
-//   InstallContextId(context1, 1);
-//   Local<Context> context2 = Context::New(isolate);
-//   InstallContextId(context2, 2);
-//   Local<Context> context3 = Context::New(isolate);
-//   InstallContextId(context3, 3);
+THREADED_TEST(CreationContext) {
+  v8::Isolate* isolate = CcTest::isolate();
+  HandleScope handle_scope(isolate);
+  Local<Context> context1 = Context::New(isolate);
+  InstallContextId(context1, 1);
+  Local<Context> context2 = Context::New(isolate);
+  InstallContextId(context2, 2);
+  Local<Context> context3 = Context::New(isolate);
+  InstallContextId(context3, 3);
 
-//   Local<v8::FunctionTemplate> tmpl = v8::FunctionTemplate::New(isolate);
+  Local<v8::FunctionTemplate> tmpl = v8::FunctionTemplate::New(isolate);
 
-//   Local<Object> object1;
-//   Local<Function> func1;
-//   {
-//     Context::Scope scope(context1);
-//     object1 = Object::New(isolate);
-//     func1 = tmpl->GetFunction(context1).ToLocalChecked();
-//   }
+  Local<Object> object1;
+  Local<Function> func1;
+  {
+    Context::Scope scope(context1);
+    object1 = Object::New(isolate);
+    func1 = tmpl->GetFunction(context1).ToLocalChecked();
+  }
 
-//   Local<Object> object2;
-//   Local<Function> func2;
-//   {
-//     Context::Scope scope(context2);
-//     object2 = Object::New(isolate);
-//     func2 = tmpl->GetFunction(context2).ToLocalChecked();
-//   }
+  Local<Object> object2;
+  Local<Function> func2;
+  {
+    Context::Scope scope(context2);
+    object2 = Object::New(isolate);
+    func2 = tmpl->GetFunction(context2).ToLocalChecked();
+  }
 
-//   Local<Object> instance1;
-//   Local<Object> instance2;
+  Local<Object> instance1;
+  Local<Object> instance2;
 
-//   {
-//     Context::Scope scope(context3);
-//     instance1 = func1->NewInstance(context3).ToLocalChecked();
-//     instance2 = func2->NewInstance(context3).ToLocalChecked();
-//   }
+  {
+    Context::Scope scope(context3);
+    instance1 = func1->NewInstance(context3).ToLocalChecked();
+    instance2 = func2->NewInstance(context3).ToLocalChecked();
+  }
 
-//   {
-//     Local<Context> other_context = Context::New(isolate);
-//     Context::Scope scope(other_context);
-//     CHECK(object1->CreationContext() == context1);
-//     CheckContextId(object1, 1);
-//     CHECK(func1->CreationContext() == context1);
-//     CheckContextId(func1, 1);
-//     CHECK(instance1->CreationContext() == context1);
-//     CheckContextId(instance1, 1);
-//     CHECK(object2->CreationContext() == context2);
-//     CheckContextId(object2, 2);
-//     CHECK(func2->CreationContext() == context2);
-//     CheckContextId(func2, 2);
-//     CHECK(instance2->CreationContext() == context2);
-//     CheckContextId(instance2, 2);
-//   }
+  {
+    Local<Context> other_context = Context::New(isolate);
+    Context::Scope scope(other_context);
+    CHECK(object1->CreationContext() == context1);
+    CheckContextId(object1, 1);
+    CHECK(func1->CreationContext() == context1);
+    CheckContextId(func1, 1);
+    CHECK(instance1->CreationContext() == context1);
+    CheckContextId(instance1, 1);
+    CHECK(object2->CreationContext() == context2);
+    CheckContextId(object2, 2);
+    CHECK(func2->CreationContext() == context2);
+    CheckContextId(func2, 2);
+    CHECK(instance2->CreationContext() == context2);
+    CheckContextId(instance2, 2);
+  }
 
-//   {
-//     Context::Scope scope(context1);
-//     CHECK(object1->CreationContext() == context1);
-//     CheckContextId(object1, 1);
-//     CHECK(func1->CreationContext() == context1);
-//     CheckContextId(func1, 1);
-//     CHECK(instance1->CreationContext() == context1);
-//     CheckContextId(instance1, 1);
-//     CHECK(object2->CreationContext() == context2);
-//     CheckContextId(object2, 2);
-//     CHECK(func2->CreationContext() == context2);
-//     CheckContextId(func2, 2);
-//     CHECK(instance2->CreationContext() == context2);
-//     CheckContextId(instance2, 2);
-//   }
+  {
+    Context::Scope scope(context1);
+    CHECK(object1->CreationContext() == context1);
+    CheckContextId(object1, 1);
+    CHECK(func1->CreationContext() == context1);
+    CheckContextId(func1, 1);
+    CHECK(instance1->CreationContext() == context1);
+    CheckContextId(instance1, 1);
+    CHECK(object2->CreationContext() == context2);
+    CheckContextId(object2, 2);
+    CHECK(func2->CreationContext() == context2);
+    CheckContextId(func2, 2);
+    CHECK(instance2->CreationContext() == context2);
+    CheckContextId(instance2, 2);
+  }
 
-//   {
-//     Context::Scope scope(context2);
-//     CHECK(object1->CreationContext() == context1);
-//     CheckContextId(object1, 1);
-//     CHECK(func1->CreationContext() == context1);
-//     CheckContextId(func1, 1);
-//     CHECK(instance1->CreationContext() == context1);
-//     CheckContextId(instance1, 1);
-//     CHECK(object2->CreationContext() == context2);
-//     CheckContextId(object2, 2);
-//     CHECK(func2->CreationContext() == context2);
-//     CheckContextId(func2, 2);
-//     CHECK(instance2->CreationContext() == context2);
-//     CheckContextId(instance2, 2);
-//   }
-// }
+  {
+    Context::Scope scope(context2);
+    CHECK(object1->CreationContext() == context1);
+    CheckContextId(object1, 1);
+    CHECK(func1->CreationContext() == context1);
+    CheckContextId(func1, 1);
+    CHECK(instance1->CreationContext() == context1);
+    CheckContextId(instance1, 1);
+    CHECK(object2->CreationContext() == context2);
+    CheckContextId(object2, 2);
+    CHECK(func2->CreationContext() == context2);
+    CheckContextId(func2, 2);
+    CHECK(instance2->CreationContext() == context2);
+    CheckContextId(instance2, 2);
+  }
+}
 
 
 // THREADED_TEST(CreationContextOfJsFunction) {

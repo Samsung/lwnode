@@ -380,22 +380,6 @@ bool IsolateWrap::isCurrentScopeSealed() {
 }
 
 void IsolateWrap::pushContext(ContextWrap* context) {
-  LWNODE_CALL_TRACE_ID(ISOWRAP,
-                       "%p (%zu -> %zu)",
-                       context,
-                       contextScopes_.size(),
-                       contextScopes_.size() + 1);
-
-  if (contextScopes_.size() && (contextScopes_.back() != context)) {
-    LWNODE_DLOG_WARN(R"(multiple contexts exist:
-contextScopes_.back() != context means that we need to support multiple
-contexts. In Node.js at this time, one main Context associated with the
-Environment instance is used for most Node.js features (except writing
-MessagePort objects.) So, on purpose, we don't store Object's creation
-context which is related to Object::CreationContext().
-@note: we may ignore this warning if cctest not related runs.)");
-  }
-
   contextScopes_.push_back(context);
 }
 

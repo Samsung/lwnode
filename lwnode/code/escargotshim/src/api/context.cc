@@ -18,6 +18,7 @@
 #include "base.h"
 #include "es-helper.h"
 #include "escargot_natives.h"
+#include "extra-data.h"
 #include "isolate.h"
 
 using namespace Escargot;
@@ -66,6 +67,10 @@ ContextWrap::ContextWrap(IsolateWrap* isolate, ContextRef* contextToUse) {
     context_ = contextToUse;
   } else {
     context_ = ContextRef::create(isolate->vmInstance());
+    auto globalObjectData = new GlobalObjectData();
+    globalObjectData->setInternalFieldCount(1);
+    globalObjectData->setInternalField(0, this);
+    ObjectRefHelper::setExtraData(context_->globalObject(), globalObjectData);
     createGlobals(context_);
   }
 
