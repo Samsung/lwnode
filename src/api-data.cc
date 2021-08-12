@@ -1629,7 +1629,8 @@ int v8::Object::GetIdentityHash() {
 }
 
 bool v8::Object::IsCallable() {
-  LWNODE_RETURN_FALSE;
+  auto esSelf = CVAL(this)->value()->asObject();
+  return esSelf->isCallable();
 }
 
 bool v8::Object::IsConstructor() {
