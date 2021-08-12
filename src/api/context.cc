@@ -66,8 +66,9 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
 
   context_ = ContextRef::create(isolate->vmInstance());
   auto globalObjectData = new GlobalObjectData();
-  globalObjectData->setInternalFieldCount(1);
-  globalObjectData->setInternalField(0, this);
+  globalObjectData->setInternalFieldCount(
+      GlobalObjectData::kInternalFieldCount);
+  globalObjectData->setInternalField(GlobalObjectData::kContextWrapSlot, this);
   ObjectRefHelper::setExtraData(context_->globalObject(), globalObjectData);
   createGlobals(context_);
 

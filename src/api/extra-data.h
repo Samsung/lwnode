@@ -96,6 +96,10 @@ class FunctionData : public ObjectData {
 
 class ExternalObjectData : public ObjectData {
  public:
+  enum InternalFields {
+    kValueSlot,
+    kInternalFieldCount,
+  };
   bool isExternalObjectData() const override { return true; }
 };
 
@@ -141,6 +145,10 @@ class ExceptionObjectData : public ObjectData {
 
 class GlobalObjectData : public ObjectData {
  public:
+  enum InternalFields {
+    kContextWrapSlot,
+    kInternalFieldCount,
+  };
   bool isGlobalObjectData() const override { return true; }
 };
 
