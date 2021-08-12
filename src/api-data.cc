@@ -108,7 +108,7 @@ bool Value::IsDataView() const {
 }
 
 bool Value::IsSharedArrayBuffer() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isSharedArrayBufferObject();
 }
 
 bool Value::IsObject() const {
