@@ -27,8 +27,7 @@ typedef GCUnorderedMap<int, void*> EmbedderDataMap;
 
 class ContextWrap : public ValueWrap {
  public:
-  static ContextWrap* New(IsolateWrap* isolate,
-                          Escargot::ContextRef* contextToUse = nullptr);
+  static ContextWrap* New(IsolateWrap* isolate);
 
   void Enter();
   void Exit();
@@ -52,8 +51,7 @@ class ContextWrap : public ValueWrap {
  private:
   EmbedderDataMap* embedder_data_{nullptr};
 
-  ContextWrap(IsolateWrap* isolate,
-              Escargot::ContextRef* contextToUse = nullptr);
+  ContextWrap(IsolateWrap* isolate);
   void setEmbedderData(int index, void* value);
   void* getEmbedderData(int index);
 
