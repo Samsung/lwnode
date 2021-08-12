@@ -1612,10 +1612,11 @@ Local<v8::Context> v8::Object::CreationContext() {
       ObjectRefHelper::getExtraData(esVal.get()->globalObject())
           ->asGlobalObjectData();
 
-  LWNODE_CHECK(globalObjectData->internalFieldCount() == 1);
+  LWNODE_CHECK(globalObjectData->internalFieldCount() ==
+               GlobalObjectData::kInternalFieldCount);
 
-  auto lwCreationContext =
-      reinterpret_cast<ContextWrap*>(globalObjectData->internalField(0));
+  auto lwCreationContext = reinterpret_cast<ContextWrap*>(
+      globalObjectData->internalField(GlobalObjectData::kContextWrapSlot));
 
   return v8::Local<v8::Context>::New(
       lwIsolate->toV8(),

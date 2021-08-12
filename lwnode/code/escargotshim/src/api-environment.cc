@@ -309,8 +309,8 @@ Local<External> v8::External::New(Isolate* isolate, void* value) {
   auto esObject = ObjectRefHelper::create(esContext);
 
   auto data = new ExternalObjectData();
-  data->setInternalFieldCount(1);
-  data->setInternalField(0, value);
+  data->setInternalFieldCount(ExternalObjectData::kInternalFieldCount);
+  data->setInternalField(ExternalObjectData::kValueSlot, value);
 
   ObjectRefHelper::setExtraData(esObject, data);
 
