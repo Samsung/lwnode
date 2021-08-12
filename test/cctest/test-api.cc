@@ -14769,33 +14769,33 @@ TEST(ObjectClone) {
 //   }
 // }
 
-// // Test that we cannot set a property on the global object if there
-// // is a read-only property in the prototype chain.
-// TEST(ReadOnlyPropertyInGlobalProto) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> templ = v8::ObjectTemplate::New(isolate);
-//   LocalContext context(nullptr, templ);
-//   v8::Local<v8::Object> global = context->Global();
-//   v8::Local<v8::Object> global_proto = v8::Local<v8::Object>::Cast(
-//       global->Get(context.local(), v8_str("__proto__")).ToLocalChecked());
-//   global_proto->DefineOwnProperty(context.local(), v8_str("x"),
-//                                   v8::Integer::New(isolate, 0), v8::ReadOnly)
-//       .FromJust();
-//   global_proto->DefineOwnProperty(context.local(), v8_str("y"),
-//                                   v8::Integer::New(isolate, 0), v8::ReadOnly)
-//       .FromJust();
-//   // Check without 'eval' or 'with'.
-//   v8::Local<v8::Value> res =
-//       CompileRun("function f() { x = 42; return x; }; f()");
-//   CHECK(v8::Integer::New(isolate, 0)->Equals(context.local(), res).FromJust());
-//   // Check with 'eval'.
-//   res = CompileRun("function f() { eval('1'); y = 43; return y; }; f()");
-//   CHECK(v8::Integer::New(isolate, 0)->Equals(context.local(), res).FromJust());
-//   // Check with 'with'.
-//   res = CompileRun("function f() { with (this) { y = 44 }; return y; }; f()");
-//   CHECK(v8::Integer::New(isolate, 0)->Equals(context.local(), res).FromJust());
-// }
+// Test that we cannot set a property on the global object if there
+// is a read-only property in the prototype chain.
+TEST(ReadOnlyPropertyInGlobalProto) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> templ = v8::ObjectTemplate::New(isolate);
+  LocalContext context(nullptr, templ);
+  v8::Local<v8::Object> global = context->Global();
+  v8::Local<v8::Object> global_proto = v8::Local<v8::Object>::Cast(
+      global->Get(context.local(), v8_str("__proto__")).ToLocalChecked());
+  global_proto->DefineOwnProperty(context.local(), v8_str("x"),
+                                  v8::Integer::New(isolate, 0), v8::ReadOnly)
+      .FromJust();
+  global_proto->DefineOwnProperty(context.local(), v8_str("y"),
+                                  v8::Integer::New(isolate, 0), v8::ReadOnly)
+      .FromJust();
+  // Check without 'eval' or 'with'.
+  v8::Local<v8::Value> res =
+      CompileRun("function f() { x = 42; return x; }; f()");
+  CHECK(v8::Integer::New(isolate, 0)->Equals(context.local(), res).FromJust());
+  // Check with 'eval'.
+  res = CompileRun("function f() { eval('1'); y = 43; return y; }; f()");
+  CHECK(v8::Integer::New(isolate, 0)->Equals(context.local(), res).FromJust());
+  // Check with 'with'.
+  res = CompileRun("function f() { with (this) { y = 44 }; return y; }; f()");
+  CHECK(v8::Integer::New(isolate, 0)->Equals(context.local(), res).FromJust());
+}
 
 
 // TEST(CreateDataProperty) {
@@ -14901,123 +14901,125 @@ TEST(ObjectClone) {
 // }
 
 
-// TEST(DefineOwnProperty) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
+TEST(DefineOwnProperty) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   CompileRun(
-//       "var a = {};"
-//       "var b = [];"
-//       "Object.defineProperty(a, 'foo', {value: 23});"
-//       "Object.defineProperty(a, 'bar', {value: 23, configurable: true});");
+  CompileRun(
+      "var a = {};"
+      "var b = [];"
+      "Object.defineProperty(a, 'foo', {value: 23});"
+      "Object.defineProperty(a, 'bar', {value: 23, configurable: true});");
 
-//   v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(
-//       env->Global()->Get(env.local(), v8_str("a")).ToLocalChecked());
-//   v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(
-//       env->Global()->Get(env.local(), v8_str("b")).ToLocalChecked());
-//   {
-//     // Can't change a non-configurable properties.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(!obj->DefineOwnProperty(env.local(), v8_str("foo"),
-//                                   v8::Integer::New(isolate, 42)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     CHECK(obj->DefineOwnProperty(env.local(), v8_str("bar"),
-//                                  v8::Integer::New(isolate, 42)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val =
-//         obj->Get(env.local(), v8_str("bar")).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+  v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(
+      env->Global()->Get(env.local(), v8_str("a")).ToLocalChecked());
+  v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(
+      env->Global()->Get(env.local(), v8_str("b")).ToLocalChecked());
+  {
+    // Can't change a non-configurable properties.
+    v8::TryCatch try_catch(isolate);
 
-//   {
-//     // Set a regular property.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineOwnProperty(env.local(), v8_str("blub"),
-//                                  v8::Integer::New(isolate, 42)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val =
-//         obj->Get(env.local(), v8_str("blub")).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+    CHECK(!obj->DefineOwnProperty(env.local(), v8_str("foo"),
+                                  v8::Integer::New(isolate, 42)).FromJust());
 
-//   {
-//     // Set an indexed property.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineOwnProperty(env.local(), v8_str("1"),
-//                                  v8::Integer::New(isolate, 42)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), 1).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+    CHECK(!try_catch.HasCaught());
+    CHECK(obj->DefineOwnProperty(env.local(), v8_str("bar"),
+                                 v8::Integer::New(isolate, 42)).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val =
+        obj->Get(env.local(), v8_str("bar")).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//   {
-//     // Special cases for arrays.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(!arr->DefineOwnProperty(env.local(), v8_str("length"),
-//                                   v8::Integer::New(isolate, 1)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
-//   {
-//     // Special cases for arrays: index exceeds the array's length
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(arr->DefineOwnProperty(env.local(), v8_str("1"),
-//                                  v8::Integer::New(isolate, 23)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     CHECK_EQ(2U, arr->Length());
-//     v8::Local<v8::Value> val = arr->Get(env.local(), 1).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(23.0, val->NumberValue(env.local()).FromJust());
+  {
+    // Set a regular property.
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineOwnProperty(env.local(), v8_str("blub"),
+                                 v8::Integer::New(isolate, 42)).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val =
+        obj->Get(env.local(), v8_str("blub")).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//     // Set an existing entry.
-//     CHECK(arr->DefineOwnProperty(env.local(), v8_str("0"),
-//                                  v8::Integer::New(isolate, 42)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     val = arr->Get(env.local(), 0).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+  {
+    // Set an indexed property.
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineOwnProperty(env.local(), v8_str("1"),
+                                 v8::Integer::New(isolate, 42)).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), 1).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//   {
-//     // Set a non-writable property.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineOwnProperty(env.local(), v8_str("lala"),
-//                                  v8::Integer::New(isolate, 42),
-//                                  v8::ReadOnly).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val =
-//         obj->Get(env.local(), v8_str("lala")).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//     CHECK_EQ(v8::ReadOnly, obj->GetPropertyAttributes(
-//                                     env.local(), v8_str("lala")).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+  {
+    // Special cases for arrays.
+    v8::TryCatch try_catch(isolate);
+    CHECK(!arr->DefineOwnProperty(env.local(), v8_str("length"),
+                                  v8::Integer::New(isolate, 1)).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
+  {
+    // Special cases for arrays: index exceeds the array's length
+    v8::TryCatch try_catch(isolate);
+    CHECK(arr->DefineOwnProperty(env.local(), v8_str("1"),
+                                 v8::Integer::New(isolate, 23)).FromJust());
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(2U, arr->Length());
+    v8::Local<v8::Value> val = arr->Get(env.local(), 1).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(23.0, val->NumberValue(env.local()).FromJust());
 
-//   CompileRun("Object.freeze(a);");
-//   {
-//     // Can't change non-extensible objects.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(!obj->DefineOwnProperty(env.local(), v8_str("baz"),
-//                                   v8::Integer::New(isolate, 42)).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    // Set an existing entry.
+    CHECK(arr->DefineOwnProperty(env.local(), v8_str("0"),
+                                 v8::Integer::New(isolate, 42)).FromJust());
+    CHECK(!try_catch.HasCaught());
+    val = arr->Get(env.local(), 0).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//   v8::Local<v8::ObjectTemplate> templ = v8::ObjectTemplate::New(isolate);
-//   templ->SetAccessCheckCallback(AccessAlwaysBlocked);
-//   v8::Local<v8::Object> access_checked =
-//       templ->NewInstance(env.local()).ToLocalChecked();
-//   {
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(access_checked->DefineOwnProperty(env.local(), v8_str("foo"),
-//                                             v8::Integer::New(isolate, 42))
-//               .IsNothing());
-//     CHECK(try_catch.HasCaught());
-//   }
-// }
+  {
+    // Set a non-writable property.
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineOwnProperty(env.local(), v8_str("lala"),
+                                 v8::Integer::New(isolate, 42),
+                                 v8::ReadOnly).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val =
+        obj->Get(env.local(), v8_str("lala")).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+    // CHECK_EQ(v8::ReadOnly, obj->GetPropertyAttributes(
+    //                                 env.local(), v8_str("lala")).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
+
+  CompileRun("Object.freeze(a);");
+  {
+    // Can't change non-extensible objects.
+    v8::TryCatch try_catch(isolate);
+    CHECK(!obj->DefineOwnProperty(env.local(), v8_str("baz"),
+                                  v8::Integer::New(isolate, 42)).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
+
+  // v8::Local<v8::ObjectTemplate> templ = v8::ObjectTemplate::New(isolate);
+  // templ->SetAccessCheckCallback(AccessAlwaysBlocked);
+  // v8::Local<v8::Object> access_checked =
+  //     templ->NewInstance(env.local()).ToLocalChecked();
+  // {
+  //   v8::TryCatch try_catch(isolate);
+  //   CHECK(access_checked->DefineOwnProperty(env.local(), v8_str("foo"),
+  //                                           v8::Integer::New(isolate, 42))
+  //             .IsNothing());
+  //   CHECK(try_catch.HasCaught());
+  // }
+}
 
 // TEST(DefineProperty) {
 //   LocalContext env;
@@ -19535,43 +19537,43 @@ TEST(HasOwnProperty) {
 // }
 
 
-// // Regression test for issue 1470.
-// THREADED_TEST(ReadOnlyIndexedProperties) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+// Regression test for issue 1470.
+THREADED_TEST(ReadOnlyIndexedProperties) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 
-//   LocalContext context;
-//   Local<v8::Object> obj = templ->NewInstance(context.local()).ToLocalChecked();
-//   CHECK(context->Global()->Set(context.local(), v8_str("obj"), obj).FromJust());
-//   obj->DefineOwnProperty(context.local(), v8_str("1"), v8_str("DONT_CHANGE"),
-//                          v8::ReadOnly)
-//       .FromJust();
-//   obj->Set(context.local(), v8_str("1"), v8_str("foobar")).FromJust();
-//   CHECK(v8_str("DONT_CHANGE")
-//             ->Equals(context.local(),
-//                      obj->Get(context.local(), v8_str("1")).ToLocalChecked())
-//             .FromJust());
-//   obj->DefineOwnProperty(context.local(), v8_str("2"), v8_str("DONT_CHANGE"),
-//                          v8::ReadOnly)
-//       .FromJust();
-//   obj->Set(context.local(), v8_num(2), v8_str("foobar")).FromJust();
-//   CHECK(v8_str("DONT_CHANGE")
-//             ->Equals(context.local(),
-//                      obj->Get(context.local(), v8_num(2)).ToLocalChecked())
-//             .FromJust());
+  LocalContext context;
+  Local<v8::Object> obj = templ->NewInstance(context.local()).ToLocalChecked();
+  CHECK(context->Global()->Set(context.local(), v8_str("obj"), obj).FromJust());
+  obj->DefineOwnProperty(context.local(), v8_str("1"), v8_str("DONT_CHANGE"),
+                         v8::ReadOnly)
+      .FromJust();
+  obj->Set(context.local(), v8_str("1"), v8_str("foobar")).FromJust();
+  CHECK(v8_str("DONT_CHANGE")
+            ->Equals(context.local(),
+                     obj->Get(context.local(), v8_str("1")).ToLocalChecked())
+            .FromJust());
+  obj->DefineOwnProperty(context.local(), v8_str("2"), v8_str("DONT_CHANGE"),
+                         v8::ReadOnly)
+      .FromJust();
+  obj->Set(context.local(), v8_num(2), v8_str("foobar")).FromJust();
+  CHECK(v8_str("DONT_CHANGE")
+            ->Equals(context.local(),
+                     obj->Get(context.local(), v8_num(2)).ToLocalChecked())
+            .FromJust());
 
-//   // Test non-smi case.
-//   obj->DefineOwnProperty(context.local(), v8_str("2000000000"),
-//                          v8_str("DONT_CHANGE"), v8::ReadOnly)
-//       .FromJust();
-//   obj->Set(context.local(), v8_str("2000000000"), v8_str("foobar")).FromJust();
-//   CHECK(v8_str("DONT_CHANGE")
-//             ->Equals(context.local(),
-//                      obj->Get(context.local(), v8_str("2000000000"))
-//                          .ToLocalChecked())
-//             .FromJust());
-// }
+  // Test non-smi case.
+  obj->DefineOwnProperty(context.local(), v8_str("2000000000"),
+                         v8_str("DONT_CHANGE"), v8::ReadOnly)
+      .FromJust();
+  obj->Set(context.local(), v8_str("2000000000"), v8_str("foobar")).FromJust();
+  CHECK(v8_str("DONT_CHANGE")
+            ->Equals(context.local(),
+                     obj->Get(context.local(), v8_str("2000000000"))
+                         .ToLocalChecked())
+            .FromJust());
+}
 
 // static int CountLiveMapsInMapCache(i::Context context) {
 //   i::WeakFixedArray map_cache = i::WeakFixedArray::cast(context.map_cache());

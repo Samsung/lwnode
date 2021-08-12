@@ -1038,10 +1038,6 @@ Maybe<bool> v8::Object::DefineOwnProperty(v8::Local<v8::Context> context,
                                           v8::PropertyAttribute attributes) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
 
-  if (attributes == None) {
-    return Set(context, key, value);
-  }
-
   auto r = ObjectRefHelper::defineDataProperty(
       CVAL(*context)->context()->get(),
       CVAL(this)->value()->asObject(),
