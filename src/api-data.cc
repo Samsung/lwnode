@@ -1634,7 +1634,12 @@ bool v8::Object::IsCallable() {
 }
 
 bool v8::Object::IsConstructor() {
-  LWNODE_RETURN_FALSE;
+  auto esSelf = CVAL(this)->value()->asObject();
+  if (esSelf->isFunctionObject()) {
+    return esSelf->asFunctionObject()->isConstructor();
+  }
+
+  return false;
 }
 
 bool v8::Object::IsApiWrapper() {
