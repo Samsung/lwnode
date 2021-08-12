@@ -26,17 +26,26 @@ ObjectRef::PresentAttribute V8Helper::toPresentAttribute(
   if (attributes & v8::ReadOnly) {
     presentAttributes = static_cast<ObjectRef::PresentAttribute>(
         presentAttributes | ObjectRef::PresentAttribute::NonWritablePresent);
+  } else {
+    presentAttributes = static_cast<ObjectRef::PresentAttribute>(
+        presentAttributes | ObjectRef::PresentAttribute::WritablePresent);
   }
 
   if (attributes & v8::DontEnum) {
     presentAttributes = static_cast<ObjectRef::PresentAttribute>(
         presentAttributes | ObjectRef::PresentAttribute::NonEnumerablePresent);
+  } else {
+    presentAttributes = static_cast<ObjectRef::PresentAttribute>(
+        presentAttributes | ObjectRef::PresentAttribute::EnumerablePresent);
   }
 
   if (attributes & v8::DontDelete) {
     presentAttributes = static_cast<ObjectRef::PresentAttribute>(
         presentAttributes |
         ObjectRef::PresentAttribute::NonConfigurablePresent);
+  } else {
+    presentAttributes = static_cast<ObjectRef::PresentAttribute>(
+        presentAttributes | ObjectRef::PresentAttribute::ConfigurablePresent);
   }
 
   return presentAttributes;
