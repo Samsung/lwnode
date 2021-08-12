@@ -119,6 +119,8 @@ ValueRef* ValueWrap::value() const {
 }
 
 ValueWrap* ValueWrap::createContext(ContextWrap* lwContext) {
+  LWNODE_CHECK(lwContext->type_ == Type::Context);
+  LWNODE_CHECK_NOT_NULL(lwContext->val_);
   return lwContext;
 };
 
