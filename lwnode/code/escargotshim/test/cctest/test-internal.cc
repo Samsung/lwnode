@@ -680,6 +680,7 @@ static void mixinProtoMethod(FunctionTemplateRef* ft) {
                   "SET: receiver: %p data: %p self: %p", receiver, data, self);
 
               if (!data) {
+                LWNODE_DLOG_ERROR("object data empty");
                 return false;
               }
               return data->setInternalFields(
@@ -707,6 +708,10 @@ static FunctionTemplateRef* createFunctionTemplate(
          size_t argc,
          ValueRef** argv,
          OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        LWNODE_DLOG_INFO("FUNC: thisValue: %p newTarget.hasValue: %s",
+                         thisValue,
+                         strBool(newTarget.hasValue()));
+
         if (newTarget.hasValue()) {
           auto thisObject = thisValue->asObject();
           auto configureData =
@@ -820,6 +825,71 @@ TEST(Escargot_InlineCache_Regression) {
         test();
         test();
         test(); // crash should not occur on this line
+      )";
+
+  auto r = EvalResultHelper::compileRun(esContext, source);
+
+  CHECK_EQ(true, r.isSuccessful());
+}
+
+TEST(DISABLED_Escargot_ObjectCreate_Regression) {
+  // related test: test/parallel/test-tls-external-accessor.js
+  LocalContext env;
+
+  auto esContext =
+      IsolateWrap::fromV8(env->GetIsolate())->GetCurrentContext()->get();
+  EvalResultHelper::attachBuiltinPrint(esContext, esContext->globalObject());
+
+  auto esFunctionTemplate = createFunctionTemplate(
+      esContext, "Pipe", true, nullptr, mixinProtoMethod);
+
+  ObjectRefHelper::setProperty(esContext,
+                               esContext->globalObject(),
+                               StringRef::createFromUTF8("Pipe"),
+                               esFunctionTemplate->instantiate(esContext));
+
+  const char* source =
+      R"(
+        function assert(condition, message) {
+          if (!condition) throw new Error(message || 'Assertion failed');
+        }
+
+        assert(Pipe != undefined);
+        print.ptr('Pipe', Pipe);
+
+        function onRead() {
+          assert(onRead.pipe_being_test == this);
+          print.ptr('pipe', this,'onRead called');
+        }
+
+        print('-'.repeat(60));
+
+        // create an instance using new constructor
+        let pipe = new Pipe();
+        print.ptr('pipe', pipe);
+        assert(pipe.__proto__ == Pipe.prototype);
+        assert(pipe.__proto__.constructor.name == 'Pipe');
+        assert(pipe.isStreamBase == true);
+
+        pipe.onread = onRead;
+        assert(pipe.onread == onRead);
+
+        onRead.pipe_being_test = pipe;
+        pipe.onread();
+
+        print('-'.repeat(60));
+
+        // create an instance using Object.create
+        let pipe2 = Object.create(pipe);
+        print.ptr('pipe2', pipe2);
+
+        assert(pipe2.__proto__ == pipe);
+        assert(pipe2.__proto__.constructor.name == 'Pipe');
+        assert(pipe2.isStreamBase == true);
+
+        pipe2.onread = onRead;
+        assert(pipe2.onread == onRead); // <--
+        print('-'.repeat(60));
       )";
 
   auto r = EvalResultHelper::compileRun(esContext, source);
