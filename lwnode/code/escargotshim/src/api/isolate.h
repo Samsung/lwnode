@@ -84,8 +84,6 @@ class Isolate : public gc {
   }
 
  protected:
-  Escargot::ValueRef* scheduled_exception_{nullptr};
-
   void set_pending_exception(Escargot::ObjectRef* exception_obj);
   void set_pending_message_obj(Escargot::ValueRef* message_obj);
   void clear_pending_exception();
@@ -94,6 +92,11 @@ class Isolate : public gc {
   v8::TryCatch* getExternalTryCatchOnTop();
   bool hasExternalTryCatch();
 
+  // @important memory layout (IsolateData, kEmbedderDataOffset,
+  // kExternalMemoryOffset, kExternalMemoryLlimitOffset and so on) aren't
+  // considered.
+
+  Escargot::ValueRef* scheduled_exception_{nullptr};
   v8::PromiseRejectCallback promise_reject_callback_{nullptr};
   v8::PromiseHook promise_hook_{nullptr};
   v8::MessageCallback message_callback_{nullptr};
