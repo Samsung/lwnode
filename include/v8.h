@@ -12155,6 +12155,8 @@ MaybeLocal<T> Isolate::GetDataFromSnapshotOnce(size_t index) {
 
 int64_t Isolate::AdjustAmountOfExternalAllocatedMemory(
     int64_t change_in_bytes) {
+// @lwnode
+#if 0
   typedef internal::Internals I;
   int64_t* external_memory = reinterpret_cast<int64_t*>(
       reinterpret_cast<uint8_t*>(this) + I::kExternalMemoryOffset);
@@ -12182,6 +12184,8 @@ int64_t Isolate::AdjustAmountOfExternalAllocatedMemory(
     ReportExternalAllocationLimitReached();
   }
   return *external_memory;
+#endif
+  return 0;
 }
 
 Local<Value> Context::GetEmbedderData(int index) {
