@@ -220,6 +220,19 @@ IsolateWrap::IsolateWrap() {
   Memory::gcRegisterFinalizer(this, [](void* self) {
     reinterpret_cast<IsolateWrap*>(self)->~IsolateWrap();
   });
+
+  MemoryUtil::gcSetWarningListener([](WarnEventType type) {
+    switch (type) {
+      case OUT_OF_MEMORY:
+      case FAILED_TO_EXPAND_HEAP:
+        if (s_currentIsolate) {
+          s_currentIsolate->onFatalError(nullptr, "Out of memory");
+        }
+        break;
+      default:
+        break;
+    }
+  });
 }
 
 IsolateWrap::~IsolateWrap() {

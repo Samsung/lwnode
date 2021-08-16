@@ -159,8 +159,17 @@ class GCTracer {
   std::vector<Address> registeredAddress_;
 };
 
+enum WarnEventType {
+  POOR_PERFORMANCE,
+  FAILED_TO_EXPAND_HEAP,
+  OUT_OF_MEMORY,
+};
+
 class ESCARGOT_EXPORT MemoryUtil {
  public:
+  typedef void (*OnGCWarnEventListener)(WarnEventType type);
+
+  static void gcSetWarningListener(OnGCWarnEventListener callback);
   static void gcStartStatsTrace();
   static void gcEndStatsTrace();
   static void gcFull();

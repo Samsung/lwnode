@@ -30,9 +30,7 @@ using namespace Escargot;
 
 #define LOG_HANDLER_RAW(msg, ...)                                              \
   do {                                                                         \
-    if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
-      printf(msg, ##__VA_ARGS__);                                              \
-    }                                                                          \
+    printf(msg, ##__VA_ARGS__);                                                \
   } while (0)
 
 // --- GCTracer ---
@@ -158,14 +156,35 @@ void MemoryUtil::gcStartStatsTrace() {
     prettyBytes(heap, sizeof(heap), nheap, g_filter);
     LOG_HANDLER("use %s, heap %s", use, heap);
   });
+}
 
-#ifdef ENABLE_GC_WARN
-  GC_set_warn_proc([](char* msg, GC_word arg) {
-    char formatted[1024];
-    snprintf(formatted, sizeof(formatted) - 1, msg, arg);
-    LOG_HANDLER("[WARN] %s\n", formatted);
-  });
+static thread_local MemoryUtil::OnGCWarnEventListener g_gcWarnEventListener;
+
+void MemoryUtil::gcSetWarningListener(OnGCWarnEventListener callback) {
+  if (g_gcWarnEventListener == nullptr) {
+    g_gcWarnEventListener = callback;
+
+    GC_set_warn_proc([](char* format, GC_word arg) {
+      /*
+        GC Warning: ...May lead to memory leak and poor performance
+        GC Warning: ...Failed to expand heap
+        GC Warning: Out of Memory! ... Returning NULL!
+      */
+      std::string message = format;
+
+#if !defined(NDEBUG)
+      LOG_HANDLER_RAW(format, arg);
 #endif
+
+      if (message.find("poor performance") != std::string::npos) {
+        g_gcWarnEventListener(POOR_PERFORMANCE);
+      } else if (message.find("Failed to expand heap") != std::string::npos) {
+        g_gcWarnEventListener(FAILED_TO_EXPAND_HEAP);
+      } else if (message.find("Out of Memory") != std::string::npos) {
+        g_gcWarnEventListener(OUT_OF_MEMORY);
+      }
+    });
+  }
 }
 
 void MemoryUtil::printGCStats() {
