@@ -39,7 +39,10 @@ static ValueRef* accessorPropertyGetter(
       wrapper->m_isolate, self, receiver, VAL(wrapper->m_data));
 
   auto v8Getter = wrapper->m_getter;
-  LWNODE_CHECK_NOT_NULL(v8Getter);
+  if (!v8Getter) {
+    return ValueRef::createUndefined();
+  }
+
   LWNODE_CALL_TRACE(
       "name: %s",
       VAL(wrapper->m_name)->value()->asString()->toStdUTF8String().c_str())
@@ -92,9 +95,7 @@ NativeDataAccessorPropertyDataWrap<T, F>::NativeDataAccessorPropertyDataWrap(
       m_name(*name),
       m_getter(getter),
       m_setter(setter),
-      m_data(*data) {
-  LWNODE_CHECK_NOT_NULL(getter);
-}
+      m_data(*data) {}
 
 Maybe<bool> ObjectUtils::SetAccessor(ObjectRef* esObject,
                                      IsolateWrap* lwIsolate,

@@ -22012,32 +22012,32 @@ TEST(EscapableHandleScope) {
 }
 
 
-// static void SetterWhichExpectsThisAndHolderToDiffer(
-//     Local<String>, Local<Value>, const v8::PropertyCallbackInfo<void>& info) {
-//   CHECK(info.Holder() != info.This());
-// }
+static void SetterWhichExpectsThisAndHolderToDiffer(
+    Local<String>, Local<Value>, const v8::PropertyCallbackInfo<void>& info) {
+  CHECK(info.Holder() != info.This());
+}
 
 
-// TEST(Regress239669) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessor(v8_str("x"), nullptr,
-//                      SetterWhichExpectsThisAndHolderToDiffer);
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("P"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   CompileRun(
-//       "function C1() {"
-//       "  this.x = 23;"
-//       "};"
-//       "C1.prototype = P;"
-//       "for (var i = 0; i < 4; i++ ) {"
-//       "  new C1();"
-//       "}");
-// }
+TEST(Regress239669) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessor(v8_str("x"), nullptr,
+                     SetterWhichExpectsThisAndHolderToDiffer);
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("P"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  CompileRun(
+      "function C1() {"
+      "  this.x = 23;"
+      "};"
+      "C1.prototype = P;"
+      "for (var i = 0; i < 4; i++ ) {"
+      "  new C1();"
+      "}");
+}
 
 
 // class ApiCallOptimizationChecker {
