@@ -17,7 +17,6 @@
 #include "context.h"
 #include "base.h"
 #include "es-helper.h"
-#include "escargot_natives.h"
 #include "extra-data.h"
 #include "isolate.h"
 
@@ -48,14 +47,69 @@ static void evalJavaScript(ContextRef* context,
   LWNODE_CHECK_MSG(r.isSuccessful(), "Cannot execute %s", name);
 }
 
+static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
+                                           ValueRef* thisValue,
+                                           size_t argc,
+                                           ValueRef** argv,
+                                           bool isConstructCall) {
+  if (argc < 1 || !argv[0]->isObject()) {
+    return ValueRef::createUndefined();
+  }
+
+  auto exceptionObject = argv[0]->asObject();
+  auto lwIsolate = IsolateWrap::GetCurrent();
+
+  if (lwIsolate->has_pending_exception()) {
+    LWNODE_CHECK(ObjectRefHelper::hasExtraData(lwIsolate->pending_exception()));
+    auto stackTrace =
+        ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
+    ObjectRefHelper::setExtraData(exceptionObject,
+                                  new ExceptionObjectData(stackTrace));
+  }
+
+  return ValueRef::createUndefined();
+}
+
 static bool createGlobals(ContextRef* context) {
 #if defined(HOST_TIZEN)
 // @todo setup device APIs
 #endif
-  evalJavaScript(context,
-                 "stack_frame",
-                 reinterpret_cast<const char*>(stack_frame_raw),
-                 sizeof(stack_frame_raw));
+  // Create captureStackTrace and stackTraceLimit
+  EvalResult r =
+      Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
+        auto context = state->context();
+
+        const char* captureStackTraceRawString = "captureStackTrace";
+        auto captureStackTraceRawStringLength =
+            strlen(captureStackTraceRawString);
+        auto errorObject = context->globalObject()
+                               ->get(state, StringRef::createFromASCII("Error"))
+                               ->asObject();
+
+        FunctionObjectRef::NativeFunctionInfo info(
+            AtomicStringRef::create(context,
+                                    captureStackTraceRawString,
+                                    captureStackTraceRawStringLength),
+            captureStackTraceCallback,
+            1,
+            true,
+            false);
+
+        auto captureStackTrace = FunctionObjectRef::create(state, info);
+
+        errorObject->set(
+            state,
+            StringRef::createFromASCII(captureStackTraceRawString,
+                                       captureStackTraceRawStringLength),
+            captureStackTrace);
+        errorObject->set(
+            state,
+            StringRef::createFromASCII("stackTraceLimit"),
+            ValueRef::create(
+                20));  // TODO: get number from '--stack-trace-limit' options
+        return ValueRef::createUndefined();
+      });
+  LWNODE_CHECK(r.isSuccessful());
   return true;
 }
 

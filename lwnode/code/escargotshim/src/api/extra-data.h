@@ -116,6 +116,16 @@ class ExceptionObjectData : public ObjectData {
           isAssociatedWithJavaScriptCode(data.isAssociatedWithJavaScriptCode),
           isEval(data.isEval) {}
 
+    // TODO: string deep copy
+    StackTraceData(const StackTraceData* data)
+        : src(data->src),
+          sourceCode(data->sourceCode),
+          loc(data->loc),
+          functionName(data->functionName),
+          isConstructor(data->isConstructor),
+          isAssociatedWithJavaScriptCode(data->isAssociatedWithJavaScriptCode),
+          isEval(data->isEval) {}
+
     StringRef* src{nullptr};
     StringRef* sourceCode{nullptr};
     Escargot::Evaluator::LOC loc{0, 0, 0};
@@ -131,6 +141,12 @@ class ExceptionObjectData : public ObjectData {
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
     for (size_t i = 0; i < stackTraceData.size(); i++) {
       stackTraces_.push_back(new StackTraceData(stackTraceData[i]));
+    }
+  }
+
+  ExceptionObjectData(GCVector<StackTraceData*>* stackTrace) {
+    for (const auto& iter : *stackTrace) {
+      stackTraces_.push_back(iter);
     }
   }
 
