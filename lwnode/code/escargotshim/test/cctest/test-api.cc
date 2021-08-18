@@ -123,29 +123,29 @@ using ::v8::Value;
 // }
 
 
-// static int signature_callback_count;
-// static Local<Value> signature_expected_receiver;
-// static void IncrementingSignatureCallback(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   signature_callback_count++;
-//   CHECK(signature_expected_receiver->Equals(
-//                                        args.GetIsolate()->GetCurrentContext(),
-//                                        args.Holder())
-//             .FromJust());
-//   CHECK(signature_expected_receiver->Equals(
-//                                        args.GetIsolate()->GetCurrentContext(),
-//                                        args.This())
-//             .FromJust());
-//   v8::Local<v8::Array> result =
-//       v8::Array::New(args.GetIsolate(), args.Length());
-//   for (int i = 0; i < args.Length(); i++) {
-//     CHECK(result->Set(args.GetIsolate()->GetCurrentContext(),
-//                       v8::Integer::New(args.GetIsolate(), i), args[i])
-//               .FromJust());
-//   }
-//   args.GetReturnValue().Set(result);
-// }
+static int signature_callback_count;
+static Local<Value> signature_expected_receiver;
+static void IncrementingSignatureCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  signature_callback_count++;
+  CHECK(signature_expected_receiver->Equals(
+                                       args.GetIsolate()->GetCurrentContext(),
+                                       args.Holder())
+            .FromJust());
+  CHECK(signature_expected_receiver->Equals(
+                                       args.GetIsolate()->GetCurrentContext(),
+                                       args.This())
+            .FromJust());
+  v8::Local<v8::Array> result =
+      v8::Array::New(args.GetIsolate(), args.Length());
+  for (int i = 0; i < args.Length(); i++) {
+    CHECK(result->Set(args.GetIsolate()->GetCurrentContext(),
+                      v8::Integer::New(args.GetIsolate(), i), args[i])
+              .FromJust());
+  }
+  args.GetReturnValue().Set(result);
+}
 
 
 static void Returns42(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -7897,109 +7897,109 @@ THREADED_TEST(Arguments) {
 }
 
 
-// static int p_getter_count;
-// static int p_getter_count2;
+static int p_getter_count;
+static int p_getter_count2;
 
 
-// static void PGetter(Local<Name> name,
-//                     const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   p_getter_count++;
-//   v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-//   v8::Local<v8::Object> global = context->Global();
-//   CHECK(
-//       info.Holder()
-//           ->Equals(context, global->Get(context, v8_str("o1")).ToLocalChecked())
-//           .FromJust());
-//   if (name->Equals(context, v8_str("p1")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o1")).ToLocalChecked())
-//               .FromJust());
-//   } else if (name->Equals(context, v8_str("p2")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o2")).ToLocalChecked())
-//               .FromJust());
-//   } else if (name->Equals(context, v8_str("p3")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o3")).ToLocalChecked())
-//               .FromJust());
-//   } else if (name->Equals(context, v8_str("p4")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o4")).ToLocalChecked())
-//               .FromJust());
-//   }
-// }
+static void PGetter(Local<Name> name,
+                    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  p_getter_count++;
+  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+  v8::Local<v8::Object> global = context->Global();
+  CHECK(
+      info.Holder()
+          ->Equals(context, global->Get(context, v8_str("o1")).ToLocalChecked())
+          .FromJust());
+  if (name->Equals(context, v8_str("p1")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o1")).ToLocalChecked())
+              .FromJust());
+  } else if (name->Equals(context, v8_str("p2")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o2")).ToLocalChecked())
+              .FromJust());
+  } else if (name->Equals(context, v8_str("p3")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o3")).ToLocalChecked())
+              .FromJust());
+  } else if (name->Equals(context, v8_str("p4")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o4")).ToLocalChecked())
+              .FromJust());
+  }
+}
 
 
-// static void RunHolderTest(v8::Local<v8::ObjectTemplate> obj) {
-//   ApiTestFuzzer::Fuzz();
-//   LocalContext context;
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("o1"),
-//                   obj->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   CompileRun(
-//     "o1.__proto__ = { };"
-//     "var o2 = { __proto__: o1 };"
-//     "var o3 = { __proto__: o2 };"
-//     "var o4 = { __proto__: o3 };"
-//     "for (var i = 0; i < 10; i++) o4.p4;"
-//     "for (var i = 0; i < 10; i++) o3.p3;"
-//     "for (var i = 0; i < 10; i++) o2.p2;"
-//     "for (var i = 0; i < 10; i++) o1.p1;");
-// }
+static void RunHolderTest(v8::Local<v8::ObjectTemplate> obj) {
+  // ApiTestFuzzer::Fuzz();
+  LocalContext context;
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("o1"),
+                  obj->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  CompileRun(
+    "o1.__proto__ = { };"
+    "var o2 = { __proto__: o1 };"
+    "var o3 = { __proto__: o2 };"
+    "var o4 = { __proto__: o3 };"
+    "for (var i = 0; i < 10; i++) o4.p4;"
+    "for (var i = 0; i < 10; i++) o3.p3;"
+    "for (var i = 0; i < 10; i++) o2.p2;"
+    "for (var i = 0; i < 10; i++) o1.p1;");
+}
 
 
-// static void PGetter2(Local<Name> name,
-//                      const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   p_getter_count2++;
-//   v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-//   v8::Local<v8::Object> global = context->Global();
-//   CHECK(
-//       info.Holder()
-//           ->Equals(context, global->Get(context, v8_str("o1")).ToLocalChecked())
-//           .FromJust());
-//   if (name->Equals(context, v8_str("p1")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o1")).ToLocalChecked())
-//               .FromJust());
-//   } else if (name->Equals(context, v8_str("p2")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o2")).ToLocalChecked())
-//               .FromJust());
-//   } else if (name->Equals(context, v8_str("p3")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o3")).ToLocalChecked())
-//               .FromJust());
-//   } else if (name->Equals(context, v8_str("p4")).FromJust()) {
-//     CHECK(info.This()
-//               ->Equals(context,
-//                        global->Get(context, v8_str("o4")).ToLocalChecked())
-//               .FromJust());
-//   }
-// }
+static void PGetter2(Local<Name> name,
+                     const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  p_getter_count2++;
+  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+  v8::Local<v8::Object> global = context->Global();
+  CHECK(
+      info.Holder()
+          ->Equals(context, global->Get(context, v8_str("o1")).ToLocalChecked())
+          .FromJust());
+  if (name->Equals(context, v8_str("p1")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o1")).ToLocalChecked())
+              .FromJust());
+  } else if (name->Equals(context, v8_str("p2")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o2")).ToLocalChecked())
+              .FromJust());
+  } else if (name->Equals(context, v8_str("p3")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o3")).ToLocalChecked())
+              .FromJust());
+  } else if (name->Equals(context, v8_str("p4")).FromJust()) {
+    CHECK(info.This()
+              ->Equals(context,
+                       global->Get(context, v8_str("o4")).ToLocalChecked())
+              .FromJust());
+  }
+}
 
 
-// THREADED_TEST(GetterHolders) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> obj = ObjectTemplate::New(isolate);
-//   obj->SetAccessor(v8_str("p1"), PGetter);
-//   obj->SetAccessor(v8_str("p2"), PGetter);
-//   obj->SetAccessor(v8_str("p3"), PGetter);
-//   obj->SetAccessor(v8_str("p4"), PGetter);
-//   p_getter_count = 0;
-//   RunHolderTest(obj);
-//   CHECK_EQ(40, p_getter_count);
-// }
+THREADED_TEST(GetterHolders) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> obj = ObjectTemplate::New(isolate);
+  obj->SetAccessor(v8_str("p1"), PGetter);
+  obj->SetAccessor(v8_str("p2"), PGetter);
+  obj->SetAccessor(v8_str("p3"), PGetter);
+  obj->SetAccessor(v8_str("p4"), PGetter);
+  p_getter_count = 0;
+  RunHolderTest(obj);
+  CHECK_EQ(40, p_getter_count);
+}
 
 
 // THREADED_TEST(PreInterceptorHolders) {
@@ -8013,31 +8013,31 @@ THREADED_TEST(Arguments) {
 // }
 
 
-// THREADED_TEST(ObjectInstantiation) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessor(v8_str("t"), PGetter2);
-//   LocalContext context;
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("o"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   for (int i = 0; i < 100; i++) {
-//     v8::HandleScope inner_scope(CcTest::isolate());
-//     v8::Local<v8::Object> obj =
-//         templ->NewInstance(context.local()).ToLocalChecked();
-//     CHECK(!obj->Equals(context.local(), context->Global()
-//                                             ->Get(context.local(), v8_str("o"))
-//                                             .ToLocalChecked())
-//                .FromJust());
-//     CHECK(
-//         context->Global()->Set(context.local(), v8_str("o2"), obj).FromJust());
-//     v8::Local<Value> value = CompileRun("o.__proto__ === o2.__proto__");
-//     CHECK(v8::True(isolate)->Equals(context.local(), value).FromJust());
-//     CHECK(context->Global()->Set(context.local(), v8_str("o"), obj).FromJust());
-//   }
-// }
+THREADED_TEST(ObjectInstantiation) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessor(v8_str("t"), PGetter2);
+  LocalContext context;
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("o"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  for (int i = 0; i < 100; i++) {
+    v8::HandleScope inner_scope(CcTest::isolate());
+    v8::Local<v8::Object> obj =
+        templ->NewInstance(context.local()).ToLocalChecked();
+    CHECK(!obj->Equals(context.local(), context->Global()
+                                            ->Get(context.local(), v8_str("o"))
+                                            .ToLocalChecked())
+               .FromJust());
+    CHECK(
+        context->Global()->Set(context.local(), v8_str("o2"), obj).FromJust());
+    v8::Local<Value> value = CompileRun("o.__proto__ === o2.__proto__");
+    CHECK(v8::True(isolate)->Equals(context.local(), value).FromJust());
+    CHECK(context->Global()->Set(context.local(), v8_str("o"), obj).FromJust());
+  }
+}
 
 
 static int StrCmp16(uint16_t* a, uint16_t* b) {
@@ -11624,21 +11624,21 @@ THREADED_TEST(SetPrototype) {
 //   }
 // }
 
-// static void FastApiCallback_TrivialSignature(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   CheckReturnValue(args, FUNCTION_ADDR(FastApiCallback_TrivialSignature));
-//   v8::Isolate* isolate = CcTest::isolate();
-//   CHECK_EQ(isolate, args.GetIsolate());
-//   CHECK(args.This()
-//             ->Equals(isolate->GetCurrentContext(), args.Holder())
-//             .FromJust());
-//   CHECK(args.Data()
-//             ->Equals(isolate->GetCurrentContext(), v8_str("method_data"))
-//             .FromJust());
-//   args.GetReturnValue().Set(
-//       args[0]->Int32Value(isolate->GetCurrentContext()).FromJust() + 1);
-// }
+static void FastApiCallback_TrivialSignature(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  // CheckReturnValue(args, FUNCTION_ADDR(FastApiCallback_TrivialSignature));
+  v8::Isolate* isolate = CcTest::isolate();
+  CHECK_EQ(isolate, args.GetIsolate());
+  CHECK(args.This()
+            ->Equals(isolate->GetCurrentContext(), args.Holder())
+            .FromJust());
+  CHECK(args.Data()
+            ->Equals(isolate->GetCurrentContext(), v8_str("method_data"))
+            .FromJust());
+  args.GetReturnValue().Set(
+      args[0]->Int32Value(isolate->GetCurrentContext()).FromJust() + 1);
+}
 
 // static void FastApiCallback_SimpleSignature(
 //     const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -11843,38 +11843,38 @@ THREADED_TEST(SetPrototype) {
 //   CHECK_EQ(100, interceptor_call_count);
 // }
 
-// THREADED_PROFILED_TEST(CallICFastApi_TrivialSignature) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::FunctionTemplate> fun_templ =
-//       v8::FunctionTemplate::New(isolate);
-//   v8::Local<v8::FunctionTemplate> method_templ = v8::FunctionTemplate::New(
-//       isolate, FastApiCallback_TrivialSignature, v8_str("method_data"),
-//       v8::Local<v8::Signature>());
-//   v8::Local<v8::ObjectTemplate> proto_templ = fun_templ->PrototypeTemplate();
-//   proto_templ->Set(v8_str("method"), method_templ);
-//   v8::Local<v8::ObjectTemplate> templ(fun_templ->InstanceTemplate());
-//   USE(templ);
-//   LocalContext context;
-//   v8::Local<v8::Function> fun =
-//       fun_templ->GetFunction(context.local()).ToLocalChecked();
-//   GenerateSomeGarbage();
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("o"),
-//                   fun->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   CompileRun(
-//       "var result = 0;"
-//       "for (var i = 0; i < 100; i++) {"
-//       "  result = o.method(41);"
-//       "}");
+THREADED_PROFILED_TEST(CallICFastApi_TrivialSignature) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::FunctionTemplate> fun_templ =
+      v8::FunctionTemplate::New(isolate);
+  v8::Local<v8::FunctionTemplate> method_templ = v8::FunctionTemplate::New(
+      isolate, FastApiCallback_TrivialSignature, v8_str("method_data"),
+      v8::Local<v8::Signature>());
+  v8::Local<v8::ObjectTemplate> proto_templ = fun_templ->PrototypeTemplate();
+  proto_templ->Set(v8_str("method"), method_templ);
+  v8::Local<v8::ObjectTemplate> templ(fun_templ->InstanceTemplate());
+  // USE(templ);
+  LocalContext context;
+  v8::Local<v8::Function> fun =
+      fun_templ->GetFunction(context.local()).ToLocalChecked();
+  // GenerateSomeGarbage();
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("o"),
+                  fun->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  CompileRun(
+      "var result = 0;"
+      "for (var i = 0; i < 100; i++) {"
+      "  result = o.method(41);"
+      "}");
 
-//   CHECK_EQ(42, context->Global()
-//                    ->Get(context.local(), v8_str("result"))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-// }
+  CHECK_EQ(42, context->Global()
+                   ->Get(context.local(), v8_str("result"))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+}
 
 // static void ThrowingGetter(Local<String> name,
 //                            const v8::PropertyCallbackInfo<v8::Value>& info) {
@@ -19077,55 +19077,55 @@ THREADED_TEST(CreationContext) {
 }
 
 
-// THREADED_TEST(CreationContextOfJsFunction) {
-//   HandleScope handle_scope(CcTest::isolate());
-//   Local<Context> context = Context::New(CcTest::isolate());
-//   InstallContextId(context, 1);
+THREADED_TEST(CreationContextOfJsFunction) {
+  HandleScope handle_scope(CcTest::isolate());
+  Local<Context> context = Context::New(CcTest::isolate());
+  InstallContextId(context, 1);
 
-//   Local<Object> function;
-//   {
-//     Context::Scope scope(context);
-//     function = CompileRun("function foo() {}; foo").As<Object>();
-//   }
+  Local<Object> function;
+  {
+    Context::Scope scope(context);
+    function = CompileRun("function foo() {}; foo").As<Object>();
+  }
 
-//   Local<Context> other_context = Context::New(CcTest::isolate());
-//   Context::Scope scope(other_context);
-//   CHECK(function->CreationContext() == context);
-//   CheckContextId(function, 1);
-// }
+  Local<Context> other_context = Context::New(CcTest::isolate());
+  Context::Scope scope(other_context);
+  CHECK(function->CreationContext() == context);
+  CheckContextId(function, 1);
+}
 
 
-// THREADED_TEST(CreationContextOfJsBoundFunction) {
-//   HandleScope handle_scope(CcTest::isolate());
-//   Local<Context> context1 = Context::New(CcTest::isolate());
-//   InstallContextId(context1, 1);
-//   Local<Context> context2 = Context::New(CcTest::isolate());
-//   InstallContextId(context2, 2);
+THREADED_TEST(CreationContextOfJsBoundFunction) {
+  HandleScope handle_scope(CcTest::isolate());
+  Local<Context> context1 = Context::New(CcTest::isolate());
+  InstallContextId(context1, 1);
+  Local<Context> context2 = Context::New(CcTest::isolate());
+  InstallContextId(context2, 2);
 
-//   Local<Function> target_function;
-//   {
-//     Context::Scope scope(context1);
-//     target_function = CompileRun("function foo() {}; foo").As<Function>();
-//   }
+  Local<Function> target_function;
+  {
+    Context::Scope scope(context1);
+    target_function = CompileRun("function foo() {}; foo").As<Function>();
+  }
 
-//   Local<Function> bound_function1, bound_function2;
-//   {
-//     Context::Scope scope(context2);
-//     CHECK(context2->Global()
-//               ->Set(context2, v8_str("foo"), target_function)
-//               .FromJust());
-//     bound_function1 = CompileRun("foo.bind(1)").As<Function>();
-//     bound_function2 =
-//         CompileRun("Function.prototype.bind.call(foo, 2)").As<Function>();
-//   }
+  Local<Function> bound_function1, bound_function2;
+  {
+    Context::Scope scope(context2);
+    CHECK(context2->Global()
+              ->Set(context2, v8_str("foo"), target_function)
+              .FromJust());
+    bound_function1 = CompileRun("foo.bind(1)").As<Function>();
+    bound_function2 =
+        CompileRun("Function.prototype.bind.call(foo, 2)").As<Function>();
+  }
 
-//   Local<Context> other_context = Context::New(CcTest::isolate());
-//   Context::Scope scope(other_context);
-//   CHECK(bound_function1->CreationContext() == context1);
-//   CheckContextId(bound_function1, 1);
-//   CHECK(bound_function2->CreationContext() == context1);
-//   CheckContextId(bound_function2, 1);
-// }
+  Local<Context> other_context = Context::New(CcTest::isolate());
+  Context::Scope scope(other_context);
+  CHECK(bound_function1->CreationContext() == context1);
+  CheckContextId(bound_function1, 1);
+  CHECK(bound_function2->CreationContext() == context1);
+  CheckContextId(bound_function2, 1);
+}
 
 
 void HasOwnPropertyIndexedPropertyGetter(
