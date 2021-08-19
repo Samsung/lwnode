@@ -132,8 +132,9 @@ static ValueRef* FunctionTemplateNativeFunction(
 
   auto thisObject = thisValue->asObject();
   if (newTarget.hasValue() && ObjectRefHelper::hasExtraData(thisObject)) {
-    auto objectData = ObjectRefHelper::getExtraData(thisObject);
-    ObjectRefHelper::setExtraData(thisObject, objectData->clone(), true);
+    auto objectData = ObjectRefHelper::getExtraData(thisObject)->clone();
+    objectData->setInstanceTemplate(fnData->instanceTemplate());
+    ObjectRefHelper::setExtraData(thisObject, objectData, true);
   }
 
   Local<Value> result;
@@ -193,9 +194,10 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                                   isConstructor,  // isConstruction
                                   FunctionTemplateNativeFunction);  // fn
 
-  FunctionTemplateRefHelper::setInstanceExtraData(
-      esFunctionTemplate,
-      new FunctionData(isolate, *callback, *data, *signature));
+  auto functionData = new FunctionData(isolate, *callback, *data, *signature);
+  functionData->setInstanceTemplate(esFunctionTemplate);
+  FunctionTemplateRefHelper::setInstanceExtraData(esFunctionTemplate,
+                                                  functionData);
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
@@ -301,20 +303,27 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
   if (!esValue->isObject()) {
     return false;
   }
-  auto esTemplateObject = CVAL(this)->ftpl()->instantiate(esContext);
+  auto esObject = esValue->asObject();
 
-  auto r = Evaluator::execute(
-      esContext,
-      [](ExecutionStateRef* esState,
-         ValueRef* esValue,
-         ObjectRef* esTemplateObject) -> ValueRef* {
-        return ValueRef::create(esValue->instanceOf(esState, esTemplateObject));
-      },
-      esValue,
-      esTemplateObject);
-  LWNODE_CHECK(r.isSuccessful());
+  if (!ObjectRefHelper::hasExtraData(esObject)) {
+    return false;
+  }
 
-  return r.result->asBoolean();
+  auto esSelf = CVAL(this)->ftpl();
+  auto tpl = ObjectRefHelper::getExtraData(esObject)->instanceTemplate();
+  if (esSelf == tpl) {
+    return true;
+  }
+
+  auto parent = tpl->parent();
+  while (parent.hasValue()) {
+    if (esSelf == parent.value()) {
+      return true;
+    }
+    parent = parent->parent();
+  }
+
+  return false;
 }
 
 // --- O b j e c t T e m p l a t e ---
