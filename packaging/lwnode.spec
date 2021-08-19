@@ -55,10 +55,8 @@ Requires:    %{name} = %{version}
 Development files for Lightweight node.js.
 
 # Initialize the variables
-%{!?target: %define target lwnode}
-%{!?target_lib: %define target_lib liblwnode}
 %{!?node_engine: %define node_engine escargot}
-%{!?build_profile: %define build_profile none}
+%{!?lib_type: %define lib_type shared}
 
 
 %description
@@ -102,15 +100,30 @@ CXXFLAGS+="-fsanitize=address -fsanitize-recover=address -U_FORTIFY_SOURCE -fno-
 LDFLAGS+="-fsanitize=address"
 %endif
 
+%if "%{node_engine}" == "escargot"
+%define target lwnode
+%define target_lib liblwnode
+%define target_src out/Release
+%define extra_config --without-bundled-v8 --engine escargot
+%else
+%define target node
+%define target_src out/v8/Release
+%endif
+
+%if "%{lib_type}" == "shared"
+%define lib_type_config --shared
+%endif
+
 echo "Building:" %{target}
 
-./configure --without-npm --without-bundled-v8 \
+./configure --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --engine escargot --ninja --shared
-
-ninja -C out/Release %{target_lib}
-ninja -C out/Release %{target}
+            --ninja %{?extra_config} %{?lib_type_config}
+%if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
+ninja -C %{target_src} %{target_lib}
+%endif
+ninja -C %{target_src} %{target}
 
 
 ##############################################
@@ -122,15 +135,19 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
-rm -f ./out/Release/lib/*.tmp ./out/Release/lib/*.TOC
-cp ./out/Release/lib/liblwnode.so* %{buildroot}%{_libdir}
-cp ./out/Release/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
+%if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
+cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
+cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+%endif
 
 # for devel files
-cp ./out/Release/%{target} %{buildroot}%{_bindir}
+strip -v -g %{target_src}/%{target}
+cp %{target_src}/%{target} %{buildroot}%{_bindir}
 
 %clean
 rm ./*.list
+rm ./*.manifest
 
 %post
 /sbin/ldconfig
@@ -146,8 +163,10 @@ rm ./*.list
 %files
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
+%if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
 %{_libdir}/libescargot.so
 %{_libdir}/liblwnode.so*
+%endif
 %license LICENSE.Apache-2.0 LICENSE.BOEHM-GC LICENSE.BSD-3-Clause LICENSE.MIT LICENSE.NodeJS
 
 %files devel
