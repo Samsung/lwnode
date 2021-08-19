@@ -54,8 +54,13 @@ class ObjectData : public gc {
   void setInternalField(int idx, void* lwValue);
   void* internalField(int idx);
 
+  // Template
+  void setInstanceTemplate(Escargot::FunctionTemplateRef* tpl);
+  Escargot::FunctionTemplateRef* instanceTemplate();
+
  private:
   GCContainer<void*>* m_internalFields{nullptr};
+  Escargot::FunctionTemplateRef* instanceTemplate_{nullptr};
 };
 
 class FunctionData : public ObjectData {

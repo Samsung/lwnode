@@ -117,6 +117,14 @@ ObjectData* ObjectData::clone() {
   return newData;
 }
 
+void ObjectData::setInstanceTemplate(Escargot::FunctionTemplateRef* tpl) {
+  instanceTemplate_ = tpl;
+}
+
+Escargot::FunctionTemplateRef* ObjectData::instanceTemplate() {
+  return instanceTemplate_;
+}
+
 bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
                                   ValueRef* thisValue) {
   if (m_signature == nullptr) {
