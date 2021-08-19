@@ -43,6 +43,11 @@ static const char* getCurrentProcessName() {
 #endif
 
 void DebugUtils::printStackTrace() {
+#if defined(NDEBUG)
+  if (EscargotShim::Flags::isInternalLogEnabled() == false) {
+    return;
+  }
+#endif
 #if defined(LWNODE_PLATFORM_LINUX)
   void* frames[kStackTraceFrameSize];
   static const char* processName = getCurrentProcessName();

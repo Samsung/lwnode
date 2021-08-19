@@ -68,40 +68,41 @@ class IndentCounter {
 #define TRACE_ARGS2                                                            \
   getPrettyFunctionName(__PRETTY_FUNCTION__).c_str(), __FILENAME__, __LINE__
 
-#if !defined(NDEBUG)
 #define LWNODE_LOG_RAW(fmt, ...)                                               \
   do {                                                                         \
     fprintf(stderr, fmt "\n", ##__VA_ARGS__);                                  \
   } while (0);
+
+#if !defined(NDEBUG)
+#define LWNODE_LOG_INTERNAL(fmt, ...) LWNODE_LOG_RAW(fmt, ##__VA_ARGS__);
 #else
-#define LWNODE_LOG_RAW(fmt, ...)                                               \
-  do {                                                                         \
-    if (EscargotShim::Flags::isInternalLogEnabled() == true) {                 \
-      fprintf(stderr, fmt "\n", ##__VA_ARGS__);                                \
-    }                                                                          \
-  } while (0);
+#define LWNODE_LOG_INTERNAL(fmt, ...)                                          \
+  if (EscargotShim::Flags::isInternalLogEnabled()) {                           \
+    LWNODE_LOG_RAW(fmt, ##__VA_ARGS__);                                        \
+  }
 #endif
 
 #define LWNODE_LOG_INFO(fmt, ...)                                              \
-  LWNODE_LOG_RAW("INFO " fmt CLR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_INTERNAL("INFO " fmt CLR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
-  LWNODE_LOG_RAW(CLR_YELLOW "WARN " fmt CLR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_INTERNAL(CLR_YELLOW "WARN " fmt CLR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
-  LWNODE_LOG_RAW(CLR_BRED "ERROR " fmt CLR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_INTERNAL(CLR_BRED "ERROR " fmt CLR_RESET, ##__VA_ARGS__);
 
 #define LWNODE_UNIMPLEMENT                                                     \
-  LWNODE_LOG_RAW(CLR_RED "UNIMPLEMENTED " TRACE_FMT CLR_RESET, TRACE_ARGS2);
+  LWNODE_LOG_INTERNAL(CLR_RED "UNIMPLEMENTED " TRACE_FMT CLR_RESET,            \
+                      TRACE_ARGS2);
 
 #define LWNODE_UNIMPLEMENT_IGNORED                                             \
-  LWNODE_LOG_RAW(CLR_DIM "UNIMPLEMENTED (IGNORED) " TRACE_FMT CLR_RESET,       \
-                 TRACE_ARGS2);
+  LWNODE_LOG_INTERNAL(CLR_DIM "UNIMPLEMENTED (IGNORED) " TRACE_FMT CLR_RESET,  \
+                      TRACE_ARGS2);
 
 #define LWNODE_UNIMPLEMENT_WORKAROUND                                          \
-  LWNODE_LOG_RAW(CLR_DIM                                                       \
-                 "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT CLR_RESET,        \
-                 TRACE_ARGS2);
+  LWNODE_LOG_INTERNAL(CLR_DIM                                                  \
+                      "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT CLR_RESET,   \
+                      TRACE_ARGS2);
 
 // conditional loggers
 
