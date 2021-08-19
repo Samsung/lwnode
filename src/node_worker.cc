@@ -24,11 +24,14 @@ using v8::FunctionTemplate;
 using v8::HandleScope;
 using v8::Integer;
 using v8::Isolate;
+using v8::Just;
 using v8::Local;
 using v8::Locker;
+using v8::Maybe;
 using v8::MaybeLocal;
 using v8::Null;
 using v8::Number;
+using v8::Nothing;
 using v8::Object;
 using v8::ResourceConstraints;
 using v8::SealHandleScope;
@@ -364,6 +367,7 @@ void Worker::Run() {
     }
 
     {
+      /*
       int exit_code;
       bool stopped = is_stopped();
       if (!stopped)
@@ -371,9 +375,22 @@ void Worker::Run() {
       Mutex::ScopedLock lock(mutex_);
       if (exit_code_ == 0 && !stopped)
         exit_code_ = exit_code;
+      */
+      // @lwnode remove warning: ‘exit_code’ may be used uninitialized
+      Maybe<int> exit_code = Nothing<int>();
+      bool stopped = is_stopped();
+      if (!stopped) {
+        exit_code = Just<int>(EmitExit(env_.get()));
+      }
+      Mutex::ScopedLock lock(mutex_);
+      if (exit_code_ == 0 && !stopped && exit_code.IsJust()) {
+        exit_code_ = exit_code.FromJust();
+      }
 
-      Debug(this, "Exiting thread for worker %llu with exit code %d",
-            thread_id_.id, exit_code_);
+      Debug(this,
+            "Exiting thread for worker %llu with exit code %d",
+            thread_id_.id,
+            exit_code_);
     }
   }
 
