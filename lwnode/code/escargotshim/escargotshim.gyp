@@ -43,6 +43,7 @@
         'src/libplatform/tracing/trace-writer.cc',
         'src/api/utils/debug.cc',
         'src/api/utils/gc.cc',
+        'src/api/utils/smaps.cc',
         'src/api/utils/logger/flags.cc',
         'src/api/utils/logger/logger.cc',
         'src/api/arraybuffer-allocator.cc',
