@@ -32,6 +32,7 @@ constexpr const char* kRegion = "Region";
 
 std::vector<SmapContents> parseSmaps(std::string pid);
 size_t calculateTotalPssSwap(std::vector<SmapContents>& smaps);
+size_t calculateTotalRss(std::vector<SmapContents>& smaps);
 bool dumpMemorySnapshot(std::string outputPath,
                         std::vector<SmapContents>& smaps);
 

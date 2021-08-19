@@ -23,4 +23,6 @@ namespace LWNode {
 void InitializeProcessMethods(v8::Local<v8::Object> target,
                               v8::Local<v8::Context> context);
 
+bool dumpSelfMemorySnapshot();
+
 }  // namespace LWNode
