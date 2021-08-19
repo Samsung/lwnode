@@ -16,21 +16,127 @@
 
 #include "lwnode/lwnode.h"
 #include <EscargotPublic.h>
+#include <chrono>
+#include <fstream>
 #include "api.h"
+#include "api/utils/misc.h"
+#include "api/utils/smaps.h"
 #include "base.h"
 
 using namespace v8;
 using namespace EscargotShim;
+using namespace std::literals;
 
 namespace LWNode {
 
+static void SetMethod(ContextRef* context,
+                      ObjectRef* target,
+                      std::string name,
+                      NativeFunctionPointer nativeFunction) {
+  Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* target,
+         StringRef* name,
+         NativeFunctionPointer nativeFunction) -> ValueRef* {
+        target->defineDataProperty(
+            state,
+            name,
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          nativeFunction,
+                                          0,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        return ValueRef::createUndefined();
+      },
+      target,
+      StringRef::createFromASCII(name.c_str(), name.length()),
+      nativeFunction);
+}
+
+constexpr auto kSmapCacheDuration = 600ms;
+
+static std::vector<SmapContents>& getSelfSmaps() {
+  static std::vector<SmapContents> s_cachedSmaps = parseSmaps("self");
+  static auto s_lastUpdatedTime = std::chrono::steady_clock::now();
+
+  if (std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::steady_clock::now() - s_lastUpdatedTime) <
+      kSmapCacheDuration) {
+    return s_cachedSmaps;
+  }
+
+  s_cachedSmaps = parseSmaps("self");
+  s_lastUpdatedTime = std::chrono::steady_clock::now();
+  return s_cachedSmaps;
+}
+
+static std::string createDumpFilePath() {
+  std::string appName;
+  std::ifstream("/proc/self/comm") >> appName;
+  std::string outputPath =
+      "/tmp/smaps-" + appName + "-" + getCurrentTimeString() + ".csv";
+  return outputPath;
+}
+
+bool dumpSelfMemorySnapshot() {
+  auto& smaps = getSelfSmaps();
+  return dumpMemorySnapshot(createDumpFilePath(), smaps);
+}
+
+static ValueRef* PssUsage(ExecutionStateRef* state,
+                          ValueRef* thisValue,
+                          size_t argc,
+                          ValueRef** argv,
+                          bool isConstructCall) {
+  auto& smaps = getSelfSmaps();
+  size_t total = calculateTotalPssSwap(smaps);
+  return ValueRef::create(total);
+};
+
+static ValueRef* RssUsage(ExecutionStateRef* state,
+                          ValueRef* thisValue,
+                          size_t argc,
+                          ValueRef** argv,
+                          bool isConstructCall) {
+  auto& smaps = getSelfSmaps();
+  size_t total = calculateTotalRss(smaps);
+  return ValueRef::create(total);
+};
+
+static ValueRef* MemSnapshot(ExecutionStateRef* state,
+                             ValueRef* thisValue,
+                             size_t argc,
+                             ValueRef** argv,
+                             bool isConstructCall) {
+#ifdef PRODUCTION
+  return ValueRef::create(false);
+#endif
+  auto outputPath = createDumpFilePath();
+  auto& smaps = getSelfSmaps();
+  if (dumpMemorySnapshot(outputPath, smaps)) {
+    return StringRef::createFromASCII(outputPath.c_str(), outputPath.length());
+  }
+  return ValueRef::createUndefined();
+};
+
 void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
-  auto esObject = CVAL(*target)->value()->asObject();
+  auto esTarget = CVAL(*target)->value()->asObject();
 
 #if !defined(NDEBUG)
-  EvalResultHelper::attachBuiltinPrint(esContext, esObject);
+  EvalResultHelper::attachBuiltinPrint(esContext, esTarget);
 #endif
+
+  SetMethod(esContext, esTarget, "PssUsage", PssUsage);
+  SetMethod(esContext, esTarget, "RssUsage", RssUsage);
+  SetMethod(esContext, esTarget, "MemSnapshot", MemSnapshot);
 }
 
 }  // namespace LWNode

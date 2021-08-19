@@ -187,6 +187,14 @@ size_t calculateTotalPssSwap(std::vector<SmapContents>& smaps) {
   return total;
 }
 
+size_t calculateTotalRss(std::vector<SmapContents>& smaps) {
+  size_t total = 0;
+  for (auto& smap : smaps) {
+    total += std::stoull(smap["Rss"]);
+  }
+  return total;
+}
+
 bool dumpMemorySnapshot(std::string outputPath,
                         std::vector<SmapContents>& smaps) {
   std::ofstream output(outputPath);

@@ -60,12 +60,18 @@ jobs:
           command: |
             du -h out/Release/lwnode
             out/Release/lwnode test/message/hello_world.js
+            out/Release/lwnode lwnode/test/node/test/memory/test-memory-basic.js
+            mkdir -p ~/artifacts
+            cp /tmp/*.csv ~/artifacts/.
       - run:
           name: Run node.js TCs (test.py)
           command: tools/test.py -J -p dots --report --time
                   --timeout 240 --repeat 1
                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
                   test/parallel
+      - store_artifacts:
+          path: ~/artifacts
+          destination: artifacts
 
   node_test_jstester:
     <<: *config
