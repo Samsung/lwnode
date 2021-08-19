@@ -219,6 +219,7 @@ test/parallel/test-require-symlink.js
 test/parallel/test-source-map-api.js
 test/parallel/test-stream-readable-async-iterators.js
 test/parallel/test-string-decoder-end.js
+test/parallel/test-string-decoder-fuzz.js
 test/parallel/test-string-decoder.js
 test/parallel/test-sync-io-option.js
 test/parallel/test-tick-processor-arguments.js
