@@ -43,7 +43,8 @@
 #define CHECK_FMT CLR_REDBG "CHECK FAILED" CLR_RESET " "
 
 #define _LWNODE_CHECK_FAILED_HANDLER(msg, ...)                                 \
-  LWNODE_LOG_RAW(CHECK_FMT msg "\n\t " TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);  \
+  LWNODE_LOG_INTERNAL(                                                         \
+      CHECK_FMT msg "\n\t " TRACE_FMT, ##__VA_ARGS__, TRACE_ARGS);             \
   EscargotShim::DebugUtils::printStackTrace();                                 \
   std::abort();
 
