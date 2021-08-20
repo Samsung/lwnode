@@ -1899,7 +1899,8 @@ v8::Local<v8::Context> Isolate::GetIncumbentContext() {
 v8::Local<Value> Isolate::ThrowException(v8::Local<v8::Value> value) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esValue = CVAL(*value)->value();
+  auto esValue = value.IsEmpty() ? lwIsolate->undefined_value()->value()
+                                 : CVAL(*value)->value();
   lwIsolate->ScheduleThrow(esValue);
 
   return Utils::NewLocal<Value>(lwIsolate->toV8(), esValue);

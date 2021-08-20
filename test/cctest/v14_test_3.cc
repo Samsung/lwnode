@@ -771,3 +771,12 @@ THREADED_TEST(VariousGetPropertiesAndThrowingCallbacksCustom) {
   CHECK(!try_catch.HasCaught());
   CHECK(result.IsEmpty());
 }
+
+THREADED_TEST(ThrowUndefinedExceptionCrashTest) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  TryCatch try_catch(context->GetIsolate());
+  CompileRun("function f() { throw undefined; }; f();");
+}

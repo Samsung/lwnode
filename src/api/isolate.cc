@@ -519,10 +519,25 @@ void IsolateWrap::SetPendingExceptionAndMessage(
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
-  auto exceptionObject =
-      ObjectRefHelper::toObject(GetCurrentContext()->get(), exception);
-  ObjectRefHelper::setExtraData(exceptionObject,
-                                new ExceptionObjectData(stackTraceData));
+  ObjectRef* exceptionObject = nullptr;
+  if (exception->isUndefined()) {
+    // @note
+    // We create an empty ObjectRef for undefined exception value, because
+    // ValueRef::Undefined cannot be an object, and thus cannot use
+    // setExtraData()
+    EvalResult r = Evaluator::execute(
+        GetCurrentContext()->get(), [](ExecutionStateRef* state) -> ValueRef* {
+          return ObjectRef::create(state);
+        });
+    exceptionObject = r.result->asObject();
+    ObjectRefHelper::setExtraData(
+        exceptionObject, new ExceptionObjectData(stackTraceData, true));
+  } else {
+    exceptionObject =
+        ObjectRefHelper::toObject(GetCurrentContext()->get(), exception);
+    ObjectRefHelper::setExtraData(exceptionObject,
+                                  new ExceptionObjectData(stackTraceData));
+  }
 
   set_pending_exception(exceptionObject);
   // @note
