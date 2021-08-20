@@ -112,7 +112,7 @@ class ExceptionObjectData : public ObjectData {
  public:
   struct StackTraceData : public gc {
    public:
-    StackTraceData(Escargot::Evaluator::StackTraceData& data)
+    StackTraceData(const Escargot::Evaluator::StackTraceData& data)
         : src(data.src),
           sourceCode(data.sourceCode),
           loc(data.loc),
@@ -143,11 +143,7 @@ class ExceptionObjectData : public ObjectData {
 
  public:
   ExceptionObjectData(
-      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
-    for (size_t i = 0; i < stackTraceData.size(); i++) {
-      stackTraces_.push_back(new StackTraceData(stackTraceData[i]));
-    }
-  }
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
 
   ExceptionObjectData(GCVector<StackTraceData*>* stackTrace) {
     for (const auto& iter : *stackTrace) {

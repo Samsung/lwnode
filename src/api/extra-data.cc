@@ -145,6 +145,27 @@ bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
   return r.result->asBoolean();
 }
 
+static bool isValidStackFrame(const Evaluator::StackTraceData& traceData) {
+  const int errorLine = traceData.loc.line;
+  const int errorColumn = traceData.loc.column;
+  // simple filter for { [native function] } :-1:-1)
+  return (errorLine > 0 && errorColumn > 0);
+}
+
+ExceptionObjectData::ExceptionObjectData(
+    GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
+  constexpr const char* kNativeFunction = "[native function]";
+
+  for (size_t i = 0; i < stackTraceData.size(); i++) {
+    const auto& traceData = stackTraceData[i];
+    if (isValidStackFrame(traceData) == false) {
+      LWNODE_DLOG_INFO("filtered: stack frame #%zu", i);
+      continue;
+    }
+    stackTraces_.push_back(new StackTraceData(traceData));
+  }
+}
+
 GCVector<ExceptionObjectData::StackTraceData*>* ExceptionObjectData::stackTrace(
     ObjectRef* exceptionObject) {
   auto exceptionObjectData = static_cast<ExceptionObjectData*>(
