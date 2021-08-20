@@ -1438,7 +1438,7 @@ Maybe<bool> Object::SetAccessor(Local<Context> context,
   Local<Value> dataLocalValue;
   if (!data.ToLocal(&dataLocalValue)) {
     dataLocalValue =
-        Utils::NewLocal<Value>(lwIsolate->toV8(), lwIsolate->undefined());
+        Utils::NewLocal<Value>(lwIsolate->toV8(), lwIsolate->undefined_value());
   }
 
   return ObjectUtils::SetAccessor(

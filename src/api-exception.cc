@@ -113,7 +113,8 @@ v8::Local<v8::Value> v8::TryCatch::ReThrow() {
     return v8::Local<v8::Value>();
   }
   rethrow_ = true;
-  return v8::Utils::ToLocal<Value>(IsolateWrap::fromV8(isolate_)->undefined());
+  return v8::Utils::ToLocal<Value>(
+      IsolateWrap::fromV8(isolate_)->undefined_value());
 }
 
 v8::Local<Value> v8::TryCatch::Exception() const {
