@@ -65,6 +65,71 @@ EvalResult ObjectRefHelper::setProperty(ContextRef* context,
       value);
 }
 
+ValueRef* ObjectRefHelper::getOwnPropertyAttributes(ExecutionStateRef* state,
+                                                    ObjectRef* object,
+                                                    ValueRef* key) {
+  auto val = object->getOwnPropertyDescriptor(state, key);
+  if (val->isUndefined()) {
+    return ValueRef::createUndefined();
+  }
+
+  v8::PropertyAttribute attr = v8::PropertyAttribute::None;
+
+  bool isWritable = val->asObject()
+                        ->get(state, StringRef::createFromASCII("writable"))
+                        ->asBoolean();
+  bool isEnumerable = val->asObject()
+                          ->get(state, StringRef::createFromASCII("enumerable"))
+                          ->asBoolean();
+  bool isConfigurable =
+      val->asObject()
+          ->get(state, StringRef::createFromASCII("configurable"))
+          ->asBoolean();
+
+  attr = attr | !isWritable ? v8::PropertyAttribute::ReadOnly
+                            : v8::PropertyAttribute::None;
+  attr = attr | !isEnumerable ? v8::PropertyAttribute::DontEnum
+                              : v8::PropertyAttribute::None;
+  attr = attr | !isConfigurable ? v8::PropertyAttribute::DontDelete
+                                : v8::PropertyAttribute::None;
+
+  return ValueRef::create(static_cast<unsigned>(attr));
+}
+
+EvalResult ObjectRefHelper::getPropertyAttributes(ContextRef* context,
+                                                  ObjectRef* object,
+                                                  ValueRef* key,
+                                                  bool skipPrototype) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
+  EvalResult r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* object,
+         ValueRef* key,
+         bool skipPrototype) -> ValueRef* {
+        LWNODE_DCHECK_NOT_NULL(object);
+        LWNODE_DCHECK_NOT_NULL(key);
+
+        ValueRef* attr = ValueRef::createUndefined();
+        for (ObjectRef* o = object; o;
+             o = o->getPrototypeObject(state).value()) {
+          attr = getOwnPropertyAttributes(state, o, key);
+          if (skipPrototype || !attr->isUndefined()) {
+            break;
+          }
+        }
+
+        return attr;
+      },
+      object,
+      key,
+      skipPrototype);
+
+  return r;
+}
+
 EvalResult ObjectRefHelper::getProperty(ContextRef* context,
                                         ObjectRef* object,
                                         ValueRef* key) {
