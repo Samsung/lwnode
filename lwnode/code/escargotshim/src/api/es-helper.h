@@ -51,6 +51,11 @@ class ObjectRefHelper {
                                 ValueRef* key,
                                 ValueRef* value);
 
+  static EvalResult getPropertyAttributes(ContextRef* context,
+                                          ObjectRef* object,
+                                          ValueRef* key,
+                                          bool skipPrototype = false);
+
   static EvalResult hasProperty(ContextRef* context,
                                 ObjectRef* object,
                                 ValueRef* key);
@@ -111,6 +116,10 @@ class ObjectRefHelper {
 
  private:
   static ObjectData* createExtraDataIfNotExist(ObjectRef* object);
+
+  static ValueRef* getOwnPropertyAttributes(ExecutionStateRef* state,
+                                            ObjectRef* object,
+                                            ValueRef* key);
 };
 
 class ObjectTemplateRefHelper {

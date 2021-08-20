@@ -1113,40 +1113,14 @@ Maybe<PropertyAttribute> v8::Object::GetPropertyAttributes(
   auto esSelf = CVAL(this)->value()->asObject();
   auto esKey = CVAL(*key)->value();
 
-  PropertyAttribute attr;
-  EvalResult r = Evaluator::execute(
-      esContext,
-      [](ExecutionStateRef* esState,
-         ObjectRef* esSelf,
-         ValueRef* esKey,
-         PropertyAttribute* attr) -> ValueRef* {
-        auto val = esSelf->getOwnPropertyDescriptor(esState, esKey);
-        bool isWritable =
-            val->asObject()
-                ->get(esState, StringRef::createFromASCII("writable"))
-                ->asBoolean();
-        bool isEnumerable =
-            val->asObject()
-                ->get(esState, StringRef::createFromASCII("enumerable"))
-                ->asBoolean();
-        bool isConfigurable =
-            val->asObject()
-                ->get(esState, StringRef::createFromASCII("configurable"))
-                ->asBoolean();
-
-        *attr = *attr | !isWritable ? PropertyAttribute::ReadOnly
-                                    : PropertyAttribute::None;
-        *attr = *attr | !isEnumerable ? PropertyAttribute::DontEnum
-                                      : PropertyAttribute::None;
-        *attr = *attr | !isConfigurable ? PropertyAttribute::DontDelete
-                                        : PropertyAttribute::None;
-        return val;
-      },
-      esSelf,
-      esKey,
-      &attr);
+  auto r = ObjectRefHelper::getPropertyAttributes(esContext, esSelf, esKey);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<PropertyAttribute>());
 
+  if (r.result->isUndefined()) {
+    return Just(PropertyAttribute::None);
+  }
+
+  PropertyAttribute attr = static_cast<PropertyAttribute>(r.result->asUInt32());
   return Just(attr);
 }
 
