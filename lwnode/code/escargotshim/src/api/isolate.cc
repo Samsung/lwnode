@@ -548,7 +548,7 @@ ValueWrap** IsolateWrap::getGlobal(const int index) {
   return &globalSlot_[index];
 }
 
-ValueWrap* IsolateWrap::undefined() {
+ValueWrap* IsolateWrap::undefined_value() {
   return globalSlot_[internal::Internals::kUndefinedValueRootIndex];
 }
 

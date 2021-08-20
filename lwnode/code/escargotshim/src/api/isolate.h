@@ -187,7 +187,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   VMInstanceRef* vmInstance() { return vmInstance_; }
 
   ValueWrap** getGlobal(const int idex);
-  ValueWrap* undefined();
+  ValueWrap* undefined_value();
   ValueWrap* hole() override;
   ValueWrap* null();
   ValueWrap* trueValue();

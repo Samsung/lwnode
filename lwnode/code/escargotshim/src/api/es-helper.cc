@@ -755,7 +755,7 @@ InternalField* ObjectRefHelper::getInternalField(ObjectRef* object, int idx) {
 
   auto field = reinterpret_cast<InternalField*>(data->internalField(idx));
   if (!field) {
-    return IsolateWrap::GetCurrent()->undefined();
+    return IsolateWrap::GetCurrent()->undefined_value();
   }
 
   return field;

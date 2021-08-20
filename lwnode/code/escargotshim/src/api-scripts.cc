@@ -198,7 +198,7 @@ Maybe<bool> Module::InstantiateModule(Local<Context> context,
 MaybeLocal<Value> Module::Evaluate(Local<Context> context) {
   LWNODE_ONCE(LWNODE_UNIMPLEMENT_WORKAROUND);
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
-  return v8::Utils::ToLocal<Value>(lwIsolate->undefined());
+  return v8::Utils::ToLocal<Value>(lwIsolate->undefined_value());
 }
 
 Local<Module> Module::CreateSyntheticModule(

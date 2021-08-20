@@ -45,7 +45,7 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
   m_implicitArgs[T::kDataIndex] = data;
   m_implicitArgs[T::kNewTargetIndex] =
       newTarget.hasValue() ? ValueWrap::createValue(newTarget.get())
-                           : lwIsolate->undefined();
+                           : lwIsolate->undefined_value();
 }
 
 HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
