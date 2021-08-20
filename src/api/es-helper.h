@@ -51,6 +51,10 @@ class ObjectRefHelper {
                                 ValueRef* key,
                                 ValueRef* value);
 
+  static EvalResult getOwnProperty(ContextRef* context,
+                                   ObjectRef* object,
+                                   ValueRef* key);
+
   static EvalResult getPropertyAttributes(ContextRef* context,
                                           ObjectRef* object,
                                           ValueRef* key,

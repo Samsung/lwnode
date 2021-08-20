@@ -27,6 +27,8 @@ class V8Helper {
  public:
   static ObjectRef::PresentAttribute toPresentAttribute(
       v8::PropertyAttribute attributes);
+  static v8::PropertyAttribute toPropertyAttribute(
+      ObjectRef::PresentAttribute attributes);
 };
 
 }  // namespace EscargotShim

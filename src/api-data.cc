@@ -1528,12 +1528,39 @@ v8::Object::GetRealNamedPropertyAttributesInPrototypeChain(
 
 MaybeLocal<Value> v8::Object::GetRealNamedProperty(Local<Context> context,
                                                    Local<Name> key) {
-  LWNODE_RETURN_LOCAL(Value);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
+
+  auto r = ObjectRefHelper::getOwnProperty(VAL(*context)->context()->get(),
+                                           VAL(this)->value()->asObject(),
+                                           VAL(*key)->value());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+
+  if (r.result->isUndefined()) {
+    return MaybeLocal<Value>();
+  }
+
+  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
 }
 
 Maybe<PropertyAttribute> v8::Object::GetRealNamedPropertyAttributes(
-    Local<Context> context,
-    Local<Name> key){LWNODE_RETURN_MAYBE(PropertyAttribute)}
+    Local<Context> context, Local<Name> key) {
+  API_ENTER_WITH_CONTEXT(context, Nothing<PropertyAttribute>());
+
+  auto r =
+      ObjectRefHelper::getPropertyAttributes(VAL(*context)->context()->get(),
+                                             CVAL(this)->value()->asObject(),
+                                             CVAL(*key)->value(),
+                                             true);
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<PropertyAttribute>());
+
+  if (r.result->isUndefined()) {
+    return Just(PropertyAttribute::None);
+  }
+
+  auto attr = static_cast<ObjectRef::PresentAttribute>(r.result->asUInt32());
+  return Just(V8Helper::toPropertyAttribute(attr));
+}
 
 Local<v8::Object> v8::Object::Clone() {
   auto lwIsolate = IsolateWrap::GetCurrent();
