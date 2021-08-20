@@ -143,11 +143,16 @@ class ExceptionObjectData : public ObjectData {
 
  public:
   ExceptionObjectData(
-      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData,
+      bool isThisExceptionUndefined = false);
 
-  ExceptionObjectData(GCVector<StackTraceData*>* stackTrace) {
-    for (const auto& iter : *stackTrace) {
-      stackTraces_.push_back(iter);
+  ExceptionObjectData(GCVector<StackTraceData*>* stackTrace,
+                      bool isThisExceptionUndefined = false)
+      : isThisExceptionUndefined_(isThisExceptionUndefined) {
+    {
+      for (const auto& iter : *stackTrace) {
+        stackTraces_.push_back(iter);
+      }
     }
   }
 
@@ -158,6 +163,7 @@ class ExceptionObjectData : public ObjectData {
 
  private:
   GCVector<StackTraceData*> stackTraces_;
+  bool isThisExceptionUndefined_{false};
 };
 
 class GlobalObjectData : public ObjectData {

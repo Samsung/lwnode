@@ -153,7 +153,9 @@ static bool isValidStackFrame(const Evaluator::StackTraceData& traceData) {
 }
 
 ExceptionObjectData::ExceptionObjectData(
-    GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
+    GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData,
+    bool isThisExceptionUndefined)
+    : isThisExceptionUndefined_(isThisExceptionUndefined) {
   constexpr const char* kNativeFunction = "[native function]";
 
   for (size_t i = 0; i < stackTraceData.size(); i++) {
