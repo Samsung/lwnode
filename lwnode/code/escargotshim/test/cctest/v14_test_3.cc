@@ -676,3 +676,98 @@ THREADED_TEST(PromiseHookCustom) {
 
   delete promiseHookData;
 }
+
+static void ThrowingGetterCustom(
+    Local<String> name, const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // info.GetIsolate()->ThrowException(Local<Value>());
+  info.GetReturnValue().SetUndefined();
+}
+
+THREADED_TEST(VariousGetPropertiesAndThrowingCallbacksCustom) {
+  LocalContext context;
+  HandleScope scope(context->GetIsolate());
+
+  Local<FunctionTemplate> templ = FunctionTemplate::New(context->GetIsolate());
+  Local<ObjectTemplate> instance_templ = templ->InstanceTemplate();
+  instance_templ->SetAccessor(v8_str("f"), ThrowingGetterCustom);
+
+  Local<Object> instance = templ->GetFunction(context.local())
+                               .ToLocalChecked()
+                               ->NewInstance(context.local())
+                               .ToLocalChecked();
+
+  Local<Object> another = Object::New(context->GetIsolate());
+  CHECK(another->SetPrototype(context.local(), instance).FromJust());
+
+  Local<Object> with_js_getter =
+      CompileRun("o = {};\n"
+                 "o.__defineGetter__('f', function() { throw undefined; });\n"
+                 "o\n")
+          .As<Object>();
+  CHECK(!with_js_getter.IsEmpty());
+
+  TryCatch try_catch(context->GetIsolate());
+
+  v8::MaybeLocal<Value> result =
+      instance->GetRealNamedProperty(context.local(), v8_str("f"));
+  // CHECK(try_catch.HasCaught());
+  // try_catch.Reset();
+  CHECK(result.IsEmpty());
+
+  Maybe<PropertyAttribute> attr =
+      instance->GetRealNamedPropertyAttributes(context.local(), v8_str("f"));
+  CHECK(!try_catch.HasCaught());
+  CHECK(Just(None) == attr);
+
+  result = another->GetRealNamedProperty(context.local(), v8_str("f"));
+  // CHECK(try_catch.HasCaught());
+  try_catch.Reset();
+  CHECK(result.IsEmpty());
+
+  attr = another->GetRealNamedPropertyAttributes(context.local(), v8_str("f"));
+  CHECK(!try_catch.HasCaught());
+  CHECK(Just(None) == attr);
+
+  // result = another->GetRealNamedPropertyInPrototypeChain(context.local(),
+  //                                                        v8_str("f"));
+  // CHECK(try_catch.HasCaught());
+  // try_catch.Reset();
+  // CHECK(result.IsEmpty());
+
+  // attr = another->GetRealNamedPropertyAttributesInPrototypeChain(
+  //     context.local(), v8_str("f"));
+  // CHECK(!try_catch.HasCaught());
+  // CHECK(Just(None) == attr);
+
+  // result = another->Get(context.local(), v8_str("f"));
+  // CHECK(try_catch.HasCaught());
+  // try_catch.Reset();
+  // CHECK(result.IsEmpty());
+
+  // result = with_js_getter->GetRealNamedProperty(context.local(),
+  // v8_str("f")); CHECK(try_catch.HasCaught()); try_catch.Reset();
+  // CHECK(result.IsEmpty());
+
+  // attr = with_js_getter->GetRealNamedPropertyAttributes(context.local(),
+  //                                                       v8_str("f"));
+  // CHECK(!try_catch.HasCaught());
+  // CHECK(Just(None) == attr);
+
+  // result = with_js_getter->Get(context.local(), v8_str("f"));
+  // CHECK(try_catch.HasCaught());
+  // try_catch.Reset();
+  // CHECK(result.IsEmpty());
+
+  Local<Object> target = CompileRun("({})").As<Object>();
+  Local<Object> handler = CompileRun("({})").As<Object>();
+  Local<v8::Proxy> proxy =
+      v8::Proxy::New(context.local(), target, handler).ToLocalChecked();
+
+  result = target->GetRealNamedProperty(context.local(), v8_str("f"));
+  CHECK(!try_catch.HasCaught());
+  CHECK(result.IsEmpty());
+
+  result = proxy->GetRealNamedProperty(context.local(), v8_str("f"));
+  CHECK(!try_catch.HasCaught());
+  CHECK(result.IsEmpty());
+}

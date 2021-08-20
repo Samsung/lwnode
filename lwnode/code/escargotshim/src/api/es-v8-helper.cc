@@ -50,4 +50,26 @@ ObjectRef::PresentAttribute V8Helper::toPresentAttribute(
 
   return presentAttributes;
 }
+
+v8::PropertyAttribute V8Helper::toPropertyAttribute(
+    ObjectRef::PresentAttribute attributes) {
+  int propertyAttributes = v8::PropertyAttribute::None;
+
+  if (attributes & ObjectRef::PresentAttribute::NonWritablePresent) {
+    propertyAttributes =
+        propertyAttributes | ObjectRef::PresentAttribute::NonWritablePresent;
+  }
+
+  if (attributes & ObjectRef::PresentAttribute::NonEnumerablePresent) {
+    propertyAttributes =
+        propertyAttributes | ObjectRef::PresentAttribute::NonEnumerablePresent;
+  }
+
+  if (attributes & ObjectRef::PresentAttribute::NonConfigurablePresent) {
+    propertyAttributes = propertyAttributes |
+                         ObjectRef::PresentAttribute::NonConfigurablePresent;
+  }
+
+  return static_cast<v8::PropertyAttribute>(propertyAttributes);
+}
 }  // namespace EscargotShim

@@ -73,7 +73,7 @@ ValueRef* ObjectRefHelper::getOwnPropertyAttributes(ExecutionStateRef* state,
     return ValueRef::createUndefined();
   }
 
-  v8::PropertyAttribute attr = v8::PropertyAttribute::None;
+  int attr = ObjectRef::PresentAttribute::NotPresent;
 
   bool isWritable = val->asObject()
                         ->get(state, StringRef::createFromASCII("writable"))
@@ -86,14 +86,25 @@ ValueRef* ObjectRefHelper::getOwnPropertyAttributes(ExecutionStateRef* state,
           ->get(state, StringRef::createFromASCII("configurable"))
           ->asBoolean();
 
-  attr = attr | !isWritable ? v8::PropertyAttribute::ReadOnly
-                            : v8::PropertyAttribute::None;
-  attr = attr | !isEnumerable ? v8::PropertyAttribute::DontEnum
-                              : v8::PropertyAttribute::None;
-  attr = attr | !isConfigurable ? v8::PropertyAttribute::DontDelete
-                                : v8::PropertyAttribute::None;
+  if (isWritable) {
+    attr = attr | ObjectRef::PresentAttribute::WritablePresent;
+  } else {
+    attr = attr | ObjectRef::PresentAttribute::NonWritablePresent;
+  }
 
-  return ValueRef::create(static_cast<unsigned>(attr));
+  if (isEnumerable) {
+    attr = attr | ObjectRef::PresentAttribute::EnumerablePresent;
+  } else {
+    attr = attr | ObjectRef::PresentAttribute::NonEnumerablePresent;
+  }
+
+  if (isConfigurable) {
+    attr = attr | ObjectRef::PresentAttribute::ConfigurablePresent;
+  } else {
+    attr = attr | ObjectRef::PresentAttribute::NonConfigurablePresent;
+  }
+
+  return ValueRef::create(attr);
 }
 
 EvalResult ObjectRefHelper::getPropertyAttributes(ContextRef* context,
@@ -141,6 +152,20 @@ EvalResult ObjectRefHelper::getProperty(ContextRef* context,
       [](ExecutionStateRef* esState,
          ObjectRef* object,
          ValueRef* key) -> ValueRef* { return object->get(esState, key); },
+      object,
+      key);
+}
+
+EvalResult ObjectRefHelper::getOwnProperty(ContextRef* context,
+                                           ObjectRef* object,
+                                           ValueRef* key) {
+  LWNODE_DCHECK_NOT_NULL(object);
+  LWNODE_DCHECK_NOT_NULL(key);
+
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* esState, ObjectRef* object, ValueRef* key)
+          -> ValueRef* { return object->getOwnProperty(esState, key); },
       object,
       key);
 }
