@@ -203,6 +203,7 @@ test/parallel/test-repl-setprompt.js
 test/parallel/test-repl-sigint-nested-eval.js
 test/parallel/test-repl-sigint.js
 test/parallel/test-repl-syntax-error-handling.js
+test/parallel/test-repl-syntax-error-stack.js
 test/parallel/test-repl-tab-complete-crash.js
 test/parallel/test-repl-tab-complete-nested-repls.js
 test/parallel/test-repl-tab-complete-no-warn.js
