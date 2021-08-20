@@ -174,9 +174,11 @@ void Isolate::ReportPendingMessages() {
   if (should_report_exception) {
     v8::HandleScope scope(EscargotShim::IsolateWrap::toV8(this));
 
-    v8::Local<v8::Message> message;
     v8::Local<v8::Value> exception = v8::Utils::NewLocal<v8::Value>(
         EscargotShim::IsolateWrap::toV8(this), pending_exception_);
+
+    v8::Local<v8::Message> message = v8::Exception::CreateMessage(
+        EscargotShim::IsolateWrap::toV8(this), exception);
 
     if (message_callback_ != nullptr) {
       message_callback_(message, exception);
