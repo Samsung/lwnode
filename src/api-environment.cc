@@ -1514,40 +1514,23 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
 
-  BackingStoreRef* esBackingStore = nullptr;
-  EvalResult r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState,
-         BackingStoreRef** backingStore,
-         void* data,
-         size_t byteLength,
-         v8::BackingStore::DeleterCallback deleter,
-         void* deleterData) -> ValueRef* {
-        struct Params {
-          v8::BackingStore::DeleterCallback deleter;
-          void* deleterData;
-        };
+  struct Params {
+    BackingStore::DeleterCallback deleter{nullptr};
+    void* deleter_data{nullptr};
+  };
 
-        Params* callbackData = new Params();
-        callbackData->deleter = deleter;
-        callbackData->deleterData = deleterData;
-        auto callback = [](void* data, size_t length, void* callbackData) {
-          Params* p = (Params*)callbackData;
-          p->deleter(data, length, p->deleterData);
-          delete p;
-        };
+  Params* callbackData = new Params();
+  callbackData->deleter = deleter;
+  callbackData->deleter_data = deleter_data;
 
-        *backingStore =
-            BackingStoreRef::create(data, byteLength, callback, callbackData);
+  auto callback = [](void* data, size_t length, void* callbackData) {
+    Params* params = reinterpret_cast<Params*>(callbackData);
+    params->deleter(data, length, params->deleter_data);
+    delete params;
+  };
 
-        return ValueRef::createNull();
-      },
-      &esBackingStore,
-      data,
-      byte_length,
-      deleter,
-      deleter_data);
-  LWNODE_CHECK(esBackingStore);
+  BackingStoreRef* esBackingStore =
+      BackingStoreRef::create(data, byte_length, callback, callbackData);
 
   lwIsolate->addBackingStore(esBackingStore);
 
