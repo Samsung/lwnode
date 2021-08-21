@@ -1669,7 +1669,18 @@ MaybeLocal<Function> Function::New(Local<Context> context,
                                    int length,
                                    ConstructorBehavior behavior,
                                    SideEffectType side_effect_type) {
-  LWNODE_RETURN_LOCAL(Function);
+  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>());
+
+  Local<FunctionTemplate> functionTemplate =
+      FunctionTemplate::New(lwIsolate->toV8(),
+                            callback,
+                            data,
+                            Local<Signature>(),
+                            length,
+                            behavior,
+                            side_effect_type);
+
+  return functionTemplate->GetFunction(context);
 }
 
 MaybeLocal<Object> Function::NewInstance(Local<Context> context,
