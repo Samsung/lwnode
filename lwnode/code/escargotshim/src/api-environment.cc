@@ -1443,7 +1443,9 @@ v8::ArrayBuffer::Contents v8::ArrayBuffer::GetContents(bool externalize) {
   return ArrayBuffer::Contents();
 }
 
-void v8::ArrayBuffer::Detach() {}
+void v8::ArrayBuffer::Detach() {
+  CVAL(this)->value()->asArrayBufferObject()->detachArrayBuffer();
+}
 
 size_t v8::ArrayBuffer::ByteLength() const {
   return CVAL(this)->value()->asArrayBufferObject()->byteLength();
