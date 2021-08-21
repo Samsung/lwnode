@@ -21804,47 +21804,47 @@ void UnreachableCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
 // }
 
 
-// static Local<Value> function_new_expected_env;
-// static void FunctionNewCallback(const v8::FunctionCallbackInfo<Value>& info) {
-//   CHECK(
-//       function_new_expected_env->Equals(info.GetIsolate()->GetCurrentContext(),
-//                                         info.Data())
-//           .FromJust());
-//   info.GetReturnValue().Set(17);
-// }
+static Local<Value> function_new_expected_env;
+static void FunctionNewCallback(const v8::FunctionCallbackInfo<Value>& info) {
+  CHECK(
+      function_new_expected_env->Equals(info.GetIsolate()->GetCurrentContext(),
+                                        info.Data())
+          .FromJust());
+  info.GetReturnValue().Set(17);
+}
 
 
-// THREADED_TEST(FunctionNew) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   Local<Object> data = v8::Object::New(isolate);
-//   function_new_expected_env = data;
-//   Local<Function> func =
-//       Function::New(env.local(), FunctionNewCallback, data).ToLocalChecked();
-//   CHECK(env->Global()->Set(env.local(), v8_str("func"), func).FromJust());
-//   Local<Value> result = CompileRun("func();");
-//   CHECK(v8::Integer::New(isolate, 17)->Equals(env.local(), result).FromJust());
-//   // Serial number should be invalid => should not be cached.
-//   auto serial_number =
-//       i::Smi::cast(i::Handle<i::JSFunction>::cast(v8::Utils::OpenHandle(*func))
-//                        ->shared()
-//                        .get_api_func_data()
-//                        .serial_number())
-//           .value();
-//   CHECK_EQ(i::FunctionTemplateInfo::kInvalidSerialNumber, serial_number);
+THREADED_TEST(FunctionNew) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  Local<Object> data = v8::Object::New(isolate);
+  function_new_expected_env = data;
+  Local<Function> func =
+      Function::New(env.local(), FunctionNewCallback, data).ToLocalChecked();
+  CHECK(env->Global()->Set(env.local(), v8_str("func"), func).FromJust());
+  Local<Value> result = CompileRun("func();");
+  CHECK(v8::Integer::New(isolate, 17)->Equals(env.local(), result).FromJust());
+  // Serial number should be invalid => should not be cached.
+  // auto serial_number =
+  //     i::Smi::cast(i::Handle<i::JSFunction>::cast(v8::Utils::OpenHandle(*func))
+  //                      ->shared()
+  //                      .get_api_func_data()
+  //                      .serial_number())
+  //         .value();
+  // CHECK_EQ(i::FunctionTemplateInfo::kInvalidSerialNumber, serial_number);
 
-//   // Verify that each Function::New creates a new function instance
-//   Local<Object> data2 = v8::Object::New(isolate);
-//   function_new_expected_env = data2;
-//   Local<Function> func2 =
-//       Function::New(env.local(), FunctionNewCallback, data2).ToLocalChecked();
-//   CHECK(!func2->IsNull());
-//   CHECK(!func->Equals(env.local(), func2).FromJust());
-//   CHECK(env->Global()->Set(env.local(), v8_str("func2"), func2).FromJust());
-//   Local<Value> result2 = CompileRun("func2();");
-//   CHECK(v8::Integer::New(isolate, 17)->Equals(env.local(), result2).FromJust());
-// }
+  // Verify that each Function::New creates a new function instance
+  Local<Object> data2 = v8::Object::New(isolate);
+  function_new_expected_env = data2;
+  Local<Function> func2 =
+      Function::New(env.local(), FunctionNewCallback, data2).ToLocalChecked();
+  CHECK(!func2->IsNull());
+  CHECK(!func->Equals(env.local(), func2).FromJust());
+  CHECK(env->Global()->Set(env.local(), v8_str("func2"), func2).FromJust());
+  Local<Value> result2 = CompileRun("func2();");
+  CHECK(v8::Integer::New(isolate, 17)->Equals(env.local(), result2).FromJust());
+}
 
 // namespace {
 
