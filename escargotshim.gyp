@@ -62,6 +62,7 @@
         'src/api/serializer.cc',
         'src/lwnode.cc',
       ],
+      'defines': ['V8_PROMISE_INTERNAL_FIELD_COUNT=1'],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [
         '-std=gnu++14',
