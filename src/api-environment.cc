@@ -1525,7 +1525,15 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
 
   auto callback = [](void* data, size_t length, void* callbackData) {
     Params* params = reinterpret_cast<Params*>(callbackData);
-    params->deleter(data, length, params->deleter_data);
+    if (data) {
+      /*
+        @note
+
+        According to src/node_buffer.cc mention, V8 simply ignores the
+        BackingStore deleter callback if data == nullptr.
+      */
+      params->deleter(data, length, params->deleter_data);
+    }
     delete params;
   };
 
