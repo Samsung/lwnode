@@ -26,6 +26,8 @@
 namespace v8 {
 namespace internal {
 
+using namespace EscargotShim;
+
 // 'exception_' is of type ValueWrap*. Ref: api-exception.cc
 void Isolate::SetTerminationOnExternalTryCatch() {
   LWNODE_CALL_TRACE_ID(TRYCATCH, "try_catch_handler_: %p", try_catch_handler_);
@@ -327,6 +329,51 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   InitializeGlobalSlots();
 
   scheduled_exception_ = hole()->value();
+
+  // Register lwnode internal promise hook to create the internal field.
+  LWNODE_DLOG_INFO("v8::Promise::kEmbedderFieldCount: %d",
+                   v8::Promise::kEmbedderFieldCount);
+  if (v8::Promise::kEmbedderFieldCount > 0) {
+    auto fn = [](ExecutionStateRef* state,
+                 VMInstanceRef::PromiseHookType type,
+                 PromiseObjectRef* promise,
+                 ValueRef* parent) {
+      // 1. create internal field on Init
+      if (type == VMInstanceRef::PromiseHookType::Init) {
+        LWNODE_DCHECK(v8::Promise::kEmbedderFieldCount > 0);
+        if (ObjectRefHelper::getInternalFieldCount(promise) == 0) {
+          ObjectRefHelper::setInternalFieldCount(promise,
+                                                 Promise::kEmbedderFieldCount);
+          /*
+            @note
+            In Node.js, promise internal field count is supposed to be set to 1.
+
+            reference:
+            - configure.py: v8_promise_internal_field_count = 1
+            - tools/v8_gypfiles/features.gypi: V8_PROMISE_INTERNAL_FIELD_COUNT
+            - deps/v8/src/heap/factory.cc: Factory::NewJSPromise()
+
+            v8 sets Smi::zero() to promise's internal fields, which are:
+              - Number from getInternalField
+              - nullptr from GetAlignedPointerFromInternalField
+
+            In lwnode, the returned value will be:
+              - Undefined from getInternalField
+              - nullptr from GetAlignedPointerFromInternalField
+
+            The difference from getInternalField seems not that meaningful in
+            Node.js.
+          */
+        }
+      }
+
+      // 2. run PromiseHook
+      IsolateWrap::GetCurrent()->RunPromiseHook(
+          (v8::PromiseHookType)type, promise, parent);
+    };
+
+    vmInstance_->registerPromiseHook(fn);
+  }
 }
 
 void IsolateWrap::Enter() {
@@ -614,9 +661,23 @@ void IsolateWrap::onFatalError(const char* location, const char* message) {
 }
 
 void IsolateWrap::SetPromiseHook(v8::PromiseHook callback) {
-  auto lwIsolate = GetCurrent();
-
   promise_hook_ = callback;
+
+  if (v8::Promise::kEmbedderFieldCount > 0) {
+    // @todo LWNODE_CHECK(isPromiseHookRegistered());
+    return;
+  }
+
+  // @note
+  // the following won't be used in Node.js since
+  // v8::Promise::kEmbedderFieldCount will be set to 1.
+  LWNODE_DCHECK(false);
+
+  auto lwIsolate = GetCurrent();
+  if (promise_hook_ == nullptr) {
+    lwIsolate->vmInstance()->unregisterPromiseHook();
+    return;
+  }
 
   auto fn = [](ExecutionStateRef* state,
                VMInstanceRef::PromiseHookType type,
