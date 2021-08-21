@@ -227,6 +227,25 @@ TEST(ArrayBuffer_Release) {
   // todo: verify if releasing context scopes works using context scope
 }
 
+TEST(ArrayBuffer_BackingStoreReused) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  Local<v8::ArrayBuffer> ab1 = v8::ArrayBuffer::New(isolate, 1024);
+  std::shared_ptr<v8::BackingStore> bs1 = ab1->GetBackingStore();
+  CHECK_EQ(1024, (int)bs1->ByteLength());
+
+  CHECK_EQ(1024, (int)ab1->ByteLength());
+  ab1->Detach();
+  CHECK_EQ(0, (int)ab1->ByteLength());
+
+  Local<v8::ArrayBuffer> ab2 = v8::ArrayBuffer::New(isolate, bs1);
+  std::shared_ptr<v8::BackingStore> bs2 = ab2->GetBackingStore();
+  CHECK_EQ(1024, (int)bs2->ByteLength());
+  CHECK_EQ(bs1->Data(), bs2->Data());
+}
+
 static std::string print_result;
 
 TEST(AddPrintFunctionUsingFunctionTemplate) {
