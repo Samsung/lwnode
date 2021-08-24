@@ -35,8 +35,17 @@ def run_gyp(args):
   args.append('--depth=' + node_root)
 
 # @lwnode
-  if '-Dnode_core_target_name=lwnode' not in args:
-    global output_dir
+  global output_dir
+  if '-Dnode_core_target_name=lwnode' in args:
+    if '-Dtarget_os=tizen' in args:
+      output_dir = os.path.join(output_dir, 'tizen')
+      args.extend(['--generator-output', output_dir])
+      args.extend(['-Goutput_dir=' + output_dir])
+    else:
+      output_dir = os.path.join(output_dir, 'linux')
+      args.extend(['--generator-output', output_dir])
+      args.extend(['-Goutput_dir=' + output_dir])
+  else:
     output_dir = os.path.join(output_dir, 'v8')
     args.extend(['--generator-output', output_dir])
     args.extend(['-Goutput_dir=' + output_dir])

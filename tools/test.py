@@ -908,7 +908,7 @@ class Context(object):
     if self.vm is not None:
       return self.vm
     if arch == 'none':
-      name = 'out/Debug/lwnode' if mode == 'debug' else 'out/Release/lwnode'
+      name = 'out/linux/Debug/lwnode' if mode == 'debug' else 'out/linux/Release/lwnode'
     else:
       name = 'out/%s.%s/lwnode' % (arch, mode)
 
