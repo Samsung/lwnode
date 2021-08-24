@@ -168,7 +168,7 @@ ExceptionObjectData::ExceptionObjectData(
   }
 }
 
-GCVector<ExceptionObjectData::StackTraceData*>* ExceptionObjectData::stackTrace(
+GCVector<StackTraceData*>* ExceptionObjectData::stackTrace(
     ObjectRef* exceptionObject) {
   auto exceptionObjectData = static_cast<ExceptionObjectData*>(
       ObjectRefHelper::getExtraData(exceptionObject));

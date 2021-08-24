@@ -24,6 +24,8 @@
 namespace EscargotShim {
 class ExternalObjectData;
 class GlobalObjectData;
+class ExceptionObjectData;
+class StackTraceData;
 class ValueWrap;
 class BackingStoreWrap;
 
@@ -41,9 +43,20 @@ class ObjectData : public gc {
     return reinterpret_cast<GlobalObjectData*>(this);
   }
 
+  ExceptionObjectData* asExceptionObjectData() {
+    LWNODE_CHECK(isExceptionObjectData());
+    return reinterpret_cast<ExceptionObjectData*>(this);
+  }
+
+  StackTraceData* asStackTraceData() {
+    LWNODE_CHECK(isStackTraceData());
+    return reinterpret_cast<StackTraceData*>(this);
+  }
+
   virtual bool isFunctionData() const { return false; }
   virtual bool isExternalObjectData() const { return false; }
   virtual bool isExceptionObjectData() const { return false; }
+  virtual bool isStackTraceData() const { return false; }
   virtual bool isGlobalObjectData() const { return false; }
 
   ObjectData* clone();
@@ -108,39 +121,44 @@ class ExternalObjectData : public ObjectData {
   bool isExternalObjectData() const override { return true; }
 };
 
+// TODO: check to make sure StackTraceData inherit ObjectData.
+class StackTraceData : public ObjectData {
+ public:
+  StackTraceData(const Escargot::Evaluator::StackTraceData& data)
+      : src_(data.src),
+        sourceCode_(data.sourceCode),
+        loc_(data.loc),
+        functionName_(data.functionName),
+        isConstructor_(data.isConstructor),
+        isAssociatedWithJavaScriptCode_(data.isAssociatedWithJavaScriptCode),
+        isEval_(data.isEval) {}
+
+  bool isStackTraceData() const override { return true; }
+
+  StringRef* src() const { return src_; }
+  StringRef* sourceCode() const { return sourceCode_; }
+  Escargot::Evaluator::LOC loc() const { return loc_; }
+  StringRef* functionName() const { return functionName_; }
+  bool isFunction() const { return isFunction_; }
+  bool isConstructor() const { return isConstructor_; }
+  bool isAssociatedWithJavaScriptCode() const {
+    return isAssociatedWithJavaScriptCode_;
+  }
+  bool isEval() const { return isEval_; }
+
+ private:
+  StringRef* src_{nullptr};
+  StringRef* sourceCode_{nullptr};
+  Escargot::Evaluator::LOC loc_{0, 0, 0};
+  StringRef* functionName_{nullptr};
+  bool isFunction_{false};
+  bool isConstructor_{false};
+  bool isAssociatedWithJavaScriptCode_{false};
+  bool isEval_{false};
+};
+
 class ExceptionObjectData : public ObjectData {
  public:
-  struct StackTraceData : public gc {
-   public:
-    StackTraceData(const Escargot::Evaluator::StackTraceData& data)
-        : src(data.src),
-          sourceCode(data.sourceCode),
-          loc(data.loc),
-          functionName(data.functionName),
-          isConstructor(data.isConstructor),
-          isAssociatedWithJavaScriptCode(data.isAssociatedWithJavaScriptCode),
-          isEval(data.isEval) {}
-
-    // TODO: string deep copy
-    StackTraceData(const StackTraceData* data)
-        : src(data->src),
-          sourceCode(data->sourceCode),
-          loc(data->loc),
-          functionName(data->functionName),
-          isConstructor(data->isConstructor),
-          isAssociatedWithJavaScriptCode(data->isAssociatedWithJavaScriptCode),
-          isEval(data->isEval) {}
-
-    StringRef* src{nullptr};
-    StringRef* sourceCode{nullptr};
-    Escargot::Evaluator::LOC loc{0, 0, 0};
-    StringRef* functionName{nullptr};
-    bool isFunction{false};
-    bool isConstructor{false};
-    bool isAssociatedWithJavaScriptCode{false};
-    bool isEval{false};
-  };
-
  public:
   ExceptionObjectData(
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData,

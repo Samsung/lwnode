@@ -73,6 +73,14 @@ class Isolate : public gc {
     prepare_stack_trace_callback_ = callback;
   }
 
+  bool HasPrepareStackTraceCallback() const {
+    return prepare_stack_trace_callback_ != nullptr;
+  }
+
+  v8::PrepareStackTraceCallback PrepareStackTraceCallback() const {
+    return prepare_stack_trace_callback_;
+  }
+
   void SetAbortOnUncaughtExceptionCallback(
       v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
     abort_on_uncaught_exception_callback_ = callback;
