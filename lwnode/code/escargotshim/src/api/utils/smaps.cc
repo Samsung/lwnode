@@ -121,7 +121,12 @@ std::vector<SmapContents> parseSmaps(std::istream& input) {
 
       map[kStartingAddr] = address[0];
       map[kEndingAddr] = address[1];
-      map[kPermissions] = "p" + tokens[1].substr(0, tokens[1].size() - 1);
+      map[kPermissions] = tokens[1].substr(tokens[1].size() - 1) +
+                          tokens[1].substr(0, tokens[1].size() - 1);
+
+      map[kOffset] = tokens[2];
+      map[kDev] = tokens[3];
+      map[kInode] = tokens[4];
 
       std::string pathname = (tokens.size() == 6) ? tokens[5] : "";
       map[kPathname] = pathname;
@@ -195,6 +200,61 @@ size_t calculateTotalRss(std::vector<SmapContents>& smaps) {
   return total;
 }
 
+std::string getMemorySnapshotString(std::vector<SmapContents>& smaps,
+                                    SnapshotStringOption option) {
+  std::stringstream output;
+
+  if (option & kShowFullInfo) {
+    output << "perms,start-addr,end-addr,vm_name,offset,dev,inode,vm_size,rss,"
+              "pss,swap,total_pss";
+    if (option & kShowRegion) {
+      output << ",region";
+    }
+    output << std::endl;
+  } else {
+    output
+        << "perms,start-addr,end-addr,vm_name,vm_size,rss,pss,swap,total_pss";
+    if (option & kShowRegion) {
+      output << ",region";
+    }
+    output << std::endl;
+  }
+
+  const int kApiSystemPointerSize = sizeof(void*);
+  const int kAlignSize = kApiSystemPointerSize * 2 - 4;
+
+  for (auto& smap : smaps) {
+    auto totalPass = std::stoull(smap["Pss"]) + std::stoull((smap["Swap"]));
+    output << smap[kPermissions] << ","
+           << "0x" << std::setfill('0') << std::setw(kAlignSize)
+           << smap[kStartingAddr] << ","
+           << "0x" << std::setfill('0') << std::setw(kAlignSize)
+           << smap[kEndingAddr] << ",";
+
+    auto pathname = smap[kPathname];
+    if (option & kUseShortPath) {
+      std::size_t found = pathname.rfind('/');
+      if (found != std::string::npos) {
+        pathname = pathname.substr(found + 1);
+      }
+    }
+    output << pathname;
+
+    if (option & kShowFullInfo) {
+      output << "," << smap[kOffset] << "," << smap[kDev] << ","
+             << smap[kInode];
+    }
+    output << "," << smap["Size"] << "," << smap["Rss"] << "," << smap["Pss"]
+           << "," << smap["Swap"] << "," << totalPass;
+    if (option & kShowRegion) {
+      output << "," << smap[kRegion];
+    }
+    output << std::endl;
+  }
+
+  return output.str();
+}
+
 bool dumpMemorySnapshot(std::string outputPath,
                         std::vector<SmapContents>& smaps) {
   std::ofstream output(outputPath);
@@ -203,23 +263,8 @@ bool dumpMemorySnapshot(std::string outputPath,
     return false;
   }
 
-  output << "perms,start-addr,end-addr,vm_name,vm_size,rss,pss,swap,total_pss,"
-            "region"
-         << std::endl;
-
-  const int kApiSystemPointerSize = sizeof(void*);
-  const int kAlignSize = kApiSystemPointerSize * 2;
-
-  for (auto& smap : smaps) {
-    auto totalPass = std::stoull(smap["Pss"]) + std::stoull((smap["Swap"]));
-    output << smap[kPermissions] << ","
-           << "0x" << std::setfill('0') << std::setw(kAlignSize)
-           << smap[kStartingAddr] << ","
-           << "0x" << std::setfill('0') << std::setw(kAlignSize)
-           << smap[kEndingAddr] << "," << smap[kPathname];
-    output << "," << smap["Size"] << "," << smap["Rss"] << "," << smap["Pss"]
-           << "," << smap["Swap"];
-    output << "," << totalPass << "," << smap[kRegion] << std::endl;
-  }
+  SnapshotStringOption option =
+      static_cast<SnapshotStringOption>(kUseShortPath | kShowRegion);
+  output << getMemorySnapshotString(smaps, option);
   return true;
 }

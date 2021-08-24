@@ -27,6 +27,9 @@ typedef std::unordered_map<std::string, std::string> SmapContents;
 constexpr const char* kStartingAddr = "StartingAddr";
 constexpr const char* kEndingAddr = "EndingAddr";
 constexpr const char* kPermissions = "Permissions";
+constexpr const char* kOffset = "Offset";
+constexpr const char* kDev = "Dev";
+constexpr const char* kInode = "Inode";
 constexpr const char* kPathname = "Pathname";
 constexpr const char* kRegion = "Region";
 
@@ -35,6 +38,16 @@ size_t calculateTotalPssSwap(std::vector<SmapContents>& smaps);
 size_t calculateTotalRss(std::vector<SmapContents>& smaps);
 bool dumpMemorySnapshot(std::string outputPath,
                         std::vector<SmapContents>& smaps);
+
+enum SnapshotStringOption {
+  kShowDefault = 0,
+  kShowFullInfo = 1,
+  kUseShortPath = 1 << 1,
+  kShowRegion = 1 << 2,
+};
+
+std::string getMemorySnapshotString(std::vector<SmapContents>& smaps,
+                                    SnapshotStringOption option = kShowDefault);
 
 bool existsFile(const std::string& path);
 std::string getCurrentTimeString(std::string format = "%y%m%d-%H%M%S");
