@@ -54,13 +54,12 @@ jobs:
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
             --engine escargot --ninja
-            ninja -v -C out/Release lwnode
+            ninja -v -C out/linux/Release lwnode
       - run:
           name: Run basic test
           command: |
-            du -h out/Release/lwnode
-            out/Release/lwnode test/message/hello_world.js
-            out/Release/lwnode lwnode/test/node/test/memory/test-memory-basic.js
+            out/linux/Release/lwnode test/message/hello_world.js
+            out/linux/Release/lwnode lwnode/test/node/test/memory/test-memory-basic.js
             mkdir -p ~/artifacts
             cp /tmp/*.csv ~/artifacts/.
       - run:

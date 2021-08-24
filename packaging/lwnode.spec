@@ -103,7 +103,7 @@ LDFLAGS+="-fsanitize=address"
 %if "%{node_engine}" == "escargot"
 %define target lwnode
 %define target_lib liblwnode
-%define target_src out/Release
+%define target_src out/tizen/Release
 %define extra_config --without-bundled-v8 --engine escargot
 %else
 %define target node
