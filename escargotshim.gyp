@@ -60,6 +60,7 @@
         'src/api/function.cc',
         'src/api/object.cc',
         'src/api/serializer.cc',
+        'src/api/stack-trace.cc',
         'src/lwnode.cc',
       ],
       'defines': ['V8_PROMISE_INTERNAL_FIELD_COUNT=1'],

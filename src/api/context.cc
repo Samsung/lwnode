@@ -19,6 +19,7 @@
 #include "es-helper.h"
 #include "extra-data.h"
 #include "isolate.h"
+#include "stack-trace.h"
 
 using namespace Escargot;
 
@@ -47,29 +48,6 @@ static void evalJavaScript(ContextRef* context,
   LWNODE_CHECK_MSG(r.isSuccessful(), "Cannot execute %s", name);
 }
 
-static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
-                                           ValueRef* thisValue,
-                                           size_t argc,
-                                           ValueRef** argv,
-                                           bool isConstructCall) {
-  if (argc < 1 || !argv[0]->isObject()) {
-    return ValueRef::createUndefined();
-  }
-
-  auto exceptionObject = argv[0]->asObject();
-  auto lwIsolate = IsolateWrap::GetCurrent();
-
-  if (lwIsolate->has_pending_exception()) {
-    LWNODE_CHECK(ObjectRefHelper::hasExtraData(lwIsolate->pending_exception()));
-    auto stackTrace =
-        ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
-    ObjectRefHelper::setExtraData(exceptionObject,
-                                  new ExceptionObjectData(stackTrace));
-  }
-
-  return ValueRef::createUndefined();
-}
-
 static bool createGlobals(ContextRef* context) {
 #if defined(HOST_TIZEN)
 // @todo setup device APIs
@@ -77,31 +55,14 @@ static bool createGlobals(ContextRef* context) {
   // Create captureStackTrace and stackTraceLimit
   EvalResult r =
       Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
-        auto context = state->context();
-
-        const char* captureStackTraceRawString = "captureStackTrace";
-        auto captureStackTraceRawStringLength =
-            strlen(captureStackTraceRawString);
-        auto errorObject = context->globalObject()
+        auto errorObject = state->context()
+                               ->globalObject()
                                ->get(state, StringRef::createFromASCII("Error"))
                                ->asObject();
 
-        FunctionObjectRef::NativeFunctionInfo info(
-            AtomicStringRef::create(context,
-                                    captureStackTraceRawString,
-                                    captureStackTraceRawStringLength),
-            captureStackTraceCallback,
-            1,
-            true,
-            false);
-
-        auto captureStackTrace = FunctionObjectRef::create(state, info);
-
-        errorObject->set(
-            state,
-            StringRef::createFromASCII(captureStackTraceRawString,
-                                       captureStackTraceRawStringLength),
-            captureStackTrace);
+        errorObject->set(state,
+                         StringRef::createFromASCII("captureStackTrace"),
+                         StackTrace::createCaptureStackTrace(state));
         errorObject->set(
             state,
             StringRef::createFromASCII("stackTraceLimit"),
@@ -119,6 +80,9 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
   isolate_ = isolate;
 
   context_ = ContextRef::create(isolate->vmInstance());
+
+  callSite_ = new CallSite(context_);
+
   auto globalObjectData = new GlobalObjectData();
   globalObjectData->setInternalFieldCount(
       GlobalObjectData::kInternalFieldCount);

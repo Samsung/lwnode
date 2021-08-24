@@ -22,6 +22,7 @@
 namespace EscargotShim {
 
 class IsolateWrap;
+class CallSite;
 
 typedef GCUnorderedMap<int, void*> EmbedderDataMap;
 
@@ -48,6 +49,8 @@ class ContextWrap : public ValueWrap {
   Escargot::ValueRef* GetSecurityToken();
   void UseDefaultSecurityToken();
 
+  CallSite* callSite() { return callSite_; }
+
  private:
   EmbedderDataMap* embedder_data_{nullptr};
 
@@ -59,6 +62,8 @@ class ContextWrap : public ValueWrap {
   Escargot::ContextRef* context_ = nullptr;
   Escargot::ObjectRef* bindingObject_ = nullptr;
   Escargot::ValueRef* security_token_ = nullptr;
+
+  CallSite* callSite_ = nullptr;
 };
 
 }  // namespace EscargotShim

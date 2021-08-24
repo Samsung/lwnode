@@ -216,7 +216,7 @@ v8::Local<Value> Message::GetScriptResourceName() const {
   }
 
   auto top = stackTrace->front();
-  return Utils::NewLocal<String>(lwIsolate->toV8(), top->src);
+  return Utils::NewLocal<String>(lwIsolate->toV8(), top->src());
 }
 
 v8::Local<v8::StackTrace> Message::GetStackTrace() const {
@@ -234,7 +234,7 @@ Maybe<int> Message::GetLineNumber(Local<Context> context) const {
   }
 
   auto top = stackTrace->front();
-  return Just<int>(top->loc.line);
+  return Just<int>(top->loc().line);
 }
 
 int Message::GetStartPosition() const {
@@ -248,7 +248,7 @@ int Message::GetStartPosition() const {
   }
 
   auto top = stackTrace->front();
-  return top->loc.index;
+  return top->loc().index;
 }
 
 int Message::GetEndPosition() const {
@@ -262,7 +262,7 @@ int Message::GetEndPosition() const {
   }
 
   auto top = stackTrace->front();
-  return top->loc.index + 1;
+  return top->loc().index + 1;
 }
 
 int Message::ErrorLevel() const {
@@ -295,7 +295,7 @@ Maybe<int> Message::GetStartColumn(Local<Context> context) const {
   }
 
   auto top = stackTrace->front();
-  return Just<int>(top->loc.column - 1);
+  return Just<int>(top->loc().column - 1);
 }
 
 int Message::GetEndColumn() const {
@@ -313,7 +313,7 @@ Maybe<int> Message::GetEndColumn(Local<Context> context) const {
   }
 
   auto top = stackTrace->front();
-  int endCol = top->loc.column;
+  int endCol = top->loc().column;
 
   return Just<int>(endCol);
 }
@@ -337,11 +337,11 @@ MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
   }
 
   auto top = stackTrace->front();
-  std::string code = top->sourceCode->toStdUTF8String();
+  std::string code = top->sourceCode()->toStdUTF8String();
   std::stringstream ss(code);
   std::string line;
   for (size_t i = 1; std::getline(ss, line); i++) {
-    if (i == top->loc.line) {
+    if (i == top->loc().line) {
       break;
     }
   }
