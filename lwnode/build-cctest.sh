@@ -17,7 +17,8 @@ ROOT_PATH=out/cctest
 
 ./tools/gyp/gyp ./lwnode/code/escargotshim/test/cctest.gyp --depth=. -f ninja \
   --generator-output=$ROOT_PATH -Dbuild_asan=1 -Dbuild_mode=debug \
-  -Descargot_lib_type=static_lib -Denable_experimental=true -Dtarget_arch=x64
+  -Descargot_lib_type=static_lib -Dtarget_arch=x64 -Dtarget_os=linux \
+  -Denable_experimental=true
 
 ninja -v -C $ROOT_PATH/out/Debug cctest
 

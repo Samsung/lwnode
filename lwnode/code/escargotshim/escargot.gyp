@@ -1,11 +1,13 @@
 {
   'includes': ['common.gypi'],
   'variables': {
+    'target_arch%': '<(target_arch)',
+    'target_os%': '<(target_os)',
+    'build_host%': '<(build_host)',
+    'build_asan%': '<(build_asan)',
     'escargot_dir%': 'deps/escargot',
     "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
     "escargot_threading%": 0,
-    'build_asan%': '<(build_asan)',
-    'target_arch%': '<(target_arch)',
     'conditions': [
       ['escargot_lib_type=="shared_lib"', {
         'lib_ext': '.so'
@@ -18,13 +20,18 @@
       ['target_arch=="x32"', {
         'target_arch': 'i686'
       }],
+      ['target_os=="tizen"', {
+        # tizen build host is fixed to gbs
+        'build_host': 'tizen_obs'
+      }],
     ],
   },
   'targets': [{
     'target_name': 'escargot',
     'type': 'none',
     'variables': {
-      'configs': '<!(["find", "<(escargot_dir)", "-name", "*.cmake"])',
+      'configs': '<!(["find", "<(escargot_dir)", \
+                              "-name", "CMakeLists.txt", "-o", "-name", "*.cmake"])',
       'sources': '<!(["find", "<(escargot_dir)/src", \
                               "<(escargot_dir)/third_party", \
                               "-name", "*.cpp", "-o", "-name", "*.cc"])',
