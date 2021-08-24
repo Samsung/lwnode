@@ -116,7 +116,7 @@ LDFLAGS+="-fsanitize=address"
 
 echo "Building:" %{target}
 
-./configure --without-npm \
+./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?extra_config} %{?lib_type_config}

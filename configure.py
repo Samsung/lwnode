@@ -88,9 +88,9 @@ lwnode_optgroup.add_option('--tizen',
     help='Platform: tizen')
 
 lwnode_optgroup.add_option('--profile',
-    choices=['none', 'tv', 'kiosk'],
-    default='none',
-    help='Build profile: none | tv | kiosk')
+    choices=['common', 'tv', 'kiosk'],
+    default='common',
+    help='Build profile: common | tv | kiosk')
 
 lwnode_optgroup.add_option('--enable-external-builtin-scripts',
     action='store_true',
@@ -129,7 +129,6 @@ def get_lwnode_gyp_options():
   if options.tizen:
     args += ['-Dtarget_os=tizen']
     args += ['-Dprofile='+ str(options.profile)]
-    args += ['-Descargot_host=tizen_obs']
   else:
     args += ['-Dtarget_os=linux']
 
