@@ -96,6 +96,16 @@ static ValueRef* PssUsage(ExecutionStateRef* state,
                           ValueRef** argv,
                           bool isConstructCall) {
   auto& smaps = getSelfSmaps();
+  size_t total = calculateTotal(smaps, kPss);
+  return ValueRef::create(total);
+};
+
+static ValueRef* PssSwapUsage(ExecutionStateRef* state,
+                              ValueRef* thisValue,
+                              size_t argc,
+                              ValueRef** argv,
+                              bool isConstructCall) {
+  auto& smaps = getSelfSmaps();
   size_t total = calculateTotalPssSwap(smaps);
   return ValueRef::create(total);
 };
@@ -136,6 +146,7 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
 
   SetMethod(esContext, esTarget, "PssUsage", PssUsage);
   SetMethod(esContext, esTarget, "RssUsage", RssUsage);
+  SetMethod(esContext, esTarget, "PssSwapUsage", PssSwapUsage);
   SetMethod(esContext, esTarget, "MemSnapshot", MemSnapshot);
 }
 
