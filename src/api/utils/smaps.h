@@ -32,8 +32,11 @@ constexpr const char* kDev = "Dev";
 constexpr const char* kInode = "Inode";
 constexpr const char* kPathname = "Pathname";
 constexpr const char* kRegion = "Region";
+constexpr const char* kPss = "Pss";
+constexpr const char* kSwap = "Swap";
 
 std::vector<SmapContents> parseSmaps(std::string pid);
+size_t calculateTotal(std::vector<SmapContents>& smaps, const char* key);
 size_t calculateTotalPssSwap(std::vector<SmapContents>& smaps);
 size_t calculateTotalRss(std::vector<SmapContents>& smaps);
 bool dumpMemorySnapshot(std::string outputPath,

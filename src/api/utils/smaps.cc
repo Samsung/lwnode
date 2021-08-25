@@ -184,6 +184,14 @@ std::vector<SmapContents> parseSmaps(std::string pid) {
   return std::vector<SmapContents>();
 }
 
+size_t calculateTotal(std::vector<SmapContents>& smaps, const char* key) {
+  size_t total = 0;
+  for (auto& smap : smaps) {
+    total += std::stoull(smap[key]);
+  }
+  return total;
+}
+
 size_t calculateTotalPssSwap(std::vector<SmapContents>& smaps) {
   size_t total = 0;
   for (auto& smap : smaps) {
