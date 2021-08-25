@@ -10,10 +10,12 @@
     'defines': [ 'LWNODE=1' ],
     'cflags!': [ '-Wno-error' ],
     'cflags': [
-      '-Wall', '-Wextra', '-Werror', '-ggdb',
+      '-Wall', '-Wextra', '-Werror',
       '-Wno-unused-variable',
       '-Wno-unused-function',
       '-Wno-unused-but-set-variable',
+      '-fPIC',
+      '-ggdb', # all builds include debug symbols, which will be stripped before packaging
     ],
     'link_settings': {
       'libraries': [ '-ldl', '-lrt' ],
@@ -30,19 +32,16 @@
     'conditions': [
       ['target_os=="tizen"', {
         'target_defaults': {
-          'defines': [
-            'HOST_TIZEN',
-          ],
-          'ldflags': [
-            '-mthumb',
-            '-pie',
-            '-Wl,-z,relro,-z,now',
-          ],
+          'defines': ['HOST_TIZEN'],
           'cflags': [
-            '-ggdb', '-Os',
-            '-fPIC', '-fPIE',
+            '-Os',
+            '-fPIE',
             '-fstack-protector-strong',
             '-D_FORTIFY_SOURCE=2',
+          ],
+          'ldflags': [
+            '-pie',
+            '-Wl,-z,relro,-z,now',
           ],
         },
       }],
