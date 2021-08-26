@@ -237,6 +237,8 @@ class StringRefHelper {
   static bool equalsWithASCIIString(StringRef* esString, const char (&str)[N]) {
     return esString->equalsWithASCIIString(str, N - 1);
   }
+
+  static bool isAsciiString(StringRef* str);
 };
 
 }  // namespace EscargotShim

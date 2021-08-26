@@ -1849,7 +1849,7 @@ bool String::ContainsOnlyOneByte() const {
 
 int String::Utf8Length(Isolate* isolate) const {
   auto esString = CVAL(this)->value()->asString();
-  if (esString->has8BitContent()) {
+  if (StringRefHelper::isAsciiString(esString)) {
     return esString->length();
   } else {
     return esString->toStdUTF8String().length();
@@ -1921,7 +1921,8 @@ int String::WriteUtf8(Isolate* v8_isolate,
 
   auto esString = CVAL(this)->value()->asString();
   auto bufferData = esString->stringBufferAccessData();
-  if (bufferData.has8BitContent) {
+
+  if (StringRefHelper::isAsciiString(esString)) {
     byteLength = bufferData.length;
     int maxBytes = std::min(bufferCapacity, byteLength);
     memcpy(buffer, bufferData.buffer, maxBytes);
