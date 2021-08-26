@@ -867,4 +867,25 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
   return r.result->asErrorObject();
 }
 
+// --- StringRefHelper ---
+
+bool StringRefHelper::isAsciiString(StringRef* str) {
+  auto bufferData = str->stringBufferAccessData();
+
+  if (!bufferData.has8BitContent) {
+    return false;
+  }
+
+  bool isAscii = true;
+  for (size_t i = 0; i < bufferData.length; i++) {
+    char16_t c = bufferData.charAt(i);
+    if (!(' ' <= c && c <= '~')) {
+      isAscii = false;
+      break;
+    }
+  }
+
+  return isAscii;
+}
+
 }  // namespace EscargotShim

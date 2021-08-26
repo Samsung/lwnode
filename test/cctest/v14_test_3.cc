@@ -780,3 +780,33 @@ THREADED_TEST(ThrowUndefinedExceptionCrashTest) {
   TryCatch try_catch(context->GetIsolate());
   CompileRun("function f() { throw undefined; }; f();");
 }
+
+THREADED_TEST(OneByteStringTest) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  { ExpectString("function f() { return 'twø'; }; f();", "twø"); }
+
+  {
+    Local<String> s =
+        CompileRun("function f() { return 'twø'; }; f();").As<String>();
+    char buf[10] = {0};
+    int len = s->WriteUtf8(isolate, buf);
+    CHECK_EQ(0, strcmp(buf, "twø"));
+  }
+
+  {
+    int flags = String::HINT_MANY_WRITES_EXPECTED |
+                String::NO_NULL_TERMINATION | String::REPLACE_INVALID_UTF8;
+
+    v8::Local<String> utf8 =
+        v8::String::NewFromUtf8(
+            context->GetIsolate(), "twø", v8::NewStringType::kNormal)
+            .ToLocalChecked();
+
+    char buf[5] = {0};
+    int len = utf8->WriteUtf8(isolate, buf, flags);
+    CHECK_EQ(0, strcmp(buf, "twø"));
+  }
+}
