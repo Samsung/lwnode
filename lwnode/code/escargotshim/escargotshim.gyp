@@ -77,7 +77,7 @@
       ],
       'direct_dependent_settings': {
         'defines': [
-          'LWNODE=1',
+          'LWNODE',
         ],
         'include_dirs': [
           'src/api/utils/logger',
@@ -89,6 +89,9 @@
         'cflags_cc!': ['-fno-exceptions'],
         'cflags_cc': ['-fexceptions'],
         'conditions': [
+          ['library == "shared_library"', {
+            'defines': ['USING_V8_SHARED'],
+          }],
           ['enable_reload_script == "true"', {
             'defines': ['LWNODE_USE_RELOAD_SCRIPT'],
           }],
@@ -99,6 +102,9 @@
           'defines': [
             'LWNODE_PLATFORM_LINUX=1',
           ],
+        }],
+        ['library == "shared_library"', {
+          'defines': ['BUILDING_V8_SHARED'],
         }],
         ['enable_reload_script == "true"', {
           'defines': ['LWNODE_USE_RELOAD_SCRIPT'],
