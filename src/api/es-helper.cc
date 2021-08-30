@@ -879,7 +879,7 @@ bool StringRefHelper::isAsciiString(StringRef* str) {
   bool isAscii = true;
   for (size_t i = 0; i < bufferData.length; i++) {
     char16_t c = bufferData.charAt(i);
-    if (!(' ' <= c && c <= '~')) {
+    if (c > 127) {  // including all 7 bit code
       isAscii = false;
       break;
     }
