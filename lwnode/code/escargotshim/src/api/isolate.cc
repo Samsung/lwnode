@@ -331,8 +331,8 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
   scheduled_exception_ = hole()->value();
 
   // Register lwnode internal promise hook to create the internal field.
-  LWNODE_DLOG_INFO("v8::Promise::kEmbedderFieldCount: %d",
-                   v8::Promise::kEmbedderFieldCount);
+  LWNODE_ONCE(LWNODE_DLOG_INFO("v8::Promise::kEmbedderFieldCount: %d",
+                               v8::Promise::kEmbedderFieldCount));
   if (v8::Promise::kEmbedderFieldCount > 0) {
     auto fn = [](ExecutionStateRef* state,
                  VMInstanceRef::PromiseHookType type,
