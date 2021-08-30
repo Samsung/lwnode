@@ -24,11 +24,15 @@
 #include "api/isolate.h"
 #include "internal-api.h"
 
+#include <fstream>
+#include <string>
 #include "api/es-helper.h"
 #include "api/utils/gc-container.h"
+#include "lwnode.h"
 
 using namespace Escargot;
 using namespace EscargotShim;
+using namespace LWNode;
 
 class Count {
  public:
@@ -895,6 +899,125 @@ TEST(DISABLED_Escargot_ObjectCreate_Regression) {
   auto r = EvalResultHelper::compileRun(esContext, source);
 
   CHECK_EQ(true, r.isSuccessful());
+}
+
+struct FileData {
+  void* byte{nullptr};
+  long int size{0};
+
+  FileData(void* data, long int data_size) {
+    byte = data;
+    size = data_size;
+  }
+  FileData() = default;
+};
+
+static FileData readFile(std::string filename) {
+  FILE* file = std::fopen(filename.c_str(), "rb");
+  if (!file) {
+    return FileData();
+  }
+
+  std::fseek(file, 0, SEEK_END);
+  long int fileSize = std::ftell(file);
+  std::fseek(file, 0, SEEK_SET);
+
+  void* buffer = Memory::gcMallocAtomicUncollectable(fileSize);
+  std::fread(buffer, 1, fileSize, file);
+  std::fclose(file);
+
+  return FileData(buffer, fileSize);
+}
+
+static int g_reload_count;
+static void* LoadReloadableSource(void* userData) {
+  LWNODE_LOG_INFO("LoadReloadableSource");
+  g_reload_count++;
+  auto data = (Utils::ReloadableSourceData*)userData;
+  if (data->preloadedData) {  // move memory ownership to js engine
+    LWNODE_LOG_INFO("cached");
+    auto buffer = data->preloadedData;
+    data->preloadedData = nullptr;
+    return buffer;
+  }
+  LWNODE_LOG_INFO("reload");
+  FileData dest = readFile(data->path());
+  LWNODE_CHECK_NOT_NULL(dest.byte);
+  return dest.byte;
+}
+
+static void UnloadReloadableSource(void* preloadedData, void* userData) {
+  LWNODE_LOG_INFO("UnloadReloadableSource");
+  auto data = (Utils::ReloadableSourceData*)userData;
+  if (data->preloadedData) {
+    Memory::gcFree(data->preloadedData);
+    data->preloadedData = nullptr;
+  }
+  Memory::gcFree(preloadedData);
+}
+
+class ReloadableContentScope {
+ public:
+  ReloadableContentScope(std::string filename) {
+    std::string contents = R"(
+        function hello() { print('hello'); }
+        function world() { print('world'); }
+        hello();
+      )";
+    std::ofstream ofile(filename);
+    if (ofile.is_open()) {
+      ofile << contents << std::endl;
+      ofile.close();
+    }
+    filename_ = filename;
+  }
+  ~ReloadableContentScope() { std::remove(filename_.c_str()); }
+
+ private:
+  std::string filename_;
+};
+
+TEST(ReloadableString) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  context->Global()
+      ->Set(context,
+            v8_str("print"),
+            v8::FunctionTemplate::New(
+                isolate,
+                [](const v8::FunctionCallbackInfo<v8::Value>& args) -> void {
+                  v8::String::Utf8Value utf8(args.GetIsolate(), args[0]);
+                  printf("%s\n", *utf8);
+                })
+                ->GetFunction(context)
+                .ToLocalChecked())
+      .Check();
+
+  std::string filename = "./tmp.test-reloadable-string.js";
+  ReloadableContentScope scope(filename);
+  FileData dest = readFile(filename);
+  LWNODE_CHECK_NOT_NULL(dest.byte);
+  v8::Script::Compile(
+      context,
+      Utils::NewReloadableStringFromOneByte(
+          isolate,
+          Utils::ReloadableSourceData::create(filename, dest.byte, dest.size),
+          LoadReloadableSource,
+          UnloadReloadableSource)
+          .ToLocalChecked())
+      .ToLocalChecked()
+      ->Run(context);
+
+  dest = FileData();  // note: remove address of preloaded buffer from stack
+  MemoryUtil::gc();
+  IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+  v8::Script::Compile(
+      context, v8::String::NewFromUtf8(isolate, "world();").ToLocalChecked())
+      .ToLocalChecked()
+      ->Run(context);
+  EXPECT_GE(g_reload_count, 1);  // this depends on GC result
 }
 
 #endif

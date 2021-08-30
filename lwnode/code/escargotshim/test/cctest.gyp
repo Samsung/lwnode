@@ -16,6 +16,7 @@
        ],
       'cflags_cc': [
         '-Wno-unused-parameter',
+        '-Wno-unused-result',
         '-Wno-comment',
         '-Wno-sign-compare',
         '-Wno-cast-function-type',
