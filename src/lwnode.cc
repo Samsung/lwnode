@@ -19,6 +19,7 @@
 #include <chrono>
 #include <fstream>
 #include "api.h"
+#include "api/isolate.h"
 #include "api/utils/misc.h"
 #include "api/utils/smaps.h"
 #include "base.h"
@@ -148,6 +149,47 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   SetMethod(esContext, esTarget, "RssUsage", RssUsage);
   SetMethod(esContext, esTarget, "PssSwapUsage", PssSwapUsage);
   SetMethod(esContext, esTarget, "MemSnapshot", MemSnapshot);
+}
+
+Utils::ReloadableSourceData* Utils::ReloadableSourceData::create(
+    std::string sourcePath, void* preloadedData, size_t preloadedDataLength) {
+  auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
+      ReloadableSourceData();
+
+  data->path_ = (char*)Escargot::Memory::gcMalloc(sourcePath.size() + 1);
+  std::copy(sourcePath.begin(), sourcePath.end(), data->path_);
+  data->path_[sourcePath.size()] = '\0';
+
+  data->preloadedData = preloadedData;
+  data->preloadedDataLength_ = preloadedDataLength;
+
+  return data;
+}
+
+MaybeLocal<String> Utils::NewReloadableStringFromOneByte(
+    Isolate* isolate,
+    ReloadableSourceData* data,
+    LoadCallback loadCallback,
+    UnloadCallback unloadCallback) {
+  MaybeLocal<String> result;
+
+  if (data->preloadedDataLength() == 0) {
+    result = String::Empty(isolate);
+  } else if (data->preloadedDataLength() > v8::String::kMaxLength) {
+    result = MaybeLocal<String>();
+  } else {
+    Escargot::StringRef* reloadableString =
+        Escargot::StringRef::createReloadableString(
+            IsolateWrap::fromV8(isolate)->vmInstance(),
+            true,
+            data->preloadedDataLength(),
+            data,  // data should be gc-managed.
+            loadCallback,
+            unloadCallback);
+    result = v8::Utils::NewLocal<String>(isolate, reloadableString);
+  }
+
+  return result;
 }
 
 }  // namespace LWNode
