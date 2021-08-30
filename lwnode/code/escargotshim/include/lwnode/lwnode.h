@@ -17,6 +17,7 @@
 #pragma once
 
 #include <v8.h>
+#include <string>
 
 namespace LWNode {
 
@@ -24,5 +25,34 @@ void InitializeProcessMethods(v8::Local<v8::Object> target,
                               v8::Local<v8::Context> context);
 
 bool dumpSelfMemorySnapshot();
+
+class Utils {
+ public:
+  // should return string buffer
+  typedef void* (*LoadCallback)(void* callbackData);
+  // should free memoryPtr
+  typedef void (*UnloadCallback)(void* memoryPtr, void* callbackData);
+
+  struct ReloadableSourceData {
+    void* preloadedData{nullptr};
+
+    const char* path() { return path_; }
+    size_t preloadedDataLength() { return preloadedDataLength_; }
+    static ReloadableSourceData* create(std::string sourcePath,
+                                        void* preloadedData,
+                                        size_t preloadedDataLength);
+
+   private:
+    char* path_{nullptr};
+    size_t preloadedDataLength_{0};
+    ReloadableSourceData() = default;
+  };
+
+  static v8::MaybeLocal<v8::String> NewReloadableStringFromOneByte(
+      v8::Isolate* isolate,
+      ReloadableSourceData* data,
+      LoadCallback loadCallback,
+      UnloadCallback unloadCallback);
+};
 
 }  // namespace LWNode
