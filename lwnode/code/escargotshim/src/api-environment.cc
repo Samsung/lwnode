@@ -1672,12 +1672,24 @@ v8::SharedArrayBuffer::Contents v8::SharedArrayBuffer::GetContents(
 }
 
 size_t v8::SharedArrayBuffer::ByteLength() const {
-  LWNODE_RETURN_0;
+  auto esSelf = CVAL(this)->value()->asSharedArrayBufferObject();
+  return esSelf->byteLength();
 }
 
 Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(Isolate* isolate,
                                                     size_t byte_length) {
-  LWNODE_RETURN_LOCAL(SharedArrayBuffer);
+  API_ENTER_NO_EXCEPTION(isolate);
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state, size_t byteLength) -> ValueRef* {
+        return SharedArrayBufferObjectRef::create(state, byteLength);
+      },
+      byte_length);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<SharedArrayBuffer>(isolate, r.result);
 }
 
 Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
@@ -1685,6 +1697,7 @@ Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
     void* data,
     size_t byte_length,
     ArrayBufferCreationMode mode) {
+  // Deprecate soon
   LWNODE_RETURN_LOCAL(SharedArrayBuffer);
 }
 
@@ -1702,7 +1715,13 @@ Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
 
 std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
-  LWNODE_RETURN_NULLPTR;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+
+  BackingStoreRef* esBackingStore = BackingStoreRef::create(byte_length);
+  lwIsolate->addBackingStore(esBackingStore);
+
+  return std::unique_ptr<v8::BackingStore>(
+      reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
 
 std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
@@ -1710,7 +1729,32 @@ std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
     size_t byte_length,
     v8::BackingStore::DeleterCallback deleter,
     void* deleter_data) {
-  LWNODE_RETURN_NULLPTR;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+
+  struct Params {
+    BackingStore::DeleterCallback deleter{nullptr};
+    void* deleterData{nullptr};
+  };
+
+  Params* callbackData = new Params();
+  callbackData->deleter = deleter;
+  callbackData->deleterData = deleter_data;
+
+  auto callback = [](void* data, size_t length, void* callbackData) {
+    Params* params = reinterpret_cast<Params*>(callbackData);
+    if (data) {
+      params->deleter(data, length, params->deleterData);
+    }
+    delete params;
+  };
+
+  auto esBackingStore =
+      BackingStoreRef::create(data, byte_length, callback, callbackData);
+
+  lwIsolate->addBackingStore(esBackingStore);
+
+  return std::unique_ptr<v8::BackingStore>(
+      reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
 
 Local<Symbol> v8::Symbol::New(Isolate* isolate, Local<String> name) {

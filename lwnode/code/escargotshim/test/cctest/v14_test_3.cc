@@ -810,3 +810,32 @@ THREADED_TEST(OneByteStringTest) {
     CHECK_EQ(0, strcmp(buf, "twø"));
   }
 }
+
+THREADED_TEST(SharedArrayBufferCustom) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  {
+    v8::Local<SharedArrayBuffer> sa =
+        v8::SharedArrayBuffer::New(context->GetIsolate(), 4);
+    CHECK_EQ(4, sa->ByteLength());
+  }
+
+  {
+    auto bs = v8::SharedArrayBuffer::NewBackingStore(isolate, 10);
+    CHECK(bs);
+  }
+
+  {
+    int data[10];
+    int called = false;
+    auto deleter = [](void* data, size_t, void* deleteData) {
+      bool* called = (bool*)deleteData;
+      // *called = true;
+    };
+    auto bs = v8::SharedArrayBuffer::NewBackingStore(
+        &data, sizeof(data), deleter, &called);
+    CHECK(bs);
+  }
+}
