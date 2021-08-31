@@ -104,7 +104,7 @@ LDFLAGS+="-fsanitize=address"
 %define target lwnode
 %define target_lib liblwnode
 %define target_src out/tizen/Release
-%define extra_config --without-bundled-v8 --engine escargot
+%define extra_config --without-bundled-v8 --engine escargot --escargot-threading
 %else
 %define target node
 %define target_src out/v8/Release
