@@ -165,7 +165,7 @@ UNINITIALIZED_TEST(internal_GCObject3) {
   EXPECT_EQ(g_tracer.getAllocatedCount(), 0);
 }
 
-UNINITIALIZED_TEST(internal_GCObject4) {
+UNINITIALIZED_TEST(DISABLED_internal_GCObject4) {
   GC_TRACE_RESET();
 
   Escargot::PersistentRefHolder<Object> holder;

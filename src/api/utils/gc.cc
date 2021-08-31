@@ -15,8 +15,8 @@
  */
 
 #include "gc.h"
+
 #include <EscargotPublic.h>
-#include <GCUtil.h>
 #include "misc.h"
 
 using namespace Escargot;
@@ -206,6 +206,7 @@ void MemoryUtil::printBacktrace(void* gcPtr) {
 }
 
 void MemoryUtil::printEveryReachableGCObjects() {
+#if !defined(ESCARGOT_THREADING)
   LOG_HANDLER("print reachable pointers -->\n");
   GC_gcollect();
   GC_disable();
@@ -244,6 +245,7 @@ void MemoryUtil::printEveryReachableGCObjects() {
   LOG_HANDLER("<-- end of print reachable pointers %fKB (count: %zu)\n",
               temp.totalRemainSize / 1024.f,
               temp.totalCount);
+#endif
 }
 
 void MemoryUtil::gcFull() {
