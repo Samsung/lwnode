@@ -7,7 +7,7 @@
     'build_asan%': '<(build_asan)',
     'escargot_dir%': 'deps/escargot',
     "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
-    "escargot_threading%": 0,
+    'escargot_threading%': '<(escargot_threading)',
     'conditions': [
       ['escargot_lib_type=="shared_lib"', {
         'lib_ext': '.so'
@@ -71,6 +71,11 @@
         '<(escargot_dir)/src/api',
         '<(escargot_dir)/third_party/GCutil',
         '<(escargot_dir)/third_party/GCutil/bdwgc/include',
+      ],
+      'conditions': [
+        ['escargot_threading==1', {
+          'defines':['ESCARGOT_THREADING']
+        }],
       ],
     },
     'actions': [

@@ -103,6 +103,11 @@ lwnode_optgroup.add_option('--static-escargot',
     dest='static_escargot',
     help='link to a static escargot instead of shared linking')
 
+lwnode_optgroup.add_option('--escargot-threading',
+    action='store_true',
+    dest='escargot_threading',
+    help='Enable Escargot threading')
+
 parser.add_option_group(lwnode_optgroup)
 
 def get_lwnode_gyp_options():
@@ -136,6 +141,12 @@ def get_lwnode_gyp_options():
     args += (['-Descargot_lib_type=static_lib'])
   else:
     args += (['-Descargot_lib_type=shared_lib'])
+
+  if options.escargot_threading:
+    args += (['-Descargot_threading=1'])
+  else:
+    args += (['-Descargot_threading=0'])
+
 
   args += ['-Dnode_core_target_name=lwnode']
   args += ['-Dnode_lib_target_name=liblwnode']

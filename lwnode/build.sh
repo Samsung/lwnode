@@ -20,7 +20,7 @@ CONFIG="--without-npm --without-bundled-v8 \
     --without-inspector --without-node-code-cache --without-node-snapshot \
     --with-intl none --shared-openssl --shared-zlib \
     --dest-os linux --dest-cpu x64 \
-    --engine escargot \
+    --engine escargot --escargot-threading \
     --ninja"
 
 if [[ $1 =~ ^"-d" ]]; then
