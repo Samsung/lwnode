@@ -42,7 +42,7 @@ class Isolate : public gc {
   void set_scheduled_exception(Escargot::ValueRef* exception_obj);
   void clear_scheduled_exception();
 
-  Escargot::ObjectRef* pending_exception();
+  Escargot::ValueRef* pending_exception();
   bool has_pending_exception();
 
   Escargot::ValueRef* pending_message_obj();
@@ -92,7 +92,7 @@ class Isolate : public gc {
   }
 
  protected:
-  void set_pending_exception(Escargot::ObjectRef* exception_obj);
+  void set_pending_exception(Escargot::ValueRef* exception_obj);
   void set_pending_message_obj(Escargot::ValueRef* message_obj);
   void clear_pending_exception();
   void clear_pending_message_obj();
@@ -115,7 +115,7 @@ class Isolate : public gc {
 
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
-  Escargot::ObjectRef* pending_exception_{nullptr};
+  Escargot::ValueRef* pending_exception_{nullptr};
   Escargot::ValueRef* pending_message_obj_{nullptr};
 };
 }  // namespace internal

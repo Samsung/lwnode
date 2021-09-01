@@ -171,7 +171,6 @@ test/parallel/test-release-npm.js
 test/parallel/test-repl-import-referrer.js
 test/parallel/test-repl-mode.js
 test/parallel/test-repl-multiline.js
-test/parallel/test-repl-null-thrown.js
 test/parallel/test-repl-pretty-custom-stack.js
 test/parallel/test-repl-pretty-stack.js
 test/parallel/test-repl-require.js
@@ -184,7 +183,6 @@ test/parallel/test-repl-tab-complete-crash.js
 test/parallel/test-repl-tab-complete-nested-repls.js
 test/parallel/test-repl-tab-complete-no-warn.js
 test/parallel/test-repl-tab-complete.js
-test/parallel/test-repl-throw-null-or-undefined.js
 test/parallel/test-repl-uncaught-exception-async.js
 test/parallel/test-repl-uncaught-exception-standalone.js
 test/parallel/test-repl-uncaught-exception.js

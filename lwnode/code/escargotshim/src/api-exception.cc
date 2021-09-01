@@ -170,6 +170,19 @@ void v8::TryCatch::SetCaptureMessage(bool value) {
 
 // --- M e s s a g e ---
 
+static bool hasStackTraceData(ValueRef* exception) {
+  if (!exception->isObject()) {
+    return false;
+  }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(exception->asObject());
+  auto empty = stackTrace->empty();
+  if (empty) {
+    LWNODE_LOG_WARN("No StackTrace found");
+  }
+  return !empty;
+}
+
 Local<String> Message::Get() const {
   LWNODE_RETURN_LOCAL(String);
 }
@@ -208,12 +221,13 @@ ScriptOrigin Message::GetScriptOrigin() const {
 
 v8::Local<Value> Message::GetScriptResourceName() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   return Utils::NewLocal<String>(lwIsolate->toV8(), top->src());
@@ -225,13 +239,13 @@ v8::Local<v8::StackTrace> Message::GetStackTrace() const {
 
 Maybe<int> Message::GetLineNumber(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
 
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return Just<int>(0);
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   return Just<int>(top->loc().line);
@@ -239,13 +253,13 @@ Maybe<int> Message::GetLineNumber(Local<Context> context) const {
 
 int Message::GetStartPosition() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
 
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return 0;
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   return top->loc().index;
@@ -253,13 +267,13 @@ int Message::GetStartPosition() const {
 
 int Message::GetEndPosition() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
 
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return 0;
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   return top->loc().index + 1;
@@ -286,13 +300,13 @@ int Message::GetWasmFunctionIndex() const {
 
 Maybe<int> Message::GetStartColumn(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
 
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return Nothing<int>();
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   return Just<int>(top->loc().column - 1);
@@ -304,13 +318,13 @@ int Message::GetEndColumn() const {
 
 Maybe<int> Message::GetEndColumn(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
 
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return Nothing<int>();
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   int endCol = top->loc().column;
@@ -328,13 +342,13 @@ bool Message::IsOpaque() const {
 
 MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
-  auto stackTrace =
-      ExceptionObjectData::stackTrace(lwIsolate->pending_exception());
 
-  if (stackTrace->empty()) {
-    LWNODE_LOG_WARN("No StackTrace found");
+  if (!hasStackTraceData(lwIsolate->pending_exception())) {
     return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
   }
+
+  auto stackTrace = ExceptionObjectData::stackTrace(
+      lwIsolate->pending_exception()->asObject());
 
   auto top = stackTrace->front();
   std::string code = top->sourceCode()->toStdUTF8String();
