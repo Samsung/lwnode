@@ -103,12 +103,12 @@ void Isolate::clear_scheduled_exception() {
   scheduled_exception_ = hole()->value();
 }
 
-Escargot::ObjectRef* Isolate::pending_exception() {
+Escargot::ValueRef* Isolate::pending_exception() {
   LWNODE_CHECK(has_pending_exception());
   return pending_exception_;
 }
 
-void Isolate::set_pending_exception(Escargot::ObjectRef* exception_obj) {
+void Isolate::set_pending_exception(Escargot::ValueRef* exception_obj) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   LWNODE_CHECK_NOT_NULL(exception_obj);
   pending_exception_ = exception_obj;
@@ -566,27 +566,12 @@ void IsolateWrap::SetPendingExceptionAndMessage(
     GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
-  ObjectRef* exceptionObject = nullptr;
-  if (exception->isUndefined()) {
-    // @note
-    // We create an empty ObjectRef for undefined exception value, because
-    // ValueRef::Undefined cannot be an object, and thus cannot use
-    // setExtraData()
-    EvalResult r = Evaluator::execute(
-        GetCurrentContext()->get(), [](ExecutionStateRef* state) -> ValueRef* {
-          return ObjectRef::create(state);
-        });
-    exceptionObject = r.result->asObject();
-    ObjectRefHelper::setExtraData(
-        exceptionObject, new ExceptionObjectData(stackTraceData, true));
-  } else {
-    exceptionObject =
-        ObjectRefHelper::toObject(GetCurrentContext()->get(), exception);
-    ObjectRefHelper::setExtraData(exceptionObject,
+  if (exception->isObject()) {
+    ObjectRefHelper::setExtraData(exception->asObject(),
                                   new ExceptionObjectData(stackTraceData));
   }
 
-  set_pending_exception(exceptionObject);
+  set_pending_exception(exception);
   // @note
   // pending_message_obj: v8::Message isn't created. Instead v8::Message
   // uses `stackTraceData.stackTraces()` directly to make a result requested.
