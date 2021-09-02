@@ -82,6 +82,11 @@
         ],
         'cflags_cc!': ['-fno-exceptions'],
         'cflags_cc': ['-fexceptions'],
+        'conditions': [
+          ['enable_external_builtin_scripts == "true"', {
+            'defines': ['LWNODE_USE_EXTERNAL_BUILTIN_SCRIPTS'],
+          }],
+        ],
       },
       'conditions': [
         ['OS == "linux"', {
