@@ -89,7 +89,7 @@ SLUGGER_RE =re.compile('[.\-/]')
 
 is_verbose = False
 
-def GetDefinition(var, source, step=30):
+def GetDefinition(var, source, is_reloadable_code=False, step=30):
   template = ONE_BYTE_STRING
   code_points = [ord(c) for c in source]
   if any(c > 127 for c in code_points):
@@ -107,19 +107,26 @@ def GetDefinition(var, source, step=30):
   slices = [elements_s[i:i + step] for i in range(0, len(elements_s), step)]
   lines = [','.join(s) for s in slices]
   array_content = ',\n'.join(lines)
-  definition = template.format(var, array_content)
+  if is_reloadable_code == True:
+    definition = template.format(var, '')
+  else:
+    definition = template.format(var, array_content)
 
   return definition, len(code_points)
 
 
-def AddModule(filename, definitions, initializers):
+def AddModule(filename, definitions, initializers, is_reloadable_code=False):
   code = ReadFile(filename)
   name = NormalizeFileName(filename)
   slug = SLUGGER_RE.sub('_', name)
   var = slug + '_raw'
-  definition, size = GetDefinition(var, code)
-  initializer = INITIALIZER.format(name, var, size)
-  definitions.append(definition)
+  definition, size = GetDefinition(var, code, is_reloadable_code)
+  if is_reloadable_code == True:
+    initializer = INITIALIZER.format(name, var, 0)
+    definitions.append(definition)
+  else:
+    initializer = INITIALIZER.format(name, var, size)
+    definitions.append(definition)
   initializers.append(initializer)
 
 def NormalizeFileName(filename):
@@ -133,13 +140,13 @@ def NormalizeFileName(filename):
   return os.path.splitext(filename)[0]
 
 
-def JS2C(source_files, target):
+def JS2C(source_files, target, is_reloadable_code=False):
   # Build source code lines
   definitions = []
   initializers = []
 
   for filename in source_files['.js']:
-    AddModule(filename, definitions, initializers)
+    AddModule(filename, definitions, initializers, is_reloadable_code)
 
   config_def, config_size = handle_config_gypi(source_files['config.gypi'])
   definitions.append(config_def)
@@ -156,7 +163,7 @@ def handle_config_gypi(config_filename):
   # later on anyway, so get it out of the way now
   config = ReadFile(config_filename)
   config = jsonify(config)
-  config_def, config_size = GetDefinition(CONFIG_GYPI_ID, config)
+  config_def, config_size = GetDefinition(CONFIG_GYPI_ID, config, False)
   return config_def, config_size
 
 
@@ -201,6 +208,11 @@ def main():
   )
   parser.add_argument('--target', help='output file')
   parser.add_argument('--verbose', action='store_true', help='output file')
+  # @lwnode --reloadable
+  parser.add_argument('--reloadable',
+          action='store_true',
+          default=False,
+          help='reloadable string')
   parser.add_argument('sources', nargs='*', help='input files')
   options = parser.parse_args()
   global is_verbose
@@ -211,7 +223,7 @@ def main():
   # Currently config.gypi is the only `.gypi` file allowed
   assert source_files['.gypi'] == ['config.gypi']
   source_files['config.gypi'] = source_files.pop('.gypi')[0]
-  JS2C(source_files, options.target)
+  JS2C(source_files, options.target, options.reloadable)
 
 
 if __name__ == "__main__":
