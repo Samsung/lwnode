@@ -770,6 +770,30 @@
           'dependencies': [
             '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
           ],
+          'conditions': [
+            ['enable_external_builtin_scripts=="true"', {
+              'variables': {
+                'archive_filename%': '<(node_core_target_name).dat'
+              },
+              'defines': [
+                'LWNODE_EXTERNAL_BUILTINS_FILENAME="<(archive_filename)"',
+              ],
+              'actions': [
+                {
+                  'action_name': 'generate_builtins_archive',
+                  'inputs': ['<@(library_files)'],
+                  'outputs': ['<(PRODUCT_DIR)/<(archive_filename)'],
+                  'process_outputs_as_sources': 1,
+                  'action': [
+                    'zip',
+                    '-0', # no compression
+                    '<(PRODUCT_DIR)/<(archive_filename)',
+                    '<@(_inputs)',
+                  ],
+                },
+              ],
+            }],
+          ],
         }],
         [ 'openssl_default_cipher_list!=""', {
           'defines': [
