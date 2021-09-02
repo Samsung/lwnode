@@ -269,6 +269,12 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
       esSource, esResourceName, source->GetResourceOptions().IsModule());
 
   if (!result.isSuccessful()) {
+    Evaluator::EvaluatorResult r;
+    r.error = ExceptionHelper::createErrorObject(
+        esPureContext, result.parseErrorCode, result.parseErrorMessage);
+
+    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+    lwIsolate->ReportPendingMessages();
     return MaybeLocal<UnboundScript>();
   }
 
