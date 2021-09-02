@@ -990,9 +990,18 @@
           'outputs': [
             '<(SHARED_INTERMEDIATE_DIR)/node_javascript.cc',
           ],
-          'action': [
-            'python', '<@(_inputs)',
-            '--target', '<@(_outputs)',
+          'conditions': [
+            ['lwnode=="true" and enable_external_builtin_scripts=="true"', {
+              'action': [
+                'python', '<@(_inputs)',
+                '--reloadable',
+                '--target', '<@(_outputs)',
+              ]}, {
+              'action': [
+                'python', '<@(_inputs)',
+                '--target', '<@(_outputs)',
+              ],
+            }]
           ],
         },
       ],
