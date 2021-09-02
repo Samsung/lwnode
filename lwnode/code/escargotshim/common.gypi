@@ -29,6 +29,13 @@
         'cflags': [ '-Wfatal-errors', '-Os' ],
       },
     },
+    'all_dependent_settings': {
+      'configurations': {
+        'Release': {
+          'defines': ['NDEBUG'],
+        },
+      },
+    },
     'conditions': [
       ['target_os=="tizen"', {
         'target_defaults': {
