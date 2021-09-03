@@ -190,7 +190,7 @@ static void setCallSitePrototype(
   LWNODE_CHECK(r.isSuccessful());
 
   otpl->set(
-      StringRef::createFromASCII(name, length), r.result, false, false, true);
+      StringRef::createFromUTF8(name, length), r.result, false, false, true);
 }
 
 static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
@@ -280,7 +280,7 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
                << data->src()->toStdUTF8String() << ":" << data->loc().line
                << ":" << data->loc().column << ")";
         auto string = stream.str();
-        return StringRef::createFromASCII(string.data(), string.length());
+        return StringRef::createFromUTF8(string.data(), string.length());
       });
 }
 

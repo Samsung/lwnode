@@ -216,8 +216,8 @@ IsolateWrap::IsolateWrap() {
   globalHandles_ = new GlobalHandles(toV8());
 
   privateValuesSymbol_ = PersistentRefHolder<SymbolRef>(
-      SymbolRef::create(StringRef::createFromASCII(PRIVATE_VALUES.data(),
-                                                   PRIVATE_VALUES.length())));
+      SymbolRef::create(StringRef::createFromUTF8(PRIVATE_VALUES.data(),
+                                                  PRIVATE_VALUES.length())));
 
   // NOTE: check lock_gc_release(); is needed (and where)
   // lock_gc_release();
