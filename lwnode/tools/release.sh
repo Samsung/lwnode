@@ -21,7 +21,13 @@ echo "Found: $repo"
 git submodule update --init
 
 pushd lwnode/code/escargotshim/deps/escargot
-git submodule update --init -- third_party/GCutil
+git submodule update --init third_party
+
+# Patch update code for wasm
+pushd third_party/wasm/wabt
+patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+popd
+
 popd
 
 rsync -armL --delete --delete-excluded --filter="merge lwnode/tools/release_filter.txt" . ../$repo

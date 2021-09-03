@@ -5,6 +5,15 @@ P /.circleci
 - /lwnode/tools
 - /lwnode/code/escargotshim/sample
 - /lwnode/code/escargotshim/test
+
+- /lwnode/code/escargotshim/deps/escargot/third_party/windows
+- /lwnode/code/escargotshim/deps/escargot/third_party/googletest
+- /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/docs
+- /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/fuzz-in
+- /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/man
+- /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/scripts
+- /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/wasm2c
+
 - /out
 - /benchmark
 - /doc
@@ -13,8 +22,6 @@ P /.circleci
 - /deps/openssl
 - /tools/node_modules
 - /tools/gyp/tools/Xcode
-+ /lib/internal/test
-
 - .git
 - .github
 - .circleci
@@ -24,6 +31,9 @@ P /.circleci
 - .eslintignore
 - .eslintrc.yaml
 - .remarkrc
+
++ /lib/internal/test
++ /lwnode/test
 - test
 - testing
 - jinja2
