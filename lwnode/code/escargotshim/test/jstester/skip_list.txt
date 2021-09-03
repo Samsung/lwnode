@@ -7,6 +7,7 @@ test/parallel/test-async-hooks-destroy-on-gc.js
 test/parallel/test-async-hooks-disable-gc-tracking.js
 test/parallel/test-async-hooks-execution-async-resource-await.js
 test/parallel/test-async-hooks-prevent-double-destroy.js
+test/parallel/test-async-hooks-recursive-stack-runInAsyncScope.js
 test/parallel/test-async-hooks-worker-asyncfn-terminate-1.js
 test/parallel/test-async-hooks-worker-asyncfn-terminate-2.js
 test/parallel/test-async-hooks-worker-asyncfn-terminate-3.js
@@ -20,7 +21,6 @@ test/parallel/test-buffer-constants.js
 test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
 test/parallel/test-buffer-constructor-outside-node-modules.js
-test/parallel/test-buffer-from.js
 test/parallel/test-buffer-pool-untransferable.js
 test/parallel/test-child-process-advanced-serialization.js
 test/parallel/test-child-process-fork-exec-path.js
