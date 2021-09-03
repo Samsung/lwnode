@@ -57,7 +57,7 @@ static void SetMethod(ContextRef* context,
         return ValueRef::createUndefined();
       },
       target,
-      StringRef::createFromASCII(name.c_str(), name.length()),
+      StringRef::createFromUTF8(name.c_str(), name.length()),
       nativeFunction);
 }
 
@@ -132,7 +132,7 @@ static ValueRef* MemSnapshot(ExecutionStateRef* state,
   auto outputPath = createDumpFilePath();
   auto& smaps = getSelfSmaps();
   if (dumpMemorySnapshot(outputPath, smaps)) {
-    return StringRef::createFromASCII(outputPath.c_str(), outputPath.length());
+    return StringRef::createFromUTF8(outputPath.c_str(), outputPath.length());
   }
   return ValueRef::createUndefined();
 };
