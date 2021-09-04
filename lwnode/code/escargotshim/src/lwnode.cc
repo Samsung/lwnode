@@ -152,7 +152,10 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
 }
 
 Utils::ReloadableSourceData* Utils::ReloadableSourceData::create(
-    std::string sourcePath, void* preloadedData, size_t preloadedDataLength) {
+    std::string sourcePath,
+    void* preloadedData,
+    size_t preloadedDataLength,
+    bool isOneByteString) {
   auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
       ReloadableSourceData();
 
@@ -162,15 +165,15 @@ Utils::ReloadableSourceData* Utils::ReloadableSourceData::create(
 
   data->preloadedData = preloadedData;
   data->preloadedDataLength_ = preloadedDataLength;
+  data->isOneByteString_ = isOneByteString;
 
   return data;
 }
 
-MaybeLocal<String> Utils::NewReloadableStringFromOneByte(
-    Isolate* isolate,
-    ReloadableSourceData* data,
-    LoadCallback loadCallback,
-    UnloadCallback unloadCallback) {
+MaybeLocal<String> Utils::NewReloadableString(Isolate* isolate,
+                                              ReloadableSourceData* data,
+                                              LoadCallback loadCallback,
+                                              UnloadCallback unloadCallback) {
   MaybeLocal<String> result;
 
   if (data->preloadedDataLength() == 0) {
@@ -181,7 +184,7 @@ MaybeLocal<String> Utils::NewReloadableStringFromOneByte(
     Escargot::StringRef* reloadableString =
         Escargot::StringRef::createReloadableString(
             IsolateWrap::fromV8(isolate)->vmInstance(),
-            true,
+            data->isOneByteString(),
             data->preloadedDataLength(),
             data,  // data should be gc-managed.
             loadCallback,
