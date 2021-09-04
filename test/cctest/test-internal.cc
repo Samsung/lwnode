@@ -958,15 +958,29 @@ static void UnloadReloadableSource(void* preloadedData, void* userData) {
 
 class ReloadableContentScope {
  public:
-  ReloadableContentScope(std::string filename) {
-    std::string contents = R"(
+  ReloadableContentScope(std::string filename, const bool isOneByteString) {
+    std::string content;
+
+    if (isOneByteString) {
+      content = R"(
         function hello() { print('hello'); }
         function world() { print('world'); }
         hello();
       )";
+    } else {
+      content = R"(
+        // ╔════════════════════════
+        // ║ 16 bits content
+        // ╚════════════════════════
+        function hello() { print('hello'); }
+        function world() { print('world'); }
+        hello();
+      )";
+    }
+
     std::ofstream ofile(filename);
     if (ofile.is_open()) {
-      ofile << contents << std::endl;
+      ofile << content << std::endl;
       ofile.close();
     }
     filename_ = filename;
@@ -977,7 +991,7 @@ class ReloadableContentScope {
   std::string filename_;
 };
 
-TEST(ReloadableString) {
+TEST(ReloadableString8) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -996,28 +1010,122 @@ TEST(ReloadableString) {
       .Check();
 
   std::string filename = "./tmp.test-reloadable-string.js";
-  ReloadableContentScope scope(filename);
-  FileData dest = readFile(filename);
-  LWNODE_CHECK_NOT_NULL(dest.byte);
-  v8::Script::Compile(
-      context,
-      Utils::NewReloadableStringFromOneByte(
-          isolate,
-          Utils::ReloadableSourceData::create(filename, dest.byte, dest.size),
-          LoadReloadableSource,
-          UnloadReloadableSource)
-          .ToLocalChecked())
-      .ToLocalChecked()
-      ->Run(context);
 
-  dest = FileData();  // note: remove address of preloaded buffer from stack
-  MemoryUtil::gc();
-  IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
-  v8::Script::Compile(
-      context, v8::String::NewFromUtf8(isolate, "world();").ToLocalChecked())
-      .ToLocalChecked()
-      ->Run(context);
-  EXPECT_GE(g_reload_count, 1);  // this depends on GC result
+  {
+    g_reload_count = 0;
+    const bool isOneByteString = true;
+    ReloadableContentScope scope(filename, isOneByteString);
+
+    FileData dest = readFile(filename);
+    LWNODE_CHECK_NOT_NULL(dest.byte);
+    v8::Script::Compile(
+        context,
+        Utils::NewReloadableString(
+            isolate,
+            Utils::ReloadableSourceData::create(
+                filename, dest.byte, dest.size, isOneByteString),
+            LoadReloadableSource,
+            UnloadReloadableSource)
+            .ToLocalChecked())
+        .ToLocalChecked()
+        ->Run(context);
+
+    dest = FileData();  // note: remove address of preloaded buffer from stack
+    MemoryUtil::gc();
+    IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+    v8::Script::Compile(
+        context, v8::String::NewFromUtf8(isolate, "world();").ToLocalChecked())
+        .ToLocalChecked()
+        ->Run(context);
+    EXPECT_GE(g_reload_count, 1);  // this depends on GC result
+  }
+}
+
+TEST(DISABLED_ReloadableString16) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  context->Global()
+      ->Set(context,
+            v8_str("print"),
+            v8::FunctionTemplate::New(
+                isolate,
+                [](const v8::FunctionCallbackInfo<v8::Value>& args) -> void {
+                  v8::String::Utf8Value utf8(args.GetIsolate(), args[0]);
+                  printf("%s\n", *utf8);
+                })
+                ->GetFunction(context)
+                .ToLocalChecked())
+      .Check();
+
+  std::string filename = "./tmp.test-reloadable-string.js";
+
+  {
+    const bool isOneByteString = false;
+    ReloadableContentScope scope(filename, isOneByteString);
+
+    FileData dest = readFile(filename);
+    LWNODE_CHECK_NOT_NULL(dest.byte);
+
+    auto data = Utils::ReloadableSourceData::create(
+        filename, dest.byte, dest.size, isOneByteString);
+
+    Escargot::StringRef* source = Escargot::StringRef::createReloadableString(
+        IsolateWrap::fromV8(isolate)->vmInstance(),
+        isOneByteString,
+        data->preloadedDataLength(),
+        data,  // data should be gc-managed.
+        LoadReloadableSource,
+        UnloadReloadableSource);
+    CHECK_NOT_NULL(source);
+
+    ContextRef* context =
+        ContextRef::create(IsolateWrap::fromV8(isolate)->vmInstance());
+    ScriptParserRef* parser = context->scriptParser();
+
+    ScriptParserRef::InitializeScriptResult result = parser->initializeScript(
+        source,
+        StringRef::createFromUTF8(filename.c_str(), filename.length()),
+        false);
+
+    if (!result.isSuccessful()) {
+      LWNODE_LOG_ERROR("(%d) %s",
+                       result.parseErrorCode,
+                       result.parseErrorMessage->toStdUTF8String().c_str());
+    }
+
+    ASSERT_EQ(result.isSuccessful(), true);
+  }
+
+  {
+    g_reload_count = 0;
+    const bool isOneByteString = false;
+    ReloadableContentScope scope(filename, isOneByteString);
+
+    FileData dest = readFile(filename);
+    LWNODE_CHECK_NOT_NULL(dest.byte);
+    v8::Script::Compile(
+        context,
+        Utils::NewReloadableString(
+            isolate,
+            Utils::ReloadableSourceData::create(
+                filename, dest.byte, dest.size, isOneByteString),
+            LoadReloadableSource,
+            UnloadReloadableSource)
+            .ToLocalChecked())
+        .ToLocalChecked()
+        ->Run(context);
+
+    dest = FileData();  // note: remove address of preloaded buffer from stack
+    MemoryUtil::gc();
+    IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+    v8::Script::Compile(
+        context, v8::String::NewFromUtf8(isolate, "world();").ToLocalChecked())
+        .ToLocalChecked()
+        ->Run(context);
+    EXPECT_GE(g_reload_count, 1);  // this depends on GC result
+  }
 }
 
 #endif

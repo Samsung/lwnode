@@ -38,17 +38,20 @@ class Utils {
 
     const char* path() { return path_; }
     size_t preloadedDataLength() { return preloadedDataLength_; }
+    bool isOneByteString() { return isOneByteString_; }
     static ReloadableSourceData* create(std::string sourcePath,
                                         void* preloadedData,
-                                        size_t preloadedDataLength);
+                                        size_t preloadedDataLength,
+                                        bool isOneByteString);
 
    private:
     char* path_{nullptr};
     size_t preloadedDataLength_{0};
+    bool isOneByteString_{false};
     ReloadableSourceData() = default;
   };
 
-  static v8::MaybeLocal<v8::String> NewReloadableStringFromOneByte(
+  static v8::MaybeLocal<v8::String> NewReloadableString(
       v8::Isolate* isolate,
       ReloadableSourceData* data,
       LoadCallback loadCallback,
