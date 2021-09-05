@@ -273,6 +273,7 @@ test/parallel/test-vm-strict-mode.js
 test/parallel/test-vm-symbols.js
 test/parallel/test-vm-syntax-error-message.js
 test/parallel/test-vm-syntax-error-stderr.js
+test/parallel/test-vm-timeout-escape-promise-2.js
 test/parallel/test-vm-timeout-escape-promise.js
 test/parallel/test-vm-timeout.js
 test/parallel/test-wasm-simple.js
