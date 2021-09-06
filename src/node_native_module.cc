@@ -1,6 +1,10 @@
 #include "node_native_module.h"
 #include "util-inl.h"
 
+#ifdef LWNODE_EXTERNAL_BUILTINS_FILENAME
+#include "node_native_module_lwnode-inl.h"
+#endif
+
 namespace node {
 namespace native_module {
 
@@ -202,6 +206,10 @@ static std::string OnDiskFileName(const char* id) {
 
 MaybeLocal<String> NativeModuleLoader::LoadBuiltinModuleSource(Isolate* isolate,
                                                                const char* id) {
+#ifdef LWNODE_EXTERNAL_BUILTINS_FILENAME
+  return LoadExternalBuiltinSource(isolate, id);
+#endif
+
 #ifdef NODE_BUILTIN_MODULES_PATH
   std::string filename = OnDiskFileName(id);
 

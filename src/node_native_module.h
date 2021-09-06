@@ -39,6 +39,12 @@ class NativeModuleLoader {
   friend class NativeModuleEnv;
   friend class CodeCacheBuilder;
 
+  // @lwnode
+  inline bool IsOneByte(const char* id);
+  v8::MaybeLocal<v8::String> LoadExternalBuiltinSource(
+      v8::Isolate* isolate, const char* id);
+  // end of @lwnode
+
   NativeModuleLoader();
   static NativeModuleLoader* GetInstance();
 

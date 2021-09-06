@@ -778,6 +778,9 @@
               'defines': [
                 'LWNODE_EXTERNAL_BUILTINS_FILENAME="<(archive_filename)"',
               ],
+              'dependencies': [
+                '<(lwnode_jsengine_path)/deps/minizip/minizip.gyp:minizip',
+              ],
               'actions': [
                 {
                   'action_name': 'generate_builtins_archive',
