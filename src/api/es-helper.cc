@@ -19,7 +19,7 @@
 #include "extra-data.h"
 #include "isolate.h"
 #include "utils/misc.h"
-#include "utils/string.h"
+#include "utils/string-util.h"
 
 #include <sstream>
 

@@ -19,7 +19,7 @@
 #include <sstream>
 #include "handle.h"
 #include "utils/misc.h"
-#include "utils/string.h"
+#include "utils/string-util.h"
 
 using namespace Escargot;
 

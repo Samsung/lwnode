@@ -76,6 +76,7 @@
         ],
         'include_dirs': [
           'src/api/utils/logger',
+          'src/api/utils',
           'include/lwnode',
           'include',
           '.',
