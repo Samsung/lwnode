@@ -24,6 +24,7 @@ BuildRequires: cmake
 BuildRequires: make
 BuildRequires: python
 BuildRequires: ninja
+BuildRequires: zip
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(capi-appfw-app-common)
@@ -119,7 +120,7 @@ echo "Building:" %{target}
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --ninja %{?extra_config} %{?lib_type_config}
+            --ninja %{?extra_config}  %{?external_script_config} %{?lib_type_config}
 %if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
 ninja -C %{target_src} %{target_lib}
 %endif
@@ -144,6 +145,9 @@ cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
 # for devel files
 strip -v -g %{target_src}/%{target}
 cp %{target_src}/%{target} %{buildroot}%{_bindir}
+%if "%{external_script_config}" == "--enable-external-builtin-scripts"
+cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
+%endif
 
 %clean
 rm ./*.list
@@ -172,3 +176,6 @@ rm ./*.manifest
 %files devel
 %manifest packaging/%{name}.manifest
 %{_bindir}/%{target}
+%if "%{external_script_config}" == "--enable-external-builtin-scripts"
+%{_bindir}/%{target}.dat
+%endif
