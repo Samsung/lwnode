@@ -39,7 +39,7 @@
 #include "api/module.h"
 #include "api/object.h"
 #include "api/serializer.h"
-#include "api/utils/string.h"
+#include "api/utils/string-util.h"
 
 namespace i = v8::internal;
 

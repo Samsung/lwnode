@@ -21,4 +21,4 @@
 #include "utils/conversions-inl.h"
 #include "utils/gc.h"
 #include "utils/misc.h"
-#include "utils/string.h"
+#include "utils/string-util.h"
