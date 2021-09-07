@@ -99,6 +99,19 @@ ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
   return new ContextWrap(isolate);
 }
 
+ContextWrap* ContextWrap::fromEscargot(Escargot::ContextRef* esContext) {
+  auto globalObjectData =
+      ObjectRefHelper::getExtraData(esContext->globalObject())
+          ->asGlobalObjectData();
+
+  LWNODE_CHECK(globalObjectData->internalFieldCount() ==
+               GlobalObjectData::kInternalFieldCount);
+
+  auto lwCreationContext = reinterpret_cast<ContextWrap*>(
+      globalObjectData->internalField(GlobalObjectData::kContextWrapSlot));
+  return lwCreationContext;
+}
+
 void ContextWrap::Enter() {
   isolate_->Enter();
   isolate_->pushContext(this);

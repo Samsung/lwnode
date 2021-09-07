@@ -1609,15 +1609,7 @@ Local<v8::Context> v8::Object::CreationContext() {
     return Local<v8::Context>();
   }
 
-  auto globalObjectData =
-      ObjectRefHelper::getExtraData(esVal.get()->globalObject())
-          ->asGlobalObjectData();
-
-  LWNODE_CHECK(globalObjectData->internalFieldCount() ==
-               GlobalObjectData::kInternalFieldCount);
-
-  auto lwCreationContext = reinterpret_cast<ContextWrap*>(
-      globalObjectData->internalField(GlobalObjectData::kContextWrapSlot));
+  auto lwCreationContext = ContextWrap::fromEscargot(esVal.get());
 
   return v8::Local<v8::Context>::New(
       lwIsolate->toV8(),
