@@ -195,4 +195,8 @@ MaybeLocal<String> Utils::NewReloadableString(Isolate* isolate,
   return result;
 }
 
+
+void MessageLoop::OnPrepare(v8::Isolate* isolate) {
+}
+
 }  // namespace LWNode
