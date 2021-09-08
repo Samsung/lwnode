@@ -219,6 +219,13 @@ int WorkerThreadsTaskRunner::NumberOfWorkerThreads() const {
   return threads_.size();
 }
 
+#ifdef LWNODE
+void PerIsolatePlatformData::PrepareTask(uv_prepare_t *handle) {
+  auto data = reinterpret_cast<PerIsolatePlatformData*>(handle->data);
+  LWNode::MessageLoop::OnPrepare(data->isolate_);
+}
+#endif
+
 PerIsolatePlatformData::PerIsolatePlatformData(
     Isolate* isolate, uv_loop_t* loop)
   : isolate_(isolate), loop_(loop) {
@@ -226,6 +233,14 @@ PerIsolatePlatformData::PerIsolatePlatformData(
   CHECK_EQ(0, uv_async_init(loop, flush_tasks_, FlushTasks));
   flush_tasks_->data = static_cast<void*>(this);
   uv_unref(reinterpret_cast<uv_handle_t*>(flush_tasks_));
+
+#if defined(LWNODE) && defined(LWNODE_EXTERNAL_BUILTINS_FILENAME)
+  prepare_task_ = new uv_prepare_t();
+  uv_prepare_init(loop_, prepare_task_);
+  uv_prepare_start(prepare_task_, PrepareTask);
+  prepare_task_->data = static_cast<void*>(this);
+  uv_unref(reinterpret_cast<uv_handle_t*>(prepare_task_));
+#endif
 }
 
 std::shared_ptr<v8::TaskRunner>
@@ -329,6 +344,13 @@ void PerIsolatePlatformData::AddShutdownCallback(void (*callback)(void*),
 }
 
 void PerIsolatePlatformData::Shutdown() {
+#ifdef LWNODE
+  if (prepare_task_) {
+    uv_close(reinterpret_cast<uv_handle_t*>(prepare_task_), nullptr);
+    prepare_task_ = nullptr;
+  }
+#endif
+
   if (flush_tasks_ == nullptr)
     return;
 

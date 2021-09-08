@@ -106,6 +106,11 @@ class PerIsolatePlatformData :
   TaskQueue<v8::Task> foreground_tasks_;
   TaskQueue<DelayedTask> foreground_delayed_tasks_;
 
+//@lwnode
+  uv_prepare_t* prepare_task_ = nullptr;
+  static void PrepareTask(uv_prepare_t* handle);
+//end of @lwnode
+
   // Use a custom deleter because libuv needs to close the handle first.
   typedef std::unique_ptr<DelayedTask, void(*)(DelayedTask*)>
       DelayedTaskPointer;

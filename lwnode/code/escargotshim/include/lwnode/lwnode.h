@@ -26,6 +26,12 @@ void InitializeProcessMethods(v8::Local<v8::Object> target,
 
 bool dumpSelfMemorySnapshot();
 
+class MessageLoop {
+ public:
+  // this callback should be called right before polling I/O events
+  static void OnPrepare(v8::Isolate* isolate);
+};
+
 class Utils {
  public:
   // should return string buffer
