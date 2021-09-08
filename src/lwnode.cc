@@ -16,9 +16,12 @@
 
 #include "lwnode/lwnode.h"
 #include <EscargotPublic.h>
+#include <malloc.h>  // for malloc_trim
 #include <chrono>
 #include <fstream>
 #include "api.h"
+#include "api/context.h"
+#include "api/es-helper.h"
 #include "api/isolate.h"
 #include "api/utils/misc.h"
 #include "api/utils/smaps.h"
@@ -195,8 +198,18 @@ MaybeLocal<String> Utils::NewReloadableString(Isolate* isolate,
   return result;
 }
 
+static void IdleGC(v8::Isolate* isolate) {
+  LWNODE_LOG_INFO("IdleGC");
+  IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+  malloc_trim(0);
+}
 
 void MessageLoop::OnPrepare(v8::Isolate* isolate) {
+  // @note escargot says:
+  // user can call 'enterIdleMode' many times without performance concern
+
+  // @todo consider delayed-entering Idle GC
+  IdleGC(isolate);
 }
 
 }  // namespace LWNode
