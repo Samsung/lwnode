@@ -33,6 +33,8 @@ BuildRequires: pkgconfig(capi-system-system-settings)
 BuildRequires: pkgconfig(icu-i18n)
 BuildRequires: pkgconfig(icu-uc)
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: nghttp2-devel
+BuildRequires: pkgconfig(libcares)
 
 %if (0%{?tizen_version_major} >= 6)
 BuildRequires: pkgconfig(openssl1.1)
@@ -117,10 +119,15 @@ LDFLAGS+="-fsanitize=address"
 
 echo "Building:" %{target}
 
+CFLAGS+=' -Os '
+CXXFLAGS+=' -Os '
+
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
-            --with-intl none --shared-openssl --shared-zlib --dest-os linux --dest-cpu '%{tizen_arch}' \
+            --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
+            --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?extra_config}  %{?external_script_config} %{?lib_type_config}
+
 %if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
 ninja -C %{target_src} %{target_lib}
 %endif
