@@ -201,6 +201,7 @@ MaybeLocal<String> Utils::NewReloadableString(Isolate* isolate,
 static void IdleGC(v8::Isolate* isolate) {
   LWNODE_LOG_INFO("IdleGC");
   IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+  Escargot::Memory::gc();
   malloc_trim(0);
 }
 
