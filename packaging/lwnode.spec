@@ -17,7 +17,7 @@ Summary:       -
 Version:       1.0.0
 Release:       1
 Group:         System/Servers
-License:       Apache 2.0
+License:       Apache 2.0 and MIT and BSD-2-Clause and BSD-3-Clause and BOEHM-GC and ICU and LGPL-2.1+ and Zlib
 Source:        %{name}-%{version}.tar.gz
 
 BuildRequires: cmake
