@@ -21,6 +21,7 @@ test/parallel/test-buffer-constants.js
 test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
 test/parallel/test-buffer-constructor-outside-node-modules.js
+test/parallel/test-buffer-from.js
 test/parallel/test-buffer-pool-untransferable.js
 test/parallel/test-child-process-advanced-serialization.js
 test/parallel/test-child-process-fork-exec-path.js
@@ -84,6 +85,7 @@ test/parallel/test-fs-access.js
 test/parallel/test-fs-filehandle.js
 test/parallel/test-fs-opendir.js
 test/parallel/test-fs-promises-file-handle-close.js
+test/parallel/test-fs-readdir-stack-overflow.js
 test/parallel/test-fs-readfile-error.js
 test/parallel/test-fs-utimes.js
 test/parallel/test-fs-write-reuse-callback.js
@@ -184,6 +186,7 @@ test/parallel/test-require-symlink.js
 test/parallel/test-source-map-api.js
 test/parallel/test-stream-readable-async-iterators.js
 test/parallel/test-string-decoder-end.js
+test/parallel/test-string-decoder-fuzz.js
 test/parallel/test-string-decoder.js
 test/parallel/test-sync-io-option.js
 test/parallel/test-tick-processor-arguments.js
