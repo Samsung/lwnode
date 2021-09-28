@@ -370,7 +370,7 @@ void Engine::dispose() {
   Memory::setGCEventListener(nullptr);
 
   gcHeap_.release();
-  MemoryUtil::gc();
+  MemoryUtil::gcFull();
   GC_invoke_finalizers();
 
   Globals::finalize();
