@@ -535,7 +535,7 @@ std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
   if (esSelf->backingStore().hasValue()) {
     esBackingStore = esSelf->backingStore().value();
   } else {
-    esBackingStore = BackingStoreRef::create(0);
+    esBackingStore = BackingStoreRef::createDefaultNonSharedBackingStore(0);
   }
 
   return std::shared_ptr<v8::BackingStore>(

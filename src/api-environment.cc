@@ -1501,7 +1501,8 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
   auto lwIsolate = IsolateWrap::GetCurrent();
 
-  BackingStoreRef* esBackingStore = BackingStoreRef::create(byte_length);
+  BackingStoreRef* esBackingStore =
+      BackingStoreRef::createDefaultNonSharedBackingStore(byte_length);
   lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(
@@ -1540,7 +1541,8 @@ std::unique_ptr<v8::BackingStore> v8::ArrayBuffer::NewBackingStore(
   };
 
   BackingStoreRef* esBackingStore =
-      BackingStoreRef::create(data, byte_length, callback, callbackData);
+      BackingStoreRef::createNonSharedBackingStore(
+          data, byte_length, callback, callbackData);
 
   lwIsolate->addBackingStore(esBackingStore);
 
@@ -1717,7 +1719,8 @@ std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
   auto lwIsolate = IsolateWrap::GetCurrent();
 
-  BackingStoreRef* esBackingStore = BackingStoreRef::create(byte_length);
+  BackingStoreRef* esBackingStore =
+      BackingStoreRef::createDefaultSharedBackingStore(byte_length);
   lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(
@@ -1748,9 +1751,9 @@ std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
     delete params;
   };
 
-  auto esBackingStore =
-      BackingStoreRef::create(data, byte_length, callback, callbackData);
-
+  // TODO: change to shared type.
+  auto esBackingStore = BackingStoreRef::createNonSharedBackingStore(
+      data, byte_length, callback, callbackData);
   lwIsolate->addBackingStore(esBackingStore);
 
   return std::unique_ptr<v8::BackingStore>(
