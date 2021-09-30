@@ -178,7 +178,7 @@ rm ./*.manifest
 %{_libdir}/libescargot.so
 %{_libdir}/liblwnode.so*
 %endif
-%license LICENSE.Apache-2.0 LICENSE.BOEHM-GC LICENSE.BSD-3-Clause LICENSE.MIT LICENSE.NodeJS
+%license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
 
 %files devel
 %manifest packaging/%{name}.manifest
