@@ -1,5 +1,6 @@
 test/parallel/test-accessor-properties.js
 test/parallel/test-assert-async.js
+test/parallel/test-assert-builtins-not-read-from-filesystem.js
 test/parallel/test-assert-deep.js
 test/parallel/test-assert-first-line.js
 test/parallel/test-assert.js
@@ -16,7 +17,6 @@ test/parallel/test-async-local-storage-deep-stack.js
 test/parallel/test-async-wrap-pop-id-during-load.js
 test/parallel/test-buffer-alloc.js
 test/parallel/test-buffer-backing-arraybuffer.js
-test/parallel/test-buffer-bigint64.js
 test/parallel/test-buffer-constants.js
 test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
@@ -78,12 +78,9 @@ test/parallel/test-eslint-prefer-util-format-errors.js
 test/parallel/test-eslint-require-common-first.js
 test/parallel/test-eslint-required-modules.js
 test/parallel/test-event-capture-rejections.js
-test/parallel/test-event-on-async-iterator.js
 test/parallel/test-events-uncaught-exception-stack.js
 test/parallel/test-freeze-intrinsics.js
-test/parallel/test-fs-access.js
 test/parallel/test-fs-filehandle.js
-test/parallel/test-fs-opendir.js
 test/parallel/test-fs-promises-file-handle-close.js
 test/parallel/test-fs-readdir-stack-overflow.js
 test/parallel/test-fs-readfile-error.js
@@ -166,7 +163,6 @@ test/parallel/test-promises-unhandled-symbol-rejections.js
 test/parallel/test-promises-warning-on-unhandled-rejection.js
 test/parallel/test-queue-microtask-uncaught-asynchooks.js
 test/parallel/test-queue-microtask.js
-test/parallel/test-readable-from-iterator-closing.js
 test/parallel/test-readline-async-iterators-destroy.js
 test/parallel/test-release-npm.js
 test/parallel/test-repl-import-referrer.js
