@@ -13258,52 +13258,52 @@ THREADED_TEST(ObjectGetConstructorName) {
 // }
 
 
-// static void UnlockForAMoment(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   v8::Unlocker unlocker(CcTest::isolate());
-// }
+static void UnlockForAMoment(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  v8::Unlocker unlocker(CcTest::isolate());
+}
 
 
-// THREADED_TEST(LockUnlockLock) {
-//   {
-//     v8::Locker locker(CcTest::isolate());
-//     v8::HandleScope scope(CcTest::isolate());
-//     LocalContext env;
-//     Local<v8::FunctionTemplate> fun_templ =
-//         v8::FunctionTemplate::New(CcTest::isolate(), UnlockForAMoment);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()
-//               ->Set(env.local(), v8_str("unlock_for_a_moment"), fun)
-//               .FromJust());
-//     Local<Script> script = v8_compile("(function () {"
-//                                       "  unlock_for_a_moment();"
-//                                       "  return 42;"
-//                                       "})();");
-//     CHECK_EQ(42, script->Run(env.local())
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   }
-//   {
-//     v8::Locker locker(CcTest::isolate());
-//     v8::HandleScope scope(CcTest::isolate());
-//     LocalContext env;
-//     Local<v8::FunctionTemplate> fun_templ =
-//         v8::FunctionTemplate::New(CcTest::isolate(), UnlockForAMoment);
-//     Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//     CHECK(env->Global()
-//               ->Set(env.local(), v8_str("unlock_for_a_moment"), fun)
-//               .FromJust());
-//     Local<Script> script = v8_compile("(function () {"
-//                                       "  unlock_for_a_moment();"
-//                                       "  return 42;"
-//                                       "})();");
-//     CHECK_EQ(42, script->Run(env.local())
-//                      .ToLocalChecked()
-//                      ->Int32Value(env.local())
-//                      .FromJust());
-//   }
-// }
+THREADED_TEST(LockUnlockLock) {
+  {
+    v8::Locker locker(CcTest::isolate());
+    v8::HandleScope scope(CcTest::isolate());
+    LocalContext env;
+    Local<v8::FunctionTemplate> fun_templ =
+        v8::FunctionTemplate::New(CcTest::isolate(), UnlockForAMoment);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()
+              ->Set(env.local(), v8_str("unlock_for_a_moment"), fun)
+              .FromJust());
+    Local<Script> script = v8_compile("(function () {"
+                                      "  unlock_for_a_moment();"
+                                      "  return 42;"
+                                      "})();");
+    CHECK_EQ(42, script->Run(env.local())
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  }
+  {
+    v8::Locker locker(CcTest::isolate());
+    v8::HandleScope scope(CcTest::isolate());
+    LocalContext env;
+    Local<v8::FunctionTemplate> fun_templ =
+        v8::FunctionTemplate::New(CcTest::isolate(), UnlockForAMoment);
+    Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+    CHECK(env->Global()
+              ->Set(env.local(), v8_str("unlock_for_a_moment"), fun)
+              .FromJust());
+    Local<Script> script = v8_compile("(function () {"
+                                      "  unlock_for_a_moment();"
+                                      "  return 42;"
+                                      "})();");
+    CHECK_EQ(42, script->Run(env.local())
+                     .ToLocalChecked()
+                     ->Int32Value(env.local())
+                     .FromJust());
+  }
+}
 
 
 // static int GetGlobalObjectsCount() {

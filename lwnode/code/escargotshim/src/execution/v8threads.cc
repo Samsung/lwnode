@@ -18,19 +18,37 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "v8threads.h"
+
+#include "api/isolate.h"
 #include "base.h"
 #include "v8.h"
 
+using namespace EscargotShim;
 namespace v8 {
 
 // Once the Locker is initialized, the current thread will be guaranteed to have
 // the lock for a given isolate.
 void Locker::Initialize(v8::Isolate* isolate) {
-  LWNODE_RETURN_VOID;
+  LWNODE_CHECK(isolate);
+  has_lock_ = false;
+  top_level_ = true;
+  isolate_ = reinterpret_cast<internal::Isolate*>(isolate);
+  ThreadManager* manager = IsolateWrap::fromV8(isolate_)->thread_manager();
+
+  if (!manager->IsLockedByCurrentThread()) {
+    manager->Lock();
+    has_lock_ = true;
+  }
+
+  LWNODE_CHECK(manager->IsLockedByCurrentThread());
 }
 
 bool Locker::IsLocked(v8::Isolate* isolate) {
-  LWNODE_RETURN_FALSE;
+  LWNODE_CHECK(isolate);
+  return IsolateWrap::fromV8(isolate)
+      ->thread_manager()
+      ->IsLockedByCurrentThread();
 }
 
 bool Locker::IsActive() {
@@ -38,13 +56,70 @@ bool Locker::IsActive() {
 }
 
 Locker::~Locker() {
-  LWNODE_UNIMPLEMENT;
+  ThreadManager* manager = IsolateWrap::fromV8(isolate_)->thread_manager();
+  LWNODE_CHECK(manager->IsLockedByCurrentThread());
+
+  if (has_lock_) {
+    if (top_level_) {
+      manager->FreeThreadResources();
+    } else {
+      manager->ArchiveThread();
+    }
+    manager->Unlock();
+  }
 }
 
-void Unlocker::Initialize(v8::Isolate* isolate){LWNODE_RETURN_VOID}
+void Unlocker::Initialize(v8::Isolate* isolate) {
+  LWNODE_CHECK(isolate);
+
+  ThreadManager* manager = IsolateWrap::fromV8(isolate)->thread_manager();
+  LWNODE_CHECK(manager->IsLockedByCurrentThread());
+  manager->ArchiveThread();
+  manager->Unlock();
+}
 
 Unlocker::~Unlocker() {
-  LWNODE_UNIMPLEMENT;
+  ThreadManager* manager = IsolateWrap::fromV8(isolate_)->thread_manager();
+  LWNODE_CHECK(!manager->IsLockedByCurrentThread());
+  manager->Lock();
+  manager->RestoreThread();
+}
+}  // namespace v8
+
+namespace EscargotShim {
+
+void ThreadManager::Lock() {
+  mutex_.lock();
+  mutex_owner_ = std::this_thread::get_id();
+  LWNODE_CHECK(IsLockedByCurrentThread());
 }
 
-}  // namespace v8
+void ThreadManager::Unlock() {
+  std::thread::id invalid;
+  mutex_owner_ = invalid;
+  mutex_.unlock();
+}
+
+bool ThreadManager::IsLockedByCurrentThread() const {
+  return mutex_owner_ == std::this_thread::get_id();
+}
+
+void ThreadManager::ArchiveThread() {
+  // TODO: Check if we need this logic
+}
+
+bool ThreadManager::RestoreThread() {
+  // TODO: Check if we need this logic
+  return false;
+}
+
+void ThreadManager::FreeThreadResources() {
+  // TODO: Check if we need this logic
+}
+
+bool ThreadManager::IsArchived() {
+  // TODO: Check if we need this logic
+  return false;
+}
+
+}  // namespace EscargotShim
