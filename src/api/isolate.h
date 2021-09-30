@@ -18,6 +18,7 @@
 
 #include "arraybuffer-allocator.h"
 #include "engine.h"
+#include "execution/v8threads.h"
 #include "global-handles.h"
 #include "handlescope.h"
 #include "utils/compiler.h"
@@ -233,6 +234,8 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   void SetPromiseHook(v8::PromiseHook callback);
 
+  ThreadManager* thread_manager() { return threadManager_; }
+
  private:
   IsolateWrap();
 
@@ -261,6 +264,8 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   PersistentRefHolder<IsolateWrap> release_lock_;
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
+
+  ThreadManager* threadManager_ = nullptr;
 };
 
 }  // namespace EscargotShim

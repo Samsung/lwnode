@@ -219,6 +219,8 @@ IsolateWrap::IsolateWrap() {
       SymbolRef::create(StringRef::createFromUTF8(PRIVATE_VALUES.data(),
                                                   PRIVATE_VALUES.length())));
 
+  threadManager_ = new ThreadManager();
+
   // NOTE: check lock_gc_release(); is needed (and where)
   // lock_gc_release();
   Memory::gcRegisterFinalizer(this, [](void* self) {
