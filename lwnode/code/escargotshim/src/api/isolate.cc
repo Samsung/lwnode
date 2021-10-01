@@ -328,6 +328,22 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     LWNODE_CALL_TRACE_GC_END();
   });
 
+  vmInstance_->registerErrorCreationCallback([](ExecutionStateRef* state,
+                                                ErrorObjectRef* err) {
+    auto stackString = EvalResultHelper::getCallStackStringAsNodeStyle(
+        state->computeStackTraceData(), 1);
+    auto message = err->toString(state)->toStdUTF8String();
+
+    if (message.length() > 0) {
+      stackString = message + "\n" + stackString;
+    }
+
+    err->set(
+        state,
+        StringRef::createFromASCII("stack"),
+        StringRef::createFromASCII(stackString.data(), stackString.length()));
+  });
+
   InitializeGlobalSlots();
 
   scheduled_exception_ = hole()->value();

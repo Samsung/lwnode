@@ -3,6 +3,7 @@ test/parallel/test-assert-async.js
 test/parallel/test-assert-builtins-not-read-from-filesystem.js
 test/parallel/test-assert-deep.js
 test/parallel/test-assert-first-line.js
+test/parallel/test-assert-if-error.js
 test/parallel/test-assert.js
 test/parallel/test-async-hooks-destroy-on-gc.js
 test/parallel/test-async-hooks-disable-gc-tracking.js
@@ -163,7 +164,6 @@ test/parallel/test-promises-unhandled-symbol-rejections.js
 test/parallel/test-promises-warning-on-unhandled-rejection.js
 test/parallel/test-queue-microtask-uncaught-asynchooks.js
 test/parallel/test-queue-microtask.js
-test/parallel/test-readline-async-iterators-destroy.js
 test/parallel/test-release-npm.js
 test/parallel/test-repl-import-referrer.js
 test/parallel/test-repl-mode.js
@@ -187,17 +187,9 @@ test/parallel/test-string-decoder.js
 test/parallel/test-sync-io-option.js
 test/parallel/test-tick-processor-arguments.js
 test/parallel/test-tls-check-server-identity.js
-test/parallel/test-tls-cli-max-version-1.2.js
-test/parallel/test-tls-cli-max-version-1.3.js
-test/parallel/test-tls-cli-min-version-1.0.js
-test/parallel/test-tls-cli-min-version-1.1.js
-test/parallel/test-tls-cli-min-version-1.2.js
-test/parallel/test-tls-cli-min-version-1.3.js
 test/parallel/test-tls-connect-memleak.js
 test/parallel/test-tls-external-accessor.js
-test/parallel/test-tls-min-max-version.js
 test/parallel/test-tls-securepair-leak.js
-test/parallel/test-tls-set-ciphers.js
 test/parallel/test-tls-transport-destroy-after-own-gc.js
 test/parallel/test-trace-atomics-wait.js
 test/parallel/test-trace-events-all.js
