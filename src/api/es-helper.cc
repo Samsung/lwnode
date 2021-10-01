@@ -509,6 +509,29 @@ std::string EvalResultHelper::getCallStackString(
   return oss.str();
 }
 
+std::string EvalResultHelper::getCallStackStringAsNodeStyle(
+    const GCManagedVector<Evaluator::StackTraceData>& traceData,
+    size_t maxStackSize) {
+  std::ostringstream oss;
+  const std::string separator = "    ";
+  size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
+
+  for (size_t i = 0; i < maxPrintStackSize; ++i) {
+    const auto& iter = traceData[i];
+    const auto& resourceName = iter.src->toStdUTF8String();
+    const auto& functionName = iter.functionName->toStdUTF8String();
+    const int errorLine = iter.loc.line;
+    const int errorColumn = iter.loc.column;
+
+    oss << separator << "at "
+        << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
+        << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
+        << ":" << errorColumn << ")" << std::endl;
+  }
+
+  return oss.str();
+}
+
 std::string EvalResultHelper::getErrorString(
     ContextRef* context, const Evaluator::EvaluatorResult& result) {
   const auto& traceData = result.stackTraceData;

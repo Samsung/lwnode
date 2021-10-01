@@ -220,6 +220,9 @@ class EvalResultHelper {
   static std::string getCallStackString(
       const GCManagedVector<Evaluator::StackTraceData>& traceData,
       size_t maxStackSize = 5);
+  static std::string getCallStackStringAsNodeStyle(
+      const GCManagedVector<Evaluator::StackTraceData>& traceData,
+      size_t maxStackSize = 5);
 };
 
 class ExceptionHelper {
