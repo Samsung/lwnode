@@ -207,31 +207,41 @@ THREADED_TEST(IsolateOfContext) {
   CHECK(env->GetIsolate() == CcTest::isolate());
 }
 
-// static void TestSignatureLooped(const char* operation, Local<Value> receiver,
-//                                 v8::Isolate* isolate) {
-//   i::ScopedVector<char> source(200);
-//   i::SNPrintF(source,
-//               "for (var i = 0; i < 10; i++) {"
-//               "  %s"
-//               "}",
-//               operation);
-//   signature_callback_count = 0;
-//   signature_expected_receiver = receiver;
-//   bool expected_to_throw = receiver.IsEmpty();
-//   v8::TryCatch try_catch(isolate);
-//   CompileRun(source.begin());
-//   CHECK_EQ(expected_to_throw, try_catch.HasCaught());
-//   if (!expected_to_throw) {
-//     CHECK_EQ(10, signature_callback_count);
-//   } else {
-//     CHECK(v8_str("TypeError: Illegal invocation")
-//               ->Equals(isolate->GetCurrentContext(),
-//                        try_catch.Exception()
-//                            ->ToString(isolate->GetCurrentContext())
-//                            .ToLocalChecked())
-//               .FromJust());
-//   }
-// }
+static void TestSignatureLooped(const char* operation, Local<Value> receiver,
+                                v8::Isolate* isolate) {
+  // i::ScopedVector<char> source(200);
+  // i::SNPrintF(source,
+  //             "for (var i = 0; i < 10; i++) {"
+  //             "  %s"
+  //             "}",
+  //             operation);
+  char source[200];
+  snprintf(source,
+           200,
+           "for (var i = 0; i < 10; i++) {"
+           "  %s"
+           "}",
+           operation);
+
+  signature_callback_count = 0;
+  signature_expected_receiver = receiver;
+  bool expected_to_throw = receiver.IsEmpty();
+  v8::TryCatch try_catch(isolate);
+  // CompileRun(source.begin());
+  Local<Value> test_object = CompileRun(source);
+
+  CHECK_EQ(expected_to_throw, try_catch.HasCaught());
+  if (!expected_to_throw) {
+    CHECK_EQ(10, signature_callback_count);
+  } else {
+    CHECK(v8_str("TypeError: Illegal invocation")
+              ->Equals(isolate->GetCurrentContext(),
+                       try_catch.Exception()
+                           ->ToString(isolate->GetCurrentContext())
+                           .ToLocalChecked())
+              .FromJust());
+  }
+}
 
 // static void TestSignatureOptimized(const char* operation, Local<Value> receiver,
 //                                    v8::Isolate* isolate) {
@@ -264,117 +274,122 @@ THREADED_TEST(IsolateOfContext) {
 //   }
 // }
 
-// static void TestSignature(const char* operation, Local<Value> receiver,
-//                           v8::Isolate* isolate) {
-//   TestSignatureLooped(operation, receiver, isolate);
-//   TestSignatureOptimized(operation, receiver, isolate);
-// }
+static void TestSignature(const char* operation, Local<Value> receiver,
+                          v8::Isolate* isolate) {
+  TestSignatureLooped(operation, receiver, isolate);
+  // TestSignatureOptimized(operation, receiver, isolate);
+}
 
-// THREADED_TEST(ReceiverSignature) {
-//   i::FLAG_allow_natives_syntax = true;
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   // Setup templates.
-//   v8::Local<v8::FunctionTemplate> fun = v8::FunctionTemplate::New(isolate);
-//   v8::Local<v8::Signature> sig = v8::Signature::New(isolate, fun);
-//   v8::Local<v8::FunctionTemplate> callback_sig = v8::FunctionTemplate::New(
-//       isolate, IncrementingSignatureCallback, Local<Value>(), sig);
-//   v8::Local<v8::FunctionTemplate> callback =
-//       v8::FunctionTemplate::New(isolate, IncrementingSignatureCallback);
-//   v8::Local<v8::FunctionTemplate> sub_fun = v8::FunctionTemplate::New(isolate);
-//   sub_fun->Inherit(fun);
-//   v8::Local<v8::FunctionTemplate> direct_sub_fun =
-//       v8::FunctionTemplate::New(isolate);
-//   direct_sub_fun->Inherit(fun);
-//   v8::Local<v8::FunctionTemplate> unrel_fun =
-//       v8::FunctionTemplate::New(isolate);
-//   // Install properties.
-//   v8::Local<v8::ObjectTemplate> fun_proto = fun->PrototypeTemplate();
-//   fun_proto->Set(v8_str("prop_sig"), callback_sig);
-//   fun_proto->Set(v8_str("prop"), callback);
-//   fun_proto->SetAccessorProperty(
-//       v8_str("accessor_sig"), callback_sig, callback_sig);
-//   fun_proto->SetAccessorProperty(v8_str("accessor"), callback, callback);
-//   // Instantiate templates.
-//   Local<Value> fun_instance =
-//       fun->InstanceTemplate()->NewInstance(env.local()).ToLocalChecked();
-//   Local<Value> sub_fun_instance =
-//       sub_fun->InstanceTemplate()->NewInstance(env.local()).ToLocalChecked();
-//   // Instance template with properties.
-//   v8::Local<v8::ObjectTemplate> direct_instance_templ =
-//       direct_sub_fun->InstanceTemplate();
-//   direct_instance_templ->Set(v8_str("prop_sig"), callback_sig);
-//   direct_instance_templ->Set(v8_str("prop"), callback);
-//   direct_instance_templ->SetAccessorProperty(v8_str("accessor_sig"),
-//                                              callback_sig, callback_sig);
-//   direct_instance_templ->SetAccessorProperty(v8_str("accessor"), callback,
-//                                              callback);
-//   Local<Value> direct_instance =
-//       direct_instance_templ->NewInstance(env.local()).ToLocalChecked();
-//   // Setup global variables.
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("Fun"),
-//                   fun->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("UnrelFun"),
-//                   unrel_fun->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("fun_instance"), fun_instance)
-//             .FromJust());
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("sub_fun_instance"), sub_fun_instance)
-//             .FromJust());
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("direct_instance"), direct_instance)
-//             .FromJust());
-//   CompileRun(
-//       "var accessor_sig_key = 'accessor_sig';"
-//       "var accessor_key = 'accessor';"
-//       "var prop_sig_key = 'prop_sig';"
-//       "var prop_key = 'prop';"
-//       ""
-//       "function copy_props(obj) {"
-//       "  var keys = [accessor_sig_key, accessor_key, prop_sig_key, prop_key];"
-//       "  var source = Fun.prototype;"
-//       "  for (var i in keys) {"
-//       "    var key = keys[i];"
-//       "    var desc = Object.getOwnPropertyDescriptor(source, key);"
-//       "    Object.defineProperty(obj, key, desc);"
-//       "  }"
-//       "}"
-//       ""
-//       "var plain = {};"
-//       "copy_props(plain);"
-//       "var unrelated = new UnrelFun();"
-//       "copy_props(unrelated);"
-//       "var inherited = { __proto__: fun_instance };"
-//       "var inherited_direct = { __proto__: direct_instance };");
-//   // Test with and without ICs
-//   const char* test_objects[] = {
-//       "fun_instance", "sub_fun_instance", "direct_instance", "plain",
-//       "unrelated",    "inherited",        "inherited_direct"};
-//   unsigned bad_signature_start_offset = 3;
-//   for (unsigned i = 0; i < arraysize(test_objects); i++) {
-//     i::ScopedVector<char> source(200);
-//     i::SNPrintF(
-//         source, "var test_object = %s; test_object", test_objects[i]);
-//     Local<Value> test_object = CompileRun(source.begin());
-//     TestSignature("test_object.prop();", test_object, isolate);
-//     TestSignature("test_object.accessor;", test_object, isolate);
-//     TestSignature("test_object[accessor_key];", test_object, isolate);
-//     TestSignature("test_object.accessor = 1;", test_object, isolate);
-//     TestSignature("test_object[accessor_key] = 1;", test_object, isolate);
-//     if (i >= bad_signature_start_offset) test_object = Local<Value>();
-//     TestSignature("test_object.prop_sig();", test_object, isolate);
-//     TestSignature("test_object.accessor_sig;", test_object, isolate);
-//     TestSignature("test_object[accessor_sig_key];", test_object, isolate);
-//     TestSignature("test_object.accessor_sig = 1;", test_object, isolate);
-//     TestSignature("test_object[accessor_sig_key] = 1;", test_object, isolate);
-//   }
-// }
+THREADED_TEST(ReceiverSignature) {
+  // i::FLAG_allow_natives_syntax = true;
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  // Setup templates.
+  v8::Local<v8::FunctionTemplate> fun = v8::FunctionTemplate::New(isolate);
+  v8::Local<v8::Signature> sig = v8::Signature::New(isolate, fun);
+  v8::Local<v8::FunctionTemplate> callback_sig = v8::FunctionTemplate::New(
+      isolate, IncrementingSignatureCallback, Local<Value>(), sig);
+  v8::Local<v8::FunctionTemplate> callback =
+      v8::FunctionTemplate::New(isolate, IncrementingSignatureCallback);
+  v8::Local<v8::FunctionTemplate> sub_fun = v8::FunctionTemplate::New(isolate);
+  sub_fun->Inherit(fun);
+  v8::Local<v8::FunctionTemplate> direct_sub_fun =
+      v8::FunctionTemplate::New(isolate);
+  direct_sub_fun->Inherit(fun);
+  v8::Local<v8::FunctionTemplate> unrel_fun =
+      v8::FunctionTemplate::New(isolate);
+  // Install properties.
+  v8::Local<v8::ObjectTemplate> fun_proto = fun->PrototypeTemplate();
+  fun_proto->Set(v8_str("prop_sig"), callback_sig);
+  fun_proto->Set(v8_str("prop"), callback);
+  fun_proto->SetAccessorProperty(
+      v8_str("accessor_sig"), callback_sig, callback_sig);
+  fun_proto->SetAccessorProperty(v8_str("accessor"), callback, callback);
+  // Instantiate templates.
+  Local<Value> fun_instance =
+      fun->InstanceTemplate()->NewInstance(env.local()).ToLocalChecked();
+  Local<Value> sub_fun_instance =
+      sub_fun->InstanceTemplate()->NewInstance(env.local()).ToLocalChecked();
+  // Instance template with properties.
+  v8::Local<v8::ObjectTemplate> direct_instance_templ =
+      direct_sub_fun->InstanceTemplate();
+  direct_instance_templ->Set(v8_str("prop_sig"), callback_sig);
+  direct_instance_templ->Set(v8_str("prop"), callback);
+  direct_instance_templ->SetAccessorProperty(v8_str("accessor_sig"),
+                                             callback_sig, callback_sig);
+  direct_instance_templ->SetAccessorProperty(v8_str("accessor"), callback,
+                                             callback);
+  Local<Value> direct_instance =
+      direct_instance_templ->NewInstance(env.local()).ToLocalChecked();
+  // Setup global variables.
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("Fun"),
+                  fun->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("UnrelFun"),
+                  unrel_fun->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("fun_instance"), fun_instance)
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("sub_fun_instance"), sub_fun_instance)
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("direct_instance"), direct_instance)
+            .FromJust());
+  CompileRun(
+      "var accessor_sig_key = 'accessor_sig';"
+      "var accessor_key = 'accessor';"
+      "var prop_sig_key = 'prop_sig';"
+      "var prop_key = 'prop';"
+      ""
+      "function copy_props(obj) {"
+      "  var keys = [accessor_sig_key, accessor_key, prop_sig_key, prop_key];"
+      "  var source = Fun.prototype;"
+      "  for (var i in keys) {"
+      "    var key = keys[i];"
+      "    var desc = Object.getOwnPropertyDescriptor(source, key);"
+      "    Object.defineProperty(obj, key, desc);"
+      "  }"
+      "}"
+      ""
+      "var plain = {};"
+      "copy_props(plain);"
+      "var unrelated = new UnrelFun();"
+      "copy_props(unrelated);"
+      "var inherited = { __proto__: fun_instance };"
+      "var inherited_direct = { __proto__: direct_instance };");
+  // Test with and without ICs
+  const char* test_objects[] = {
+      "fun_instance", "sub_fun_instance", "direct_instance", "plain",
+      "unrelated",    "inherited",        "inherited_direct"};
+  unsigned bad_signature_start_offset = 3;
+  // for (unsigned i = 0; i < arraysize(test_objects); i++) {
+  for (unsigned i = 0; i < 7; i++) {
+    // i::ScopedVector<char> source(200);
+    // i::SNPrintF(
+    //     source, "var test_object = %s; test_object", test_objects[i]);
+    // Local<Value> test_object = CompileRun(source.begin());
+    char source[200];
+    snprintf(source, 200, "var test_object = %s; test_object", test_objects[i]);
+    Local<Value> test_object = CompileRun(source);
+
+    TestSignature("test_object.prop();", test_object, isolate);
+    TestSignature("test_object.accessor;", test_object, isolate);
+    TestSignature("test_object[accessor_key];", test_object, isolate);
+    TestSignature("test_object.accessor = 1;", test_object, isolate);
+    TestSignature("test_object[accessor_key] = 1;", test_object, isolate);
+    if (i >= bad_signature_start_offset) test_object = Local<Value>();
+    // TestSignature("test_object.prop_sig();", test_object, isolate);
+    // TestSignature("test_object.accessor_sig;", test_object, isolate);
+    // TestSignature("test_object[accessor_sig_key];", test_object, isolate);
+    // TestSignature("test_object.accessor_sig = 1;", test_object, isolate);
+    // TestSignature("test_object[accessor_sig_key] = 1;", test_object, isolate);
+  }
+}
 
 
 THREADED_TEST(HulIgennem) {
@@ -6224,62 +6239,62 @@ THREADED_TEST(TypeOf) {
             .FromJust());
 }
 
-// THREADED_TEST(InstanceOf) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   CompileRun(
-//       "var A = {};"
-//       "var B = {};"
-//       "var C = {};"
-//       "B.__proto__ = A;"
-//       "C.__proto__ = B;"
-//       "function F() {}"
-//       "F.prototype = A;"
-//       "var G = { [Symbol.hasInstance] : null};"
-//       "var H = { [Symbol.hasInstance] : () => { throw new Error(); } };"
-//       "var J = { [Symbol.hasInstance] : () => true };"
-//       "class K {}"
-//       "var D = new K;"
-//       "class L extends K {}"
-//       "var E = new L");
+THREADED_TEST(InstanceOf) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  CompileRun(
+      "var A = {};"
+      "var B = {};"
+      "var C = {};"
+      "B.__proto__ = A;"
+      "C.__proto__ = B;"
+      "function F() {}"
+      "F.prototype = A;"
+      "var G = { [Symbol.hasInstance] : null};"
+      "var H = { [Symbol.hasInstance] : () => { throw new Error(); } };"
+      "var J = { [Symbol.hasInstance] : () => true };"
+      "class K {}"
+      "var D = new K;"
+      "class L extends K {}"
+      "var E = new L");
 
-//   v8::Local<v8::Object> f = v8::Local<v8::Object>::Cast(CompileRun("F"));
-//   v8::Local<v8::Object> g = v8::Local<v8::Object>::Cast(CompileRun("G"));
-//   v8::Local<v8::Object> h = v8::Local<v8::Object>::Cast(CompileRun("H"));
-//   v8::Local<v8::Object> j = v8::Local<v8::Object>::Cast(CompileRun("J"));
-//   v8::Local<v8::Object> k = v8::Local<v8::Object>::Cast(CompileRun("K"));
-//   v8::Local<v8::Object> l = v8::Local<v8::Object>::Cast(CompileRun("L"));
-//   v8::Local<v8::Value> a = v8::Local<v8::Value>::Cast(CompileRun("A"));
-//   v8::Local<v8::Value> b = v8::Local<v8::Value>::Cast(CompileRun("B"));
-//   v8::Local<v8::Value> c = v8::Local<v8::Value>::Cast(CompileRun("C"));
-//   v8::Local<v8::Value> d = v8::Local<v8::Value>::Cast(CompileRun("D"));
-//   v8::Local<v8::Value> e = v8::Local<v8::Value>::Cast(CompileRun("E"));
+  v8::Local<v8::Object> f = v8::Local<v8::Object>::Cast(CompileRun("F"));
+  v8::Local<v8::Object> g = v8::Local<v8::Object>::Cast(CompileRun("G"));
+  v8::Local<v8::Object> h = v8::Local<v8::Object>::Cast(CompileRun("H"));
+  v8::Local<v8::Object> j = v8::Local<v8::Object>::Cast(CompileRun("J"));
+  v8::Local<v8::Object> k = v8::Local<v8::Object>::Cast(CompileRun("K"));
+  v8::Local<v8::Object> l = v8::Local<v8::Object>::Cast(CompileRun("L"));
+  v8::Local<v8::Value> a = v8::Local<v8::Value>::Cast(CompileRun("A"));
+  v8::Local<v8::Value> b = v8::Local<v8::Value>::Cast(CompileRun("B"));
+  v8::Local<v8::Value> c = v8::Local<v8::Value>::Cast(CompileRun("C"));
+  v8::Local<v8::Value> d = v8::Local<v8::Value>::Cast(CompileRun("D"));
+  v8::Local<v8::Value> e = v8::Local<v8::Value>::Cast(CompileRun("E"));
 
-//   v8::TryCatch try_catch(env->GetIsolate());
-//   CHECK(!a->InstanceOf(env.local(), f).ToChecked());
-//   CHECK(b->InstanceOf(env.local(), f).ToChecked());
-//   CHECK(c->InstanceOf(env.local(), f).ToChecked());
-//   CHECK(!d->InstanceOf(env.local(), f).ToChecked());
-//   CHECK(!e->InstanceOf(env.local(), f).ToChecked());
-//   CHECK(!try_catch.HasCaught());
+  v8::TryCatch try_catch(env->GetIsolate());
+  CHECK(!a->InstanceOf(env.local(), f).ToChecked());
+  CHECK(b->InstanceOf(env.local(), f).ToChecked());
+  CHECK(c->InstanceOf(env.local(), f).ToChecked());
+  CHECK(!d->InstanceOf(env.local(), f).ToChecked());
+  CHECK(!e->InstanceOf(env.local(), f).ToChecked());
+  CHECK(!try_catch.HasCaught());
 
-//   CHECK(a->InstanceOf(env.local(), g).IsNothing());
-//   CHECK(try_catch.HasCaught());
-//   try_catch.Reset();
+  CHECK(a->InstanceOf(env.local(), g).IsNothing());
+  CHECK(try_catch.HasCaught());
+  try_catch.Reset();
 
-//   CHECK(b->InstanceOf(env.local(), h).IsNothing());
-//   CHECK(try_catch.HasCaught());
-//   try_catch.Reset();
+  CHECK(b->InstanceOf(env.local(), h).IsNothing());
+  CHECK(try_catch.HasCaught());
+  try_catch.Reset();
 
-//   CHECK(v8_num(1)->InstanceOf(env.local(), j).ToChecked());
-//   CHECK(!try_catch.HasCaught());
+  CHECK(v8_num(1)->InstanceOf(env.local(), j).ToChecked());
+  CHECK(!try_catch.HasCaught());
 
-//   CHECK(d->InstanceOf(env.local(), k).ToChecked());
-//   CHECK(e->InstanceOf(env.local(), k).ToChecked());
-//   CHECK(!d->InstanceOf(env.local(), l).ToChecked());
-//   CHECK(e->InstanceOf(env.local(), l).ToChecked());
-//   CHECK(!try_catch.HasCaught());
-// }
+  CHECK(d->InstanceOf(env.local(), k).ToChecked());
+  CHECK(e->InstanceOf(env.local(), k).ToChecked());
+  CHECK(!d->InstanceOf(env.local(), l).ToChecked());
+  CHECK(e->InstanceOf(env.local(), l).ToChecked());
+  CHECK(!try_catch.HasCaught());
+}
 
 // THREADED_TEST(MultiRun) {
 //   LocalContext context;
