@@ -1803,21 +1803,31 @@ Local<Symbol> v8::Symbol::ForApi(Isolate* isolate, Local<String> name) {
 }
 
 #define WELL_KNOWN_SYMBOLS(V)                                                  \
-  V(AsyncIterator, async_iterator)                                             \
-  V(HasInstance, has_instance)                                                 \
-  V(IsConcatSpreadable, is_concat_spreadable)                                  \
-  V(Iterator, iterator)                                                        \
-  V(Match, match)                                                              \
-  V(Replace, replace)                                                          \
-  V(Search, search)                                                            \
-  V(Split, split)                                                              \
-  V(ToPrimitive, to_primitive)                                                 \
-  V(ToStringTag, to_string_tag)                                                \
-  V(Unscopables, unscopables)
+  V(AsyncIterator, async_iterator, asyncIterator)                              \
+  V(HasInstance, has_instance, hasInstance)                                    \
+  V(IsConcatSpreadable, is_concat_spreadable, isConcatSpreadable)              \
+  V(Iterator, iterator, iterator)                                              \
+  V(Match, match, match)                                                       \
+  V(Replace, replace, replace)                                                 \
+  V(Search, search, search)                                                    \
+  V(Split, split, split)                                                       \
+  V(ToPrimitive, to_primitive, toPrimitive)                                    \
+  V(ToStringTag, to_string_tag, toStringTag)                                   \
+  V(Unscopables, unscopables, unscopables)
 
-#define SYMBOL_GETTER(Name, name)                                              \
+#define SYMBOL_GETTER(Name, v8InternalName, esName)                            \
   Local<Symbol> v8::Symbol::Get##Name(Isolate* isolate) {                      \
-    return Local<Symbol>();                                                    \
+    IsolateWrap* lwIsolate = IsolateWrap::fromV8(isolate);                     \
+    auto lwContext = lwIsolate->GetCurrentContext();                           \
+                                                                               \
+    auto r = Evaluator::execute(                                               \
+        lwContext->get(),                                                      \
+        [](ExecutionStateRef* state, VMInstanceRef* vmInstance) -> ValueRef* { \
+          return vmInstance->esName##Symbol();                                 \
+        },                                                                     \
+        lwIsolate->get());                                                     \
+                                                                               \
+    return Utils::NewLocal<Symbol>(isolate, r.result);                         \
   }
 
 WELL_KNOWN_SYMBOLS(SYMBOL_GETTER)
