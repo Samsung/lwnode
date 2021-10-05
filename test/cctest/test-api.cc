@@ -1031,30 +1031,30 @@ static void handle_callback_2(const v8::FunctionCallbackInfo<Value>& info) {
   return handle_callback_impl(info, FUNCTION_ADDR(handle_callback_2));
 }
 
-// static void construct_callback(
-//     const v8::FunctionCallbackInfo<Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   CheckReturnValue(info, FUNCTION_ADDR(construct_callback));
-//   CHECK(
-//       info.This()
-//           ->Set(info.GetIsolate()->GetCurrentContext(), v8_str("x"), v8_num(1))
-//           .FromJust());
-//   CHECK(
-//       info.This()
-//           ->Set(info.GetIsolate()->GetCurrentContext(), v8_str("y"), v8_num(2))
-//           .FromJust());
-//   info.GetReturnValue().Set(v8_str("bad value"));
-//   info.GetReturnValue().Set(info.This());
-// }
+static void construct_callback(
+    const v8::FunctionCallbackInfo<Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  // CheckReturnValue(info, FUNCTION_ADDR(construct_callback));
+  CHECK(
+      info.This()
+          ->Set(info.GetIsolate()->GetCurrentContext(), v8_str("x"), v8_num(1))
+          .FromJust());
+  CHECK(
+      info.This()
+          ->Set(info.GetIsolate()->GetCurrentContext(), v8_str("y"), v8_num(2))
+          .FromJust());
+  info.GetReturnValue().Set(v8_str("bad value"));
+  info.GetReturnValue().Set(info.This());
+}
 
 
-// static void Return239Callback(
-//     Local<String> name, const v8::PropertyCallbackInfo<Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   CheckReturnValue(info, FUNCTION_ADDR(Return239Callback));
-//   info.GetReturnValue().Set(v8_str("bad value"));
-//   info.GetReturnValue().Set(v8_num(239));
-// }
+static void Return239Callback(
+    Local<String> name, const v8::PropertyCallbackInfo<Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  // CheckReturnValue(info, FUNCTION_ADDR(Return239Callback));
+  info.GetReturnValue().Set(v8_str("bad value"));
+  info.GetReturnValue().Set(v8_num(239));
+}
 
 
 template<typename Handler>
@@ -1094,40 +1094,40 @@ static void TestFunctionTemplateInitializer(Handler handler,
 }
 
 
-// template<typename Constructor, typename Accessor>
-// static void TestFunctionTemplateAccessor(Constructor constructor,
-//                                          Accessor accessor) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
+template<typename Constructor, typename Accessor>
+static void TestFunctionTemplateAccessor(Constructor constructor,
+                                         Accessor accessor) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
 
-//   Local<v8::FunctionTemplate> fun_templ =
-//       v8::FunctionTemplate::New(isolate, constructor);
-//   fun_templ->PrototypeTemplate()->Set(
-//       v8::Symbol::GetToStringTag(isolate), v8_str("funky"),
-//       static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
-//   fun_templ->InstanceTemplate()->SetAccessor(v8_str("m"), accessor);
+  Local<v8::FunctionTemplate> fun_templ =
+      v8::FunctionTemplate::New(isolate, constructor);
+  fun_templ->PrototypeTemplate()->Set(
+      v8::Symbol::GetToStringTag(isolate), v8_str("funky"),
+      static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
+  fun_templ->InstanceTemplate()->SetAccessor(v8_str("m"), accessor);
 
-//   Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
-//   CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
-//   Local<Value> result = CompileRun("(new obj()).toString()");
-//   CHECK(v8_str("[object funky]")->Equals(env.local(), result).FromJust());
-//   CompileRun("var obj_instance = new obj();");
+  Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+  CHECK(env->Global()->Set(env.local(), v8_str("obj"), fun).FromJust());
+  Local<Value> result = CompileRun("(new obj()).toString()");
+  CHECK(v8_str("[object funky]")->Equals(env.local(), result).FromJust());
+  CompileRun("var obj_instance = new obj();");
 
-//   Local<Script> script = v8_compile("obj_instance.x");
-//   for (int i = 0; i < 30; i++) {
-//     CHECK_EQ(1, v8_run_int32value(script));
-//   }
-//   script = v8_compile("obj_instance.m");
-//   for (int i = 0; i < 30; i++) {
-//     CHECK_EQ(239, v8_run_int32value(script));
-//   }
-// }
+  Local<Script> script = v8_compile("obj_instance.x");
+  for (int i = 0; i < 30; i++) {
+    CHECK_EQ(1, v8_run_int32value(script));
+  }
+  script = v8_compile("obj_instance.m");
+  for (int i = 0; i < 30; i++) {
+    CHECK_EQ(239, v8_run_int32value(script));
+  }
+}
 
 
 THREADED_PROFILED_TEST(FunctionTemplate) {
   TestFunctionTemplateInitializer(handle_callback, handle_callback_2);
-  // TestFunctionTemplateAccessor(construct_callback, Return239Callback);
+  TestFunctionTemplateAccessor(construct_callback, Return239Callback);
 }
 
 static void FunctionCallbackForProxyTest(
@@ -3628,19 +3628,19 @@ static void CheckWellKnownSymbol(v8::Local<v8::Symbol>(*getter)(v8::Isolate*),
 }
 
 
-// THREADED_TEST(WellKnownSymbols) {
-//   CheckWellKnownSymbol(v8::Symbol::GetIterator, "Symbol.iterator");
-//   CheckWellKnownSymbol(v8::Symbol::GetUnscopables, "Symbol.unscopables");
-//   CheckWellKnownSymbol(v8::Symbol::GetHasInstance, "Symbol.hasInstance");
-//   CheckWellKnownSymbol(v8::Symbol::GetIsConcatSpreadable,
-//                        "Symbol.isConcatSpreadable");
-//   CheckWellKnownSymbol(v8::Symbol::GetMatch, "Symbol.match");
-//   CheckWellKnownSymbol(v8::Symbol::GetReplace, "Symbol.replace");
-//   CheckWellKnownSymbol(v8::Symbol::GetSearch, "Symbol.search");
-//   CheckWellKnownSymbol(v8::Symbol::GetSplit, "Symbol.split");
-//   CheckWellKnownSymbol(v8::Symbol::GetToPrimitive, "Symbol.toPrimitive");
-//   CheckWellKnownSymbol(v8::Symbol::GetToStringTag, "Symbol.toStringTag");
-// }
+THREADED_TEST(WellKnownSymbols) {
+  CheckWellKnownSymbol(v8::Symbol::GetIterator, "Symbol.iterator");
+  CheckWellKnownSymbol(v8::Symbol::GetUnscopables, "Symbol.unscopables");
+  CheckWellKnownSymbol(v8::Symbol::GetHasInstance, "Symbol.hasInstance");
+  CheckWellKnownSymbol(v8::Symbol::GetIsConcatSpreadable,
+                       "Symbol.isConcatSpreadable");
+  CheckWellKnownSymbol(v8::Symbol::GetMatch, "Symbol.match");
+  CheckWellKnownSymbol(v8::Symbol::GetReplace, "Symbol.replace");
+  CheckWellKnownSymbol(v8::Symbol::GetSearch, "Symbol.search");
+  CheckWellKnownSymbol(v8::Symbol::GetSplit, "Symbol.split");
+  CheckWellKnownSymbol(v8::Symbol::GetToPrimitive, "Symbol.toPrimitive");
+  CheckWellKnownSymbol(v8::Symbol::GetToStringTag, "Symbol.toStringTag");
+}
 
 
 THREADED_TEST(GlobalPrivates) {
