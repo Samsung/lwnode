@@ -15036,244 +15036,244 @@ TEST(DefineOwnProperty) {
   // }
 }
 
-// TEST(DefineProperty) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
+TEST(DefineProperty) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
 
-//   v8::Local<v8::Name> p;
+  v8::Local<v8::Name> p;
 
-//   CompileRun(
-//       "var a = {};"
-//       "var b = [];"
-//       "Object.defineProperty(a, 'v1', {value: 23});"
-//       "Object.defineProperty(a, 'v2', {value: 23, configurable: true});");
+  CompileRun(
+      "var a = {};"
+      "var b = [];"
+      "Object.defineProperty(a, 'v1', {value: 23});"
+      "Object.defineProperty(a, 'v2', {value: 23, configurable: true});");
 
-//   v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(
-//       env->Global()->Get(env.local(), v8_str("a")).ToLocalChecked());
-//   v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(
-//       env->Global()->Get(env.local(), v8_str("b")).ToLocalChecked());
+  v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(
+      env->Global()->Get(env.local(), v8_str("a")).ToLocalChecked());
+  v8::Local<v8::Array> arr = v8::Local<v8::Array>::Cast(
+      env->Global()->Get(env.local(), v8_str("b")).ToLocalChecked());
 
-//   v8::PropertyDescriptor desc(v8_num(42));
-//   {
-//     // Use a data descriptor.
+  v8::PropertyDescriptor desc(v8_num(42));
+  {
+    // Use a data descriptor.
 
-//     // Cannot change a non-configurable property.
-//     p = v8_str("v1");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(!obj->DefineProperty(env.local(), p, desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(23.0, val->NumberValue(env.local()).FromJust());
+    // Cannot change a non-configurable property.
+    p = v8_str("v1");
+    v8::TryCatch try_catch(isolate);
+    CHECK(!obj->DefineProperty(env.local(), p, desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(23.0, val->NumberValue(env.local()).FromJust());
 
-//     // Change a configurable property.
-//     p = v8_str("v2");
-//     obj->DefineProperty(env.local(), p, desc).FromJust();
-//     CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+    // Change a configurable property.
+    p = v8_str("v2");
+    obj->DefineProperty(env.local(), p, desc).FromJust();
+    CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
 
-//     // Check that missing writable has default value false.
-//     p = v8_str("v12");
-//     CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//     v8::PropertyDescriptor desc2(v8_num(43));
-//     CHECK(!obj->DefineProperty(env.local(), p, desc2).FromJust());
-//     val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    // Check that missing writable has default value false.
+    p = v8_str("v12");
+    CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+    v8::PropertyDescriptor desc2(v8_num(43));
+    CHECK(!obj->DefineProperty(env.local(), p, desc2).FromJust());
+    val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Set a regular property.
-//     p = v8_str("v3");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+  {
+    // Set a regular property.
+    p = v8_str("v3");
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//   {
-//     // Set an indexed property.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), v8_str("1"), desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), 1).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+  {
+    // Set an indexed property.
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), v8_str("1"), desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), 1).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//   {
-//     // No special case when changing array length.
-//     v8::TryCatch try_catch(isolate);
-//     // Use a writable descriptor, otherwise the next test, that changes
-//     // the array length will fail.
-//     v8::PropertyDescriptor desc(v8_num(42), true);
-//     CHECK(arr->DefineProperty(env.local(), v8_str("length"), desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+  {
+    // No special case when changing array length.
+    v8::TryCatch try_catch(isolate);
+    // Use a writable descriptor, otherwise the next test, that changes
+    // the array length will fail.
+    v8::PropertyDescriptor desc(v8_num(42), true);
+    CHECK(arr->DefineProperty(env.local(), v8_str("length"), desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Special cases for arrays: index exceeds the array's length.
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(arr->DefineProperty(env.local(), v8_str("100"), desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     CHECK_EQ(101U, arr->Length());
-//     v8::Local<v8::Value> val = arr->Get(env.local(), 100).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  {
+    // Special cases for arrays: index exceeds the array's length.
+    v8::TryCatch try_catch(isolate);
+    CHECK(arr->DefineProperty(env.local(), v8_str("100"), desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(101U, arr->Length());
+    v8::Local<v8::Value> val = arr->Get(env.local(), 100).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
 
-//     // Set an existing entry.
-//     CHECK(arr->DefineProperty(env.local(), v8_str("0"), desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     val = arr->Get(env.local(), 0).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//   }
+    // Set an existing entry.
+    CHECK(arr->DefineProperty(env.local(), v8_str("0"), desc).FromJust());
+    CHECK(!try_catch.HasCaught());
+    val = arr->Get(env.local(), 0).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+  }
 
-//   {
-//     // Use a generic descriptor.
-//     v8::PropertyDescriptor desc_generic;
+  {
+    // Use a generic descriptor.
+    v8::PropertyDescriptor desc_generic;
 
-//     p = v8_str("v4");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc_generic).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsUndefined());
+    p = v8_str("v4");
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc_generic).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsUndefined());
 
-//     obj->Set(env.local(), p, v8_num(1)).FromJust();
-//     CHECK(!try_catch.HasCaught());
+    obj->Set(env.local(), p, v8_num(1)).FromJust();
+    CHECK(!try_catch.HasCaught());
 
-//     val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsUndefined());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsUndefined());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Use a data descriptor with undefined value.
-//     v8::PropertyDescriptor desc_empty(v8::Undefined(isolate));
+  {
+    // Use a data descriptor with undefined value.
+    v8::PropertyDescriptor desc_empty(v8::Undefined(isolate));
 
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc_empty).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsUndefined());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc_empty).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsUndefined());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Use a descriptor with attribute == v8::ReadOnly.
-//     v8::PropertyDescriptor desc_read_only(v8_num(42), false);
-//     desc_read_only.set_enumerable(true);
-//     desc_read_only.set_configurable(true);
+  {
+    // Use a descriptor with attribute == v8::ReadOnly.
+    v8::PropertyDescriptor desc_read_only(v8_num(42), false);
+    desc_read_only.set_enumerable(true);
+    desc_read_only.set_configurable(true);
 
-//     p = v8_str("v5");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc_read_only).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
-//     CHECK_EQ(v8::ReadOnly,
-//              obj->GetPropertyAttributes(env.local(), p).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    p = v8_str("v5");
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc_read_only).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(42.0, val->NumberValue(env.local()).FromJust());
+    // CHECK_EQ(v8::ReadOnly,
+    //          obj->GetPropertyAttributes(env.local(), p).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Use an accessor descriptor with empty handles.
-//     v8::PropertyDescriptor desc_empty(v8::Undefined(isolate),
-//                                       v8::Undefined(isolate));
+  {
+    // Use an accessor descriptor with empty handles.
+    v8::PropertyDescriptor desc_empty(v8::Undefined(isolate),
+                                      v8::Undefined(isolate));
 
-//     p = v8_str("v6");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc_empty).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsUndefined());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    p = v8_str("v6");
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc_empty).FromJust());
+    CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsUndefined());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Use an accessor descriptor.
-//     CompileRun(
-//         "var set = function(x) {this.val = 2*x;};"
-//         "var get = function() {return this.val || 0;};");
+  {
+    // Use an accessor descriptor.
+    CompileRun(
+        "var set = function(x) {this.val = 2*x;};"
+        "var get = function() {return this.val || 0;};");
 
-//     v8::Local<v8::Function> get = v8::Local<v8::Function>::Cast(
-//         env->Global()->Get(env.local(), v8_str("get")).ToLocalChecked());
-//     v8::Local<v8::Function> set = v8::Local<v8::Function>::Cast(
-//         env->Global()->Get(env.local(), v8_str("set")).ToLocalChecked());
-//     v8::PropertyDescriptor desc(get, set);
+    v8::Local<v8::Function> get = v8::Local<v8::Function>::Cast(
+        env->Global()->Get(env.local(), v8_str("get")).ToLocalChecked());
+    v8::Local<v8::Function> set = v8::Local<v8::Function>::Cast(
+        env->Global()->Get(env.local(), v8_str("set")).ToLocalChecked());
+    v8::PropertyDescriptor desc(get, set);
 
-//     p = v8_str("v7");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
+    p = v8_str("v7");
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
+    CHECK(!try_catch.HasCaught());
 
-//     v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(0.0, val->NumberValue(env.local()).FromJust());
-//     CHECK(!try_catch.HasCaught());
+    v8::Local<v8::Value> val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(0.0, val->NumberValue(env.local()).FromJust());
+    CHECK(!try_catch.HasCaught());
 
-//     obj->Set(env.local(), p, v8_num(7)).FromJust();
-//     CHECK(!try_catch.HasCaught());
+    obj->Set(env.local(), p, v8_num(7)).FromJust();
+    CHECK(!try_catch.HasCaught());
 
-//     val = obj->Get(env.local(), p).ToLocalChecked();
-//     CHECK(val->IsNumber());
-//     CHECK_EQ(14.0, val->NumberValue(env.local()).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    val = obj->Get(env.local(), p).ToLocalChecked();
+    CHECK(val->IsNumber());
+    CHECK_EQ(14.0, val->NumberValue(env.local()).FromJust());
+    CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Redefine an existing property.
+  {
+    // Redefine an existing property.
 
-//     // desc = {value: 42, enumerable: true}
-//     v8::PropertyDescriptor desc(v8_num(42));
-//     desc.set_enumerable(true);
+    // desc = {value: 42, enumerable: true}
+    v8::PropertyDescriptor desc(v8_num(42));
+    desc.set_enumerable(true);
 
-//     p = v8_str("v8");
-//     v8::TryCatch try_catch(isolate);
-//     CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
-//     CHECK(!try_catch.HasCaught());
+    p = v8_str("v8");
+    v8::TryCatch try_catch(isolate);
+    CHECK(obj->DefineProperty(env.local(), p, desc).FromJust());
+    CHECK(!try_catch.HasCaught());
 
-//     // desc = {enumerable: true}
-//     v8::PropertyDescriptor desc_true((v8::Local<v8::Value>()));
-//     desc_true.set_enumerable(true);
+    // desc = {enumerable: true}
+    // v8::PropertyDescriptor desc_true((v8::Local<v8::Value>()));
+    // desc_true.set_enumerable(true);
 
-//     // Successful redefinition because all present attributes have the same
-//     // value as the current descriptor.
-//     CHECK(obj->DefineProperty(env.local(), p, desc_true).FromJust());
-//     CHECK(!try_catch.HasCaught());
+    // Successful redefinition because all present attributes have the same
+    // value as the current descriptor.
+    // CHECK(obj->DefineProperty(env.local(), p, desc_true).FromJust());
+    // CHECK(!try_catch.HasCaught());
 
-//     // desc = {}
-//     v8::PropertyDescriptor desc_empty;
-//     // Successful redefinition because no attributes are overwritten in the
-//     // current descriptor.
-//     CHECK(obj->DefineProperty(env.local(), p, desc_empty).FromJust());
-//     CHECK(!try_catch.HasCaught());
+    // desc = {}
+    // v8::PropertyDescriptor desc_empty;
+    // Successful redefinition because no attributes are overwritten in the
+    // current descriptor.
+    // CHECK(obj->DefineProperty(env.local(), p, desc_empty).FromJust());
+    // CHECK(!try_catch.HasCaught());
 
-//     // desc = {enumerable: false}
-//     v8::PropertyDescriptor desc_false((v8::Local<v8::Value>()));
-//     desc_false.set_enumerable(false);
-//     // Not successful because we cannot define a different value for enumerable.
-//     CHECK(!obj->DefineProperty(env.local(), p, desc_false).FromJust());
-//     CHECK(!try_catch.HasCaught());
-//   }
+    // desc = {enumerable: false}
+    // v8::PropertyDescriptor desc_false((v8::Local<v8::Value>()));
+    // desc_false.set_enumerable(false);
+    // Not successful because we cannot define a different value for enumerable.
+    // CHECK(!obj->DefineProperty(env.local(), p, desc_false).FromJust());
+    // CHECK(!try_catch.HasCaught());
+  }
 
-//   {
-//     // Redefine a property that has a getter.
-//     CompileRun("var get = function() {};");
-//     v8::Local<v8::Function> get = v8::Local<v8::Function>::Cast(
-//         env->Global()->Get(env.local(), v8_str("get")).ToLocalChecked());
+  {
+    // Redefine a property that has a getter.
+    CompileRun("var get = function() {};");
+    v8::Local<v8::Function> get = v8::Local<v8::Function>::Cast(
+        env->Global()->Get(env.local(), v8_str("get")).ToLocalChecked());
 
 //     // desc = {get: function() {}}
 //     v8::PropertyDescriptor desc(get, v8::Local<v8::Function>());
@@ -15320,8 +15320,8 @@ TEST(DefineOwnProperty) {
 //     CHECK(access_checked->DefineProperty(env.local(), v8_str("v11"), desc)
 //               .IsNothing());
 //     CHECK(try_catch.HasCaught());
-//   }
-// }
+  }
+}
 
 // THREADED_TEST(GetCurrentContextWhenNotInContext) {
 //   i::Isolate* isolate = CcTest::i_isolate();

@@ -1053,7 +1053,70 @@ Maybe<bool> v8::Object::DefineOwnProperty(v8::Local<v8::Context> context,
 Maybe<bool> v8::Object::DefineProperty(v8::Local<v8::Context> context,
                                        v8::Local<Name> key,
                                        PropertyDescriptor& descriptor) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+  auto esContext = lwIsolate->GetCurrentContext()->get();
+  auto esObject = CVAL(this)->value()->asObject();
+  auto esKey = CVAL(*key)->value();
+
+  ObjectRef::PresentAttribute attr = ObjectRef::PresentAttribute::NotPresent;
+
+  if (descriptor.has_writable()) {
+    if (descriptor.writable()) {
+      attr = static_cast<ObjectRef::PresentAttribute>(
+          attr | ObjectRef::PresentAttribute::WritablePresent);
+    } else {
+      attr = static_cast<ObjectRef::PresentAttribute>(
+          attr | ObjectRef::PresentAttribute::NonWritablePresent);
+    }
+  }
+
+  if (descriptor.has_enumerable()) {
+    if (descriptor.enumerable()) {
+      attr = static_cast<ObjectRef::PresentAttribute>(
+          attr | ObjectRef::PresentAttribute::EnumerablePresent);
+    } else {
+      attr = static_cast<ObjectRef::PresentAttribute>(
+          attr | ObjectRef::PresentAttribute::NonEnumerablePresent);
+    }
+  }
+
+  if (descriptor.has_configurable()) {
+    if (descriptor.enumerable()) {
+      attr = static_cast<ObjectRef::PresentAttribute>(
+          attr | ObjectRef::PresentAttribute::ConfigurablePresent);
+    } else {
+      attr = static_cast<ObjectRef::PresentAttribute>(
+          attr | ObjectRef::PresentAttribute::NonConfigurablePresent);
+    }
+  }
+
+  if (descriptor.has_value()) {
+    ObjectRef::DataPropertyDescriptor desc(CVAL(*descriptor.value())->value(),
+                                           attr);
+    auto r =
+        ObjectRefHelper::defineDataProperty(esContext, esObject, esKey, desc);
+    API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+    return Just(r.result->asBoolean());
+  } else if (descriptor.has_get()) {
+    ValueRef* setter = nullptr;
+    if (descriptor.has_set()) {
+      setter = CVAL(*descriptor.set())->value();
+    }
+    ObjectRef::AccessorPropertyDescriptor desc(
+        CVAL(*descriptor.get())->value(), setter, attr);
+    auto r = ObjectRefHelper::defineAccessorProperty(
+        esContext, esObject, esKey, desc);
+    API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+    return Just(r.result->asBoolean());
+  } else {
+    ObjectRef::DataPropertyDescriptor desc(ValueRef::createUndefined(), attr);
+    auto r =
+        ObjectRefHelper::defineDataProperty(esContext, esObject, esKey, desc);
+    API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+    return Just(r.result->asBoolean());
+  }
+
+  return Just(false);
 }
 
 Maybe<bool> v8::Object::SetPrivate(Local<Context> context,
