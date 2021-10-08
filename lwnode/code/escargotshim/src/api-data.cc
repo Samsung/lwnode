@@ -91,7 +91,7 @@ bool Value::IsArrayBufferView() const {
 }
 
 bool Value::IsTypedArray() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isTypedArrayObject();
 }
 
 #define VALUE_IS_TYPED_ARRAY(Type, typeName, TYPE, ctype)                      \
@@ -120,7 +120,7 @@ bool Value::IsNumber() const {
 }
 
 bool Value::IsBigInt() const {
-  LWNODE_RETURN_FALSE;
+  return CVAL(this)->value()->isBigInt();
 }
 
 bool Value::IsProxy() const {
@@ -557,7 +557,7 @@ void v8::ArrayBufferView::CheckCast(Value* that) {
 constexpr size_t v8::TypedArray::kMaxLength;
 
 void v8::TypedArray::CheckCast(Value* that) {
-  LWNODE_UNIMPLEMENT;
+  LWNODE_CHECK(that->IsTypedArray());
 }
 
 #define CHECK_TYPED_ARRAY_CAST(Type, typeName, TYPE, ctype)                    \
