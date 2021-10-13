@@ -17,6 +17,8 @@
 #pragma once
 
 #include <unzip.h>
+#include <codecvt>
+#include <locale>
 #include "lwnode.h"
 #include "node_native_module.h"
 #include "trace.h"
@@ -95,13 +97,15 @@ bool readFileFromArchive(std::string filename,
       }
 
       *fileSize = fileInfo.uncompressed_size;
-      *buffer = (char*)malloc(fileInfo.uncompressed_size);
+      *buffer = (char*)malloc(fileInfo.uncompressed_size + 1);
 
       if (unzReadCurrentFile(file, *buffer, *fileSize) < 0) {
         free(buffer);
         buffer = nullptr;
         return false;
       }
+      (*buffer)[*fileSize] = '\0';
+
       unzCloseCurrentFile(file);
       break;
     }
@@ -131,6 +135,35 @@ static std::string OnArchiveFileName(const char* id) {
   return filename;
 }
 
+static void convert_utf8_to_utf16le(char** buffer,
+                                    size_t* bufferSize,
+                                    const char* utf8Buffer,
+                                    const size_t utf8BufferSize) {
+  DCHECK_NOT_NULL(buffer);
+  DCHECK_NOT_NULL(bufferSize);
+
+  std::wstring_convert<
+      std::codecvt_utf8_utf16<char16_t,
+                              0x10ffff,
+                              std::codecvt_mode::little_endian>,
+      char16_t>
+      convertor;
+  std::u16string utf16 = convertor.from_bytes(utf8Buffer);
+
+  if (convertor.converted() < utf8BufferSize) {
+    LWNODE_LOG_ERROR("Invalid conversion");
+    std::abort();
+  }
+
+  size_t utf16Size = utf16.size() * 2;
+
+  *buffer = (char*)malloc(utf16Size + 1);
+  memcpy(*buffer, utf16.data(), utf16Size);
+  (*buffer)[utf16Size] = '\0';
+
+  *bufferSize = utf16Size;
+}
+
 MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
     Isolate* isolate, const char* id) {
   std::string filename = OnArchiveFileName(id);
@@ -150,12 +183,18 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
 
   bool is8BitString = true;
   if (IsOneByte(id) == false) {
-    // FIXME: should be `is8BitString = false;` here
-    // "lib/internal/cli_table.js", "lib/internal/timers.js",
-    // "deps/node-inspect/lib/internal/inspect_repl.js",
-    // "deps/acorn/acorn/dist/acorn.js"
-    LWNODE_LOG_ERROR(
-        "FIXME: %s - createReloadableString fails to load uint16 string", id);
+    is8BitString = false;
+
+    // treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+    char* newStringBuffer = nullptr;
+    size_t newStringBufferSize = 0;
+
+    convert_utf8_to_utf16le(
+        &newStringBuffer, &newStringBufferSize, buffer, fileSize);
+
+    free(buffer);
+    buffer = newStringBuffer;
+    fileSize = newStringBufferSize;
   }
 
   auto data = Utils::ReloadableSourceData::create(
@@ -185,6 +224,19 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
         size_t fileSize = 0;
         char* buffer = nullptr;
         bool result = readFileFromArchive(data->path(), &buffer, &fileSize);
+        if (data->isOneByteString() == false) {
+          // treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+          char* newStringBuffer = nullptr;
+          size_t newStringBufferSize = 0;
+
+          convert_utf8_to_utf16le(
+              &newStringBuffer, &newStringBufferSize, buffer, fileSize);
+
+          free(buffer);
+          buffer = newStringBuffer;
+          fileSize = newStringBufferSize;
+        }
+
         CHECK(result);
         return buffer;
       },
