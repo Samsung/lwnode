@@ -402,7 +402,7 @@ void V8::InternalFieldOutOfBounds(int index) {
 MaybeLocal<Value> JSON::Parse(Local<Context> context,
                               Local<String> json_string) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
-  auto lwContext = CVAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   auto r = Evaluator::execute(
       lwContext->get(),
@@ -422,7 +422,7 @@ MaybeLocal<String> JSON::Stringify(Local<Context> context,
                                    Local<Value> json_object,
                                    Local<String> gap) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<String>());
-  auto lwContext = CVAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   StringRef* esGap = gap.IsEmpty() ? StringRef::emptyString()
                                    : CVAL(*gap)->value()->asString();
