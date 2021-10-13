@@ -179,16 +179,16 @@ MaybeLocal<String> Utils::NewReloadableString(Isolate* isolate,
                                               UnloadCallback unloadCallback) {
   MaybeLocal<String> result;
 
-  if (data->preloadedDataLength() == 0) {
+  if (data->stringLength() == 0) {
     result = String::Empty(isolate);
-  } else if (data->preloadedDataLength() > v8::String::kMaxLength) {
+  } else if (data->stringLength() > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
     Escargot::StringRef* reloadableString =
         Escargot::StringRef::createReloadableString(
             IsolateWrap::fromV8(isolate)->vmInstance(),
             data->isOneByteString(),
-            data->preloadedDataLength(),
+            data->stringLength(),
             data,  // data should be gc-managed.
             loadCallback,
             unloadCallback);

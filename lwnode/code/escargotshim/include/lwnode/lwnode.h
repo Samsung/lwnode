@@ -44,6 +44,9 @@ class Utils {
 
     const char* path() { return path_; }
     size_t preloadedDataLength() { return preloadedDataLength_; }
+    size_t stringLength() {
+      return isOneByteString_ ? preloadedDataLength_ : preloadedDataLength_ / 2;
+    }
     bool isOneByteString() { return isOneByteString_; }
     static ReloadableSourceData* create(std::string sourcePath,
                                         void* preloadedData,
