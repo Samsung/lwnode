@@ -24,6 +24,7 @@
 #include "api/isolate.h"
 #include "internal-api.h"
 
+#include <codecvt>
 #include <fstream>
 #include <string>
 #include "api/es-helper.h"
@@ -920,13 +921,49 @@ static FileData readFile(std::string filename) {
 
   std::fseek(file, 0, SEEK_END);
   long int fileSize = std::ftell(file);
-  std::fseek(file, 0, SEEK_SET);
 
-  void* buffer = Memory::gcMallocAtomicUncollectable(fileSize);
-  std::fread(buffer, 1, fileSize, file);
+  uint8_t* buffer = (uint8_t*)Memory::gcMallocAtomicUncollectable(fileSize + 1);
+  std::fseek(file, 0, SEEK_SET);
+  std::fread(buffer, sizeof(uint8_t), fileSize, file);
   std::fclose(file);
 
-  return FileData(buffer, fileSize);
+  buffer[fileSize] = '\0';
+
+  // 1. check if non-ascii
+  bool isOneByteString = true;
+  for (size_t i = 0; i < fileSize; ++i) {
+    if (buffer[i] > 127) {
+      isOneByteString = false;
+      break;
+    }
+  }
+
+  void* stringBuffer = buffer;
+
+  if (isOneByteString == false) {
+    // 2. Treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+    std::wstring_convert<
+        std::codecvt_utf8_utf16<char16_t,
+                                0x10ffff,
+                                std::codecvt_mode::little_endian>,
+        char16_t>
+        convertor;
+    std::u16string utf16 = convertor.from_bytes((const char*)buffer);
+
+    LWNODE_DCHECK(convertor.converted() == fileSize);
+
+    // 3. allocate buffer for utf16 string
+    fileSize = utf16.size() * 2;
+    uint8_t* newStringBuffer =
+        (uint8_t*)Memory::gcMallocAtomicUncollectable(fileSize + 1);
+    memcpy(newStringBuffer, utf16.data(), fileSize);
+    newStringBuffer[fileSize] = '\0';
+
+    Memory::gcFree(buffer);
+    stringBuffer = newStringBuffer;
+  }
+
+  return FileData(stringBuffer, fileSize);
 }
 
 static int g_reload_count;
@@ -1041,7 +1078,7 @@ TEST(ReloadableString8) {
   }
 }
 
-TEST(DISABLED_ReloadableString16) {
+TEST(ReloadableString16) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -1069,7 +1106,7 @@ TEST(DISABLED_ReloadableString16) {
     LWNODE_CHECK_NOT_NULL(dest.byte);
 
     auto data = Utils::ReloadableSourceData::create(
-        filename, dest.byte, dest.size, isOneByteString);
+        filename, dest.byte, dest.size / 2, isOneByteString);
 
     Escargot::StringRef* source = Escargot::StringRef::createReloadableString(
         IsolateWrap::fromV8(isolate)->vmInstance(),
@@ -1110,7 +1147,7 @@ TEST(DISABLED_ReloadableString16) {
         Utils::NewReloadableString(
             isolate,
             Utils::ReloadableSourceData::create(
-                filename, dest.byte, dest.size, isOneByteString),
+                filename, dest.byte, dest.size / 2, isOneByteString),
             LoadReloadableSource,
             UnloadReloadableSource)
             .ToLocalChecked())
