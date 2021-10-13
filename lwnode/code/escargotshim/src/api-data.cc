@@ -610,7 +610,7 @@ Maybe<double> Value::NumberValue(Local<Context> context) const {
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<double>());
-  auto lwContext = CVAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* esState, ValueRef* self) {
@@ -629,7 +629,7 @@ Maybe<int64_t> Value::IntegerValue(Local<Context> context) const {
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<int64_t>());
-  auto lwContext = VAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
   auto r = Evaluator::execute(
       lwContext->get(),
       [](ExecutionStateRef* esState, ValueRef* self) {
@@ -648,7 +648,7 @@ Maybe<int32_t> Value::Int32Value(Local<Context> context) const {
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<int32_t>());
-  auto lwContext = VAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   auto r = Evaluator::execute(
       lwContext->get(),
@@ -668,7 +668,7 @@ Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<uint32_t>());
-  auto lwContext = VAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   uint32_t val = 0;
   auto r = Evaluator::execute(
@@ -686,7 +686,7 @@ Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
 
 MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Uint32>());
-  auto lwContext = VAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   uint32_t index = ValueRef::InvalidIndex32Value;
   auto r = Evaluator::execute(
@@ -708,7 +708,7 @@ MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
 
 Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto lwContext = VAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   auto r = Evaluator::execute(
       lwContext->get(),
@@ -1743,7 +1743,7 @@ MaybeLocal<Object> Function::NewInstance(Local<Context> context,
                                          int argc,
                                          v8::Local<v8::Value> argv[]) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Object>());
-  auto lwContext = CVAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   GCVector<ValueRef*> arguments;
   for (int i = 0; i < argc; i++) {

@@ -677,7 +677,7 @@ MaybeLocal<v8::RegExp> v8::RegExp::New(Local<Context> context,
                                        Local<String> pattern,
                                        Flags flags) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<RegExp>());
-  auto lwContext = CVAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
   auto lwPattern = CVAL(*pattern)->value();
   int flagsValue = (int)flags;
 
@@ -1332,7 +1332,7 @@ MaybeLocal<Proxy> Proxy::New(Local<Context> context,
                              Local<Object> local_target,
                              Local<Object> local_handler) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Proxy>());
-  auto lwContext = VAL(*context)->context();
+  auto lwContext = lwIsolate->GetCurrentContext();
 
   EvalResult r = Evaluator::execute(
       lwContext->get(),
