@@ -136,26 +136,24 @@ static std::function<bool(uint, double)> g_filter = [](uint idx, double value) {
 
 #define THRESHOLD_BYTES_BACKTRACE 2048
 
-void MemoryUtil::gcStartStatsTrace() {
-  Memory::setGCEventListener([]() {
-    static size_t last_use = 0, last_heap = 0;
+void MemoryUtil::gcPrintGCMemoryUsage(void* data) {
+  static size_t last_use = 0, last_heap = 0;
 
-    size_t nuse = GC_get_memory_use();
-    size_t nheap = GC_get_heap_size();
+  size_t nuse = GC_get_memory_use();
+  size_t nheap = GC_get_heap_size();
 
-    if (last_use == nuse && last_heap == nheap) {
-      // skip
-      return;
-    } else {
-      last_use = nuse;
-      last_heap = nheap;
-    }
+  if (last_use == nuse && last_heap == nheap) {
+    // skip
+    return;
+  } else {
+    last_use = nuse;
+    last_heap = nheap;
+  }
 
-    char heap[20], use[20];
-    prettyBytes(use, sizeof(use), nuse);
-    prettyBytes(heap, sizeof(heap), nheap, g_filter);
-    LOG_HANDLER("use %s, heap %s", use, heap);
-  });
+  char heap[20], use[20];
+  prettyBytes(use, sizeof(use), nuse);
+  prettyBytes(heap, sizeof(heap), nheap, g_filter);
+  LOG_HANDLER("use %s, heap %s", use, heap);
 }
 
 static thread_local MemoryUtil::OnGCWarnEventListener g_gcWarnEventListener;
@@ -281,10 +279,6 @@ void MemoryUtil::gc() {
 
 void MemoryUtil::gcInvokeFinalizers() {
   GC_invoke_finalizers();
-}
-
-void MemoryUtil::gcEndStatsTrace() {
-  Memory::setGCEventListener(nullptr);
 }
 
 void MemoryUtil::prettyBytes(char* buf,

@@ -280,7 +280,7 @@ void GCHeap::postUpdate(void* address) {
   isStatePrinted_ = false;
 }
 
-void GCHeap::processGCEvent() {
+void GCHeap::processGCEvent(void* data) {
   auto gcHeap = Engine::current()->gcHeap();
   gcHeap->printStatus();
   gcHeap->postGarbageCollectionProcessing();
@@ -351,15 +351,10 @@ void Engine::initialize() {
   Memory::setGCFrequency(GC_FREE_SPACE_DIVISOR);
   gcHeap_.reset(GCHeap::create());
 
-#if defined(GC_HEAP_TRACE_ONLY)
-  // this is invoked at GC_EVENT_RECLAIM_END phase
-  Memory::setGCEventListener(GCHeap::processGCEvent);
-#endif
-
   auto flags = Flags::get();
   if (Flags::isTraceGCEnabled()) {
     LWNODE_DLOG_WARN("temporary blocked for postGarbageCollectionProcessing");
-    // MemoryUtil::gcStartStatsTrace();
+    registerGCEventListeners();
   }
 }
 
@@ -367,7 +362,7 @@ void Engine::dispose() {
   LWNODE_CALL_TRACE_GC_START();
   s_state = OnDestroy;
 
-  Memory::setGCEventListener(nullptr);
+  unregisterGCEventListeners();
 
   gcHeap_.release();
   MemoryUtil::gcFull();
@@ -410,4 +405,25 @@ void Engine::disposeExternalStrings() {
   s_externalStrings.clear();
 }
 
+void Engine::registerGCEventListeners() {
+#if defined(GC_HEAP_TRACE_ONLY)
+  Memory::addGCEventListener(
+      Memory::GCEventType::RECLAIM_END, GCHeap::processGCEvent, nullptr);
+#else
+  Memory::addGCEventListener(Memory::GCEventType::RECLAIM_END,
+                             MemoryUtil::gcPrintGCMemoryUsage,
+                             nullptr);
+#endif
+}
+
+void Engine::unregisterGCEventListeners() {
+#if defined(GC_HEAP_TRACE_ONLY)
+  Memory::removeGCEventListener(
+      Memory::GCEventType::RECLAIM_END, GCHeap::processGCEvent, nullptr);
+#else
+  Memory::removeGCEventListener(Memory::GCEventType::RECLAIM_END,
+                                MemoryUtil::gcPrintGCMemoryUsage,
+                                nullptr);
+#endif
+}
 }  // namespace EscargotShim

@@ -101,7 +101,7 @@ class GCHeap : public gc {
   };
 
   void postGarbageCollectionProcessing();
-  static void processGCEvent();
+  static void processGCEvent(void* data);
 
   static GCHeap* create() { return new GCHeap(); }
 
@@ -132,6 +132,9 @@ class Engine {
       v8::String::ExternalStringResourceBase* v8Str);
 
   GCHeap* gcHeap() { return gcHeap_.get(); }
+
+  void registerGCEventListeners();
+  void unregisterGCEventListeners();
 
   enum State {
     Freed,

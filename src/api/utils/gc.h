@@ -170,8 +170,7 @@ class ESCARGOT_EXPORT MemoryUtil {
   typedef void (*OnGCWarnEventListener)(WarnEventType type);
 
   static void gcSetWarningListener(OnGCWarnEventListener callback);
-  static void gcStartStatsTrace();
-  static void gcEndStatsTrace();
+  static void gcPrintGCMemoryUsage(void* data);
   static void gcFull();
   static void gcInvokeFinalizers();
   static void gc();
