@@ -546,7 +546,19 @@ std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
 }
 
 std::shared_ptr<v8::BackingStore> v8::SharedArrayBuffer::GetBackingStore() {
-  LWNODE_RETURN_NULLPTR;
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto esSelf = CVAL(this)->value()->asSharedArrayBufferObject();
+
+  BackingStoreRef* esBackingStore = nullptr;
+  if (esSelf->backingStore().hasValue()) {
+    esBackingStore = esSelf->backingStore().value();
+  } else {
+    esBackingStore = BackingStoreRef::createDefaultNonSharedBackingStore(0);
+  }
+
+  lwIsolate->addBackingStore(esBackingStore);
+  return std::shared_ptr<v8::BackingStore>(
+      reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
 
 void v8::ArrayBuffer::CheckCast(Value* that) {

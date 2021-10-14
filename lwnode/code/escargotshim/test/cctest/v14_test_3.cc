@@ -828,6 +828,20 @@ THREADED_TEST(SharedArrayBufferCustom) {
   }
 
   {
+    v8::Local<SharedArrayBuffer> sa;
+    {
+      auto bs = v8::SharedArrayBuffer::NewBackingStore(isolate, 10);
+      CHECK(bs);
+      sa = v8::SharedArrayBuffer::New(context->GetIsolate(), std::move(bs));
+      CHECK_EQ(10, sa->ByteLength());
+    }
+
+    CHECK_EQ(10, sa->ByteLength());
+    auto bs = sa->GetBackingStore();
+    CHECK_EQ(10, bs->ByteLength());
+  }
+
+  {
     int data[10];
     int called = false;
     auto deleter = [](void* data, size_t, void* deleteData) {

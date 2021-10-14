@@ -27,7 +27,6 @@ class GlobalObjectData;
 class ExceptionObjectData;
 class StackTraceData;
 class ValueWrap;
-class BackingStoreWrap;
 
 using namespace Escargot;
 

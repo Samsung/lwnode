@@ -1662,7 +1662,9 @@ v8::SharedArrayBuffer::Contents v8::SharedArrayBuffer::Externalize() {
 }
 
 void v8::SharedArrayBuffer::Externalize(
-    const std::shared_ptr<BackingStore>& backing_store) {}
+    const std::shared_ptr<BackingStore>& backing_store) {
+  LWNODE_UNIMPLEMENT;
+}
 
 v8::SharedArrayBuffer::Contents v8::SharedArrayBuffer::GetContents() {
   return GetContents(false);
@@ -1705,7 +1707,19 @@ Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
 
 Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
     Isolate* isolate, std::shared_ptr<BackingStore> backing_store) {
-  LWNODE_RETURN_LOCAL(SharedArrayBuffer);
+  API_ENTER_NO_EXCEPTION(isolate);
+  auto lwContext = lwIsolate->GetCurrentContext();
+
+  auto esBackingStore = reinterpret_cast<BackingStoreRef*>(backing_store.get());
+  auto r = Evaluator::execute(
+      lwContext->get(),
+      [](ExecutionStateRef* state, BackingStoreRef* bs) -> ValueRef* {
+        return SharedArrayBufferObjectRef::create(state, bs);
+      },
+      esBackingStore);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<SharedArrayBuffer>(isolate, r.result);
 }
 
 Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
