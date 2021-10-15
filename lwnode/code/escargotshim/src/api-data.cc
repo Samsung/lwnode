@@ -485,11 +485,13 @@ void v8::WasmModuleObject::CheckCast(Value* that) {
 
 // void v8::debug::WasmValue::CheckCast(Value* that) {}
 
-v8::BackingStore::~BackingStore() {}
+v8::BackingStore::~BackingStore() {
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  lwIsolate->removeBackingStore(reinterpret_cast<BackingStoreRef*>(this));
+}
 
 void v8::BackingStore::operator delete(void* p) {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  lwIsolate->removeBackingStore(reinterpret_cast<BackingStoreRef*>(p));
+  // Ignore all implicit delete by unique_ptr/shared_ptr
 }
 
 void* v8::BackingStore::Data() const {
@@ -538,6 +540,7 @@ std::shared_ptr<v8::BackingStore> v8::ArrayBuffer::GetBackingStore() {
     esBackingStore = BackingStoreRef::createDefaultNonSharedBackingStore(0);
   }
 
+  lwIsolate->addBackingStore(esBackingStore);
   return std::shared_ptr<v8::BackingStore>(
       reinterpret_cast<v8::BackingStore*>(esBackingStore));
 }
