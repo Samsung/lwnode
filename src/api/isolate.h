@@ -128,6 +128,12 @@ class ContextWrap;
 
 typedef gc GCManagedObject;
 
+struct BackingStoreComparator {
+  bool operator()(const BackingStoreRef* a, const BackingStoreRef* b) const {
+    return a < b;
+  }
+};
+
 class IsolateWrap final : public v8::internal::Isolate {
  public:
   virtual ~IsolateWrap();
@@ -189,6 +195,9 @@ class IsolateWrap final : public v8::internal::Isolate {
   // Eternal
   void addEternal(GCManagedObject* value);
 
+  // Increment/Decrement a counter when either a unique_ptr<v8::BackingStore>
+  // or shared_ptr<v8::BackingStore> is created. It holds a BackingStore when
+  // it is transferred between Array/SharedArrayBuffers.
   void addBackingStore(BackingStoreRef* value);
   void removeBackingStore(BackingStoreRef* value);
 
@@ -242,7 +251,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   void InitializeGlobalSlots();
 
   GCVector<GCManagedObject*> eternals_;
-  GCUnorderedSet<BackingStoreRef*> backingStores_;
+  GCMap<BackingStoreRef*, int, BackingStoreComparator> backingStoreCounter_;
+
   GCVector<HandleScopeWrap*> handleScopes_;
   GCVector<ContextWrap*> contextScopes_;
 

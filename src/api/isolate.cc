@@ -496,11 +496,25 @@ void IsolateWrap::addEternal(GCManagedObject* value) {
 }
 
 void IsolateWrap::addBackingStore(BackingStoreRef* value) {
-  backingStores_.insert(value);
+  auto itr = backingStoreCounter_.find(value);
+  if (itr != backingStoreCounter_.end()) {
+    ++itr->second;
+  } else {
+    backingStoreCounter_.insert(std::make_pair(value, 1));
+  }
 }
 
 void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
-  backingStores_.erase(value);
+  auto itr = backingStoreCounter_.find(value);
+  if (itr != backingStoreCounter_.end()) {
+    if (itr->second == 1) {
+      backingStoreCounter_.erase(itr);
+    } else {
+      --itr->second;
+    }
+  } else {
+    LWNODE_CHECK_MSG(false, "increment/decrement count do not match");
+  }
 }
 
 SymbolRef* IsolateWrap::createApiSymbol(StringRef* name) {
