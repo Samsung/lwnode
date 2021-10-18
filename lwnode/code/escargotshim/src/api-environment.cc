@@ -1731,7 +1731,7 @@ Local<SharedArrayBuffer> v8::SharedArrayBuffer::New(
 
 std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
     Isolate* isolate, size_t byte_length) {
-  auto lwIsolate = IsolateWrap::GetCurrent();
+  API_ENTER_NO_EXCEPTION(isolate);
 
   BackingStoreRef* esBackingStore =
       BackingStoreRef::createDefaultSharedBackingStore(byte_length);
@@ -1766,6 +1766,7 @@ std::unique_ptr<v8::BackingStore> v8::SharedArrayBuffer::NewBackingStore(
   };
 
   // TODO: change to shared type.
+  LWNODE_UNIMPLEMENT;
   auto esBackingStore = BackingStoreRef::createNonSharedBackingStore(
       data, byte_length, callback, callbackData);
   lwIsolate->addBackingStore(esBackingStore);

@@ -846,10 +846,14 @@ THREADED_TEST(SharedArrayBufferCustom) {
     int called = false;
     auto deleter = [](void* data, size_t, void* deleteData) {
       bool* called = (bool*)deleteData;
-      // *called = true;
+      *called = true;
     };
-    auto bs = v8::SharedArrayBuffer::NewBackingStore(
-        &data, sizeof(data), deleter, &called);
-    CHECK(bs);
+    {
+      auto bs = v8::SharedArrayBuffer::NewBackingStore(
+          &data, sizeof(data), deleter, &called);
+      CHECK(bs);
+    }
+    CcTest::CollectAllGarbage();
+    CHECK(called);
   }
 }
