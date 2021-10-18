@@ -857,3 +857,100 @@ THREADED_TEST(SharedArrayBufferCustom) {
     CHECK(called);
   }
 }
+
+THREADED_TEST(InheritanceCustom) {
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+
+  Local<v8::FunctionTemplate> funA = v8::FunctionTemplate::New(isolate);
+  // funA->SetClassName(v8_str("A"));
+  funA->InstanceTemplate()->SetInternalFieldCount(10);
+  funA->PrototypeTemplate()->Set(
+      v8::String::NewFromUtf8(isolate, "f").ToLocalChecked(),
+      FunctionTemplate::New(isolate,
+                            [](const FunctionCallbackInfo<Value>& info) {
+                              info.GetReturnValue().Set(v8_num(1));
+                            }));
+
+  Local<v8::FunctionTemplate> funB = v8::FunctionTemplate::New(isolate);
+  // funB->SetClassName(v8_str("B"));
+  funB->InstanceTemplate()->SetInternalFieldCount(10);
+  funB->PrototypeTemplate()->Set(
+      v8::String::NewFromUtf8(isolate, "f").ToLocalChecked(),
+      FunctionTemplate::New(isolate,
+                            [](const FunctionCallbackInfo<Value>& info) {
+                              info.GetReturnValue().Set(v8_num(2));
+                            }));
+  funB->Inherit(funA);
+
+  Local<v8::FunctionTemplate> funC = v8::FunctionTemplate::New(isolate);
+  // funC->SetClassName(v8_str("C"));
+  funC->InstanceTemplate()->SetInternalFieldCount(10);
+  funC->PrototypeTemplate()->Set(
+      v8::String::NewFromUtf8(isolate, "f").ToLocalChecked(),
+      FunctionTemplate::New(isolate,
+                            [](const FunctionCallbackInfo<Value>& info) {
+                              info.GetReturnValue().Set(v8_num(3));
+                            }));
+  funC->Inherit(funB);
+
+  funA->InstanceTemplate()->SetAccessor(
+      v8_str("knurd"),
+      [](Local<String> property,
+         const v8::PropertyCallbackInfo<v8::Value>& info) {
+        info.GetReturnValue().Set(v8_num(15.2));
+      });
+
+  CHECK(env->Global()
+            ->Set(env.local(),
+                  v8_str("A"),
+                  funA->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(),
+                  v8_str("B"),
+                  funB->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(),
+                  v8_str("C"),
+                  funC->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+
+  CompileRun("A();");
+  CompileRun("B();");
+  CompileRun("C();");
+
+  CHECK(env->Global()
+            ->Set(env.local(),
+                  v8_str("a"),
+                  funA->GetFunction(env.local())
+                      .ToLocalChecked()
+                      ->NewInstance(env.local())
+                      .ToLocalChecked())
+            .FromJust());
+  CHECK_EQ(1, CompileRun("a.f()")->NumberValue(env.local()).FromJust());
+
+  CHECK(env->Global()
+            ->Set(env.local(),
+                  v8_str("b"),
+                  funB->GetFunction(env.local())
+                      .ToLocalChecked()
+                      ->NewInstance(env.local())
+                      .ToLocalChecked())
+            .FromJust());
+  CHECK_EQ(2, CompileRun("b.f()")->NumberValue(env.local()).FromJust());
+
+  CHECK(env->Global()
+            ->Set(env.local(),
+                  v8_str("c"),
+                  funC->GetFunction(env.local())
+                      .ToLocalChecked()
+                      ->NewInstance(env.local())
+                      .ToLocalChecked())
+            .FromJust());
+  CHECK_EQ(3, CompileRun("c.f()")->NumberValue(env.local()).FromJust());
+
+  CHECK_EQ(15.2, CompileRun("b.knurd")->NumberValue(env.local()).FromJust());
+}

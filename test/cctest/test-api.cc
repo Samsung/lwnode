@@ -2102,17 +2102,17 @@ THREADED_TEST(IntegerValue) {
   CHECK_EQ(0, CompileRun("undefined")->IntegerValue(env.local()).FromJust());
 }
 
-// static void GetNirk(Local<String> name,
-//                     const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(900));
-// }
+static void GetNirk(Local<String> name,
+                    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  info.GetReturnValue().Set(v8_num(900));
+}
 
-// static void GetRino(Local<String> name,
-//                     const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(560));
-// }
+static void GetRino(Local<String> name,
+                    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  info.GetReturnValue().Set(v8_num(560));
+}
 
 // enum ObjectInstantiationMode {
 //   // Create object using ObjectTemplate::NewInstance.
@@ -2362,100 +2362,101 @@ THREADED_TEST(IntegerValue) {
 //   }
 // }
 
-// static void GetFlabby(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   args.GetReturnValue().Set(v8_num(17.2));
-// }
+static void GetFlabby(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  // ApiTestFuzzer::Fuzz();
+  args.GetReturnValue().Set(v8_num(17.2));
+}
 
 
-// static void GetKnurd(Local<String> property,
-//                      const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   ApiTestFuzzer::Fuzz();
-//   info.GetReturnValue().Set(v8_num(15.2));
-// }
+static void GetKnurd(Local<String> property,
+                     const v8::PropertyCallbackInfo<v8::Value>& info) {
+  // ApiTestFuzzer::Fuzz();
+  printf("accessor: GetKnurd()\n");
+  info.GetReturnValue().Set(v8_num(15.2));
+}
 
 
-// THREADED_TEST(DescriptorInheritance) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::FunctionTemplate> super = v8::FunctionTemplate::New(isolate);
-//   super->PrototypeTemplate()->Set(isolate, "flabby",
-//                                   v8::FunctionTemplate::New(isolate,
-//                                                             GetFlabby));
-//   super->PrototypeTemplate()->Set(isolate, "PI", v8_num(3.14));
+THREADED_TEST(DescriptorInheritance) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::FunctionTemplate> super = v8::FunctionTemplate::New(isolate);
+  super->PrototypeTemplate()->Set(isolate, "flabby",
+                                  v8::FunctionTemplate::New(isolate,
+                                                            GetFlabby));
+  super->PrototypeTemplate()->Set(isolate, "PI", v8_num(3.14));
 
-//   super->InstanceTemplate()->SetAccessor(v8_str("knurd"), GetKnurd);
+  super->InstanceTemplate()->SetAccessor(v8_str("knurd"), GetKnurd);
 
-//   v8::Local<v8::FunctionTemplate> base1 = v8::FunctionTemplate::New(isolate);
-//   base1->Inherit(super);
-//   base1->PrototypeTemplate()->Set(isolate, "v1", v8_num(20.1));
+  v8::Local<v8::FunctionTemplate> base1 = v8::FunctionTemplate::New(isolate);
+  base1->Inherit(super);
+  base1->PrototypeTemplate()->Set(isolate, "v1", v8_num(20.1));
 
-//   v8::Local<v8::FunctionTemplate> base2 = v8::FunctionTemplate::New(isolate);
-//   base2->Inherit(super);
-//   base2->PrototypeTemplate()->Set(isolate, "v2", v8_num(10.1));
+  v8::Local<v8::FunctionTemplate> base2 = v8::FunctionTemplate::New(isolate);
+  base2->Inherit(super);
+  base2->PrototypeTemplate()->Set(isolate, "v2", v8_num(10.1));
 
-//   LocalContext env;
+  LocalContext env;
 
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("s"),
-//                   super->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("base1"),
-//                   base1->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("base2"),
-//                   base2->GetFunction(env.local()).ToLocalChecked())
-//             .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("s"),
+                  super->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("base1"),
+                  base1->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("base2"),
+                  base2->GetFunction(env.local()).ToLocalChecked())
+            .FromJust());
 
-//   // Checks right __proto__ chain.
-//   CHECK(CompileRun("base1.prototype.__proto__ == s.prototype")
-//             ->BooleanValue(isolate));
-//   CHECK(CompileRun("base2.prototype.__proto__ == s.prototype")
-//             ->BooleanValue(isolate));
+  // Checks right __proto__ chain.
+  CHECK(CompileRun("base1.prototype.__proto__ == s.prototype")
+            ->BooleanValue(isolate));
+  CHECK(CompileRun("base2.prototype.__proto__ == s.prototype")
+            ->BooleanValue(isolate));
 
-//   CHECK(v8_compile("s.prototype.PI == 3.14")
-//             ->Run(env.local())
-//             .ToLocalChecked()
-//             ->BooleanValue(isolate));
+  CHECK(v8_compile("s.prototype.PI == 3.14")
+            ->Run(env.local())
+            .ToLocalChecked()
+            ->BooleanValue(isolate));
 
-//   // Instance accessor should not be visible on function object or its prototype
-//   CHECK(CompileRun("s.knurd == undefined")->BooleanValue(isolate));
-//   CHECK(CompileRun("s.prototype.knurd == undefined")->BooleanValue(isolate));
-//   CHECK(
-//       CompileRun("base1.prototype.knurd == undefined")->BooleanValue(isolate));
+  // Instance accessor should not be visible on function object or its prototype
+  CHECK(CompileRun("s.knurd == undefined")->BooleanValue(isolate));
+  CHECK(CompileRun("s.prototype.knurd == undefined")->BooleanValue(isolate));
+  CHECK(
+      CompileRun("base1.prototype.knurd == undefined")->BooleanValue(isolate));
 
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("obj"), base1->GetFunction(env.local())
-//                                                   .ToLocalChecked()
-//                                                   ->NewInstance(env.local())
-//                                                   .ToLocalChecked())
-//             .FromJust());
-//   CHECK_EQ(17.2,
-//            CompileRun("obj.flabby()")->NumberValue(env.local()).FromJust());
-//   CHECK(CompileRun("'flabby' in obj")->BooleanValue(isolate));
-//   CHECK_EQ(15.2, CompileRun("obj.knurd")->NumberValue(env.local()).FromJust());
-//   CHECK(CompileRun("'knurd' in obj")->BooleanValue(isolate));
-//   CHECK_EQ(20.1, CompileRun("obj.v1")->NumberValue(env.local()).FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("obj"), base1->GetFunction(env.local())
+                                                  .ToLocalChecked()
+                                                  ->NewInstance(env.local())
+                                                  .ToLocalChecked())
+            .FromJust());
+  CHECK_EQ(17.2,
+           CompileRun("obj.flabby()")->NumberValue(env.local()).FromJust());
+  CHECK(CompileRun("'flabby' in obj")->BooleanValue(isolate));
+  CHECK_EQ(15.2, CompileRun("obj.knurd")->NumberValue(env.local()).FromJust());
+  CHECK(CompileRun("'knurd' in obj")->BooleanValue(isolate));
+  CHECK_EQ(20.1, CompileRun("obj.v1")->NumberValue(env.local()).FromJust());
 
-//   CHECK(env->Global()
-//             ->Set(env.local(), v8_str("obj2"), base2->GetFunction(env.local())
-//                                                    .ToLocalChecked()
-//                                                    ->NewInstance(env.local())
-//                                                    .ToLocalChecked())
-//             .FromJust());
-//   CHECK_EQ(17.2,
-//            CompileRun("obj2.flabby()")->NumberValue(env.local()).FromJust());
-//   CHECK(CompileRun("'flabby' in obj2")->BooleanValue(isolate));
-//   CHECK_EQ(15.2, CompileRun("obj2.knurd")->NumberValue(env.local()).FromJust());
-//   CHECK(CompileRun("'knurd' in obj2")->BooleanValue(isolate));
-//   CHECK_EQ(10.1, CompileRun("obj2.v2")->NumberValue(env.local()).FromJust());
+  CHECK(env->Global()
+            ->Set(env.local(), v8_str("obj2"), base2->GetFunction(env.local())
+                                                   .ToLocalChecked()
+                                                   ->NewInstance(env.local())
+                                                   .ToLocalChecked())
+            .FromJust());
+  CHECK_EQ(17.2,
+           CompileRun("obj2.flabby()")->NumberValue(env.local()).FromJust());
+  CHECK(CompileRun("'flabby' in obj2")->BooleanValue(isolate));
+  CHECK_EQ(15.2, CompileRun("obj2.knurd")->NumberValue(env.local()).FromJust());
+  CHECK(CompileRun("'knurd' in obj2")->BooleanValue(isolate));
+  CHECK_EQ(10.1, CompileRun("obj2.v2")->NumberValue(env.local()).FromJust());
 
-//   // base1 and base2 cannot cross reference to each's prototype
-//   CHECK(CompileRun("obj.v2")->IsUndefined());
-//   CHECK(CompileRun("obj2.v1")->IsUndefined());
-// }
+  // base1 and base2 cannot cross reference to each's prototype
+  CHECK(CompileRun("obj.v2")->IsUndefined());
+  CHECK(CompileRun("obj2.v1")->IsUndefined());
+}
 
 // THREADED_TEST(DescriptorInheritance2) {
 //   LocalContext env;
