@@ -104,7 +104,7 @@ static GCTracer g_tracer;
     g_tracer.printState();                                                     \
   }
 
-TEST(internal_GCObject1) {
+TEST(DISABLED_internal_GCObject1) {
   GC_TRACE_RESET();
 
   []() {
@@ -117,7 +117,7 @@ TEST(internal_GCObject1) {
   CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 0);
 }
 
-TEST(internal_GCObject2) {
+TEST(DISABLED_internal_GCObject2) {
   GC_TRACE_RESET();
 
   []() {
@@ -139,7 +139,7 @@ TEST(internal_GCObject2) {
   CHECK_EQ(GC_TRACE_GET_ALIVE_COUNT(), 0);
 }
 
-TEST(internal_GCObject3) {
+TEST(DISABLED_internal_GCObject3) {
   GC_TRACE_RESET();
 
   []() {
@@ -212,7 +212,7 @@ TEST(DISABLED_internal_GCObject4) {
   EXPECT_LE(GC_TRACE_GET_ALIVE_COUNT(), 1);
 }
 
-TEST(internal_GCContainer) {
+TEST(DISABLED_internal_GCContainer) {
   g_tracer.reset();
 
   Escargot::PersistentRefHolder<GCContainer<ObjectBasic*>> holder;
