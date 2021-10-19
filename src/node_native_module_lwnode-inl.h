@@ -19,6 +19,7 @@
 #include <unzip.h>
 #include <codecvt>
 #include <locale>
+#include "lwnode-loader.h"
 #include "lwnode.h"
 #include "node_native_module.h"
 #include "trace.h"
@@ -197,15 +198,15 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
     fileSize = newStringBufferSize;
   }
 
-  auto data = Utils::ReloadableSourceData::create(
+  auto data = Loader::ReloadableSourceData::create(
       filename, buffer, fileSize, is8BitString);
 
-  return Utils::NewReloadableString(
+  return Loader::NewReloadableString(
       isolate,
       data,
       // Load-ReloadableSource
       [](void* userData) -> void* {
-        auto data = reinterpret_cast<Utils::ReloadableSourceData*>(userData);
+        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
 
         LWNODE_LOG_INFO("  Load: %d (%d) %p %s (+%.2f kB)",
                         ++s_stat.loaded,
@@ -242,7 +243,7 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
       },
       // Unload-ReloadableSource
       [](void* preloadedData, void* userData) -> void {
-        auto data = reinterpret_cast<Utils::ReloadableSourceData*>(userData);
+        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
 
         LWNODE_LOG_INFO("Unload: %d (%d) %p %s (-%.2f kB)",
                         --s_stat.loaded,
