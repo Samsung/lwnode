@@ -86,6 +86,7 @@
         'action': [
           'cmake', '<(escargot_dir)', '-B<(output_dir)',
           '-GNinja',
+          '-DESCARGOT_SMALL_CONFIG=1',
           '-DESCARGOT_ARCH=<(target_arch)',
           '-DESCARGOT_MODE=<(build_mode)',
           '-DESCARGOT_HOST=<(build_host)',
