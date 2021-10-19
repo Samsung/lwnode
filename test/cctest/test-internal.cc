@@ -29,6 +29,7 @@
 #include <string>
 #include "api/es-helper.h"
 #include "api/utils/gc-container.h"
+#include "lwnode-loader.h"
 #include "lwnode.h"
 
 using namespace Escargot;
@@ -902,75 +903,11 @@ TEST(DISABLED_Escargot_ObjectCreate_Regression) {
   CHECK_EQ(true, r.isSuccessful());
 }
 
-struct FileData {
-  void* byte{nullptr};
-  long int size{0};
-
-  FileData(void* data, long int data_size) {
-    byte = data;
-    size = data_size;
-  }
-  FileData() = default;
-};
-
-static FileData readFile(std::string filename) {
-  FILE* file = std::fopen(filename.c_str(), "rb");
-  if (!file) {
-    return FileData();
-  }
-
-  std::fseek(file, 0, SEEK_END);
-  long int fileSize = std::ftell(file);
-
-  uint8_t* buffer = (uint8_t*)Memory::gcMallocAtomicUncollectable(fileSize + 1);
-  std::fseek(file, 0, SEEK_SET);
-  std::fread(buffer, sizeof(uint8_t), fileSize, file);
-  std::fclose(file);
-
-  buffer[fileSize] = '\0';
-
-  // 1. check if non-ascii
-  bool isOneByteString = true;
-  for (size_t i = 0; i < fileSize; ++i) {
-    if (buffer[i] > 127) {
-      isOneByteString = false;
-      break;
-    }
-  }
-
-  void* stringBuffer = buffer;
-
-  if (isOneByteString == false) {
-    // 2. Treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
-    std::wstring_convert<
-        std::codecvt_utf8_utf16<char16_t,
-                                0x10ffff,
-                                std::codecvt_mode::little_endian>,
-        char16_t>
-        convertor;
-    std::u16string utf16 = convertor.from_bytes((const char*)buffer);
-
-    LWNODE_DCHECK(convertor.converted() == fileSize);
-
-    // 3. allocate buffer for utf16 string
-    fileSize = utf16.size() * 2;
-    uint8_t* newStringBuffer =
-        (uint8_t*)Memory::gcMallocAtomicUncollectable(fileSize + 1);
-    memcpy(newStringBuffer, utf16.data(), fileSize);
-    newStringBuffer[fileSize] = '\0';
-
-    Memory::gcFree(buffer);
-    stringBuffer = newStringBuffer;
-  }
-
-  return FileData(stringBuffer, fileSize);
-}
-
 static int g_reload_count;
 static void* LoadReloadableSource(void* userData) {
   LWNODE_LOG_INFO("LoadReloadableSource");
   g_reload_count++;
-  auto data = (Utils::ReloadableSourceData*)userData;
+  auto data = (Loader::ReloadableSourceData*)userData;
   if (data->preloadedData) {  // move memory ownership to js engine
     LWNODE_LOG_INFO("cached");
     auto buffer = data->preloadedData;
@@ -978,19 +915,19 @@ static void* LoadReloadableSource(void* userData) {
     return buffer;
   }
   LWNODE_LOG_INFO("reload");
-  FileData dest = readFile(data->path());
-  LWNODE_CHECK_NOT_NULL(dest.byte);
-  return dest.byte;
+  FileData dest = Loader::readFile(data->path());
+  LWNODE_CHECK_NOT_NULL(dest.buffer);
+  return dest.buffer;
 }
 
 static void UnloadReloadableSource(void* preloadedData, void* userData) {
   LWNODE_LOG_INFO("UnloadReloadableSource");
-  auto data = (Utils::ReloadableSourceData*)userData;
+  auto data = (Loader::ReloadableSourceData*)userData;
   if (data->preloadedData) {
-    Memory::gcFree(data->preloadedData);
+    free(data->preloadedData);
     data->preloadedData = nullptr;
   }
-  Memory::gcFree(preloadedData);
+  free(preloadedData);
 }
 
 class ReloadableContentScope {
@@ -1053,14 +990,14 @@ TEST(ReloadableString8) {
     const bool isOneByteString = true;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = readFile(filename);
-    LWNODE_CHECK_NOT_NULL(dest.byte);
+    FileData dest = Loader::readFile(filename);
+    LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
-        Utils::NewReloadableString(
+        Loader::NewReloadableString(
             isolate,
-            Utils::ReloadableSourceData::create(
-                filename, dest.byte, dest.size, isOneByteString),
+            Loader::ReloadableSourceData::create(
+                filename, dest.buffer, dest.size, isOneByteString),
             LoadReloadableSource,
             UnloadReloadableSource)
             .ToLocalChecked())
@@ -1102,16 +1039,16 @@ TEST(ReloadableString16) {
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = readFile(filename);
-    LWNODE_CHECK_NOT_NULL(dest.byte);
+    FileData dest = Loader::readFile(filename);
+    LWNODE_CHECK_NOT_NULL(dest.buffer);
 
-    auto data = Utils::ReloadableSourceData::create(
-        filename, dest.byte, dest.size / 2, isOneByteString);
+    auto data = Loader::ReloadableSourceData::create(
+        filename, dest.buffer, dest.size / 2, isOneByteString);
 
     Escargot::StringRef* source = Escargot::StringRef::createReloadableString(
         IsolateWrap::fromV8(isolate)->vmInstance(),
         isOneByteString,
-        data->preloadedDataLength(),
+        data->stringLength(),
         data,  // data should be gc-managed.
         LoadReloadableSource,
         UnloadReloadableSource);
@@ -1140,14 +1077,14 @@ TEST(ReloadableString16) {
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = readFile(filename);
-    LWNODE_CHECK_NOT_NULL(dest.byte);
+    FileData dest = Loader::readFile(filename);
+    LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
-        Utils::NewReloadableString(
+        Loader::NewReloadableString(
             isolate,
-            Utils::ReloadableSourceData::create(
-                filename, dest.byte, dest.size / 2, isOneByteString),
+            Loader::ReloadableSourceData::create(
+                filename, dest.buffer, dest.size / 2, isOneByteString),
             LoadReloadableSource,
             UnloadReloadableSource)
             .ToLocalChecked())
