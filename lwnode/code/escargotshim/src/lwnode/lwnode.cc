@@ -18,6 +18,7 @@
 #include <EscargotPublic.h>
 #include <malloc.h>  // for malloc_trim
 #include <chrono>
+#include <codecvt>
 #include <fstream>
 #include "api.h"
 #include "api/context.h"
@@ -26,6 +27,7 @@
 #include "api/utils/misc.h"
 #include "api/utils/smaps.h"
 #include "base.h"
+#include "lwnode/lwnode-loader.h"
 
 using namespace v8;
 using namespace EscargotShim;
@@ -140,6 +142,22 @@ static ValueRef* MemSnapshot(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 };
 
+static ValueRef* CreateReloadableSourceFromFile(ExecutionStateRef* state,
+                                                ValueRef* thisValue,
+                                                size_t argc,
+                                                ValueRef** argv,
+                                                bool isConstructCall) {
+  if (argc > 0) {
+    if (argv[0]->isString()) {
+      std::string fileName = argv[0]
+                                 ->toStringWithoutException(state->context())
+                                 ->toStdUTF8String();
+      return Loader::CreateReloadableSourceFromFile(state, fileName);
+    }
+  }
+  return ValueRef::createUndefined();
+}
+
 void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
   auto esTarget = CVAL(*target)->value()->asObject();
@@ -152,50 +170,12 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   SetMethod(esContext, esTarget, "RssUsage", RssUsage);
   SetMethod(esContext, esTarget, "PssSwapUsage", PssSwapUsage);
   SetMethod(esContext, esTarget, "MemSnapshot", MemSnapshot);
-}
-
-Utils::ReloadableSourceData* Utils::ReloadableSourceData::create(
-    std::string sourcePath,
-    void* preloadedData,
-    size_t preloadedDataLength,
-    bool isOneByteString) {
-  auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
-      ReloadableSourceData();
-
-  data->path_ = (char*)Escargot::Memory::gcMalloc(sourcePath.size() + 1);
-  std::copy(sourcePath.begin(), sourcePath.end(), data->path_);
-  data->path_[sourcePath.size()] = '\0';
-
-  data->preloadedData = preloadedData;
-  data->preloadedDataLength_ = preloadedDataLength;
-  data->isOneByteString_ = isOneByteString;
-
-  return data;
-}
-
-MaybeLocal<String> Utils::NewReloadableString(Isolate* isolate,
-                                              ReloadableSourceData* data,
-                                              LoadCallback loadCallback,
-                                              UnloadCallback unloadCallback) {
-  MaybeLocal<String> result;
-
-  if (data->stringLength() == 0) {
-    result = String::Empty(isolate);
-  } else if (data->stringLength() > v8::String::kMaxLength) {
-    result = MaybeLocal<String>();
-  } else {
-    Escargot::StringRef* reloadableString =
-        Escargot::StringRef::createReloadableString(
-            IsolateWrap::fromV8(isolate)->vmInstance(),
-            data->isOneByteString(),
-            data->stringLength(),
-            data,  // data should be gc-managed.
-            loadCallback,
-            unloadCallback);
-    result = v8::Utils::NewLocal<String>(isolate, reloadableString);
-  }
-
-  return result;
+#ifdef LWNODE_USE_RELOAD_SCRIPT
+  SetMethod(esContext,
+            esTarget,
+            "CreateReloadableSourceFromFile",
+            CreateReloadableSourceFromFile);
+#endif
 }
 
 static void IdleGC(v8::Isolate* isolate) {

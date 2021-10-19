@@ -61,13 +61,15 @@
         'src/api/object.cc',
         'src/api/serializer.cc',
         'src/api/stack-trace.cc',
-        'src/lwnode.cc',
+        'src/lwnode/lwnode.cc',
+        'src/lwnode/lwnode-loader.cc',
       ],
       'defines': ['V8_PROMISE_INTERNAL_FIELD_COUNT=1'],
       'cflags_cc!': ['-fno-exceptions'],
       'cflags_cc': [
         '-std=gnu++14',
         '-Wno-unused-parameter',
+        '-Wno-unused-result',
         '-fexceptions',
       ],
       'direct_dependent_settings': {
