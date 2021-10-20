@@ -89,7 +89,7 @@ SLUGGER_RE =re.compile('[.\-/]')
 
 is_verbose = False
 
-def GetDefinition(var, source, is_reloadable_code=False, step=30):
+def GetDefinition(var, source, is_external_code=False, step=30):
   template = ONE_BYTE_STRING
   code_points = [ord(c) for c in source]
   if any(c > 127 for c in code_points):
@@ -107,7 +107,7 @@ def GetDefinition(var, source, is_reloadable_code=False, step=30):
   slices = [elements_s[i:i + step] for i in range(0, len(elements_s), step)]
   lines = [','.join(s) for s in slices]
   array_content = ',\n'.join(lines)
-  if is_reloadable_code == True:
+  if is_external_code == True:
     definition = template.format(var, '')
   else:
     definition = template.format(var, array_content)
@@ -115,13 +115,13 @@ def GetDefinition(var, source, is_reloadable_code=False, step=30):
   return definition, len(code_points)
 
 
-def AddModule(filename, definitions, initializers, is_reloadable_code=False):
+def AddModule(filename, definitions, initializers, is_external_code=False):
   code = ReadFile(filename)
   name = NormalizeFileName(filename)
   slug = SLUGGER_RE.sub('_', name)
   var = slug + '_raw'
-  definition, size = GetDefinition(var, code, is_reloadable_code)
-  if is_reloadable_code == True:
+  definition, size = GetDefinition(var, code, is_external_code)
+  if is_external_code == True:
     initializer = INITIALIZER.format(name, var, 0)
     definitions.append(definition)
   else:
@@ -140,13 +140,13 @@ def NormalizeFileName(filename):
   return os.path.splitext(filename)[0]
 
 
-def JS2C(source_files, target, is_reloadable_code=False):
+def JS2C(source_files, target, is_external_code=False):
   # Build source code lines
   definitions = []
   initializers = []
 
   for filename in source_files['.js']:
-    AddModule(filename, definitions, initializers, is_reloadable_code)
+    AddModule(filename, definitions, initializers, is_external_code)
 
   config_def, config_size = handle_config_gypi(source_files['config.gypi'])
   definitions.append(config_def)
@@ -208,11 +208,11 @@ def main():
   )
   parser.add_argument('--target', help='output file')
   parser.add_argument('--verbose', action='store_true', help='output file')
-  # @lwnode --reloadable
-  parser.add_argument('--reloadable',
+  # @lwnode --external
+  parser.add_argument('--external',
           action='store_true',
           default=False,
-          help='reloadable string')
+          help='use external scripts')
   parser.add_argument('sources', nargs='*', help='input files')
   options = parser.parse_args()
   global is_verbose
@@ -223,7 +223,7 @@ def main():
   # Currently config.gypi is the only `.gypi` file allowed
   assert source_files['.gypi'] == ['config.gypi']
   source_files['config.gypi'] = source_files.pop('.gypi')[0]
-  JS2C(source_files, options.target, options.reloadable)
+  JS2C(source_files, options.target, options.external)
 
 
 if __name__ == "__main__":
