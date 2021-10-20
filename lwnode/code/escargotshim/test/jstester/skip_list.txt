@@ -172,7 +172,6 @@ test/parallel/test-repl-pretty-stack.js
 test/parallel/test-repl-require.js
 test/parallel/test-repl-sigint-nested-eval.js
 test/parallel/test-repl-sigint.js
-test/parallel/test-repl-syntax-error-stack.js
 test/parallel/test-repl-tab-complete.js
 test/parallel/test-repl-uncaught-exception-standalone.js
 test/parallel/test-repl-uncaught-exception.js
@@ -262,7 +261,6 @@ test/parallel/test-vm-sigint.js
 test/parallel/test-vm-strict-assign.js
 test/parallel/test-vm-strict-mode.js
 test/parallel/test-vm-symbols.js
-test/parallel/test-vm-syntax-error-message.js
 test/parallel/test-vm-syntax-error-stderr.js
 test/parallel/test-vm-timeout-escape-promise-2.js
 test/parallel/test-vm-timeout-escape-promise.js

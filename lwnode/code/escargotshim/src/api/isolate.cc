@@ -610,16 +610,33 @@ void IsolateWrap::SetPendingExceptionAndMessage(
   set_pending_message_obj(nullptr);
 }
 
+static bool isCatchableByJavascript(Escargot::ExecutionStateRef* state) {
+  OptionalRef<ExecutionStateRef> e = state;
+  while (e) {
+    if (e->onTry()) {
+      return true;
+    }
+    e = e->parent();
+  }
+  return false;
+}
+
 void IsolateWrap::Throw(Escargot::ExecutionStateRef* state) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   LWNODE_DCHECK(has_scheduled_exception());
 
   auto exception = scheduled_exception();
   clear_scheduled_exception();
-  if (hasExternalTryCatch()) {
-    return;
+
+  if (isCatchableByJavascript(state)) {
+    if (hasExternalTryCatch()) {
+      ClearPendingExceptionAndMessage();
+      SetTerminationOnExternalTryCatch();
+    }
+    state->throwException(exception);
+  } else if (!hasExternalTryCatch()) {
+    state->throwException(exception);
   }
-  state->throwException(exception);
 }
 
 ValueWrap** IsolateWrap::getGlobal(const int index) {
