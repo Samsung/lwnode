@@ -4,7 +4,7 @@
     'library%': 'static_library',
     'tizen_device_api_dir': 'deps/tizen-device-api',
     'enable_escargotshim_asan%': 0,
-    'enable_external_builtin_scripts%': 'false',
+    'enable_reload_scripts%': 'false',
     'enable_experimental%': 'false',
   },
   'targets': [
@@ -84,8 +84,8 @@
         'cflags_cc!': ['-fno-exceptions'],
         'cflags_cc': ['-fexceptions'],
         'conditions': [
-          ['enable_external_builtin_scripts == "true"', {
-            'defines': ['LWNODE_USE_EXTERNAL_BUILTIN_SCRIPTS'],
+          ['enable_reload_scripts == "true"', {
+            'defines': ['LWNODE_USE_RELOAD_SCRIPT'],
           }],
         ],
       },
@@ -94,6 +94,9 @@
           'defines': [
             'LWNODE_PLATFORM_LINUX=1',
           ],
+        }],
+        ['enable_reload_scripts == "true"', {
+          'defines': ['LWNODE_USE_RELOAD_SCRIPT'],
         }],
         ['enable_experimental == "true"', {
           'defines': [
