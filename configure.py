@@ -98,6 +98,12 @@ lwnode_optgroup.add_option('--enable-external-builtin-scripts',
     default=False,
     help='Store builtin scripts outside of executable')
 
+lwnode_optgroup.add_option('--enable-reload-script',
+    action='store_true',
+    dest='enable_reload_script',
+    default=False,
+    help='Reload scripts on demand')
+
 lwnode_optgroup.add_option('--static-escargot',
     action='store_true',
     dest='static_escargot',
@@ -128,6 +134,13 @@ def get_lwnode_gyp_options():
       args += ['-Denable_external_builtin_scripts=true']
     else:
       args += ['-Denable_external_builtin_scripts=false']
+
+    if options.enable_reload_script:
+      args += ['-Denable_reload_script=true']
+      if options.enable_external_builtin_scripts == False:
+        args += ['-Denable_external_builtin_scripts=true']
+    else:
+      args += ['-Denable_reload_script=false']
   else:
     args += ['-Dlwnode='+ 'false']
 

@@ -997,7 +997,7 @@
             ['lwnode=="true" and enable_external_builtin_scripts=="true"', {
               'action': [
                 'python', '<@(_inputs)',
-                '--reloadable',
+                '--external',
                 '--target', '<@(_outputs)',
               ]}, {
               'action': [
