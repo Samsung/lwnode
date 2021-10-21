@@ -60,7 +60,7 @@ Development files for Lightweight node.js.
 # Initialize the variables
 %{!?node_engine: %define node_engine escargot}
 %{!?lib_type: %define lib_type shared}
-
+%{!?feature_mode: %define feature_mode production}
 
 %description
 Node.js on Escargot is a memory efficient node.js implementation,
@@ -107,7 +107,7 @@ LDFLAGS+="-fsanitize=address"
 %define target lwnode
 %define target_lib liblwnode
 %define target_src out/tizen/Release
-%define extra_config --without-bundled-v8 --engine escargot --escargot-threading
+%define engine_config --without-bundled-v8 --engine escargot
 %else
 %define target node
 %define target_src out/v8/Release
@@ -115,6 +115,15 @@ LDFLAGS+="-fsanitize=address"
 
 %if "%{lib_type}" == "shared"
 %define lib_type_config --shared
+%endif
+
+%if "%{?feature_mode}" == "production"
+  echo -e "\033[0;32m"production"\033[0m"
+  %define extra_config --escargot-threading
+%else
+  echo -e "\033[0;32m"development"\033[0m"
+  %define extra_config --enable-reload-script
+  %define use_external_builtin_scripts 1
 %endif
 
 echo "Building:" %{target}
@@ -126,10 +135,10 @@ CXXFLAGS+=' -Os '
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
             --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --ninja %{?extra_config}  %{?external_script_config} %{?lib_type_config}
+            --ninja %{?engine_config} %{?extra_config} %{?lib_type_config}
 
 %if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
-ninja -C %{target_src} %{target_lib}
+  ninja -C %{target_src} %{target_lib}
 %endif
 ninja -C %{target_src} %{target}
 
@@ -144,16 +153,18 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
 rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
-%if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
-cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
-cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+%if "%{node_engine}" == "escargot"
+  cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+  %if "%{lib_type}" == "shared"
+    cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
+  %endif
 %endif
 
 # for devel files
 strip -v -g %{target_src}/%{target}
 cp %{target_src}/%{target} %{buildroot}%{_bindir}
-%if "%{external_script_config}" == "--enable-external-builtin-scripts"
-cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
+%if 0%{?use_external_builtin_scripts} == 1
+  cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 %endif
 
 %clean
@@ -174,15 +185,17 @@ rm ./*.manifest
 %files
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
-%if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
-%{_libdir}/libescargot.so
-%{_libdir}/liblwnode.so*
+%if "%{node_engine}" == "escargot"
+  %{_libdir}/libescargot.so
+  %if "%{lib_type}" == "shared"
+    %{_libdir}/liblwnode.so*
+  %endif
 %endif
 %license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
 
 %files devel
 %manifest packaging/%{name}.manifest
 %{_bindir}/%{target}
-%if "%{external_script_config}" == "--enable-external-builtin-scripts"
-%{_bindir}/%{target}.dat
+%if 0%{?use_external_builtin_scripts} == 1
+  %{_bindir}/%{target}.dat
 %endif

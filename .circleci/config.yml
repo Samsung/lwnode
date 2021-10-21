@@ -113,7 +113,7 @@ jobs:
           path: ~/artifacts
           destination: artifacts
 
-  build_tizen_6.5_external_script:
+  build_tizen_6.5_development:
     <<: *config
     steps:
       - checkout
@@ -125,7 +125,8 @@ jobs:
           name: Build RPMs
           command: |
             gbs -c .circleci/gbs.conf build -A armv7l -P profile.t65std --include-all --incremental \
-                --define 'external_script_config --enable-external-builtin-scripts'
+                --define 'feature_mode development' \
+                --define 'lib_type static'
       - run:
           name: Store artifacts
           command: |
@@ -146,6 +147,6 @@ workflows:
     verify_build:
       jobs:
         - build_tizen_6.5
-    verify_build_external_script:
+    verify_build_development:
       jobs:
-        - build_tizen_6.5_external_script
+        - build_tizen_6.5_development
