@@ -881,13 +881,40 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
       [](ExecutionStateRef* state,
          ErrorObjectRef::Code code,
          StringRef* errorMessage) -> ValueRef* {
-        return ErrorObjectRef::create(state, code, errorMessage);
+        auto errorObject = ErrorObjectRef::create(state, code, errorMessage);
+        ExceptionHelper::setStackPropertyIfNotExist(state, errorObject);
+        return errorObject;
       },
       code,
       errorMessage);
 
   LWNODE_CHECK(r.isSuccessful());
   return r.result->asErrorObject();
+}
+
+void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
+                                                 Escargot::ValueRef* error) {
+  if (!error->isObject()) {
+    return;
+  }
+
+  auto errorObject = error->asObject();
+  auto stackString = StringRef::createFromASCII("stack");
+  if (errorObject->has(state, stackString)) {
+    return;
+  }
+
+  auto stack = EvalResultHelper::getCallStackStringAsNodeStyle(
+      state->computeStackTraceData(), 1);
+  auto message = errorObject->toString(state)->toStdUTF8String();
+
+  if (message.length() > 0) {
+    stack = message + "\n" + stack;
+  }
+
+  errorObject->set(state,
+                   stackString,
+                   StringRef::createFromASCII(stack.data(), stack.length()));
 }
 
 // --- StringRefHelper ---
