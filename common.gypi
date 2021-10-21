@@ -16,6 +16,11 @@
       '-Wno-unused-but-set-variable',
       '-fPIC',
       '-ggdb', # all builds include debug symbols, which will be stripped before packaging
+      '-fdata-sections',     # for gc-sections
+      '-ffunction-sections', # for gc-sections
+    ],
+    'ldflags': [
+      '-Wl,--gc-sections',
     ],
     'link_settings': {
       'libraries': [ '-ldl', '-lrt' ],
