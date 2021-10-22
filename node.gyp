@@ -771,7 +771,7 @@
             '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
           ],
           'conditions': [
-            ['enable_external_builtin_scripts=="true"', {
+            ['enable_external_builtin_script=="true"', {
               'variables': {
                 'archive_filename%': '<(node_core_target_name).dat'
               },
@@ -994,7 +994,7 @@
             '<(SHARED_INTERMEDIATE_DIR)/node_javascript.cc',
           ],
           'conditions': [
-            ['lwnode=="true" and enable_external_builtin_scripts=="true"', {
+            ['lwnode=="true" and enable_external_builtin_script=="true"', {
               'action': [
                 'python', '<@(_inputs)',
                 '--external',

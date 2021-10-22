@@ -122,7 +122,7 @@ LDFLAGS+="-fsanitize=address"
   %define extra_config --escargot-threading
 %else
   echo -e "\033[0;32m"development"\033[0m"
-  %define extra_config --enable-reload-script
+  %define extra_config --enable-reload-script --enable-external-builtin-script
   %define use_external_builtin_scripts 1
 %endif
 
