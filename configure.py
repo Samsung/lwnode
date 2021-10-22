@@ -92,9 +92,9 @@ lwnode_optgroup.add_option('--profile',
     default='common',
     help='Build profile: common | tv | kiosk')
 
-lwnode_optgroup.add_option('--enable-external-builtin-scripts',
+lwnode_optgroup.add_option('--enable-external-builtin-script',
     action='store_true',
-    dest='enable_external_builtin_scripts',
+    dest='enable_external_builtin_script',
     default=False,
     help='Store builtin scripts outside of executable')
 
@@ -130,15 +130,13 @@ def get_lwnode_gyp_options():
     lwnode_jsengine_path = 'lwnode/code/escargotshim'
     args += ['-Dlwnode_jsengine_path='+ lwnode_jsengine_path]
 
-    if options.enable_external_builtin_scripts:
-      args += ['-Denable_external_builtin_scripts=true']
+    if options.enable_external_builtin_script:
+      args += ['-Denable_external_builtin_script=true']
     else:
-      args += ['-Denable_external_builtin_scripts=false']
+      args += ['-Denable_external_builtin_script=false']
 
     if options.enable_reload_script:
       args += ['-Denable_reload_script=true']
-      if options.enable_external_builtin_scripts == False:
-        args += ['-Denable_external_builtin_scripts=true']
     else:
       args += ['-Denable_reload_script=false']
   else:
