@@ -487,7 +487,12 @@ void ObjectTemplate::SetHandler(
 
       if (info.hasReturnValue()) {
         Local<Value> ret = info.GetReturnValue().Get();
-        return CVAL(*ret)->value();
+        if (ret->IsFalse()) {
+          return Escargot::OptionalRef<Escargot::ValueRef>(
+              ValueRef::create(false));
+        }
+        return Escargot::OptionalRef<Escargot::ValueRef>(
+            ValueRef::create(true));
       }
 
       return Escargot::OptionalRef<Escargot::ValueRef>();
