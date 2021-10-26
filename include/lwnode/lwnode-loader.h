@@ -26,7 +26,7 @@ class ExecutionStateRef;
 
 namespace LWNode {
 
-enum Encoding { ONE_BYTE, TWO_BYTE };
+enum Encoding { UNKNOWN, ONE_BYTE, TWO_BYTE };
 
 struct FileData {
   void* buffer{nullptr};
@@ -43,7 +43,7 @@ struct FileData {
 
 class Loader {
  public:
-  static FileData readFile(std::string filename);
+  static FileData readFile(std::string filename, const Encoding fileEncoding);
 
   // should return string buffer
   typedef void* (*LoadCallback)(void* callbackData);
@@ -81,5 +81,13 @@ class Loader {
       LoadCallback loadCallback,
       UnloadCallback unloadCallback);
 };
+
+bool convertUTF8ToUTF16le(char** buffer,
+                          size_t* bufferSize,
+                          const char* utf8Buffer,
+                          const size_t utf8BufferSize);
+
+void* allocateStringBuffer(size_t size);
+void freeStringBuffer(void* ptr);
 
 }  // namespace LWNode

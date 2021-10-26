@@ -26,81 +26,125 @@
 #include "api/es-helper.h"
 #include "api/isolate.h"
 #include "api/utils/misc.h"
-#include "api/utils/smaps.h"
 #include "base.h"
 
 using namespace EscargotShim;
 using namespace Escargot;
 using namespace v8;
 
-static inline void* allocateMemory(size_t size) {
+namespace LWNode {
+
+void* allocateStringBuffer(size_t size) {
   return malloc(size);
 }
 
-static inline void freeMemory(void* ptr) {
+void freeStringBuffer(void* ptr) {
   free(ptr);
 }
 
-namespace LWNode {
+bool convertUTF8ToUTF16le(char** buffer,
+                          size_t* bufferSize,
+                          const char* utf8Buffer,
+                          const size_t utf8BufferSize) {
+  LWNODE_CHECK_NOT_NULL(buffer);
+  LWNODE_CHECK_NOT_NULL(bufferSize);
 
-FileData Loader::readFile(std::string filename) {
-  FILE* file = std::fopen(filename.c_str(), "rb");
+  std::wstring_convert<
+      std::codecvt_utf8_utf16<char16_t,
+                              0x10ffff,
+                              std::codecvt_mode::little_endian>,
+      char16_t>
+      convertor;
+  std::u16string utf16 = convertor.from_bytes(utf8Buffer);
+
+  if (convertor.converted() < utf8BufferSize) {
+    LWNODE_LOG_ERROR("Invalid conversion");
+    return false;
+  }
+
+  size_t utf16Size = utf16.size() * 2;
+
+  *buffer = (char*)allocateStringBuffer(utf16Size + 1);
+  memcpy(*buffer, utf16.data(), utf16Size);
+  (*buffer)[utf16Size] = '\0';
+
+  *bufferSize = utf16Size;
+  return true;
+}
+
+class FileScope {
+ public:
+  FileScope(const char* path, const char* mode) {
+    file_ = std::fopen(path, mode);
+  }
+  ~FileScope() { std::fclose(file_); }
+  std::FILE* file() { return file_; }
+
+ private:
+  std::FILE* file_{nullptr};
+};
+
+FileData Loader::readFile(std::string filename, const Encoding fileEncoding) {
+  FileScope fileScope(filename.c_str(), "rb");
+
+  std::FILE* file = fileScope.file();
+
   if (!file) {
     return FileData();
   }
 
   std::fseek(file, 0, SEEK_END);
   long pos = std::ftell(file);
-
-  LWNODE_CHECK(pos != -1L);
-
-  size_t fileSize = (size_t)pos;
-
-  uint8_t* buffer = (uint8_t*)allocateMemory(fileSize + 1);
-
   std::rewind(file);
-  std::fread(buffer, sizeof(uint8_t), fileSize, file);
-  std::fclose(file);
 
-  buffer[fileSize] = '\0';
+  LWNODE_CHECK(pos >= 0);
 
-  // 1. check if non-ascii
+  size_t bufferSize = (size_t)pos;
+  uint8_t* buffer = (uint8_t*)allocateStringBuffer(bufferSize + 1);
+  buffer[bufferSize] = '\0';
+
   bool isOneByteString = true;
-  Encoding encoding = ONE_BYTE;
 
-  for (size_t i = 0; i < fileSize; ++i) {
-    if (buffer[i] > 127) {
+  std::fread(buffer, sizeof(uint8_t), bufferSize, file);
+
+  if (fileEncoding == UNKNOWN) {
+    for (size_t i = 0; i < bufferSize; ++i) {
+      if (buffer[i] > 127) {
+        isOneByteString = false;
+        break;
+      }
+    }
+  } else {
+    if (fileEncoding == TWO_BYTE) {
       isOneByteString = false;
-      break;
     }
   }
 
   void* stringBuffer = buffer;
+  Encoding encoding = ONE_BYTE;
 
   if (isOneByteString == false) {
-    // 2. Treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
-    std::wstring_convert<
-        std::codecvt_utf8_utf16<char16_t,
-                                0x10ffff,
-                                std::codecvt_mode::little_endian>,
-        char16_t>
-        convertor;
-    std::u16string utf16 = convertor.from_bytes((const char*)buffer);
+    // Treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+    char* newStringBuffer = nullptr;
+    size_t newStringBufferSize = 0;
 
-    LWNODE_DCHECK(convertor.converted() == fileSize);
+    bool isConverted = convertUTF8ToUTF16le(&newStringBuffer,
+                                            &newStringBufferSize,
+                                            (const char*)stringBuffer,
+                                            bufferSize);
 
-    // 3. allocate buffer for utf16 string
-    fileSize = utf16.size() * 2;
-    uint8_t* newStringBuffer = (uint8_t*)allocateMemory(fileSize + 1);
-    memcpy(newStringBuffer, utf16.data(), fileSize);
-    newStringBuffer[fileSize] = '\0';
+    freeStringBuffer(stringBuffer);
 
-    freeMemory(buffer);
+    if (isConverted == false) {
+      return FileData();
+    }
+
     stringBuffer = newStringBuffer;
+    bufferSize = newStringBufferSize;
     encoding = TWO_BYTE;
   }
 
-  return FileData(stringBuffer, fileSize, encoding);
+  return FileData(stringBuffer, bufferSize, encoding);
 }
 
 Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
@@ -133,7 +177,7 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
   auto lwContext = ContextWrap::fromEscargot(state->context());
   auto isolate = lwContext->GetIsolate()->toV8();
 
-  FileData dest = Loader::readFile(fileName);
+  FileData dest = Loader::readFile(fileName, UNKNOWN);
 
   if (dest.buffer) {
     auto data = Loader::ReloadableSourceData::create(
@@ -163,7 +207,10 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
                 return buffer;  // move memory ownership to js engine
               }
               s_stat.reloaded++;
-              FileData dest = Loader::readFile(data->path());
+
+              Encoding fileEncoding =
+                  data->isOneByteString() ? ONE_BYTE : TWO_BYTE;
+              FileData dest = Loader::readFile(data->path(), fileEncoding);
               LWNODE_CHECK_NOT_NULL(dest.buffer);
               return dest.buffer;
             },
@@ -180,10 +227,10 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
                               (float)data->preloadedDataLength() / 1024);
 
               if (data->preloadedData) {
-                freeMemory(data->preloadedData);
+                freeStringBuffer(data->preloadedData);
                 data->preloadedData = nullptr;
               }
-              freeMemory(preloadedData);
+              freeStringBuffer(preloadedData);
             })
             .ToLocalChecked();
 

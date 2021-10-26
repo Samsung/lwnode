@@ -915,7 +915,7 @@ static void* LoadReloadableSource(void* userData) {
     return buffer;
   }
   LWNODE_LOG_INFO("reload");
-  FileData dest = Loader::readFile(data->path());
+  FileData dest = Loader::readFile(data->path(), UNKNOWN);
   LWNODE_CHECK_NOT_NULL(dest.buffer);
   return dest.buffer;
 }
@@ -990,7 +990,7 @@ TEST(ReloadableString8) {
     const bool isOneByteString = true;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = Loader::readFile(filename);
+    FileData dest = Loader::readFile(filename, UNKNOWN);
     LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
@@ -1039,7 +1039,7 @@ TEST(ReloadableString16) {
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = Loader::readFile(filename);
+    FileData dest = Loader::readFile(filename, UNKNOWN);
     LWNODE_CHECK_NOT_NULL(dest.buffer);
 
     auto data = Loader::ReloadableSourceData::create(
@@ -1077,7 +1077,7 @@ TEST(ReloadableString16) {
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = Loader::readFile(filename);
+    FileData dest = Loader::readFile(filename, UNKNOWN);
     LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
