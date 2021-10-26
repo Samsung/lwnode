@@ -53,20 +53,14 @@ class ArchiveFileScope {
   unzFile file_{nullptr};
 };
 
-bool readFileFromArchive(std::string filename,
+bool readFileFromArchive(const std::string& archiveFilename,
+                         const std::string& filename,
                          char** buffer,
                          size_t* fileSize) {
   DCHECK_NOT_NULL(buffer);
   DCHECK_NOT_NULL(fileSize);
 
-  static std::string s_externalBuiltinsPath;
-  if (s_externalBuiltinsPath.empty()) {
-    std::string executablePath = getSelfProcPath();
-    executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
-    s_externalBuiltinsPath = executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
-  }
-
-  ArchiveFileScope scope(s_externalBuiltinsPath.c_str());
+  ArchiveFileScope scope(archiveFilename.c_str());
   const unzFile file = scope.file();
   CHECK_NOT_NULL(file);
 
@@ -98,10 +92,10 @@ bool readFileFromArchive(std::string filename,
       }
 
       *fileSize = fileInfo.uncompressed_size;
-      *buffer = (char*)malloc(fileInfo.uncompressed_size + 1);
+      *buffer = (char*)allocateStringBuffer(fileInfo.uncompressed_size + 1);
 
       if (unzReadCurrentFile(file, *buffer, *fileSize) < 0) {
-        free(buffer);
+        freeStringBuffer(buffer);
         buffer = nullptr;
         return false;
       }
@@ -116,6 +110,45 @@ bool readFileFromArchive(std::string filename,
   return isFileFound;
 }
 
+FileData readFileFromArchive(std::string filename,
+                             const Encoding fileEncoding) {
+  CHECK(fileEncoding != UNKNOWN);
+
+  size_t fileSize = 0;
+  char* buffer = nullptr;
+
+  static std::string s_externalBuiltinsPath;
+
+  if (s_externalBuiltinsPath.empty()) {
+    std::string executablePath = getSelfProcPath();
+    executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
+    s_externalBuiltinsPath = executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
+  }
+
+  if (readFileFromArchive(
+          s_externalBuiltinsPath, filename, &buffer, &fileSize) == false) {
+    return FileData();
+  }
+
+  if (fileEncoding == TWO_BYTE) {
+    // treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+    char* newStringBuffer = nullptr;
+    size_t newStringBufferSize = 0;
+
+    bool isConverted = convertUTF8ToUTF16le(
+        &newStringBuffer, &newStringBufferSize, buffer, fileSize);
+
+    // builtin scripts should be successfully converted.
+    CHECK(isConverted);
+
+    freeStringBuffer(buffer);
+    buffer = newStringBuffer;
+    fileSize = newStringBufferSize;
+  }
+
+  return FileData(buffer, fileSize, fileEncoding);
+}
+
 bool NativeModuleLoader::IsOneByte(const char* id) {
   const auto& it = source_.find(id);
   if (it == source_.end()) {
@@ -124,7 +157,7 @@ bool NativeModuleLoader::IsOneByte(const char* id) {
   return it->second.is_one_byte();
 }
 
-static std::string OnArchiveFileName(const char* id) {
+static std::string getFileNameOnArchive(const char* id) {
   std::string filename;
   if (strncmp(id, "internal/deps", strlen("internal/deps")) == 0) {
     id += strlen("internal/");
@@ -136,70 +169,29 @@ static std::string OnArchiveFileName(const char* id) {
   return filename;
 }
 
-static void convert_utf8_to_utf16le(char** buffer,
-                                    size_t* bufferSize,
-                                    const char* utf8Buffer,
-                                    const size_t utf8BufferSize) {
-  DCHECK_NOT_NULL(buffer);
-  DCHECK_NOT_NULL(bufferSize);
-
-  std::wstring_convert<
-      std::codecvt_utf8_utf16<char16_t,
-                              0x10ffff,
-                              std::codecvt_mode::little_endian>,
-      char16_t>
-      convertor;
-  std::u16string utf16 = convertor.from_bytes(utf8Buffer);
-
-  if (convertor.converted() < utf8BufferSize) {
-    LWNODE_LOG_ERROR("Invalid conversion");
-    std::abort();
-  }
-
-  size_t utf16Size = utf16.size() * 2;
-
-  *buffer = (char*)malloc(utf16Size + 1);
-  memcpy(*buffer, utf16.data(), utf16Size);
-  (*buffer)[utf16Size] = '\0';
-
-  *bufferSize = utf16Size;
-}
+struct Stat {
+  int loaded{0};
+  int reloaded{0};
+};
+static Stat s_stat;
 
 MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
     Isolate* isolate, const char* id) {
-  std::string filename = OnArchiveFileName(id);
+  std::string filename = getFileNameOnArchive(id);
 
-  size_t fileSize = 0;
-  char* buffer = nullptr;
-  if (readFileFromArchive(filename, &buffer, &fileSize) == false) {
+  FileData fileData =
+      readFileFromArchive(filename, (IsOneByte(id) ? ONE_BYTE : TWO_BYTE));
+
+  if (fileData.buffer == nullptr) {
     ERROR_AND_ABORT("Failed to open builtins");
     return MaybeLocal<String>();
   }
 
-  struct Stat {
-    int loaded{0};
-    int reloaded{0};
-  };
-  static Stat s_stat;
-
-  bool is8BitString = true;
-  if (IsOneByte(id) == false) {
-    is8BitString = false;
-
-    // treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
-    char* newStringBuffer = nullptr;
-    size_t newStringBufferSize = 0;
-
-    convert_utf8_to_utf16le(
-        &newStringBuffer, &newStringBufferSize, buffer, fileSize);
-
-    free(buffer);
-    buffer = newStringBuffer;
-    fileSize = newStringBufferSize;
-  }
-
   auto data = Loader::ReloadableSourceData::create(
-      filename, buffer, fileSize, is8BitString);
+      filename,
+      fileData.buffer,
+      fileData.size,
+      (fileData.encoding == ONE_BYTE ? true : false));
 
   return Loader::NewReloadableString(
       isolate,
@@ -222,24 +214,12 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
         }
 
         s_stat.reloaded++;
-        size_t fileSize = 0;
-        char* buffer = nullptr;
-        bool result = readFileFromArchive(data->path(), &buffer, &fileSize);
-        if (data->isOneByteString() == false) {
-          // treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
-          char* newStringBuffer = nullptr;
-          size_t newStringBufferSize = 0;
 
-          convert_utf8_to_utf16le(
-              &newStringBuffer, &newStringBufferSize, buffer, fileSize);
+        FileData fileData = readFileFromArchive(
+            data->path(), (data->isOneByteString() ? ONE_BYTE : TWO_BYTE));
 
-          free(buffer);
-          buffer = newStringBuffer;
-          fileSize = newStringBufferSize;
-        }
-
-        CHECK(result);
-        return buffer;
+        CHECK_NOT_NULL(fileData.buffer);
+        return fileData.buffer;
       },
       // Unload-ReloadableSource
       [](void* preloadedData, void* userData) -> void {
@@ -253,10 +233,10 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
                         (float)data->preloadedDataLength() / 1024);
 
         if (data->preloadedData) {
-          free(data->preloadedData);
+          freeStringBuffer(data->preloadedData);
           data->preloadedData = nullptr;
         }
-        free(preloadedData);
+        freeStringBuffer(preloadedData);
       });
 }
 
