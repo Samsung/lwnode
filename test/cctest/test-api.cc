@@ -11799,29 +11799,29 @@ static void FastApiCallback_TrivialSignature(
 //   LoadICFastApi_DirectCall_GCMoveStub(DirectGetterCallback);
 // }
 
-// void ThrowingDirectGetterCallback(
-//     Local<String> name, const v8::PropertyCallbackInfo<v8::Value>& info) {
-//   info.GetIsolate()->ThrowException(v8_str("g"));
-// }
+void ThrowingDirectGetterCallback(
+    Local<String> name, const v8::PropertyCallbackInfo<v8::Value>& info) {
+  info.GetIsolate()->ThrowException(v8_str("g"));
+}
 
-// THREADED_TEST(LoadICFastApi_DirectCall_Throw) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> obj = v8::ObjectTemplate::New(isolate);
-//   obj->SetAccessor(v8_str("p1"), ThrowingDirectGetterCallback);
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("o1"),
-//                   obj->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   v8::Local<Value> result = CompileRun(
-//       "var result = '';"
-//       "for (var i = 0; i < 5; i++) {"
-//       "    try { o1.p1; } catch (e) { result += e; }"
-//       "}"
-//       "result;");
-//   CHECK(v8_str("ggggg")->Equals(context.local(), result).FromJust());
-// }
+THREADED_TEST(LoadICFastApi_DirectCall_Throw) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> obj = v8::ObjectTemplate::New(isolate);
+  obj->SetAccessor(v8_str("p1"), ThrowingDirectGetterCallback);
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("o1"),
+                  obj->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  v8::Local<Value> result = CompileRun(
+      "var result = '';"
+      "for (var i = 0; i < 5; i++) {"
+      "    try { o1.p1; } catch (e) { result += e; }"
+      "}"
+      "result;");
+  CHECK(v8_str("ggggg")->Equals(context.local(), result).FromJust());
+}
 
 // THREADED_PROFILED_TEST(InterceptorCallICFastApi_TrivialSignature) {
 //   int interceptor_call_count = 0;

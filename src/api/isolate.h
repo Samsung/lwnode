@@ -234,7 +234,7 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   void onFatalError(const char* location, const char* message);
 
-  void Throw(Escargot::ExecutionStateRef* state);
+  void ThrowErrorIfHasException(Escargot::ExecutionStateRef* state);
 
   void lock_gc_release() { release_lock_.reset(this); }
   void unlock_gc_release() { release_lock_.release(); }

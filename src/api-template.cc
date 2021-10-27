@@ -125,7 +125,7 @@ static ValueRef* FunctionTemplateNativeFunction(
   if (!fnData->checkSignature(state, thisValue)) {
     lwIsolate->ScheduleThrow(TypeErrorObjectRef::create(
         state, StringRef::createFromASCII("Illegal invocation")));
-    lwIsolate->Throw(state);
+    lwIsolate->ThrowErrorIfHasException(state);
     LWNODE_DLOG_ERROR("Signature mismatch!");
     return ValueRef::createUndefined();
   }
@@ -148,9 +148,7 @@ static ValueRef* FunctionTemplateNativeFunction(
                                   argc,
                                   argv);
     fnData->callback()(info);
-    if (lwIsolate->has_scheduled_exception()) {
-      lwIsolate->Throw(state);
-    }
+    lwIsolate->ThrowErrorIfHasException(state);
     result = info.GetReturnValue().Get();
   }
 
