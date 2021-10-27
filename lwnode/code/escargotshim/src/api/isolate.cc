@@ -610,9 +610,11 @@ static bool isCatchableByJavascript(Escargot::ExecutionStateRef* state) {
   return false;
 }
 
-void IsolateWrap::Throw(Escargot::ExecutionStateRef* state) {
+void IsolateWrap::ThrowErrorIfHasException(Escargot::ExecutionStateRef* state) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
-  LWNODE_DCHECK(has_scheduled_exception());
+  if (!has_scheduled_exception()) {
+    return;
+  }
 
   auto exception = scheduled_exception();
   clear_scheduled_exception();

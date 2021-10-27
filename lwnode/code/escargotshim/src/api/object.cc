@@ -49,6 +49,9 @@ static ValueRef* accessorPropertyGetter(
 
   v8Getter(v8::Utils::ToLocal<Name>(VAL(wrapper->m_name)), info);
 
+  auto lwIsolate = IsolateWrap::fromV8(wrapper->m_isolate);
+  lwIsolate->ThrowErrorIfHasException(state);
+
   return VAL(*info.GetReturnValue().Get())->value();
 }
 
@@ -71,6 +74,9 @@ static bool accessorPropertySetter(
   auto v8Setter = wrapper->m_setter;
   LWNODE_CHECK_NOT_NULL(v8Setter);
   v8Setter(v8::Utils::ToLocal<Name>(VAL(wrapper->m_name)), v8SetValue, info);
+
+  auto lwIsolate = IsolateWrap::fromV8(wrapper->m_isolate);
+  lwIsolate->ThrowErrorIfHasException(state);
 
   return true;
 }
