@@ -1,4 +1,3 @@
-test/parallel/test-accessor-properties.js
 test/parallel/test-assert-async.js
 test/parallel/test-assert-builtins-not-read-from-filesystem.js
 test/parallel/test-assert-deep.js
@@ -21,7 +20,6 @@ test/parallel/test-buffer-constants.js
 test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
 test/parallel/test-buffer-constructor-outside-node-modules.js
-test/parallel/test-buffer-from.js
 test/parallel/test-buffer-pool-untransferable.js
 test/parallel/test-child-process-advanced-serialization.js
 test/parallel/test-child-process-fork-exec-path.js
@@ -81,7 +79,6 @@ test/parallel/test-events-uncaught-exception-stack.js
 test/parallel/test-freeze-intrinsics.js
 test/parallel/test-fs-filehandle.js
 test/parallel/test-fs-promises-file-handle-close.js
-test/parallel/test-fs-readdir-stack-overflow.js
 test/parallel/test-fs-readfile-error.js
 test/parallel/test-fs-utimes.js
 test/parallel/test-fs-write-reuse-callback.js
@@ -181,7 +178,6 @@ test/parallel/test-sync-io-option.js
 test/parallel/test-tick-processor-arguments.js
 test/parallel/test-tls-check-server-identity.js
 test/parallel/test-tls-connect-memleak.js
-test/parallel/test-tls-external-accessor.js
 test/parallel/test-tls-securepair-leak.js
 test/parallel/test-tls-transport-destroy-after-own-gc.js
 test/parallel/test-trace-atomics-wait.js
