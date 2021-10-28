@@ -26,7 +26,7 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-static inline bool checkOutofBounds(ObjectData* data, int idx) {
+static inline bool checkOutofBounds(ObjectTemplateData* data, int idx) {
   return idx >= data->internalFieldCount() || idx < 0;
 }
 
@@ -46,14 +46,17 @@ static std::string toObjectDataString(const ObjectData* data,
   return oss.str();
 }
 
-int ObjectData::internalFieldCount() {
+ObjectData::ObjectData(FunctionObjectRef* functionObject)
+    : functionObject_(functionObject) {}
+
+int ObjectTemplateData::internalFieldCount() {
   if (m_internalFields == nullptr) {
     return 0;
   }
   return m_internalFields->size();
 }
 
-void ObjectData::setInternalFieldCount(int size) {
+void ObjectTemplateData::setInternalFieldCount(int size) {
   LWNODE_CALL_TRACE_ID(OBJDATA, "%d", size);
 
   // TODO: throw internal error
@@ -68,7 +71,7 @@ void ObjectData::setInternalFieldCount(int size) {
   }
 }
 
-void ObjectData::setInternalField(int idx, void* lwValue) {
+void ObjectTemplateData::setInternalField(int idx, void* lwValue) {
   // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(m_internalFields);
   if (checkOutofBounds(this, idx)) {
@@ -76,13 +79,14 @@ void ObjectData::setInternalField(int idx, void* lwValue) {
     return;
   }
 
-  LWNODE_CALL_TRACE_ID(
-      OBJDATA, "%s", toObjectDataString(this, idx, lwValue).c_str());
+  // TODO: Update type
+  // LWNODE_CALL_TRACE_ID(
+  //     OBJDATA, "%s", toObjectDataString(this, idx, lwValue).c_str());
 
   m_internalFields->set(idx, lwValue);
 }
 
-void* ObjectData::internalField(int idx) {
+void* ObjectTemplateData::internalField(int idx) {
   // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(m_internalFields);
   if (checkOutofBounds(this, idx)) {
@@ -92,15 +96,21 @@ void* ObjectData::internalField(int idx) {
 
   void* field = m_internalFields->get(idx);
   if (field) {
-    LWNODE_CALL_TRACE_ID(
-        OBJDATA, "%s", toObjectDataString(this, idx, field).c_str());
+    // TODO: Update type
+    // LWNODE_CALL_TRACE_ID(
+    //     OBJDATA, "%s", toObjectDataString(this, idx, field).c_str());
   }
 
   return field;
 }
 
-ObjectData* ObjectData::clone() {
-  auto newData = new ObjectData();
+ObjectData* ObjectTemplateData::createObjectData(
+    ObjectTemplateRef* objectTemplate) {
+  auto newData = new ObjectData(objectTemplate);
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "ObjectTemplateData(%p)::createObjectData: %p",
+                           objectTemplate,
+                           newData);
 
   LWNODE_CALL_TRACE_ID(OBJDATA, "%p clone: %p", this, newData);
 
@@ -117,31 +127,94 @@ ObjectData* ObjectData::clone() {
   return newData;
 }
 
-void ObjectData::setInstanceTemplate(Escargot::FunctionTemplateRef* tpl) {
-  instanceTemplate_ = tpl;
+v8::Isolate* FunctionData::isolate() {
+  if (functionTemplate_) {
+    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
+                                    ->asFunctionTemplateData();
+    return functionTemplateData->isolate();
+  }
+
+  return nullptr;
 }
 
-Escargot::FunctionTemplateRef* ObjectData::instanceTemplate() {
-  return instanceTemplate_;
+v8::FunctionCallback FunctionData::callback() {
+  if (functionTemplate_) {
+    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
+                                    ->asFunctionTemplateData();
+    return functionTemplateData->callback();
+  }
+
+  return v8::FunctionCallback();
 }
 
+v8::Value* FunctionData::callbackData() {
+  if (functionTemplate_) {
+    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
+                                    ->asFunctionTemplateData();
+    return functionTemplateData->callbackData();
+  }
+
+  return nullptr;
+}
+
+v8::Signature* FunctionData::signature() {
+  if (functionTemplate_) {
+    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
+                                    ->asFunctionTemplateData();
+    return functionTemplateData->signature();
+  }
+
+  return nullptr;
+}
+
+//  A receiver matches a given signature if the receiver (or any of its
+//  hidden prototypes) was created from the signature's FunctionTemplate, or
+//  from a FunctionTemplate that inherits directly or indirectly from the
+//  signature's FunctionTemplate.
 bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
-                                  ValueRef* thisValue) {
-  if (m_signature == nullptr) {
+                                  ObjectRef* receiver) {
+  auto calleeSignature = signature();
+  if (calleeSignature == nullptr) {
     return true;
   }
+
   auto esContext = state->context();
-  auto receiver = CVAL(m_signature)->ftpl()->instantiate(esContext);
+
+  // e.g., 1.x();
+  // 1 is not created by FunctionTemplate
+  auto extraData = ExtraDataHelper::getExtraData(receiver);
+  if (extraData == nullptr) {
+    // receiver is not created by functionTemplate.
+    return false;
+  }
+  auto calleeSignatureObject =
+      CVAL(calleeSignature)->ftpl()->instantiate(esContext);
+
+  FunctionTemplateRef* functionTemplate = nullptr;
+  if (extraData->isObjectData()) {
+    functionTemplate = extraData->asObjectData()->functionTemplate();
+  } else if (extraData->isObjectTemplateData()) {
+    functionTemplate = extraData->asObjectTemplateData()->functionTemplate();
+  } else {
+    LWNODE_CHECK(false);
+  }
+
+  if (functionTemplate == CVAL(calleeSignature)->ftpl()) {
+    return true;
+  }
+
   auto r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState,
-         ValueRef* thisValue,
-         ObjectRef* receiver) -> ValueRef* {
-        return ValueRef::create(thisValue->instanceOf(esState, receiver));
+      [](ExecutionStateRef* state,
+         ObjectRef* receiver,
+         ObjectRef* calleeSignatureObject) -> ValueRef* {
+        return ValueRef::create(
+            receiver->instanceOf(state, calleeSignatureObject));
       },
-      thisValue,
-      receiver);
+      receiver,
+      calleeSignatureObject);
   LWNODE_CHECK(r.isSuccessful());
+
   return r.result->asBoolean();
 }
 

@@ -102,9 +102,29 @@ void FunctionTemplate::SetPrototypeProviderTemplate(
 }
 
 void FunctionTemplate::Inherit(v8::Local<FunctionTemplate> value) {
-  CVAL(this)->ftpl()->inherit(CVAL(*value)->ftpl());
+  auto esThisFunctionTemplate = CVAL(this)->ftpl();
+  auto esThatFunctionTemplate = CVAL(*value)->ftpl();
+
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "FunctionTemplate(%p)::Inherit(): %p",
+                           esThisFunctionTemplate,
+                           esThatFunctionTemplate);
+
+  esThisFunctionTemplate->inherit(esThatFunctionTemplate);
+  LWNODE_CALL_TRACE_ID_LOG(
+      EXTRADATA,
+      "FunctionTemplate(%p)::Inherit(): ExtraData1: %p, ExtraData2: %p",
+      esThisFunctionTemplate,
+      ExtraDataHelper::getExtraData(esThisFunctionTemplate),
+      ExtraDataHelper::getExtraData(esThatFunctionTemplate));
 }
 
+// e.g.,
+// sig_obj()
+// var s = new sig_obj();
+//  target: sig_obj == constructor obj, thisValue: s
+// s.x();
+//  target: null, thisValue: s
 static ValueRef* FunctionTemplateNativeFunction(
     ExecutionStateRef* state,
     ValueRef* thisValue,
@@ -113,28 +133,87 @@ static ValueRef* FunctionTemplateNativeFunction(
     OptionalRef<ObjectRef> newTarget) {
   Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
       state->resolveCallee();
-  LWNODE_DCHECK_NOT_NULL(callee->extraData());
-  auto fnData = FunctionData::toFunctionData(callee->extraData());
+
+  auto calleeExtraData = ExtraDataHelper::getExtraData(callee.value());
+  LWNODE_DCHECK_NOT_NULL(calleeExtraData);
+
+  FunctionData* fnData = nullptr;
+  // callee->extraData() is one of two types below
+  if (calleeExtraData->isFunctionData()) {
+    fnData = calleeExtraData->asFunctionData();
+  } else if (calleeExtraData->isFunctionTemplateData()) {
+    fnData = new FunctionData(
+        calleeExtraData->asFunctionTemplateData()->functionTemplate());
+  } else {
+    LWNODE_CHECK(false);
+  }
 
   LWNODE_CALL_TRACE_ID(TEMPLATE,
                        "es: %p newTarget: %s",
                        thisValue,
                        strBool(newTarget.hasValue()));
 
+  if (newTarget.hasValue()) {
+    auto extraData = ExtraDataHelper::getExtraData(newTarget.value());
+    if (extraData) {
+      // targetData was created in FunctionTemplate::GetFunction()
+      auto targetData = extraData->asFunctionData();
+      auto functionTemplate = targetData->functionTemplate();
+      auto objectTemplate = functionTemplate->instanceTemplate();
+
+      LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                               "FunctionTemplateNativeFunction::targetData: %p",
+                               targetData);
+
+      auto newInstance = thisValue->asObject();
+      auto newInstanceData = ExtraDataHelper::getExtraData(newInstance);
+      if (newInstanceData) {
+        // newInstanceData was created in FunctionTemplate::InstanceTemplate()
+        LWNODE_CHECK(newInstanceData->isObjectTemplateData());
+        auto objectTemplateData = newInstanceData->asObjectTemplateData();
+        LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                                 "FunctionTemplateNative: Existing Data 1: %p",
+                                 newInstanceData);
+        auto newObjectData =
+            objectTemplateData->createObjectData(objectTemplate);
+        // Replace ObjectTemplateData with its objectData, i.e., creating an
+        // instance
+        ObjectRefHelper::setExtraData(newInstance, newObjectData, true);
+      } else {
+        auto objectTemplateData = ExtraDataHelper::getExtraData(objectTemplate);
+        if (objectTemplateData) {
+          // newInstance was created from ObjectTemplate
+          auto newObjectData =
+              objectTemplateData->asObjectTemplateData()->createObjectData(
+                  objectTemplate);
+          LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                                   "FunctionTemplateNative: New ExtaData: %p",
+                                   newObjectData);
+          ObjectRefHelper::setExtraData(newInstance, newObjectData);
+        } else {
+          // newInstance was created from FunctionTemplate::GetFunction(), and
+          // with "var s = new S();" in Javascript
+          LWNODE_CHECK(targetData);
+          auto newObjectData = new ObjectData(targetData->functionTemplate());
+          LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                                   "FunctionTemplateNative: New ExtraData: %p",
+                                   newObjectData);
+          ObjectRefHelper::setExtraData(newInstance, newObjectData);
+        }
+      }
+    } else {
+      // newTarget was created from JavaScript without using Template
+    }
+  }
+
   auto lwIsolate = IsolateWrap::GetCurrent();
-  if (!fnData->checkSignature(state, thisValue)) {
+  if (!newTarget.hasValue() &&
+      !fnData->checkSignature(state, thisValue->asObject())) {
     lwIsolate->ScheduleThrow(TypeErrorObjectRef::create(
         state, StringRef::createFromASCII("Illegal invocation")));
     lwIsolate->ThrowErrorIfHasException(state);
     LWNODE_DLOG_ERROR("Signature mismatch!");
     return ValueRef::createUndefined();
-  }
-
-  auto thisObject = thisValue->asObject();
-  if (newTarget.hasValue() && ObjectRefHelper::hasExtraData(thisObject)) {
-    auto objectData = ObjectRefHelper::getExtraData(thisObject)->clone();
-    objectData->setInstanceTemplate(fnData->instanceTemplate());
-    ObjectRefHelper::setExtraData(thisObject, objectData, true);
   }
 
   Local<Value> result;
@@ -185,17 +264,27 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
     isConstructor = true;
   }
 
-  auto esFunctionTemplate =
-      FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),  // name
-                                  length,         // argumentCount
-                                  false,          // isStrict
-                                  isConstructor,  // isConstruction
-                                  FunctionTemplateNativeFunction);  // fn
+  auto esFunctionTemplate = FunctionTemplateRef::create(
+      AtomicStringRef::emptyAtomicString(),  // name
+      length,                                // argumentCount
+      false,                                 // isStrict
+      isConstructor,                         // isConstruction
+      FunctionTemplateNativeFunction);       // cb: called whenever the function
+                                        // created from this FunctionTemplate is
+                                        // called
 
-  auto functionData = new FunctionData(isolate, *callback, *data, *signature);
-  functionData->setInstanceTemplate(esFunctionTemplate);
-  FunctionTemplateRefHelper::setInstanceExtraData(esFunctionTemplate,
-                                                  functionData);
+  // FunctionTemplateNative callback will receive "functionTemplateData"
+  // in s as in "var s = new A();"
+  auto functionTemplateData = new FunctionTemplateData(
+      esFunctionTemplate, isolate, *callback, *data, *signature);
+
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "FunctionTemplate(%p)::New(): New ExtraData: %p",
+                           esFunctionTemplate,
+                           functionTemplateData);
+
+  FunctionTemplateRefHelper::setExtraData(esFunctionTemplate,
+                                          functionTemplateData);
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
@@ -231,17 +320,41 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
   }
 
   Escargot::FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-  auto fnData =
-      FunctionTemplateRefHelper::getInstanceExtraData(esFunctionTemplate);
-  fnData->setCallback(callback);
-  fnData->setCallbackData(*data);
+  auto functionTemplateData = ExtraDataHelper::getExtraData(esFunctionTemplate)
+                                  ->asFunctionTemplateData();
+  functionTemplateData->setCallback(callback);
+  functionTemplateData->setCallbackData(*data);
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
   FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
+  LWNODE_CALL_TRACE_ID_LOG(
+      EXTRADATA, "InstanceTemplate(%p)", esFunctionTemplate);
 
-  return Utils::NewLocal(IsolateWrap::GetCurrent()->toV8(),
-                         esFunctionTemplate->instanceTemplate());
+  auto functionTemplateData = ExtraDataHelper::getExtraData(esFunctionTemplate)
+                                  ->asFunctionTemplateData();
+  LWNODE_CHECK(functionTemplateData);
+
+  // Only one instanceTemplate should exist.
+  auto esObjectTemplate = esFunctionTemplate->instanceTemplate();
+  auto objectTemplateData = ExtraDataHelper::getExtraData(esObjectTemplate);
+  if (objectTemplateData) {
+    // objectTemplateData was set by itself in the below 'else'
+    LWNODE_CHECK(objectTemplateData->isObjectTemplateData());
+    LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                             "InstanceTemplate(%p): Existing ExtraData: %p",
+                             esObjectTemplate,
+                             objectTemplateData);
+  } else {
+    auto objectTemplateData = new ObjectTemplateData(esFunctionTemplate);
+    LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                             "InstanceTemplate(%p): New ExtarData: %p",
+                             esObjectTemplate,
+                             objectTemplateData);
+    ObjectTemplateRefHelper::setExtraData(esObjectTemplate, objectTemplateData);
+  }
+
+  return Utils::NewLocal(IsolateWrap::GetCurrent()->toV8(), esObjectTemplate);
 }
 
 void FunctionTemplate::SetLength(int length) {
@@ -281,13 +394,53 @@ void FunctionTemplate::RemovePrototype() {
   LWNODE_RETURN_VOID;
 }
 
+// Returns a unique function instance in the "current execution context"
 MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>(), TEMPLATE);
   auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esFunctionTemplate = CVAL(this)->ftpl();
 
-  return Utils::NewLocal<Function>(lwIsolate->toV8(),
-                                   esFunctionTemplate->instantiate(esContext));
+  auto esFunction = esFunctionTemplate->instantiate(esContext);
+  auto functionTemplateData = ExtraDataHelper::getExtraData(esFunctionTemplate)
+                                  ->asFunctionTemplateData();
+
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "FunctionTemplate(%p)::GetFunction(%p)",
+                           esFunctionTemplate,
+                           esFunction);
+
+  auto functionData = ExtraDataHelper::getExtraData(esFunction);
+  if (functionData) {
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "FunctionTemplate(%p)::GetFunction(%p): Existing functionData: %p",
+        esFunctionTemplate,
+        esFunction,
+        functionData);
+    if (functionData->isFunctionTemplateData()) {
+      // This functionData was created by FunctionTemplate::New(), and
+      // FunctionTemplateData was set in esFunction. We need to replace it with
+      // a new FunctionData
+      auto newFunctionData = new FunctionData(esFunctionTemplate);
+      LWNODE_CALL_TRACE_ID_LOG(
+          EXTRADATA,
+          "FunctionTemplate(%p)::GetFunction(%p): New functionData: %p",
+          esFunctionTemplate,
+          esFunction,
+          newFunctionData);
+      FunctionObjectRefHelper::setExtraData(
+          esFunction->asFunctionObject(), newFunctionData, true);
+    } else if (functionData->isFunctionData()) {
+      // this functionData was created previously by the above line.
+      // Use it as it is.
+    } else {
+      LWNODE_CHECK(false);
+    }
+  } else {
+    LWNODE_CHECK(false);
+  }
+
+  return Utils::NewLocal<Function>(lwIsolate->toV8(), esFunction);
 }
 
 MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
@@ -296,6 +449,18 @@ MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
 
 bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
   LWNODE_CALL_TRACE();
+  auto esSelf = CVAL(this)->ftpl();
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "FunctionTemplate(%p)::HasInstance(): %p",
+                           CVAL(this)->ftpl(),
+                           CVAL(*value)->value()->asObject());
+  LWNODE_CALL_TRACE_ID_LOG(
+      EXTRADATA,
+      "FunctionTemplate(%p)::HasInstance: ExtraData: %p, %p?",
+      esSelf,
+      ExtraDataHelper::getExtraData(CVAL(this)->ftpl()),
+      ExtraDataHelper::getExtraData(CVAL(*value)->value()->asObject()));
+
   auto esContext = IsolateWrap::GetCurrent()->GetCurrentContext()->get();
   auto esValue = CVAL(*value)->value();
   if (!esValue->isObject()) {
@@ -303,14 +468,38 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
   }
   auto esObject = esValue->asObject();
 
-  if (!ObjectRefHelper::hasExtraData(esObject)) {
+  if (!ExtraDataHelper::getExtraData(esObject)) {
     return false;
   }
 
-  auto esSelf = CVAL(this)->ftpl();
-  auto tpl = ObjectRefHelper::getExtraData(esObject)->instanceTemplate();
+  auto extraData = ExtraDataHelper::getExtraData(esObject);
+
+  FunctionTemplateRef* tpl = nullptr;
+  if (extraData->isObjectData()) {
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "FunctionTemplate(%p)::HasInstance: Existing ExtraData: %p",
+        esSelf,
+        extraData->asObjectData());
+
+    if (extraData->asObjectData()->objectTemplate()) {
+      auto objectTemplateData = ExtraDataHelper::getExtraData(
+                                    extraData->asObjectData()->objectTemplate())
+                                    ->asObjectTemplateData();
+      tpl = objectTemplateData->functionTemplate();
+    }
+  } else if (extraData->isObjectTemplateData()) {
+    tpl = extraData->asObjectTemplateData()->functionTemplate();
+  } else {
+    LWNODE_CHECK(false);
+  }
+
   if (esSelf == tpl) {
     return true;
+  }
+
+  if (tpl == nullptr) {
+    return false;
   }
 
   auto parent = tpl->parent();
@@ -329,8 +518,21 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
 Local<ObjectTemplate> ObjectTemplate::New(
     Isolate* isolate, v8::Local<FunctionTemplate> constructor) {
   API_ENTER_NO_EXCEPTION(isolate, TEMPLATE);
+  auto esObjectTemplate = ObjectTemplateRef::create();
 
-  return Utils::NewLocal(isolate, ObjectTemplateRef::create());
+  FunctionTemplateRef* esFunctionTemplate = nullptr;
+  if (!constructor.IsEmpty()) {
+    esFunctionTemplate = CVAL(*constructor)->ftpl();
+  }
+  auto objectTemplateData = new ObjectTemplateData(esFunctionTemplate);
+  ObjectTemplateRefHelper::setExtraData(esObjectTemplate, objectTemplateData);
+
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "ObjectTemplate()::New(%p), Data: %p\n",
+                           esObjectTemplate,
+                           objectTemplateData);
+
+  return Utils::NewLocal(isolate, esObjectTemplate);
 }
 
 void Template::SetNativeDataProperty(v8::Local<String> name,
@@ -744,11 +946,36 @@ MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
   auto esContext = VAL(*context)->context()->get();
   auto esObjectTemplate = CVAL(this)->otpl();
 
-  auto newObject = esObjectTemplate->instantiate(esContext);
-  if (ObjectRefHelper::getExtraData(newObject)) {
-    auto objectData = ObjectRefHelper::getExtraData(newObject);
-    ObjectRefHelper::setExtraData(newObject, objectData->clone(), true);
+  auto esNewObject = esObjectTemplate->instantiate(esContext);
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                           "ObjectTemplate(%p)::NewInstance(): %p",
+                           esObjectTemplate,
+                           esNewObject);
+
+  auto objectTemplateData =
+      ExtraDataHelper::getExtraData(esObjectTemplate)->asObjectTemplateData();
+
+  auto objectData = ObjectRefHelper::getExtraData(esNewObject);
+  if (objectData) {
+    // objectData was created in ObjectTemplate::New(). We need to create an
+    // ObjectData instance from its ObjectTemplateData.
+    LWNODE_CHECK(objectData->isObjectTemplateData());
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "ObjectTemplate(%p)::NewInstance(): Existing Data: %p",
+        esObjectTemplate,
+        objectData);
+    auto objectData = objectTemplateData->createObjectData(esObjectTemplate);
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "ObjectTemplate(%p)::NewInstance() New objectData: %p",
+        esObjectTemplate,
+        objectData);
+    ObjectRefHelper::setExtraData(esNewObject, objectData, true);
+  } else {
+    LWNODE_CHECK(false);
   }
-  return Utils::NewLocal<Object>(lwIsolate->toV8(), newObject);
+
+  return Utils::NewLocal<Object>(lwIsolate->toV8(), esNewObject);
 }
 }  // namespace v8

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <EscargotPublic.h>
+#include "extra-data.h"
 #include "utils/gc.h"
 
 using namespace Escargot;
@@ -126,22 +127,41 @@ class ObjectRefHelper {
                                             ValueRef* key);
 };
 
+class ExtraDataHelper {
+ public:
+  static ExtraData* getExtraData(ObjectRef* object) {
+    return (ExtraData*)object->extraData();
+  }
+
+  static ExtraData* getExtraData(TemplateRef* esTemplate) {
+    return (ExtraData*)esTemplate->instanceExtraData();
+  }
+};
+
 class ObjectTemplateRefHelper {
  public:
-  static void setInstanceExtraData(ObjectTemplateRef* otpl, ObjectData* data);
   static ObjectData* getInstanceExtraData(ObjectTemplateRef* otpl);
   static void setInternalFieldCount(ObjectTemplateRef* otpl, int size);
   static int getInternalFieldCount(ObjectTemplateRef* otpl);
+  static void setExtraData(ObjectTemplateRef* otpl, ObjectTemplateData* data);
 
  private:
-  static ObjectData* createInstanceExtraDataIfNotExist(ObjectTemplateRef* otpl);
 };
 
 class FunctionTemplateRefHelper {
  public:
   static void setInstanceExtraData(FunctionTemplateRef* ftpl,
                                    FunctionData* data);
-  static FunctionData* getInstanceExtraData(FunctionTemplateRef* ftpl);
+  static void setExtraData(FunctionTemplateRef* ftpl,
+                           FunctionTemplateData* data);
+};
+
+class FunctionObjectRefHelper {
+ public:
+  static void setExtraData(FunctionObjectRef* functionObject,
+                           FunctionData* data,
+                           bool force = false);
+  static FunctionData* getExtraData(FunctionObjectRef* functionObject);
 };
 
 class ArrayBufferHelper {

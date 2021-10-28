@@ -1759,6 +1759,9 @@ MaybeLocal<Object> Function::NewInstance(Local<Context> context,
                                          v8::Local<v8::Value> argv[]) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Object>());
   auto lwContext = lwIsolate->GetCurrentContext();
+  auto esFunction = CVAL(this)->value()->asFunctionObject();
+  LWNODE_CALL_TRACE_ID_LOG(
+      EXTRADATA, "Function(%p)::NewInstance()", esFunction);
 
   GCVector<ValueRef*> arguments;
   for (int i = 0; i < argc; i++) {
@@ -1779,7 +1782,54 @@ MaybeLocal<Object> Function::NewInstance(Local<Context> context,
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Object>());
 
-  return Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
+  auto esNewObject = r.result->asObject();
+  ObjectData* existingNewObjectExtraData = nullptr;
+  if (ExtraDataHelper::getExtraData(esNewObject)) {
+    // This objectData was added in ObjectTemplate::createObjectData();
+    existingNewObjectExtraData =
+        ExtraDataHelper::getExtraData(esNewObject)->asObjectData();
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "Function(%p)::NewInstance(): Existing extraData: %p",
+        esFunction,
+        existingNewObjectExtraData);
+  }
+
+  auto functionData = FunctionObjectRefHelper::getExtraData(esFunction);
+  if (functionData) {
+    // This functionData was added in FunctionTemplate::GetFunction()
+    LWNODE_CHECK(functionData->isFunctionData());
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "Function(%p)::NewInstance(): Existing functionData: %p\n",
+        esFunction,
+        functionData);
+
+    if (existingNewObjectExtraData) {
+      // esNewObject was created from ObjectTemplate. Add this esFunction info
+      // so that we can trace it back later
+      existingNewObjectExtraData->setFunctionObject(esFunction);
+    } else {
+      auto objectData = new ObjectData(esFunction);
+      LWNODE_CALL_TRACE_ID_LOG(
+          EXTRADATA,
+          "Function(%p)::NewInstance(): New objectData1: %p",
+          esFunction,
+          objectData);
+      ObjectRefHelper::setExtraData(esNewObject, objectData);
+    }
+  } else {
+    // Function::NewInstance() was called in JavaScript
+    LWNODE_CHECK(existingNewObjectExtraData == nullptr);
+    auto objectData = new ObjectData(esFunction);
+    LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
+                             "Function(%p)::NewInstance(): New objectData2: %p",
+                             esFunction,
+                             objectData);
+    ObjectRefHelper::setExtraData(esNewObject, objectData);
+  }
+
+  return Utils::NewLocal<Object>(lwIsolate->toV8(), esNewObject);
 }
 
 MaybeLocal<Object> Function::NewInstanceWithSideEffectType(

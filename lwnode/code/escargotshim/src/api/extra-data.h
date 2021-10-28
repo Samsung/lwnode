@@ -22,6 +22,10 @@
 #include "v8.h"
 
 namespace EscargotShim {
+class FunctionTemplateData;
+class ObjectTemplateData;
+class FunctionData;
+class ObjectData;
 class ExternalObjectData;
 class GlobalObjectData;
 class ExceptionObjectData;
@@ -30,8 +34,37 @@ class ValueWrap;
 
 using namespace Escargot;
 
-class ObjectData : public gc {
+class ExtraData : public gc {
  public:
+  virtual bool isFunctionTemplateData() const { return false; }
+  virtual bool isObjectTemplateData() const { return false; }
+  virtual bool isObjectData() const { return false; }
+  virtual bool isFunctionData() const { return false; }
+  virtual bool isExternalObjectData() const { return false; }
+  virtual bool isExceptionObjectData() const { return false; }
+  virtual bool isStackTraceData() const { return false; }
+  virtual bool isGlobalObjectData() const { return false; }
+
+  FunctionTemplateData* asFunctionTemplateData() {
+    LWNODE_CHECK(isFunctionTemplateData());
+    return reinterpret_cast<FunctionTemplateData*>(this);
+  }
+
+  ObjectTemplateData* asObjectTemplateData() {
+    LWNODE_CHECK(isObjectTemplateData());
+    return reinterpret_cast<ObjectTemplateData*>(this);
+  }
+
+  FunctionData* asFunctionData() {
+    LWNODE_CHECK(isFunctionData());
+    return reinterpret_cast<FunctionData*>(this);
+  }
+
+  ObjectData* asObjectData() {
+    LWNODE_CHECK(isObjectData());
+    return reinterpret_cast<ObjectData*>(this);
+  }
+
   ExternalObjectData* asExternalObjectData() {
     LWNODE_CHECK(isExternalObjectData());
     return reinterpret_cast<ExternalObjectData*>(this);
@@ -51,64 +84,111 @@ class ObjectData : public gc {
     LWNODE_CHECK(isStackTraceData());
     return reinterpret_cast<StackTraceData*>(this);
   }
-
-  virtual bool isFunctionData() const { return false; }
-  virtual bool isExternalObjectData() const { return false; }
-  virtual bool isExceptionObjectData() const { return false; }
-  virtual bool isStackTraceData() const { return false; }
-  virtual bool isGlobalObjectData() const { return false; }
-
-  ObjectData* clone();
-
-  // InternalFields
-  int internalFieldCount();
-  void setInternalFieldCount(int size);
-  void setInternalField(int idx, void* lwValue);
-  void* internalField(int idx);
-
-  // Template
-  void setInstanceTemplate(Escargot::FunctionTemplateRef* tpl);
-  Escargot::FunctionTemplateRef* instanceTemplate();
-
- private:
-  GCContainer<void*>* m_internalFields{nullptr};
-  Escargot::FunctionTemplateRef* instanceTemplate_{nullptr};
 };
 
-class FunctionData : public ObjectData {
+class FunctionTemplateData : public ExtraData {
  public:
-  FunctionData() = default;
-  FunctionData(v8::Isolate* isolate,
-               v8::FunctionCallback callback,
-               v8::Value* callbackData,
-               v8::Signature* signature)
-      : m_isolate(isolate),
-        m_callback(callback),
-        m_callbackData(callbackData),
-        m_signature(signature) {}
+  FunctionTemplateData() = default;
+  FunctionTemplateData(FunctionTemplateRef* functionTemplate)
+      : functionTemplate_(functionTemplate) {}
+  FunctionTemplateData(FunctionTemplateRef* functionTemplate,
+                       v8::Isolate* isolate,
+                       v8::FunctionCallback callback,
+                       v8::Value* callbackData,
+                       v8::Signature* signature)
+      : functionTemplate_(functionTemplate),
+        isolate_(isolate),
+        callback_(callback),
+        callbackData_(callbackData),
+        signature_(signature) {}
 
-  bool isFunctionData() const override { return true; }
+  bool isFunctionTemplateData() const override { return true; }
 
-  static FunctionData* toFunctionData(void* ptr) {
-    LWNODE_CHECK_NOT_NULL(ptr);
-    auto data = reinterpret_cast<FunctionData*>(ptr);
-    LWNODE_CHECK(data->isFunctionData());
-    return data;
+  virtual v8::Isolate* isolate() { return isolate_; }
+  v8::FunctionCallback callback() { return callback_; }
+  v8::Value* callbackData() { return callbackData_; }
+  v8::Signature* signature() { return signature_; }
+
+  void setCallback(v8::FunctionCallback callback) { callback_ = callback; }
+  void setCallbackData(v8::Value* callbackData) {
+    callbackData_ = callbackData;
   }
 
-  v8::Isolate* isolate() { return m_isolate; }
-  v8::FunctionCallback callback() { return m_callback; }
-  void setCallback(v8::FunctionCallback callback) { m_callback = callback; }
-  v8::Value* callbackData() { return m_callbackData; }
-  void setCallbackData(v8::Value* data) { m_callbackData = data; }
+  virtual FunctionTemplateRef* functionTemplate() { return functionTemplate_; }
 
-  bool checkSignature(Escargot::ExecutionStateRef* state, ValueRef* thisValue);
+ protected:
+  FunctionTemplateRef* functionTemplate_{nullptr};
+  v8::Isolate* isolate_{nullptr};
+  v8::FunctionCallback callback_{nullptr};
+  v8::Value* callbackData_{nullptr};
+  v8::Signature* signature_{nullptr};
+};
+
+class ObjectTemplateData : public ExtraData {
+ public:
+  ObjectTemplateData() = default;
+  ObjectTemplateData(FunctionTemplateRef* functionTemplate)
+      : functionTemplate_(functionTemplate) {}
+
+  bool isObjectTemplateData() const override { return true; }
+
+  virtual FunctionTemplateRef* functionTemplate() { return functionTemplate_; }
+
+  virtual int internalFieldCount();
+  virtual void setInternalFieldCount(int size);
+  virtual void setInternalField(int idx, void* lwValue);
+  virtual void* internalField(int idx);
+
+  ObjectData* createObjectData(ObjectTemplateRef* objectTemplate);
+
+ protected:
+  FunctionTemplateRef* functionTemplate_{nullptr};
+  GCContainer<void*>* m_internalFields{nullptr};
+};
+
+class ObjectData : public ObjectTemplateData {
+ public:
+  ObjectData() = default;
+  ObjectData(FunctionTemplateRef* functionTemplate)
+      : ObjectTemplateData(functionTemplate) {}
+  ObjectData(FunctionObjectRef* functionObject);
+  ObjectData(ObjectTemplateRef* objectTemplate)
+      : ObjectTemplateData(), objectTemplate_(objectTemplate) {}
+
+  bool isObjectData() const override { return true; }
+  bool isObjectTemplateData() const override { return false; }
+
+  void setFunctionObject(FunctionObjectRef* functionObject) {
+    LWNODE_CHECK(functionObject_ == nullptr);
+    functionObject_ = functionObject;
+  }
+
+  ObjectTemplateRef* objectTemplate() { return objectTemplate_; }
+  FunctionObjectRef* functionObject() { return functionObject_; }
+
+ protected:
+  ObjectTemplateRef* objectTemplate_{nullptr};
+  FunctionObjectRef* functionObject_{nullptr};
+};
+
+class FunctionData : public FunctionTemplateData {  // FIXME: should be a link
+ public:
+  FunctionData() = default;
+  FunctionData(FunctionTemplateRef* functionTemplate)
+      : FunctionTemplateData(functionTemplate) {}
+
+  bool isFunctionData() const override { return true; }
+  bool isFunctionTemplateData() const override { return false; }
+
+  v8::Isolate* isolate() override;
+  v8::FunctionCallback callback();
+  v8::Value* callbackData();
+  v8::Signature* signature();
+
+  bool checkSignature(Escargot::ExecutionStateRef* state, ObjectRef* thisValue);
+  std::string toString();
 
  private:
-  v8::Isolate* m_isolate{nullptr};
-  v8::FunctionCallback m_callback{nullptr};
-  v8::Value* m_callbackData{nullptr};
-  v8::Signature* m_signature{nullptr};
 };
 
 class ExternalObjectData : public ObjectData {
