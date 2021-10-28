@@ -954,3 +954,64 @@ THREADED_TEST(InheritanceCustom) {
 
   CHECK_EQ(15.2, CompileRun("b.knurd")->NumberValue(env.local()).FromJust());
 }
+
+static void Returns42C(const v8::FunctionCallbackInfo<v8::Value>& info) {
+  info.GetReturnValue().Set(42);
+}
+
+TEST(ChainSignatureCheckCustom) {
+  LocalContext context;
+  auto isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  auto global = context->Global();
+  auto sig_obj = FunctionTemplate::New(isolate);
+  auto sig = v8::Signature::New(isolate, sig_obj);
+  for (int i = 0; i < 4; ++i) {
+    auto temp = FunctionTemplate::New(isolate);
+    temp->Inherit(sig_obj);
+    sig_obj = temp;
+  }
+
+  auto x =
+      FunctionTemplate::New(isolate,
+                            Returns42C,
+                            Local<Value>(),
+                            v8::Signature::New(isolate, sig_obj));  // <-- super
+
+  global
+      ->Set(context.local(),
+            v8_str("sig_obj"),
+            sig_obj->GetFunction(context.local()).ToLocalChecked())  // <-- base
+      .FromJust();
+
+  global
+      ->Set(context.local(),
+            v8_str("x"),
+            x->GetFunction(context.local()).ToLocalChecked())  // <-- super
+      .FromJust();
+
+  CompileRun("var s = new sig_obj();");  // <-- base
+
+  {
+    TryCatch try_catch(isolate);
+    CompileRun("x()");
+    CHECK(try_catch.HasCaught());
+  }
+  {
+    TryCatch try_catch(isolate);
+    CompileRun("x.call(1)");
+    CHECK(try_catch.HasCaught());
+  }
+  {
+    TryCatch try_catch(isolate);
+    auto result = CompileRun("s.x = x; s.x()");
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
+  }
+  {
+    TryCatch try_catch(isolate);
+    auto result = CompileRun("x.call(s)");
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
+  }
+}
