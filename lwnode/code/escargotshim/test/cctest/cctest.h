@@ -364,4 +364,9 @@ class StaticOneByteResource : public v8::String::ExternalOneByteStringResource {
   const char* data_;
 };
 
+class ApiTestFuzzer {
+ public:
+  static void Fuzz() {}
+};
+
 #endif
