@@ -4434,23 +4434,23 @@ THREADED_TEST(ScriptException) {
 }
 
 
-// TEST(TryCatchCustomException) {
-//   LocalContext env;
-//   v8::Isolate* isolate = env->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::TryCatch try_catch(isolate);
-//   CompileRun(
-//       "function CustomError() { this.a = 'b'; }"
-//       "(function f() { throw new CustomError(); })();");
-//   CHECK(try_catch.HasCaught());
-//   CHECK(try_catch.Exception()
-//             ->ToObject(env.local())
-//             .ToLocalChecked()
-//             ->Get(env.local(), v8_str("a"))
-//             .ToLocalChecked()
-//             ->Equals(env.local(), v8_str("b"))
-//             .FromJust());
-// }
+TEST(TryCatchCustomException) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::TryCatch try_catch(isolate);
+  CompileRun(
+      "function CustomError() { this.a = 'b'; }"
+      "(function f() { throw new CustomError(); })();");
+  CHECK(try_catch.HasCaught());
+  CHECK(try_catch.Exception()
+            ->ToObject(env.local())
+            .ToLocalChecked()
+            ->Get(env.local(), v8_str("a"))
+            .ToLocalChecked()
+            ->Equals(env.local(), v8_str("b"))
+            .FromJust());
+}
 
 
 // bool message_received;
@@ -5461,41 +5461,41 @@ void ThrowFromC(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 
-// void CCatcher(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   if (args.Length() < 1) {
-//     args.GetReturnValue().Set(false);
-//     return;
-//   }
-//   v8::HandleScope scope(args.GetIsolate());
-//   v8::TryCatch try_catch(args.GetIsolate());
-//   Local<Value> result =
-//       CompileRun(args[0]
-//                      ->ToString(args.GetIsolate()->GetCurrentContext())
-//                      .ToLocalChecked());
-//   CHECK(!try_catch.HasCaught() || result.IsEmpty());
-//   args.GetReturnValue().Set(try_catch.HasCaught());
-// }
+void CCatcher(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  if (args.Length() < 1) {
+    args.GetReturnValue().Set(false);
+    return;
+  }
+  v8::HandleScope scope(args.GetIsolate());
+  v8::TryCatch try_catch(args.GetIsolate());
+  Local<Value> result =
+      CompileRun(args[0]
+                     ->ToString(args.GetIsolate()->GetCurrentContext())
+                     .ToLocalChecked());
+  CHECK(!try_catch.HasCaught() || result.IsEmpty());
+  args.GetReturnValue().Set(try_catch.HasCaught());
+}
 
 
-// THREADED_TEST(APICatch) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->Set(v8_str("ThrowFromC"),
-//              v8::FunctionTemplate::New(isolate, ThrowFromC));
-//   LocalContext context(nullptr, templ);
-//   CompileRun(
-//       "var thrown = false;"
-//       "try {"
-//       "  ThrowFromC();"
-//       "} catch (e) {"
-//       "  thrown = true;"
-//       "}");
-//   Local<Value> thrown = context->Global()
-//                             ->Get(context.local(), v8_str("thrown"))
-//                             .ToLocalChecked();
-//   CHECK(thrown->BooleanValue(isolate));
-// }
+THREADED_TEST(APICatch) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->Set(v8_str("ThrowFromC"),
+             v8::FunctionTemplate::New(isolate, ThrowFromC));
+  LocalContext context(nullptr, templ);
+  CompileRun(
+      "var thrown = false;"
+      "try {"
+      "  ThrowFromC();"
+      "} catch (e) {"
+      "  thrown = true;"
+      "}");
+  Local<Value> thrown = context->Global()
+                            ->Get(context.local(), v8_str("thrown"))
+                            .ToLocalChecked();
+  CHECK(thrown->BooleanValue(isolate));
+}
 
 
 THREADED_TEST(APIThrowTryCatch) {
@@ -5511,29 +5511,29 @@ THREADED_TEST(APIThrowTryCatch) {
 }
 
 
-// // Test that a try-finally block doesn't shadow a try-catch block
-// // when setting up an external handler.
-// //
-// // BUG(271): Some of the exception propagation does not work on the
-// // ARM simulator because the simulator separates the C++ stack and the
-// // JS stack.  This test therefore fails on the simulator.  The test is
-// // not threaded to allow the threading tests to run on the simulator.
-// TEST(TryCatchInTryFinally) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->Set(v8_str("CCatcher"), v8::FunctionTemplate::New(isolate, CCatcher));
-//   LocalContext context(nullptr, templ);
-//   Local<Value> result = CompileRun(
-//       "try {"
-//       "  try {"
-//       "    CCatcher('throw 7;');"
-//       "  } finally {"
-//       "  }"
-//       "} catch (e) {"
-//       "}");
-//   CHECK(result->IsTrue());
-// }
+// Test that a try-finally block doesn't shadow a try-catch block
+// when setting up an external handler.
+//
+// BUG(271): Some of the exception propagation does not work on the
+// ARM simulator because the simulator separates the C++ stack and the
+// JS stack.  This test therefore fails on the simulator.  The test is
+// not threaded to allow the threading tests to run on the simulator.
+TEST(TryCatchInTryFinally) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->Set(v8_str("CCatcher"), v8::FunctionTemplate::New(isolate, CCatcher));
+  LocalContext context(nullptr, templ);
+  Local<Value> result = CompileRun(
+      "try {"
+      "  try {"
+      "    CCatcher('throw 7;');"
+      "  } finally {"
+      "  }"
+      "} catch (e) {"
+      "}");
+  CHECK(result->IsTrue());
+}
 
 
 // static void check_custom_error_tostring(v8::Local<v8::Message> message,
@@ -5802,20 +5802,20 @@ THREADED_TEST(APIThrowTryCatch) {
 // }
 
 
-// THREADED_TEST(EvalInTryFinally) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   v8::TryCatch try_catch(context->GetIsolate());
-//   CompileRun(
-//       "(function() {"
-//       "  try {"
-//       "    eval('asldkf (*&^&*^');"
-//       "  } finally {"
-//       "    return;"
-//       "  }"
-//       "})()");
-//   CHECK(!try_catch.HasCaught());
-// }
+THREADED_TEST(EvalInTryFinally) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  v8::TryCatch try_catch(context->GetIsolate());
+  CompileRun(
+      "(function() {"
+      "  try {"
+      "    eval('asldkf (*&^&*^');"
+      "  } finally {"
+      "    return;"
+      "  }"
+      "})()");
+  CHECK(!try_catch.HasCaught());
+}
 
 
 // // This test works by making a stack of alternating JavaScript and C
@@ -6110,51 +6110,51 @@ TEST(TryCatchNested) {
 // }
 
 
-// void TryCatchNativeHelper(const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   v8::TryCatch try_catch(args.GetIsolate());
-//   args.GetIsolate()->ThrowException(v8_str("boom"));
-//   CHECK(try_catch.HasCaught());
-// }
+void TryCatchNativeHelper(const v8::FunctionCallbackInfo<v8::Value>& args) {
+  ApiTestFuzzer::Fuzz();
+  v8::TryCatch try_catch(args.GetIsolate());
+  args.GetIsolate()->ThrowException(v8_str("boom"));
+  CHECK(try_catch.HasCaught());
+}
 
 
-// TEST(TryCatchNative) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::V8::Initialize();
-//   v8::TryCatch try_catch(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->Set(v8_str("TryCatchNativeHelper"),
-//              v8::FunctionTemplate::New(isolate, TryCatchNativeHelper));
-//   LocalContext context(nullptr, templ);
-//   CompileRun("TryCatchNativeHelper();");
-//   CHECK(!try_catch.HasCaught());
-// }
+TEST(TryCatchNative) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::V8::Initialize();
+  v8::TryCatch try_catch(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->Set(v8_str("TryCatchNativeHelper"),
+             v8::FunctionTemplate::New(isolate, TryCatchNativeHelper));
+  LocalContext context(nullptr, templ);
+  CompileRun("TryCatchNativeHelper();");
+  CHECK(!try_catch.HasCaught());
+}
 
 
-// void TryCatchNativeResetHelper(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   ApiTestFuzzer::Fuzz();
-//   v8::TryCatch try_catch(args.GetIsolate());
-//   args.GetIsolate()->ThrowException(v8_str("boom"));
-//   CHECK(try_catch.HasCaught());
-//   try_catch.Reset();
-//   CHECK(!try_catch.HasCaught());
-// }
+void TryCatchNativeResetHelper(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  ApiTestFuzzer::Fuzz();
+  v8::TryCatch try_catch(args.GetIsolate());
+  args.GetIsolate()->ThrowException(v8_str("boom"));
+  CHECK(try_catch.HasCaught());
+  try_catch.Reset();
+  CHECK(!try_catch.HasCaught());
+}
 
 
-// TEST(TryCatchNativeReset) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   v8::V8::Initialize();
-//   v8::TryCatch try_catch(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->Set(v8_str("TryCatchNativeResetHelper"),
-//              v8::FunctionTemplate::New(isolate, TryCatchNativeResetHelper));
-//   LocalContext context(nullptr, templ);
-//   CompileRun("TryCatchNativeResetHelper();");
-//   CHECK(!try_catch.HasCaught());
-// }
+TEST(TryCatchNativeReset) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  v8::V8::Initialize();
+  v8::TryCatch try_catch(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->Set(v8_str("TryCatchNativeResetHelper"),
+             v8::FunctionTemplate::New(isolate, TryCatchNativeResetHelper));
+  LocalContext context(nullptr, templ);
+  CompileRun("TryCatchNativeResetHelper();");
+  CHECK(!try_catch.HasCaught());
+}
 
 
 THREADED_TEST(Equality) {
@@ -6679,46 +6679,46 @@ THREADED_TEST(SimplePropertyWrite) {
 }
 
 
-// THREADED_TEST(SetterOnly) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessor(v8_str("x"), nullptr, SetXValue, v8_str("donut"));
-//   LocalContext context;
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("obj"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   Local<Script> script = v8_compile("obj.x = 4; obj.x");
-//   for (int i = 0; i < 10; i++) {
-//     CHECK(xValue.IsEmpty());
-//     script->Run(context.local()).ToLocalChecked();
-//     CHECK(v8_num(4)
-//               ->Equals(context.local(),
-//                        Local<Value>::New(CcTest::isolate(), xValue))
-//               .FromJust());
-//     xValue.Reset();
-//   }
-// }
+THREADED_TEST(SetterOnly) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessor(v8_str("x"), nullptr, SetXValue, v8_str("donut"));
+  LocalContext context;
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("obj"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  Local<Script> script = v8_compile("obj.x = 4; obj.x");
+  for (int i = 0; i < 10; i++) {
+    CHECK(xValue.IsEmpty());
+    script->Run(context.local()).ToLocalChecked();
+    CHECK(v8_num(4)
+              ->Equals(context.local(),
+                       Local<Value>::New(CcTest::isolate(), xValue))
+              .FromJust());
+    xValue.Reset();
+  }
+}
 
 
-// THREADED_TEST(NoAccessors) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetAccessor(v8_str("x"),
-//                      static_cast<v8::AccessorGetterCallback>(nullptr), nullptr,
-//                      v8_str("donut"));
-//   LocalContext context;
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("obj"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   Local<Script> script = v8_compile("obj.x = 4; obj.x");
-//   for (int i = 0; i < 10; i++) {
-//     script->Run(context.local()).ToLocalChecked();
-//   }
-// }
+THREADED_TEST(NoAccessors) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetAccessor(v8_str("x"),
+                     static_cast<v8::AccessorGetterCallback>(nullptr), nullptr,
+                     v8_str("donut"));
+  LocalContext context;
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("obj"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  Local<Script> script = v8_compile("obj.x = 4; obj.x");
+  for (int i = 0; i < 10; i++) {
+    script->Run(context.local()).ToLocalChecked();
+  }
+}
 
 
 // THREADED_TEST(MultiContexts) {
@@ -6773,42 +6773,42 @@ THREADED_TEST(SimplePropertyWrite) {
 // }
 
 
-// THREADED_TEST(FunctionPrototypeAcrossContexts) {
-//   // Make sure that functions created by cloning boilerplates cannot
-//   // communicate through their __proto__ field.
+THREADED_TEST(FunctionPrototypeAcrossContexts) {
+  // Make sure that functions created by cloning boilerplates cannot
+  // communicate through their __proto__ field.
 
-//   v8::HandleScope scope(CcTest::isolate());
+  v8::HandleScope scope(CcTest::isolate());
 
-//   LocalContext env0;
-//   v8::Local<v8::Object> global0 = env0->Global();
-//   v8::Local<v8::Object> object0 = global0->Get(env0.local(), v8_str("Object"))
-//                                       .ToLocalChecked()
-//                                       .As<v8::Object>();
-//   v8::Local<v8::Object> tostring0 =
-//       object0->Get(env0.local(), v8_str("toString"))
-//           .ToLocalChecked()
-//           .As<v8::Object>();
-//   v8::Local<v8::Object> proto0 =
-//       tostring0->Get(env0.local(), v8_str("__proto__"))
-//           .ToLocalChecked()
-//           .As<v8::Object>();
-//   CHECK(proto0->Set(env0.local(), v8_str("custom"), v8_num(1234)).FromJust());
+  LocalContext env0;
+  v8::Local<v8::Object> global0 = env0->Global();
+  v8::Local<v8::Object> object0 = global0->Get(env0.local(), v8_str("Object"))
+                                      .ToLocalChecked()
+                                      .As<v8::Object>();
+  v8::Local<v8::Object> tostring0 =
+      object0->Get(env0.local(), v8_str("toString"))
+          .ToLocalChecked()
+          .As<v8::Object>();
+  v8::Local<v8::Object> proto0 =
+      tostring0->Get(env0.local(), v8_str("__proto__"))
+          .ToLocalChecked()
+          .As<v8::Object>();
+  CHECK(proto0->Set(env0.local(), v8_str("custom"), v8_num(1234)).FromJust());
 
-//   LocalContext env1;
-//   v8::Local<v8::Object> global1 = env1->Global();
-//   v8::Local<v8::Object> object1 = global1->Get(env1.local(), v8_str("Object"))
-//                                       .ToLocalChecked()
-//                                       .As<v8::Object>();
-//   v8::Local<v8::Object> tostring1 =
-//       object1->Get(env1.local(), v8_str("toString"))
-//           .ToLocalChecked()
-//           .As<v8::Object>();
-//   v8::Local<v8::Object> proto1 =
-//       tostring1->Get(env1.local(), v8_str("__proto__"))
-//           .ToLocalChecked()
-//           .As<v8::Object>();
-//   CHECK(!proto1->Has(env1.local(), v8_str("custom")).FromJust());
-// }
+  LocalContext env1;
+  v8::Local<v8::Object> global1 = env1->Global();
+  v8::Local<v8::Object> object1 = global1->Get(env1.local(), v8_str("Object"))
+                                      .ToLocalChecked()
+                                      .As<v8::Object>();
+  v8::Local<v8::Object> tostring1 =
+      object1->Get(env1.local(), v8_str("toString"))
+          .ToLocalChecked()
+          .As<v8::Object>();
+  v8::Local<v8::Object> proto1 =
+      tostring1->Get(env1.local(), v8_str("__proto__"))
+          .ToLocalChecked()
+          .As<v8::Object>();
+  CHECK(!proto1->Has(env1.local(), v8_str("custom")).FromJust());
+}
 
 
 THREADED_TEST(Regress892105) {
@@ -7045,20 +7045,20 @@ THREADED_TEST(Regress892105) {
 // }
 // // The point of this test is type checking. We run it only so compilers
 // // don't complain about an unused function.
-// TEST(PersistentHandles) {
-//   LocalContext env;
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<String> str = v8_str("foo");
-//   v8::Persistent<String> p_str(isolate, str);
-//   p_str.Reset();
-//   Local<Script> scr = v8_compile("");
-//   v8::Persistent<Script> p_scr(isolate, scr);
-//   p_scr.Reset();
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   v8::Persistent<ObjectTemplate> p_templ(isolate, templ);
-//   p_templ.Reset();
-// }
+TEST(PersistentHandles) {
+  LocalContext env;
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<String> str = v8_str("foo");
+  v8::Persistent<String> p_str(isolate, str);
+  p_str.Reset();
+  Local<Script> scr = v8_compile("");
+  v8::Persistent<Script> p_scr(isolate, scr);
+  p_scr.Reset();
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  v8::Persistent<ObjectTemplate> p_templ(isolate, templ);
+  p_templ.Reset();
+}
 
 
 static void HandleLogDelegator(
@@ -8905,36 +8905,36 @@ THREADED_TEST(DeleteAccessor) {
 // }
 
 
-// TEST(CompilationErrorUsingTryCatchHandler) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::TryCatch try_catch(env->GetIsolate());
-//   CHECK(v8_try_compile("This doesn't &*&@#$&*^ compile.").IsEmpty());
-//   CHECK(*try_catch.Exception());
-//   CHECK(try_catch.HasCaught());
-// }
+TEST(CompilationErrorUsingTryCatchHandler) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::TryCatch try_catch(env->GetIsolate());
+  CHECK(v8_try_compile("This doesn't &*&@#$&*^ compile.").IsEmpty());
+  CHECK(*try_catch.Exception());
+  CHECK(try_catch.HasCaught());
+}
 
 
-// TEST(TryCatchFinallyUsingTryCatchHandler) {
-//   LocalContext env;
-//   v8::HandleScope scope(env->GetIsolate());
-//   v8::TryCatch try_catch(env->GetIsolate());
-//   CompileRun("try { throw ''; } catch (e) {}");
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun("try { throw ''; } finally {}");
-//   CHECK(try_catch.HasCaught());
-//   try_catch.Reset();
-//   CompileRun(
-//       "(function() {"
-//       "try { throw ''; } finally { return; }"
-//       "})()");
-//   CHECK(!try_catch.HasCaught());
-//   CompileRun(
-//       "(function()"
-//       "  { try { throw ''; } finally { throw 0; }"
-//       "})()");
-//   CHECK(try_catch.HasCaught());
-// }
+TEST(TryCatchFinallyUsingTryCatchHandler) {
+  LocalContext env;
+  v8::HandleScope scope(env->GetIsolate());
+  v8::TryCatch try_catch(env->GetIsolate());
+  CompileRun("try { throw ''; } catch (e) {}");
+  CHECK(!try_catch.HasCaught());
+  CompileRun("try { throw ''; } finally {}");
+  CHECK(try_catch.HasCaught());
+  try_catch.Reset();
+  CompileRun(
+      "(function() {"
+      "try { throw ''; } finally { return; }"
+      "})()");
+  CHECK(!try_catch.HasCaught());
+  CompileRun(
+      "(function()"
+      "  { try { throw ''; } finally { throw 0; }"
+      "})()");
+  CHECK(try_catch.HasCaught());
+}
 
 
 // void CEvaluate(const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -11724,36 +11724,36 @@ static void FastApiCallback_TrivialSignature(
 //       "f();");
 // }
 
-// void ThrowingDirectApiCallback(
-//     const v8::FunctionCallbackInfo<v8::Value>& args) {
-//   args.GetIsolate()->ThrowException(v8_str("g"));
-// }
+void ThrowingDirectApiCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  args.GetIsolate()->ThrowException(v8_str("g"));
+}
 
-// THREADED_TEST(CallICFastApi_DirectCall_Throw) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   v8::Local<v8::ObjectTemplate> nativeobject_templ =
-//       v8::ObjectTemplate::New(isolate);
-//   nativeobject_templ->Set(
-//       isolate, "callback",
-//       v8::FunctionTemplate::New(isolate, ThrowingDirectApiCallback));
-//   v8::Local<v8::Object> nativeobject_obj =
-//       nativeobject_templ->NewInstance(context.local()).ToLocalChecked();
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("nativeobject"), nativeobject_obj)
-//             .FromJust());
-//   // call the api function multiple times to ensure direct call stub creation.
-//   v8::Local<Value> result = CompileRun(
-//       "var result = '';"
-//       "function f() {"
-//       "  for (var i = 1; i <= 5; i++) {"
-//       "    try { nativeobject.callback(); } catch (e) { result += e; }"
-//       "  }"
-//       "}"
-//       "f(); result;");
-//   CHECK(v8_str("ggggg")->Equals(context.local(), result).FromJust());
-// }
+THREADED_TEST(CallICFastApi_DirectCall_Throw) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::ObjectTemplate> nativeobject_templ =
+      v8::ObjectTemplate::New(isolate);
+  nativeobject_templ->Set(
+      isolate, "callback",
+      v8::FunctionTemplate::New(isolate, ThrowingDirectApiCallback));
+  v8::Local<v8::Object> nativeobject_obj =
+      nativeobject_templ->NewInstance(context.local()).ToLocalChecked();
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("nativeobject"), nativeobject_obj)
+            .FromJust());
+  // call the api function multiple times to ensure direct call stub creation.
+  v8::Local<Value> result = CompileRun(
+      "var result = '';"
+      "function f() {"
+      "  for (var i = 1; i <= 5; i++) {"
+      "    try { nativeobject.callback(); } catch (e) { result += e; }"
+      "  }"
+      "}"
+      "f(); result;");
+  CHECK(v8_str("ggggg")->Equals(context.local(), result).FromJust());
+}
 
 // static int p_getter_count_3;
 
@@ -12989,37 +12989,37 @@ THREADED_TEST(ObjectGetConstructorName) {
 }
 
 
-// THREADED_TEST(SubclassGetConstructorName) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   LocalContext context;
-//   v8::HandleScope scope(isolate);
-//   v8_compile(
-//       "\"use strict\";"
-//       "class Parent {}"
-//       "class Child extends Parent {}"
-//       "var p = new Parent();"
-//       "var c = new Child();")
-//       ->Run(context.local())
-//       .ToLocalChecked();
+THREADED_TEST(SubclassGetConstructorName) {
+  v8::Isolate* isolate = CcTest::isolate();
+  LocalContext context;
+  v8::HandleScope scope(isolate);
+  v8_compile(
+      "\"use strict\";"
+      "class Parent {}"
+      "class Child extends Parent {}"
+      "var p = new Parent();"
+      "var c = new Child();")
+      ->Run(context.local())
+      .ToLocalChecked();
 
-//   Local<v8::Value> p =
-//       context->Global()->Get(context.local(), v8_str("p")).ToLocalChecked();
-//   CHECK(p->IsObject() &&
-//         p->ToObject(context.local())
-//             .ToLocalChecked()
-//             ->GetConstructorName()
-//             ->Equals(context.local(), v8_str("Parent"))
-//             .FromJust());
+  Local<v8::Value> p =
+      context->Global()->Get(context.local(), v8_str("p")).ToLocalChecked();
+  CHECK(p->IsObject() &&
+        p->ToObject(context.local())
+            .ToLocalChecked()
+            ->GetConstructorName()
+            ->Equals(context.local(), v8_str("Parent"))
+            .FromJust());
 
-//   Local<v8::Value> c =
-//       context->Global()->Get(context.local(), v8_str("c")).ToLocalChecked();
-//   CHECK(c->IsObject() &&
-//         c->ToObject(context.local())
-//             .ToLocalChecked()
-//             ->GetConstructorName()
-//             ->Equals(context.local(), v8_str("Child"))
-//             .FromJust());
-// }
+  Local<v8::Value> c =
+      context->Global()->Get(context.local(), v8_str("c")).ToLocalChecked();
+  CHECK(c->IsObject() &&
+        c->ToObject(context.local())
+            .ToLocalChecked()
+            ->GetConstructorName()
+            ->Equals(context.local(), v8_str("Child"))
+            .FromJust());
+}
 
 
 // bool ApiTestFuzzer::fuzzing_ = false;

@@ -9,7 +9,6 @@ test/parallel/test-async-hooks-destroy-on-gc.js
 test/parallel/test-async-hooks-disable-gc-tracking.js
 test/parallel/test-async-hooks-execution-async-resource-await.js
 test/parallel/test-async-hooks-prevent-double-destroy.js
-test/parallel/test-async-hooks-recursive-stack-runInAsyncScope.js
 test/parallel/test-async-hooks-worker-asyncfn-terminate-1.js
 test/parallel/test-async-hooks-worker-asyncfn-terminate-2.js
 test/parallel/test-async-hooks-worker-asyncfn-terminate-3.js
@@ -33,7 +32,6 @@ test/parallel/test-cluster-advanced-serialization.js
 test/parallel/test-common-gc.js
 test/parallel/test-common-must-not-call.js
 test/parallel/test-console-table.js
-test/parallel/test-coverage-with-inspector-disabled.js
 test/parallel/test-crypto-cipheriv-decipheriv.js
 test/parallel/test-crypto-dh-leak.js
 test/parallel/test-crypto-dh.js
@@ -111,7 +109,6 @@ test/parallel/test-http2-session-gc-while-write-scheduled.js
 test/parallel/test-http2-write-finishes-after-stream-destroy.js
 test/parallel/test-http2-zero-length-header.js
 test/parallel/test-internal-errors.js
-test/parallel/test-internal-util-decorate-error-stack.js
 test/parallel/test-internal-util-weakreference.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
 test/parallel/test-memory-usage.js
@@ -125,7 +122,6 @@ test/parallel/test-net-write-fully-async-hex-string.js
 test/parallel/test-no-harmony-top-level-await.mjs
 test/parallel/test-npm-install.js
 test/parallel/test-os-userinfo-handles-getter-errors.js
-test/parallel/test-os.js
 test/parallel/test-performance-eventlooputil.js
 test/parallel/test-performance-function.js
 test/parallel/test-performance-gc.js
@@ -140,9 +136,7 @@ test/parallel/test-preload.js
 test/parallel/test-process-dlopen-undefined-exports.js
 test/parallel/test-process-emit-warning-from-native.js
 test/parallel/test-process-env-allowed-flags-are-documented.js
-test/parallel/test-process-env-deprecation.js
 test/parallel/test-process-env-symbols.js
-test/parallel/test-process-env-windows-error-reset.js
 test/parallel/test-process-env.js
 test/parallel/test-process-exception-capture-should-abort-on-uncaught.js
 test/parallel/test-process-exception-capture.js
