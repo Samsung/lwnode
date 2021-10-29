@@ -19,6 +19,7 @@
 #include <unzip.h>
 #include <codecvt>
 #include <locale>
+#include <map>
 #include "lwnode-loader.h"
 #include "lwnode.h"
 #include "node_native_module.h"
@@ -33,6 +34,37 @@ using v8::Local;
 using v8::MaybeLocal;
 using v8::String;
 
+class ArchiveFileScope {
+ public:
+  ArchiveFileScope() = default;
+  ArchiveFileScope(const char* path) { open(path); }
+  ~ArchiveFileScope() {
+    if (file_) {
+      unzClose(file_);
+    }
+  }
+
+  void open(const char* path) {
+    if (file_ == nullptr) {
+      file_ = unzOpen(path);
+    }
+  }
+
+  bool isFileOpened() { return (file_ != nullptr) ? true : false; }
+  unzFile file() { return file_; }
+
+ private:
+  unzFile file_{nullptr};
+};
+
+struct UnzFileCachedInfo {
+  unz_file_pos position{0, 0};
+  uLong uncompressedSize{0};
+};
+
+static ArchiveFileScope s_archiveFileScope;
+static std::map<std::string, UnzFileCachedInfo> s_unzFileInfoDictionary;
+
 std::string getSelfProcPath() {
   char path[PATH_MAX];
   ssize_t length = readlink("/proc/self/exe", path, PATH_MAX);
@@ -43,15 +75,30 @@ std::string getSelfProcPath() {
   return std::string(path);
 }
 
-class ArchiveFileScope {
- public:
-  ArchiveFileScope(const char* path) { file_ = unzOpen(path); }
-  ~ArchiveFileScope() { unzClose(file_); }
-  unzFile file() { return file_; }
+bool readCurrentFileFromArchive(const unzFile file,
+                                uLong uncompressedSize,
+                                char** buffer,
+                                size_t* fileSize) {
+  if (unzOpenCurrentFile(file) < 0) {
+    return false;
+  }
 
- private:
-  unzFile file_{nullptr};
-};
+  *fileSize = uncompressedSize;
+  *buffer = (char*)allocateStringBuffer(uncompressedSize + 1);
+
+  bool result = true;
+
+  if (unzReadCurrentFile(file, *buffer, *fileSize) < 0) {
+    freeStringBuffer(buffer);
+    buffer = nullptr;
+    result = false;
+  }
+
+  (*buffer)[*fileSize] = '\0';
+
+  unzCloseCurrentFile(file);
+  return result;
+}
 
 bool readFileFromArchive(const std::string& archiveFilename,
                          const std::string& filename,
@@ -60,10 +107,25 @@ bool readFileFromArchive(const std::string& archiveFilename,
   DCHECK_NOT_NULL(buffer);
   DCHECK_NOT_NULL(fileSize);
 
-  ArchiveFileScope scope(archiveFilename.c_str());
-  const unzFile file = scope.file();
+  if (s_archiveFileScope.isFileOpened() == false) {
+    s_archiveFileScope.open(archiveFilename.c_str());
+  }
+
+  const unzFile file = s_archiveFileScope.file();
   CHECK_NOT_NULL(file);
 
+  // 1.1 check if the cache on this filename exists
+  const auto& it = s_unzFileInfoDictionary.find(filename);
+  if (it != s_unzFileInfoDictionary.end()) {
+    UnzFileCachedInfo cache = it->second;
+
+    // 1.2 move the file position using the cached info and read the data
+    unzGoToFilePos(file, &cache.position);
+    return readCurrentFileFromArchive(
+        file, cache.uncompressedSize, buffer, fileSize);
+  }
+
+  // 2. read the data by searching the file position from the first one.
   if (unzGoToFirstFile(file) < 0) {
     return false;
   }
@@ -87,21 +149,19 @@ bool readFileFromArchive(const std::string& archiveFilename,
     if (filename.compare(currentFileName) == 0) {
       isFileFound = true;
 
-      if (unzOpenCurrentFile(file) < 0) {
+      // 2.1 read the data from the current file poistion
+      if (readCurrentFileFromArchive(
+              file, fileInfo.uncompressed_size, buffer, fileSize) == false) {
         return false;
       }
 
-      *fileSize = fileInfo.uncompressed_size;
-      *buffer = (char*)allocateStringBuffer(fileInfo.uncompressed_size + 1);
+      // 2.2 create the cache for this file and register it to the dictionary
+      UnzFileCachedInfo cache;
+      auto result = unzGetFilePos(file, &cache.position);
+      CHECK(result == UNZ_OK);
+      cache.uncompressedSize = fileInfo.uncompressed_size;
 
-      if (unzReadCurrentFile(file, *buffer, *fileSize) < 0) {
-        freeStringBuffer(buffer);
-        buffer = nullptr;
-        return false;
-      }
-      (*buffer)[*fileSize] = '\0';
-
-      unzCloseCurrentFile(file);
+      s_unzFileInfoDictionary[filename] = cache;
       break;
     }
 
