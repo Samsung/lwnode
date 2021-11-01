@@ -202,15 +202,79 @@ void MessageLoop::wakeupMainloopOnce() {
   }
 }
 
-void MessageLoop::OnPrepare(v8::Isolate* isolate) {
-  // @note escargot says:
-  // user can call 'enterIdleMode' many times without performance concern
+typedef std::chrono::system_clock::time_point TimePoint;
+typedef std::chrono::duration<long double, std::ratio<1, 1000>> MilliSecondTick;
+static TimePoint getCurrentTime() {
+  return std::chrono::system_clock::now();
+}
 
-  // @todo consider delayed-entering Idle GC
-  IdleGC(isolate);
+void MessageLoop::handleDelayedGC(v8::Isolate* isolate) {
+  enum class DelayedGCState {
+    TIMER_START = 0,
+    TASK_SCHEDULED,
+    TIMER_END,
+  };
+
+  static std::atomic<DelayedGCState> s_state(DelayedGCState::TIMER_END);
+  static std::atomic<bool> s_isLastCallChecked(true);
+  static const int s_periodicGCduration = DEFAULT_PERIODIC_GC_DURATION;
+  static TimePoint s_lastCheckedTime;
+
+  static std::function<bool()> canScheduleGC = []() {
+    // condition (a)
+    if (s_isLastCallChecked == true) {
+      return true;
+    }
+
+    // condition (b)
+    if (MilliSecondTick(getCurrentTime() - s_lastCheckedTime).count() >
+        s_periodicGCduration) {
+      s_lastCheckedTime = getCurrentTime();
+      return true;
+    }
+
+    return false;
+  };
+
+  /*
+    @note Delayed GC Strategy:
+    Garbage collection will be conducted :
+      - (a) `delayedGCTimeout`ms after this function is last called
+      - (b) every `s_periodicGCduration`ms when the timer is running
+
+    @todo consider applying strategy pattern if needed
+  */
+
+  s_isLastCallChecked = false;
+
+  if (s_state == DelayedGCState::TIMER_END) {
+    // start a timer thread
+    std::thread([]() {
+      s_state = DelayedGCState::TIMER_START;
+      s_lastCheckedTime = getCurrentTime();
+
+      do {
+        s_isLastCallChecked = true;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            MessageLoop::GetInstance()->delayedGCTimeout()));
+
+        if (canScheduleGC()) {
+          MessageLoop::GetInstance()->wakeupMainloopOnce();
+          s_state = DelayedGCState::TASK_SCHEDULED;
+          break;
+        }
+      } while (s_isLastCallChecked == false);
+    }).detach();
+
+  } else if (s_state == DelayedGCState::TASK_SCHEDULED) {
+    IdleGC(isolate);
+    s_state = DelayedGCState::TIMER_END;
+  }
 }
 
 void MessageLoop::onPrepare(v8::Isolate* isolate) {
+  handleDelayedGC(isolate);
 }
 
 }  // namespace LWNode
