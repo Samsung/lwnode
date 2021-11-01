@@ -5730,21 +5730,21 @@ TEST(TryCatchInTryFinally) {
 // }
 
 
-// THREADED_TEST(ExternalScriptException) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->Set(v8_str("ThrowFromC"),
-//              v8::FunctionTemplate::New(isolate, ThrowFromC));
-//   LocalContext context(nullptr, templ);
+THREADED_TEST(ExternalScriptException) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->Set(v8_str("ThrowFromC"),
+             v8::FunctionTemplate::New(isolate, ThrowFromC));
+  LocalContext context(nullptr, templ);
 
-//   v8::TryCatch try_catch(isolate);
-//   Local<Value> result = CompileRun("ThrowFromC(); throw 'panama';");
-//   CHECK(result.IsEmpty());
-//   CHECK(try_catch.HasCaught());
-//   String::Utf8Value exception_value(isolate, try_catch.Exception());
-//   CHECK_EQ(0, strcmp("konto", *exception_value));
-// }
+  v8::TryCatch try_catch(isolate);
+  Local<Value> result = CompileRun("ThrowFromC(); throw 'panama';");
+  CHECK(result.IsEmpty());
+  CHECK(try_catch.HasCaught());
+  String::Utf8Value exception_value(isolate, try_catch.Exception());
+  CHECK_EQ(0, strcmp("konto", *exception_value));
+}
 
 
 // void CThrowCountDown(const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -10956,32 +10956,32 @@ THREADED_TEST(SetPrototype) {
 // }
 
 
-// THREADED_TEST(GetterSetterExceptions) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
-//   CompileRun(
-//       "function Foo() { };"
-//       "function Throw() { throw 5; };"
-//       "var x = { };"
-//       "x.__defineSetter__('set', Throw);"
-//       "x.__defineGetter__('get', Throw);");
-//   Local<v8::Object> x = Local<v8::Object>::Cast(
-//       context->Global()->Get(context.local(), v8_str("x")).ToLocalChecked());
-//   v8::TryCatch try_catch(isolate);
-//   CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
-//             .IsNothing());
-//   CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
-//   CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
-//             .IsNothing());
-//   CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
-//   CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
-//             .IsNothing());
-//   CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
-//   CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
-//             .IsNothing());
-//   CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
-// }
+THREADED_TEST(GetterSetterExceptions) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  CompileRun(
+      "function Foo() { };"
+      "function Throw() { throw 5; };"
+      "var x = { };"
+      "x.__defineSetter__('set', Throw);"
+      "x.__defineGetter__('get', Throw);");
+  Local<v8::Object> x = Local<v8::Object>::Cast(
+      context->Global()->Get(context.local(), v8_str("x")).ToLocalChecked());
+  v8::TryCatch try_catch(isolate);
+  CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
+            .IsNothing());
+  CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
+  CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
+            .IsNothing());
+  CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
+  CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
+            .IsNothing());
+  CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
+  CHECK(x->Set(context.local(), v8_str("set"), v8::Integer::New(isolate, 8))
+            .IsNothing());
+  CHECK(x->Get(context.local(), v8_str("get")).IsEmpty());
+}
 
 
 // THREADED_TEST(Constructor) {
@@ -11001,31 +11001,31 @@ THREADED_TEST(SetPrototype) {
 // }
 
 
-// THREADED_TEST(FunctionDescriptorException) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope handle_scope(isolate);
-//   Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
-//   templ->SetClassName(v8_str("Fun"));
-//   Local<Function> cons = templ->GetFunction(context.local()).ToLocalChecked();
-//   CHECK(
-//       context->Global()->Set(context.local(), v8_str("Fun"), cons).FromJust());
-//   Local<Value> value = CompileRun(
-//       "function test() {"
-//       "  try {"
-//       "    (new Fun()).blah()"
-//       "  } catch (e) {"
-//       "    var str = String(e);"
-//       // "    if (str.indexOf('TypeError') == -1) return 1;"
-//       // "    if (str.indexOf('[object Fun]') != -1) return 2;"
-//       // "    if (str.indexOf('#<Fun>') == -1) return 3;"
-//       "    return 0;"
-//       "  }"
-//       "  return 4;"
-//       "}"
-//       "test();");
-//   CHECK_EQ(0, value->Int32Value(context.local()).FromJust());
-// }
+THREADED_TEST(FunctionDescriptorException) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+  Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  templ->SetClassName(v8_str("Fun"));
+  Local<Function> cons = templ->GetFunction(context.local()).ToLocalChecked();
+  CHECK(
+      context->Global()->Set(context.local(), v8_str("Fun"), cons).FromJust());
+  Local<Value> value = CompileRun(
+      "function test() {"
+      "  try {"
+      "    (new Fun()).blah()"
+      "  } catch (e) {"
+      "    var str = String(e);"
+      // "    if (str.indexOf('TypeError') == -1) return 1;"
+      // "    if (str.indexOf('[object Fun]') != -1) return 2;"
+      // "    if (str.indexOf('#<Fun>') == -1) return 3;"
+      "    return 0;"
+      "  }"
+      "  return 4;"
+      "}"
+      "test();");
+  CHECK_EQ(0, value->Int32Value(context.local()).FromJust());
+}
 
 
 // THREADED_TEST(EvalAliasedDynamic) {

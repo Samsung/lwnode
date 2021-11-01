@@ -146,11 +146,15 @@ bool Isolate::PropagatePendingExceptionToExternalTryCatch() {
   // If not exists, propagation pregress is done with no action.
   if (hasExternalTryCatch()) {
     v8::TryCatch* handler = getExternalTryCatchOnTop();
+
+    if (handler->exception_) {
+      LWNODE_CALL_TRACE_ID(TRYCATCH,
+                           "The previous exception has not yet been handled.");
+      return true;
+    }
+
     handler->can_continue_ = true;
     handler->has_terminated_ = false;
-
-    LWNODE_CHECK_NULL(handler->exception_);
-    LWNODE_CHECK_NULL(handler->message_obj_);
 
     // gets the status changed from `pending` to `done' through
     // setting them to an external v8::TryCatch handler.
