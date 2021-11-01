@@ -64,6 +64,7 @@
         'src/api/stack-trace.cc',
         'src/lwnode/lwnode.cc',
         'src/lwnode/lwnode-loader.cc',
+        'src/lwnode/lwnode-gc-strategy.cc',
       ],
       'defines': ['V8_PROMISE_INTERNAL_FIELD_COUNT=1'],
       'cflags_cc!': ['-fno-exceptions'],
