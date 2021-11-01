@@ -290,11 +290,8 @@ test/parallel/test-worker-message-channel.js
 test/parallel/test-worker-message-not-serializable.js
 test/parallel/test-worker-message-port-arraybuffer.js
 test/parallel/test-worker-message-port-close-while-receiving.js
-test/parallel/test-worker-message-port-close.js
-test/parallel/test-worker-message-port-constructor.js
 test/parallel/test-worker-message-port-drain.js
 test/parallel/test-worker-message-port-infinite-message-loop.js
-test/parallel/test-worker-message-port-inspect-during-init-hook.js
 test/parallel/test-worker-message-port-jstransferable-nested-untransferable.js
 test/parallel/test-worker-message-port-message-before-close.js
 test/parallel/test-worker-message-port-message-port-transferring.js
