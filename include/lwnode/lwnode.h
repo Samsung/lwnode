@@ -17,9 +17,13 @@
 #pragma once
 
 #include <v8.h>
+#include <functional>
 #include <string>
 
 namespace LWNode {
+
+#define DEFAULT_DELAYED_GC_TIMEOUT 1500
+#define DEFAULT_PERIODIC_GC_DURATION 5000
 
 void InitializeProcessMethods(v8::Local<v8::Object> target,
                               v8::Local<v8::Context> context);
@@ -28,8 +32,27 @@ bool dumpSelfMemorySnapshot();
 
 class MessageLoop {
  public:
-  // this callback should be called right before polling I/O events
-  static void OnPrepare(v8::Isolate* isolate);
+  using WakeupMainloopHandler = std::function<void()>;
+
+  struct PlatformHandler {
+    WakeupMainloopHandler wakeup{nullptr};
+  };
+
+  static MessageLoop* GetInstance();
+
+  // Prepare callback is called right before polling I/O events
+  void onPrepare(v8::Isolate* isolate);
+
+  void wakeupMainloopOnce();
+  void setWakeupMainloopOnceHandler(PlatformHandler handler);
+  unsigned delayedGCTimeout() { return delayedGCTimeout_; }
+
+ private:
+  MessageLoop() = default;
+  void handleDelayedGC(v8::Isolate* isolate);
+
+  PlatformHandler platformHandler_;
+  unsigned delayedGCTimeout_{DEFAULT_DELAYED_GC_TIMEOUT};
 };
 
 }  // namespace LWNode
