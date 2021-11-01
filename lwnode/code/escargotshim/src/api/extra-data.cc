@@ -104,9 +104,16 @@ void* ObjectTemplateData::internalField(int idx) {
   return field;
 }
 
+ObjectData::ObjectData(ObjectTemplateRef* objectTemplate)
+    : ObjectTemplateData(ExtraDataHelper::getExtraData(objectTemplate)
+                             ->asObjectTemplateData()
+                             ->functionTemplate()),
+      objectTemplate_(objectTemplate) {}
+
 ObjectData* ObjectTemplateData::createObjectData(
     ObjectTemplateRef* objectTemplate) {
   auto newData = new ObjectData(objectTemplate);
+
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "ObjectTemplateData(%p)::createObjectData: %p",
                            objectTemplate,
@@ -187,8 +194,6 @@ bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
     // receiver is not created by functionTemplate.
     return false;
   }
-  auto calleeSignatureObject =
-      CVAL(calleeSignature)->ftpl()->instantiate(esContext);
 
   FunctionTemplateRef* functionTemplate = nullptr;
   if (extraData->isObjectData()) {
@@ -199,23 +204,14 @@ bool FunctionData::checkSignature(Escargot::ExecutionStateRef* state,
     LWNODE_CHECK(false);
   }
 
-  if (functionTemplate == CVAL(calleeSignature)->ftpl()) {
-    return true;
+  auto calleeFunctionTemplate = CVAL(calleeSignature)->ftpl();
+  for (auto p = functionTemplate; p; p = p->parent().value()) {
+    if (p == calleeFunctionTemplate) {
+      return true;
+    }
   }
 
-  auto r = Evaluator::execute(
-      esContext,
-      [](ExecutionStateRef* state,
-         ObjectRef* receiver,
-         ObjectRef* calleeSignatureObject) -> ValueRef* {
-        return ValueRef::create(
-            receiver->instanceOf(state, calleeSignatureObject));
-      },
-      receiver,
-      calleeSignatureObject);
-  LWNODE_CHECK(r.isSuccessful());
-
-  return r.result->asBoolean();
+  return false;
 }
 
 static bool isValidStackFrame(const Evaluator::StackTraceData& traceData) {

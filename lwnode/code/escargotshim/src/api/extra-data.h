@@ -152,8 +152,7 @@ class ObjectData : public ObjectTemplateData {
   ObjectData(FunctionTemplateRef* functionTemplate)
       : ObjectTemplateData(functionTemplate) {}
   ObjectData(FunctionObjectRef* functionObject);
-  ObjectData(ObjectTemplateRef* objectTemplate)
-      : ObjectTemplateData(), objectTemplate_(objectTemplate) {}
+  ObjectData(ObjectTemplateRef* objectTemplate);
 
   bool isObjectData() const override { return true; }
   bool isObjectTemplateData() const override { return false; }
