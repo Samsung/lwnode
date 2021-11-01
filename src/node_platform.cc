@@ -220,9 +220,9 @@ int WorkerThreadsTaskRunner::NumberOfWorkerThreads() const {
 }
 
 #ifdef LWNODE
-void PerIsolatePlatformData::PrepareTask(uv_prepare_t *handle) {
+void PerIsolatePlatformData::PrepareTask(uv_prepare_t* handle) {
   auto data = reinterpret_cast<PerIsolatePlatformData*>(handle->data);
-  LWNode::MessageLoop::OnPrepare(data->isolate_);
+  LWNode::MessageLoop::GetInstance()->onPrepare(data->isolate_);
 }
 #endif
 
@@ -240,6 +240,18 @@ PerIsolatePlatformData::PerIsolatePlatformData(
   uv_prepare_start(prepare_task_, PrepareTask);
   prepare_task_->data = static_cast<void*>(this);
   uv_unref(reinterpret_cast<uv_handle_t*>(prepare_task_));
+
+  LWNode::MessageLoop::GetInstance()->setWakeupMainloopOnceHandler(
+      {.wakeup = []() {
+        auto wake_task = new uv_async_t();
+        uv_async_init(uv_default_loop(), wake_task, [](uv_async_t* handle) {
+          uv_close((uv_handle_t*)handle, [](uv_handle_t* handle) {
+            delete reinterpret_cast<uv_async_t*>(handle);
+          });
+        });
+        uv_unref(reinterpret_cast<uv_handle_t*>(wake_task));
+        uv_async_send(wake_task);  // “wakeup” the event loop
+      }});
 #endif
 }
 

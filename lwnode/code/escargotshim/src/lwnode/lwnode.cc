@@ -17,9 +17,11 @@
 #include "lwnode/lwnode.h"
 #include <EscargotPublic.h>
 #include <malloc.h>  // for malloc_trim
+#include <atomic>
 #include <chrono>
 #include <codecvt>
 #include <fstream>
+#include <thread>
 #include "api.h"
 #include "api/context.h"
 #include "api/es-helper.h"
@@ -185,12 +187,30 @@ static void IdleGC(v8::Isolate* isolate) {
   malloc_trim(0);
 }
 
+MessageLoop* MessageLoop::GetInstance() {
+  static MessageLoop instance_;
+  return &instance_;
+}
+
+void MessageLoop::setWakeupMainloopOnceHandler(PlatformHandler handler) {
+  platformHandler_ = handler;
+}
+
+void MessageLoop::wakeupMainloopOnce() {
+  if (platformHandler_.wakeup) {
+    platformHandler_.wakeup();
+  }
+}
+
 void MessageLoop::OnPrepare(v8::Isolate* isolate) {
   // @note escargot says:
   // user can call 'enterIdleMode' many times without performance concern
 
   // @todo consider delayed-entering Idle GC
   IdleGC(isolate);
+}
+
+void MessageLoop::onPrepare(v8::Isolate* isolate) {
 }
 
 }  // namespace LWNode
