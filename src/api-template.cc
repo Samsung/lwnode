@@ -347,10 +347,12 @@ Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
                              objectTemplateData);
   } else {
     auto objectTemplateData = new ObjectTemplateData(esFunctionTemplate);
-    LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
-                             "InstanceTemplate(%p): New ExtarData: %p",
-                             esObjectTemplate,
-                             objectTemplateData);
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA,
+        "FunctionTemplate(%p)::InstanceTemplate(%p): New ExtarData: %p",
+        esFunctionTemplate,
+        esObjectTemplate,
+        objectTemplateData);
     ObjectTemplateRefHelper::setExtraData(esObjectTemplate, objectTemplateData);
   }
 
@@ -466,15 +468,14 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
   if (!esValue->isObject()) {
     return false;
   }
-  auto esObject = esValue->asObject();
 
-  if (!ExtraDataHelper::getExtraData(esObject)) {
+  auto esObject = esValue->asObject();
+  auto extraData = ExtraDataHelper::getExtraData(esObject);
+  if (!extraData) {
     return false;
   }
 
-  auto extraData = ExtraDataHelper::getExtraData(esObject);
-
-  FunctionTemplateRef* tpl = nullptr;
+  FunctionTemplateRef* esOtherFunctionTemplate = nullptr;
   if (extraData->isObjectData()) {
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
@@ -486,28 +487,19 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
       auto objectTemplateData = ExtraDataHelper::getExtraData(
                                     extraData->asObjectData()->objectTemplate())
                                     ->asObjectTemplateData();
-      tpl = objectTemplateData->functionTemplate();
+      esOtherFunctionTemplate = objectTemplateData->functionTemplate();
     }
   } else if (extraData->isObjectTemplateData()) {
-    tpl = extraData->asObjectTemplateData()->functionTemplate();
+    esOtherFunctionTemplate =
+        extraData->asObjectTemplateData()->functionTemplate();
   } else {
     LWNODE_CHECK(false);
   }
 
-  if (esSelf == tpl) {
-    return true;
-  }
-
-  if (tpl == nullptr) {
-    return false;
-  }
-
-  auto parent = tpl->parent();
-  while (parent.hasValue()) {
-    if (esSelf == parent.value()) {
+  for (auto p = esOtherFunctionTemplate; p; p = p->parent().value()) {
+    if (esSelf == p) {
       return true;
     }
-    parent = parent->parent();
   }
 
   return false;
