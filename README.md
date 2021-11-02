@@ -21,16 +21,16 @@ git submodule update --init --recursive
 sudo apt-get install -y build-essential cmake clang libicu-dev
 ```
 
-### Compile
-1. Generate build config files and build node.js
+### How to build and run
 ```
 ./lwnode/build.sh
-./lwnode/build-cctest.sh
+./out/linux/Release/lwnode ./test/message/hello_world.js
 ```
 
-### How to run
+### How to run testcases
 ```
-./node ./test/message/hello_world.js
+./lwnode/build-cctest.sh
+./cctest
 ```
 
 ## How to Compile: Tizen
@@ -46,6 +46,9 @@ gbs -c ~/gbs.conf build -A arm7l --define 'build_profile tv'
 Build Options
 * --define 'build_profile `none|tv|kiosk|soundbar`': default is `none`
 * --define 'build_mode `release|debug`': default is `release`
+
+### Installing lwnode executable
+Install `lwnode-devel.rpm` to get the `lwnode` executable.
 
 ## Maintainers
 A list of maintainers can be found in [MAINTAINERS.md](MAINTAINERS.md).
