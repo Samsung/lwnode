@@ -804,15 +804,53 @@ void* ObjectRefHelper::getInternalPointer(ObjectRef* object, int idx) {
   return data;
 }
 
-// --- ObjectTemplateRefHelper ---
+// --- ExtraDataHelper ---
 
-void ObjectTemplateRefHelper::setExtraData(ObjectTemplateRef* otpl,
-                                           ObjectTemplateData* data) {
-  LWNODE_CALL_TRACE_ID(OBJDATA, "es: %p data: %p", otpl, data);
-  LWNODE_CHECK_NOT_NULL(data);
-  LWNODE_CHECK_NULL(otpl->instanceExtraData());
-
+void ExtraDataHelper::setExtraData(ObjectTemplateRef* otpl,
+                                   ObjectTemplateData* data) {
+  auto extraData = otpl->instanceExtraData();
+  if (extraData) {
+    LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
+    LWNODE_CHECK(false);
+  }
   otpl->setInstanceExtraData(data);
+}
+
+void ExtraDataHelper::setExtraData(FunctionTemplateRef* ftpl,
+                                   FunctionTemplateData* data) {
+  auto extraData = ftpl->instanceExtraData();
+  if (extraData) {
+    LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
+    LWNODE_CHECK(false);
+  }
+  ftpl->setInstanceExtraData(data);
+}
+
+void ExtraDataHelper::setExtraData(FunctionObjectRef* functionObject,
+                                   FunctionData* data,
+                                   bool force) {
+  auto extraData = functionObject->extraData();
+  if (!force && extraData) {
+    LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
+  }
+  functionObject->setExtraData(data);
+}
+
+void ExtraDataHelper::setExtraData(ObjectRef* exceptionObject,
+                                   ExceptionObjectData* data) {
+  auto extraData = exceptionObject->extraData();
+  if (extraData) {
+    LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
+  }
+  exceptionObject->setExtraData(data);
+}
+
+void ExtraDataHelper::setExtraData(ObjectRef* callSite, StackTraceData* data) {
+  auto extraData = callSite->extraData();
+  if (extraData) {
+    LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
+  }
+  callSite->setExtraData(data);
 }
 
 void ObjectTemplateRefHelper::setInternalFieldCount(ObjectTemplateRef* otpl,
@@ -828,49 +866,6 @@ int ObjectTemplateRefHelper::getInternalFieldCount(ObjectTemplateRef* otpl) {
     return 0;
   }
   return data->asObjectTemplateData()->internalFieldCount();
-}
-
-// --- FunctionTemplateRefHelper ---
-
-void FunctionTemplateRefHelper::setExtraData(FunctionTemplateRef* ftpl,
-                                             FunctionTemplateData* data) {
-  LWNODE_CALL_TRACE_ID(OBJDATA, "es: %p data: %p", ftpl, data);
-  LWNODE_CHECK_NOT_NULL(data);
-  LWNODE_CHECK_NULL(ftpl->instanceExtraData());
-
-  ftpl->setInstanceExtraData(data);
-}
-
-void FunctionTemplateRefHelper::setInstanceExtraData(FunctionTemplateRef* ftpl,
-                                                     FunctionData* data) {
-  LWNODE_CALL_TRACE_ID(OBJDATA, "es: %p data: %p", ftpl, data);
-  LWNODE_CHECK_NOT_NULL(data);
-  LWNODE_CHECK_NULL(ftpl->instanceExtraData());
-
-  ftpl->setInstanceExtraData(data);
-}
-
-void FunctionObjectRefHelper::setExtraData(FunctionObjectRef* functionObject,
-                                           FunctionData* data,
-                                           bool force) {
-  auto extraData = functionObject->extraData();
-  if (!force && extraData) {
-    LWNODE_DLOG_WARN(
-        "FunctionObjectRefHelper::setExtraData(): Replacing ExtraData: Is "
-        "this intended?");
-  }
-  functionObject->setExtraData(data);
-}
-
-FunctionData* FunctionObjectRefHelper::getExtraData(
-    FunctionObjectRef* functionObject) {
-  auto data = (ExtraData*)functionObject->extraData();
-  if (data) {
-    LWNODE_CHECK(data->isFunctionData());
-    return data->asFunctionData();
-  }
-
-  return nullptr;
 }
 
 // --- ExceptionHelper ---

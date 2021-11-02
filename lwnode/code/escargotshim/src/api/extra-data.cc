@@ -26,8 +26,8 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-static inline bool checkOutofBounds(ObjectTemplateData* data, int idx) {
-  return idx >= data->internalFieldCount() || idx < 0;
+bool InternalFieldData::checkOutOfBound(int idx) {
+  return idx >= internalFieldCount() || idx < 0;
 }
 
 static std::string toObjectDataString(const ObjectData* data,
@@ -47,16 +47,16 @@ static std::string toObjectDataString(const ObjectData* data,
 }
 
 ObjectData::ObjectData(FunctionObjectRef* functionObject)
-    : functionObject_(functionObject) {}
+    : TemplateData(), functionObject_(functionObject) {}
 
-int ObjectTemplateData::internalFieldCount() {
+int InternalFieldData::internalFieldCount() {
   if (m_internalFields == nullptr) {
     return 0;
   }
   return m_internalFields->size();
 }
 
-void ObjectTemplateData::setInternalFieldCount(int size) {
+void InternalFieldData::setInternalFieldCount(int size) {
   LWNODE_CALL_TRACE_ID(OBJDATA, "%d", size);
 
   // TODO: throw internal error
@@ -71,10 +71,10 @@ void ObjectTemplateData::setInternalFieldCount(int size) {
   }
 }
 
-void ObjectTemplateData::setInternalField(int idx, void* lwValue) {
+void InternalFieldData::setInternalField(int idx, void* lwValue) {
   // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(m_internalFields);
-  if (checkOutofBounds(this, idx)) {
+  if (checkOutOfBound(idx)) {
     LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
     return;
   }
@@ -86,10 +86,10 @@ void ObjectTemplateData::setInternalField(int idx, void* lwValue) {
   m_internalFields->set(idx, lwValue);
 }
 
-void* ObjectTemplateData::internalField(int idx) {
+void* InternalFieldData::internalField(int idx) {
   // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(m_internalFields);
-  if (checkOutofBounds(this, idx)) {
+  if (checkOutOfBound(idx)) {
     LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
     return nullptr;
   }
@@ -105,9 +105,9 @@ void* ObjectTemplateData::internalField(int idx) {
 }
 
 ObjectData::ObjectData(ObjectTemplateRef* objectTemplate)
-    : ObjectTemplateData(ExtraDataHelper::getExtraData(objectTemplate)
-                             ->asObjectTemplateData()
-                             ->functionTemplate()),
+    : TemplateData(ExtraDataHelper::getExtraData(objectTemplate)
+                       ->asObjectTemplateData()
+                       ->functionTemplate()),
       objectTemplate_(objectTemplate) {}
 
 ObjectData* ObjectTemplateData::createObjectData(
@@ -239,8 +239,9 @@ ExceptionObjectData::ExceptionObjectData(
 
 GCVector<StackTraceData*>* ExceptionObjectData::stackTrace(
     ObjectRef* exceptionObject) {
-  auto exceptionObjectData = static_cast<ExceptionObjectData*>(
-      ObjectRefHelper::getExtraData(exceptionObject));
+  auto exceptionObjectData =
+      ExtraDataHelper::getExtraData(exceptionObject)->asExceptionObjectData();
+
   return exceptionObjectData->stackTrace();
 }
 

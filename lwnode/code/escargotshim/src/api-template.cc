@@ -283,8 +283,7 @@ Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
                            esFunctionTemplate,
                            functionTemplateData);
 
-  FunctionTemplateRefHelper::setExtraData(esFunctionTemplate,
-                                          functionTemplateData);
+  ExtraDataHelper::setExtraData(esFunctionTemplate, functionTemplateData);
 
   return Utils::NewLocal(isolate, esFunctionTemplate);
 }
@@ -353,7 +352,7 @@ Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
         esFunctionTemplate,
         esObjectTemplate,
         objectTemplateData);
-    ObjectTemplateRefHelper::setExtraData(esObjectTemplate, objectTemplateData);
+    ExtraDataHelper::setExtraData(esObjectTemplate, objectTemplateData);
   }
 
   return Utils::NewLocal(IsolateWrap::GetCurrent()->toV8(), esObjectTemplate);
@@ -430,7 +429,7 @@ MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
           esFunctionTemplate,
           esFunction,
           newFunctionData);
-      FunctionObjectRefHelper::setExtraData(
+      ExtraDataHelper::setExtraData(
           esFunction->asFunctionObject(), newFunctionData, true);
     } else if (functionData->isFunctionData()) {
       // this functionData was created previously by the above line.
@@ -517,7 +516,7 @@ Local<ObjectTemplate> ObjectTemplate::New(
     esFunctionTemplate = CVAL(*constructor)->ftpl();
   }
   auto objectTemplateData = new ObjectTemplateData(esFunctionTemplate);
-  ObjectTemplateRefHelper::setExtraData(esObjectTemplate, objectTemplateData);
+  ExtraDataHelper::setExtraData(esObjectTemplate, objectTemplateData);
 
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "ObjectTemplate()::New(%p), Data: %p\n",

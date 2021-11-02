@@ -597,7 +597,7 @@ class ConfigureData : public ObjectDataBase {
   size_t internalFieldCount_{0};
 };
 
-class InternalFieldData : public ObjectDataBase {
+class InternalFieldDataBase : public ObjectDataBase {
  public:
   virtual bool isConfigureData() { return false; };
 
@@ -621,12 +621,12 @@ class InternalFieldData : public ObjectDataBase {
     return true;
   }
 
-  static InternalFieldData* create(ConfigureData* config) {
-    return new InternalFieldData(config);
+  static InternalFieldDataBase* create(ConfigureData* config) {
+    return new InternalFieldDataBase(config);
   }
 
  private:
-  InternalFieldData(ConfigureData* config)
+  InternalFieldDataBase(ConfigureData* config)
       : internalFields_(
             std::move(GCContainer<void*>(config->internalFieldCount()))) {}
 
@@ -664,8 +664,9 @@ static void mixinProtoMethod(FunctionTemplateRef* ft) {
                ValueRef* receiver,
                ObjectRef::NativeDataAccessorPropertyData* propertyData)
                 -> ValueRef* {
-              InternalFieldData* data = reinterpret_cast<InternalFieldData*>(
-                  receiver->asObject()->extraData());
+              InternalFieldDataBase* data =
+                  reinterpret_cast<InternalFieldDataBase*>(
+                      receiver->asObject()->extraData());
               LWNODE_DLOG_INFO(
                   "GET: receiver: %p data: %p self: %p", receiver, data, self);
 
@@ -680,8 +681,9 @@ static void mixinProtoMethod(FunctionTemplateRef* ft) {
                ValueRef* receiver,
                ObjectRef::NativeDataAccessorPropertyData* propertyData,
                ValueRef* setterInputData) -> bool {
-              InternalFieldData* data = reinterpret_cast<InternalFieldData*>(
-                  receiver->asObject()->extraData());
+              InternalFieldDataBase* data =
+                  reinterpret_cast<InternalFieldDataBase*>(
+                      receiver->asObject()->extraData());
               LWNODE_DLOG_INFO(
                   "SET: receiver: %p data: %p self: %p", receiver, data, self);
 
@@ -726,7 +728,8 @@ static FunctionTemplateRef* createFunctionTemplate(
           if (configureData) {
             // replace configure data with instance data
             LWNODE_CHECK(configureData->isConfigureData());
-            thisObject->setExtraData(InternalFieldData::create(configureData));
+            thisObject->setExtraData(
+                InternalFieldDataBase::create(configureData));
           }
 
           LWNODE_DLOG_INFO("NEW: thisValue: %p data: %p",
