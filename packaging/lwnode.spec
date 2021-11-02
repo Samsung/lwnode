@@ -119,11 +119,9 @@ LDFLAGS+="-fsanitize=address"
 
 %if "%{?feature_mode}" == "production"
   echo -e "\033[0;32m"production"\033[0m"
-  %define extra_config --escargot-threading
 %else
   echo -e "\033[0;32m"development"\033[0m"
-  %define extra_config --enable-reload-script --enable-external-builtin-script
-  %define use_external_builtin_scripts 1
+  %define extra_config --escargot-threading
 %endif
 
 echo "Building:" %{target}
@@ -134,6 +132,7 @@ CXXFLAGS+=' -Os '
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
+            --enable-reload-script --enable-external-builtin-script \
             --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?engine_config} %{?extra_config} %{?lib_type_config}
 
@@ -163,9 +162,7 @@ rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
 # for devel files
 strip -v -g %{target_src}/%{target}
 cp %{target_src}/%{target} %{buildroot}%{_bindir}
-%if 0%{?use_external_builtin_scripts} == 1
-  cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
-%endif
+cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
 %clean
 rm ./*.list
@@ -196,6 +193,4 @@ rm ./*.manifest
 %files devel
 %manifest packaging/%{name}.manifest
 %{_bindir}/%{target}
-%if 0%{?use_external_builtin_scripts} == 1
-  %{_bindir}/%{target}.dat
-%endif
+%{_bindir}/%{target}.dat
