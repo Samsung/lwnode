@@ -1795,7 +1795,7 @@ MaybeLocal<Object> Function::NewInstance(Local<Context> context,
         existingNewObjectExtraData);
   }
 
-  auto functionData = FunctionObjectRefHelper::getExtraData(esFunction);
+  auto functionData = ExtraDataHelper::getExtraData(esFunction);
   if (functionData) {
     // This functionData was added in FunctionTemplate::GetFunction()
     LWNODE_CHECK(functionData->isFunctionData());

@@ -86,17 +86,43 @@ class ExtraData : public gc {
   }
 };
 
-class FunctionTemplateData : public ExtraData {
+class InternalFieldData : public ExtraData {
+ public:
+  virtual int internalFieldCount();
+  virtual void setInternalFieldCount(int size);
+  virtual void* internalField(int idx);
+  virtual void setInternalField(int idx, void* lwValue);
+
+ protected:
+  InternalFieldData() = default;
+  GCContainer<void*>* m_internalFields{nullptr};
+
+ private:
+  bool checkOutOfBound(int idx);
+};
+
+class TemplateData : public InternalFieldData {
+ public:
+  virtual FunctionTemplateRef* functionTemplate() { return functionTemplate_; }
+
+ protected:
+  TemplateData() = default;
+  TemplateData(FunctionTemplateRef* functionTemplate)
+      : InternalFieldData(), functionTemplate_(functionTemplate) {}
+  FunctionTemplateRef* functionTemplate_{nullptr};
+};
+
+class FunctionTemplateData : public TemplateData {
  public:
   FunctionTemplateData() = default;
   FunctionTemplateData(FunctionTemplateRef* functionTemplate)
-      : functionTemplate_(functionTemplate) {}
+      : TemplateData(functionTemplate) {}
   FunctionTemplateData(FunctionTemplateRef* functionTemplate,
                        v8::Isolate* isolate,
                        v8::FunctionCallback callback,
                        v8::Value* callbackData,
                        v8::Signature* signature)
-      : functionTemplate_(functionTemplate),
+      : TemplateData(functionTemplate),
         isolate_(isolate),
         callback_(callback),
         callbackData_(callbackData),
@@ -104,7 +130,7 @@ class FunctionTemplateData : public ExtraData {
 
   bool isFunctionTemplateData() const override { return true; }
 
-  virtual v8::Isolate* isolate() { return isolate_; }
+  v8::Isolate* isolate() { return isolate_; }
   v8::FunctionCallback callback() { return callback_; }
   v8::Value* callbackData() { return callbackData_; }
   v8::Signature* signature() { return signature_; }
@@ -114,43 +140,31 @@ class FunctionTemplateData : public ExtraData {
     callbackData_ = callbackData;
   }
 
-  virtual FunctionTemplateRef* functionTemplate() { return functionTemplate_; }
-
- protected:
-  FunctionTemplateRef* functionTemplate_{nullptr};
+ private:
   v8::Isolate* isolate_{nullptr};
   v8::FunctionCallback callback_{nullptr};
   v8::Value* callbackData_{nullptr};
   v8::Signature* signature_{nullptr};
 };
 
-class ObjectTemplateData : public ExtraData {
+class ObjectTemplateData : public TemplateData {
  public:
   ObjectTemplateData() = default;
   ObjectTemplateData(FunctionTemplateRef* functionTemplate)
-      : functionTemplate_(functionTemplate) {}
+      : TemplateData(functionTemplate) {}
 
   bool isObjectTemplateData() const override { return true; }
 
-  virtual FunctionTemplateRef* functionTemplate() { return functionTemplate_; }
-
-  virtual int internalFieldCount();
-  virtual void setInternalFieldCount(int size);
-  virtual void setInternalField(int idx, void* lwValue);
-  virtual void* internalField(int idx);
-
   ObjectData* createObjectData(ObjectTemplateRef* objectTemplate);
 
- protected:
-  FunctionTemplateRef* functionTemplate_{nullptr};
-  GCContainer<void*>* m_internalFields{nullptr};
+ private:
 };
 
-class ObjectData : public ObjectTemplateData {
+class ObjectData : public TemplateData {
  public:
   ObjectData() = default;
   ObjectData(FunctionTemplateRef* functionTemplate)
-      : ObjectTemplateData(functionTemplate) {}
+      : TemplateData(functionTemplate) {}
   ObjectData(FunctionObjectRef* functionObject);
   ObjectData(ObjectTemplateRef* objectTemplate);
 
@@ -170,16 +184,16 @@ class ObjectData : public ObjectTemplateData {
   FunctionObjectRef* functionObject_{nullptr};
 };
 
-class FunctionData : public FunctionTemplateData {  // FIXME: should be a link
+class FunctionData : public ObjectData {
  public:
   FunctionData() = default;
   FunctionData(FunctionTemplateRef* functionTemplate)
-      : FunctionTemplateData(functionTemplate) {}
+      : ObjectData(functionTemplate) {}
 
   bool isFunctionData() const override { return true; }
   bool isFunctionTemplateData() const override { return false; }
 
-  v8::Isolate* isolate() override;
+  v8::Isolate* isolate();
   v8::FunctionCallback callback();
   v8::Value* callbackData();
   v8::Signature* signature();
@@ -200,7 +214,9 @@ class ExternalObjectData : public ObjectData {
 };
 
 // TODO: check to make sure StackTraceData inherit ObjectData.
-class StackTraceData : public ObjectData {
+// NOTE: StackTraceData does not use any InternalFields.
+// If InternalField is needed, make it inherit from "public InternalFieldData"
+class StackTraceData : public ExtraData {
  public:
   StackTraceData(const Escargot::Evaluator::StackTraceData& data)
       : src_(data.src),
@@ -235,7 +251,9 @@ class StackTraceData : public ObjectData {
   bool isEval_{false};
 };
 
-class ExceptionObjectData : public ObjectData {
+// NOTE: ExceptionObjectData does not use any InternalFields.
+// If InternalField is needed, make it inherit from "public InternalFieldData"
+class ExceptionObjectData : public ExtraData {
  public:
  public:
   ExceptionObjectData(

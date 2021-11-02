@@ -127,6 +127,9 @@ class ObjectRefHelper {
                                             ValueRef* key);
 };
 
+class ObjectTemplateData;
+class FunctionTemplateData;
+class FunctionData;
 class ExtraDataHelper {
  public:
   static ExtraData* getExtraData(ObjectRef* object) {
@@ -136,32 +139,25 @@ class ExtraDataHelper {
   static ExtraData* getExtraData(TemplateRef* esTemplate) {
     return (ExtraData*)esTemplate->instanceExtraData();
   }
+
+  // Only allow the following (Object, extraData) pairs when adding extraData
+  static void setExtraData(ObjectTemplateRef* otpl, ObjectTemplateData* data);
+  static void setExtraData(FunctionTemplateRef* ftpl,
+                           FunctionTemplateData* data);
+  static void setExtraData(FunctionObjectRef* functionObject,
+                           FunctionData* data,
+                           bool force = false);
+  static void setExtraData(ObjectRef* exceptionObject,
+                           ExceptionObjectData* data);
+  static void setExtraData(ObjectRef* callSite, StackTraceData* data);
 };
 
 class ObjectTemplateRefHelper {
  public:
-  static ObjectData* getInstanceExtraData(ObjectTemplateRef* otpl);
   static void setInternalFieldCount(ObjectTemplateRef* otpl, int size);
   static int getInternalFieldCount(ObjectTemplateRef* otpl);
-  static void setExtraData(ObjectTemplateRef* otpl, ObjectTemplateData* data);
 
  private:
-};
-
-class FunctionTemplateRefHelper {
- public:
-  static void setInstanceExtraData(FunctionTemplateRef* ftpl,
-                                   FunctionData* data);
-  static void setExtraData(FunctionTemplateRef* ftpl,
-                           FunctionTemplateData* data);
-};
-
-class FunctionObjectRefHelper {
- public:
-  static void setExtraData(FunctionObjectRef* functionObject,
-                           FunctionData* data,
-                           bool force = false);
-  static FunctionData* getExtraData(FunctionObjectRef* functionObject);
 };
 
 class ArrayBufferHelper {

@@ -303,7 +303,7 @@ CallSite::CallSite(ContextRef* context) {
 ValueRef* CallSite::instantiate(ContextRef* context,
                                 const Evaluator::StackTraceData& data) {
   auto callSite = template_->instanceTemplate()->instantiate(context);
-  ObjectRefHelper::setExtraData(callSite, new StackTraceData(data));
+  ExtraDataHelper::setExtraData(callSite, new StackTraceData(data));
   return callSite;
 };
 

@@ -592,7 +592,7 @@ void IsolateWrap::SetPendingExceptionAndMessage(
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
   if (exception->isObject()) {
-    ObjectRefHelper::setExtraData(exception->asObject(),
+    ExtraDataHelper::setExtraData(exception->asObject(),
                                   new ExceptionObjectData(stackTraceData));
   }
 
