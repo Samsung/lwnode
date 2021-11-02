@@ -26,8 +26,8 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-bool InternalFieldData::checkOutOfBound(int idx) {
-  return idx >= internalFieldCount() || idx < 0;
+bool InternalFieldData::isValidIndex(int idx) {
+  return 0 <= idx && idx < internalFieldCount();
 }
 
 static std::string toObjectDataString(const ObjectData* data,
@@ -50,10 +50,10 @@ ObjectData::ObjectData(FunctionObjectRef* functionObject)
     : TemplateData(), functionObject_(functionObject) {}
 
 int InternalFieldData::internalFieldCount() {
-  if (m_internalFields == nullptr) {
+  if (internalFields_ == nullptr) {
     return 0;
   }
-  return m_internalFields->size();
+  return internalFields_->size();
 }
 
 void InternalFieldData::setInternalFieldCount(int size) {
@@ -65,7 +65,7 @@ void InternalFieldData::setInternalFieldCount(int size) {
     return;
   }
 
-  m_internalFields = new GCContainer<void*>(size);
+  internalFields_ = new GCContainer<void*>(size);
   for (int i = 0; i < size; i++) {
     setInternalField(i, nullptr);
   }
@@ -73,8 +73,8 @@ void InternalFieldData::setInternalFieldCount(int size) {
 
 void InternalFieldData::setInternalField(int idx, void* lwValue) {
   // TODO: throw internal error
-  LWNODE_CHECK_NOT_NULL(m_internalFields);
-  if (checkOutOfBound(idx)) {
+  LWNODE_CHECK_NOT_NULL(internalFields_);
+  if (!isValidIndex(idx)) {
     LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
     return;
   }
@@ -83,18 +83,18 @@ void InternalFieldData::setInternalField(int idx, void* lwValue) {
   // LWNODE_CALL_TRACE_ID(
   //     OBJDATA, "%s", toObjectDataString(this, idx, lwValue).c_str());
 
-  m_internalFields->set(idx, lwValue);
+  internalFields_->set(idx, lwValue);
 }
 
 void* InternalFieldData::internalField(int idx) {
   // TODO: throw internal error
-  LWNODE_CHECK_NOT_NULL(m_internalFields);
-  if (checkOutOfBound(idx)) {
+  LWNODE_CHECK_NOT_NULL(internalFields_);
+  if (!isValidIndex(idx)) {
     LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
     return nullptr;
   }
 
-  void* field = m_internalFields->get(idx);
+  void* field = internalFields_->get(idx);
   if (field) {
     // TODO: Update type
     // LWNODE_CALL_TRACE_ID(
