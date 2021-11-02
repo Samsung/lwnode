@@ -396,7 +396,6 @@
             'ldflags': [
               '-Wl,--gc-sections',
             ],
-            'ldflags!': [ '-rdynamic', ],
           }],
           [ 'target_arch=="ia32"', {
             'cflags': [ '-m32' ],
