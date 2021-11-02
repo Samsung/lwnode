@@ -95,10 +95,10 @@ class InternalFieldData : public ExtraData {
 
  protected:
   InternalFieldData() = default;
-  GCContainer<void*>* m_internalFields{nullptr};
 
  private:
-  bool checkOutOfBound(int idx);
+  bool isValidIndex(int idx);
+  GCContainer<void*>* internalFields_{nullptr};
 };
 
 class TemplateData : public InternalFieldData {
