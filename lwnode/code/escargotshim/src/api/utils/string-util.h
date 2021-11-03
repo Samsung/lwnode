@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// Copyright 2012 the V8 project authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #pragma once
 
 #include "misc.h"
@@ -50,3 +55,57 @@ template <size_t N>
 bool strStartsWith(const char* str, const char (&prefix)[N]) {
   return strncmp(str, prefix, N - 1) == 0;
 }
+
+class UTF8Sequence {
+ public:
+  static inline bool isASCII(uint16_t character) {
+    return !(character & ~0x7F);
+  }
+
+  static inline int getLengthNonASCII(uint8_t byte) {
+    if ((byte & 0xC0) != 0xC0) return 0;
+    if ((byte & 0xE0) == 0xC0) return 2;
+    if ((byte & 0xF0) == 0xE0) return 3;
+    if ((byte & 0xF8) == 0xF0) return 4;
+    return 0;
+  }
+
+  static inline int getLength(uint8_t byte) {
+    return isASCII(byte) ? 1 : getLengthNonASCII(byte);
+  }
+
+  static inline uint32_t read(const uint8_t*& sequence, size_t length) {
+    uint32_t character = 0;
+
+    // The cases all fall through.
+    switch (length) {
+      case 6:
+        character += static_cast<uint8_t>(*sequence++);
+        character <<= 6;  // Fall through.
+      case 5:
+        character += static_cast<uint8_t>(*sequence++);
+        character <<= 6;  // Fall through.
+      case 4:
+        character += static_cast<uint8_t>(*sequence++);
+        character <<= 6;  // Fall through.
+      case 3:
+        character += static_cast<uint8_t>(*sequence++);
+        character <<= 6;  // Fall through.
+      case 2:
+        character += static_cast<uint8_t>(*sequence++);
+        character <<= 6;  // Fall through.
+      case 1:
+        character += static_cast<uint8_t>(*sequence++);
+    }
+
+    return character - s_offsetsFromUTF8[length - 1];
+  }
+
+  using u8string = std::basic_string<uint8_t, std::char_traits<uint8_t>>;
+  static bool convertUTF8ToLatin1(u8string& latin1String,
+                                  const uint8_t* sequence,
+                                  const uint8_t* endSequence);
+
+ private:
+  static const uint32_t s_offsetsFromUTF8[6];
+};
