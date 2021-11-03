@@ -26,6 +26,7 @@
 #include "api/es-helper.h"
 #include "api/isolate.h"
 #include "api/utils/misc.h"
+#include "api/utils/string-util.h"
 #include "base.h"
 
 using namespace EscargotShim;
@@ -84,7 +85,36 @@ class FileScope {
   std::FILE* file_{nullptr};
 };
 
-FileData Loader::readFile(std::string filename, const Encoding fileEncoding) {
+void Loader::tryConvertUTF8ToLatin1(U8String& latin1String,
+                                    Encoding& encoding,
+                                    const uint8_t* buffer,
+                                    const size_t bufferSize,
+                                    const Encoding encodingHint) {
+  bool isOneByteString = true;
+
+  if (encodingHint == UNKNOWN || encodingHint == ONE_BYTE_LATIN1) {
+    if (UTF8Sequence::convertUTF8ToLatin1(
+            latin1String, buffer, buffer + bufferSize) == false) {
+      isOneByteString = false;
+    }
+  } else if (encodingHint == TWO_BYTE) {
+    isOneByteString = false;
+  }
+
+  encoding = UNKNOWN;
+
+  if (isOneByteString) {
+    if (latin1String.length() == bufferSize) {
+      encoding = ONE_BYTE;
+    } else {
+      encoding = ONE_BYTE_LATIN1;
+    }
+  } else {
+    encoding = TWO_BYTE;
+  }
+}
+
+FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
   FileScope fileScope(filename.c_str(), "rb");
 
   std::FILE* file = fileScope.file();
@@ -103,55 +133,71 @@ FileData Loader::readFile(std::string filename, const Encoding fileEncoding) {
   uint8_t* buffer = (uint8_t*)allocateStringBuffer(bufferSize + 1);
   buffer[bufferSize] = '\0';
 
-  bool isOneByteString = true;
+  std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
+      buffer, freeStringBuffer);
 
-  std::fread(buffer, sizeof(uint8_t), bufferSize, file);
-
-  if (fileEncoding == UNKNOWN) {
-    for (size_t i = 0; i < bufferSize; ++i) {
-      if (buffer[i] > 127) {
-        isOneByteString = false;
-        break;
-      }
-    }
-  } else {
-    if (fileEncoding == TWO_BYTE) {
-      isOneByteString = false;
-    }
+  if (std::fread(buffer, sizeof(uint8_t), bufferSize, file) == 0) {
+    return FileData();
   }
 
-  void* stringBuffer = buffer;
-  Encoding encoding = ONE_BYTE;
+  Loader::U8String latin1String;
+  Encoding encoding = UNKNOWN;
 
-  if (isOneByteString == false) {
-    // Treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+  if (encodingHint == ONE_BYTE) {
+    encoding = ONE_BYTE;
+  } else if (encodingHint == TWO_BYTE) {
+    encoding = TWO_BYTE;
+  } else if (encodingHint == ONE_BYTE_LATIN1) {
+    Loader::tryConvertUTF8ToLatin1(
+        latin1String, encoding, buffer, bufferSize, encodingHint);
+  } else {
+    LWNODE_CHECK(encodingHint == UNKNOWN);
+    Loader::tryConvertUTF8ToLatin1(
+        latin1String, encoding, buffer, bufferSize, encodingHint);
+  }
+
+  if (encoding == TWO_BYTE) {
+    // Treat non-latin1 as UTF-8 and encode it as UTF-16 Little Endian.
+    if (encodingHint == UNKNOWN) {
+      LWNODE_LOG_INFO("%s contains characters outside of the Latin1 range.",
+                      filename.c_str());
+    }
+
     char* newStringBuffer = nullptr;
     size_t newStringBufferSize = 0;
 
     bool isConverted = convertUTF8ToUTF16le(&newStringBuffer,
                                             &newStringBufferSize,
-                                            (const char*)stringBuffer,
+                                            (const char*)bufferHolder.get(),
                                             bufferSize);
-
-    freeStringBuffer(stringBuffer);
-
     if (isConverted == false) {
       return FileData();
     }
 
-    stringBuffer = newStringBuffer;
+    bufferHolder.reset(newStringBuffer);
     bufferSize = newStringBufferSize;
-    encoding = TWO_BYTE;
+  } else {
+    if (encoding == ONE_BYTE_LATIN1) {
+      if (encodingHint == UNKNOWN) {
+        LWNODE_LOG_INFO("%s contains Latin1 characters.", filename.c_str());
+      }
+
+      bufferSize = latin1String.length();
+      bufferHolder.reset(allocateStringBuffer(bufferSize + 1));
+      ((uint8_t*)bufferHolder.get())[bufferSize] = '\0';
+
+      memcpy(bufferHolder.get(), latin1String.data(), bufferSize);
+    }
   }
 
-  return FileData(stringBuffer, bufferSize, encoding);
+  return FileData(bufferHolder.release(), bufferSize, encoding);
 }
 
 Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
     std::string sourcePath,
     void* preloadedData,
     size_t preloadedDataLength,
-    bool isOneByteString) {
+    Encoding encoding) {
   // NOTE: data and data->path should be managed by gc
   auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
       ReloadableSourceData();
@@ -161,7 +207,7 @@ Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
 
   data->preloadedData = preloadedData;
   data->preloadedDataLength_ = preloadedDataLength;
-  data->isOneByteString_ = isOneByteString;
+  data->encoding_ = encoding;
 
   return data;
 }
@@ -181,7 +227,7 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
 
   if (dest.buffer) {
     auto data = Loader::ReloadableSourceData::create(
-        fileName, dest.buffer, dest.size, (dest.encoding == ONE_BYTE));
+        fileName, dest.buffer, dest.size, dest.encoding);
 
     HandleScope handleScope(isolate);
 
@@ -208,9 +254,7 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
               }
               s_stat.reloaded++;
 
-              Encoding fileEncoding =
-                  data->isOneByteString() ? ONE_BYTE : TWO_BYTE;
-              FileData dest = Loader::readFile(data->path(), fileEncoding);
+              FileData dest = Loader::readFile(data->path(), data->encoding());
               LWNODE_CHECK_NOT_NULL(dest.buffer);
               return dest.buffer;
             },

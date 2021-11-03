@@ -26,7 +26,7 @@ class ExecutionStateRef;
 
 namespace LWNode {
 
-enum Encoding { UNKNOWN, ONE_BYTE, TWO_BYTE };
+enum Encoding { UNKNOWN, ONE_BYTE, ONE_BYTE_LATIN1, TWO_BYTE };
 
 struct FileData {
   void* buffer{nullptr};
@@ -43,7 +43,15 @@ struct FileData {
 
 class Loader {
  public:
+  using U8String = std::basic_string<uint8_t, std::char_traits<uint8_t>>;
+
   static FileData readFile(std::string filename, const Encoding fileEncoding);
+
+  static void tryConvertUTF8ToLatin1(U8String& latin1String,
+                                     Encoding& encoding,
+                                     const uint8_t* buffer,
+                                     const size_t bufferSize,
+                                     const Encoding encodingHint);
 
   // should return string buffer
   typedef void* (*LoadCallback)(void* callbackData);
@@ -57,18 +65,23 @@ class Loader {
     const char* path() { return path_; }
     size_t preloadedDataLength() { return preloadedDataLength_; }
     size_t stringLength() {
-      return isOneByteString_ ? preloadedDataLength_ : preloadedDataLength_ / 2;
+      return isOneByteString() ? preloadedDataLength_
+                               : preloadedDataLength_ / 2;
     }
-    bool isOneByteString() { return isOneByteString_; }
+    bool isOneByteString() {
+      return (encoding_ == ONE_BYTE) || (encoding_ == ONE_BYTE_LATIN1);
+    }
+    Encoding encoding() { return encoding_; }
+
     static ReloadableSourceData* create(std::string sourcePath,
                                         void* preloadedData,
                                         size_t preloadedDataLength,
-                                        bool isOneByteString);
+                                        Encoding encoding);
 
    private:
     char* path_{nullptr};
     size_t preloadedDataLength_{0};
-    bool isOneByteString_{false};
+    Encoding encoding_{UNKNOWN};
     ReloadableSourceData() = default;
   };
 

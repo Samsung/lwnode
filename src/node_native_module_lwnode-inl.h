@@ -171,10 +171,10 @@ bool readFileFromArchive(const std::string& archiveFilename,
 }
 
 FileData readFileFromArchive(std::string filename,
-                             const Encoding fileEncoding) {
-  CHECK(fileEncoding != UNKNOWN);
+                             const Encoding encodingHint) {
+  CHECK(encodingHint != UNKNOWN);
 
-  size_t fileSize = 0;
+  size_t bufferSize = 0;
   char* buffer = nullptr;
 
   static std::string s_externalBuiltinsPath;
@@ -186,27 +186,64 @@ FileData readFileFromArchive(std::string filename,
   }
 
   if (readFileFromArchive(
-          s_externalBuiltinsPath, filename, &buffer, &fileSize) == false) {
+          s_externalBuiltinsPath, filename, &buffer, &bufferSize) == false) {
     return FileData();
   }
 
-  if (fileEncoding == TWO_BYTE) {
-    // treat non-ASCII as UTF-8 and encode as UTF-16 Little Endian.
+  std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
+      buffer, freeStringBuffer);
+
+  Loader::U8String latin1String;
+  Encoding encoding = UNKNOWN;
+
+  if (encodingHint == ONE_BYTE) {
+    encoding = ONE_BYTE;
+  } else if (encodingHint == TWO_BYTE) {
+    encoding = TWO_BYTE;
+  } else if (encodingHint == ONE_BYTE_LATIN1) {
+    Loader::tryConvertUTF8ToLatin1(
+        latin1String, encoding, (uint8_t*)buffer, bufferSize, encodingHint);
+  } else {
+    CHECK(encodingHint == UNKNOWN);
+    Loader::tryConvertUTF8ToLatin1(
+        latin1String, encoding, (uint8_t*)buffer, bufferSize, encodingHint);
+  }
+
+  if (encoding == TWO_BYTE) {
+    // Treat non-latin1 as UTF-8 and encode it as UTF-16 Little Endian.
+    if (encodingHint == UNKNOWN) {
+      LWNODE_LOG_INFO("%s contains characters outside of the Latin1 range.",
+                      filename.c_str());
+    }
+
     char* newStringBuffer = nullptr;
     size_t newStringBufferSize = 0;
 
-    bool isConverted = convertUTF8ToUTF16le(
-        &newStringBuffer, &newStringBufferSize, buffer, fileSize);
+    bool isConverted = convertUTF8ToUTF16le(&newStringBuffer,
+                                            &newStringBufferSize,
+                                            (const char*)bufferHolder.get(),
+                                            bufferSize);
+    if (isConverted == false) {
+      return FileData();
+    }
 
-    // builtin scripts should be successfully converted.
-    CHECK(isConverted);
+    bufferHolder.reset(newStringBuffer);
+    bufferSize = newStringBufferSize;
+  } else {
+    if (encoding == ONE_BYTE_LATIN1) {
+      if (encodingHint == UNKNOWN) {
+        LWNODE_LOG_INFO("%s contains Latin1 characters.", filename.c_str());
+      }
 
-    freeStringBuffer(buffer);
-    buffer = newStringBuffer;
-    fileSize = newStringBufferSize;
+      bufferSize = latin1String.length();
+      bufferHolder.reset(allocateStringBuffer(bufferSize + 1));
+      ((uint8_t*)bufferHolder.get())[bufferSize] = '\0';
+
+      memcpy(bufferHolder.get(), latin1String.data(), bufferSize);
+    }
   }
 
-  return FileData(buffer, fileSize, fileEncoding);
+  return FileData(bufferHolder.release(), bufferSize, encoding);
 }
 
 bool NativeModuleLoader::IsOneByte(const char* id) {
@@ -248,10 +285,7 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
   }
 
   auto data = Loader::ReloadableSourceData::create(
-      filename,
-      fileData.buffer,
-      fileData.size,
-      (fileData.encoding == ONE_BYTE ? true : false));
+      filename, fileData.buffer, fileData.size, fileData.encoding);
 
   return Loader::NewReloadableString(
       isolate,
@@ -275,8 +309,7 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
 
         s_stat.reloaded++;
 
-        FileData fileData = readFileFromArchive(
-            data->path(), (data->isOneByteString() ? ONE_BYTE : TWO_BYTE));
+        FileData fileData = readFileFromArchive(data->path(), data->encoding());
 
         CHECK_NOT_NULL(fileData.buffer);
         return fileData.buffer;
