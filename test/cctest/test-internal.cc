@@ -1000,7 +1000,7 @@ TEST(ReloadableString8) {
         Loader::NewReloadableString(
             isolate,
             Loader::ReloadableSourceData::create(
-                filename, dest.buffer, dest.size, isOneByteString),
+                filename, dest.buffer, dest.size, dest.encoding),
             LoadReloadableSource,
             UnloadReloadableSource)
             .ToLocalChecked())
@@ -1046,7 +1046,7 @@ TEST(ReloadableString16) {
     LWNODE_CHECK_NOT_NULL(dest.buffer);
 
     auto data = Loader::ReloadableSourceData::create(
-        filename, dest.buffer, dest.size / 2, isOneByteString);
+        filename, dest.buffer, dest.size / 2, dest.encoding);
 
     Escargot::StringRef* source = Escargot::StringRef::createReloadableString(
         IsolateWrap::fromV8(isolate)->vmInstance(),
@@ -1087,7 +1087,7 @@ TEST(ReloadableString16) {
         Loader::NewReloadableString(
             isolate,
             Loader::ReloadableSourceData::create(
-                filename, dest.buffer, dest.size / 2, isOneByteString),
+                filename, dest.buffer, dest.size / 2, dest.encoding),
             LoadReloadableSource,
             UnloadReloadableSource)
             .ToLocalChecked())
