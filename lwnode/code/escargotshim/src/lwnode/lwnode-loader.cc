@@ -92,25 +92,25 @@ void Loader::tryConvertUTF8ToLatin1(U8String& latin1String,
                                     const Encoding encodingHint) {
   bool isOneByteString = true;
 
-  if (encodingHint == UNKNOWN || encodingHint == ONE_BYTE_LATIN1) {
+  if (encodingHint == Encoding::kUnknown || encodingHint == Encoding::kLatin1) {
     if (UTF8Sequence::convertUTF8ToLatin1(
             latin1String, buffer, buffer + bufferSize) == false) {
       isOneByteString = false;
     }
-  } else if (encodingHint == TWO_BYTE) {
+  } else if (encodingHint == Encoding::kUtf16) {
     isOneByteString = false;
   }
 
-  encoding = UNKNOWN;
+  encoding = Encoding::kUnknown;
 
   if (isOneByteString) {
     if (latin1String.length() == bufferSize) {
-      encoding = ONE_BYTE;
+      encoding = Encoding::kAscii;
     } else {
-      encoding = ONE_BYTE_LATIN1;
+      encoding = Encoding::kLatin1;
     }
   } else {
-    encoding = TWO_BYTE;
+    encoding = Encoding::kUtf16;
   }
 }
 
@@ -141,24 +141,24 @@ FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
   }
 
   Loader::U8String latin1String;
-  Encoding encoding = UNKNOWN;
+  Encoding encoding = Encoding::kUnknown;
 
-  if (encodingHint == ONE_BYTE) {
-    encoding = ONE_BYTE;
-  } else if (encodingHint == TWO_BYTE) {
-    encoding = TWO_BYTE;
-  } else if (encodingHint == ONE_BYTE_LATIN1) {
+  if (encodingHint == Encoding::kAscii) {
+    encoding = Encoding::kAscii;
+  } else if (encodingHint == Encoding::kUtf16) {
+    encoding = Encoding::kUtf16;
+  } else if (encodingHint == Encoding::kLatin1) {
     Loader::tryConvertUTF8ToLatin1(
         latin1String, encoding, buffer, bufferSize, encodingHint);
   } else {
-    LWNODE_CHECK(encodingHint == UNKNOWN);
+    LWNODE_CHECK(encodingHint == Encoding::kUnknown);
     Loader::tryConvertUTF8ToLatin1(
         latin1String, encoding, buffer, bufferSize, encodingHint);
   }
 
-  if (encoding == TWO_BYTE) {
+  if (encoding == Encoding::kUtf16) {
     // Treat non-latin1 as UTF-8 and encode it as UTF-16 Little Endian.
-    if (encodingHint == UNKNOWN) {
+    if (encodingHint == Encoding::kUnknown) {
       LWNODE_LOG_INFO("%s contains characters outside of the Latin1 range.",
                       filename.c_str());
     }
@@ -177,8 +177,8 @@ FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
     bufferHolder.reset(newStringBuffer);
     bufferSize = newStringBufferSize;
   } else {
-    if (encoding == ONE_BYTE_LATIN1) {
-      if (encodingHint == UNKNOWN) {
+    if (encoding == Encoding::kLatin1) {
+      if (encodingHint == Encoding::kUnknown) {
         LWNODE_LOG_INFO("%s contains Latin1 characters.", filename.c_str());
       }
 
@@ -223,7 +223,7 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
   auto lwContext = ContextWrap::fromEscargot(state->context());
   auto isolate = lwContext->GetIsolate()->toV8();
 
-  FileData dest = Loader::readFile(fileName, UNKNOWN);
+  FileData dest = Loader::readFile(fileName, Encoding::kUnknown);
 
   if (dest.buffer) {
     auto data = Loader::ReloadableSourceData::create(
