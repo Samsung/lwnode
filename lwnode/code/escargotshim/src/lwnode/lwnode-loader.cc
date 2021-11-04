@@ -85,11 +85,12 @@ class FileScope {
   std::FILE* file_{nullptr};
 };
 
-void Loader::tryConvertUTF8ToLatin1(U8String& latin1String,
-                                    Encoding& encoding,
-                                    const uint8_t* buffer,
-                                    const size_t bufferSize,
-                                    const Encoding encodingHint) {
+static void tryConvertUTF8ToLatin1(
+    std::basic_string<uint8_t, std::char_traits<uint8_t>>& latin1String,
+    Encoding& encoding,
+    const uint8_t* buffer,
+    const size_t bufferSize,
+    const Encoding encodingHint) {
   bool isOneByteString = true;
 
   if (encodingHint == Encoding::kUnknown || encodingHint == Encoding::kLatin1) {
@@ -114,33 +115,12 @@ void Loader::tryConvertUTF8ToLatin1(U8String& latin1String,
   }
 }
 
-FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
-  FileScope fileScope(filename.c_str(), "rb");
-
-  std::FILE* file = fileScope.file();
-
-  if (!file) {
-    return FileData();
-  }
-
-  std::fseek(file, 0, SEEK_END);
-  long pos = std::ftell(file);
-  std::rewind(file);
-
-  LWNODE_CHECK(pos >= 0);
-
-  size_t bufferSize = (size_t)pos;
-  uint8_t* buffer = (uint8_t*)allocateStringBuffer(bufferSize + 1);
-  buffer[bufferSize] = '\0';
-
-  std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
-      buffer, freeStringBuffer);
-
-  if (std::fread(buffer, sizeof(uint8_t), bufferSize, file) == 0) {
-    return FileData();
-  }
-
-  Loader::U8String latin1String;
+FileData Loader::createFileDataForReloadableString(
+    std::string filename,
+    std::unique_ptr<void, std::function<void(void*)>> bufferHolder,
+    size_t bufferSize,
+    const Encoding encodingHint) {
+  std::basic_string<uint8_t, std::char_traits<uint8_t>> latin1String;
   Encoding encoding = Encoding::kUnknown;
 
   if (encodingHint == Encoding::kAscii) {
@@ -148,12 +128,18 @@ FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
   } else if (encodingHint == Encoding::kUtf16) {
     encoding = Encoding::kUtf16;
   } else if (encodingHint == Encoding::kLatin1) {
-    Loader::tryConvertUTF8ToLatin1(
-        latin1String, encoding, buffer, bufferSize, encodingHint);
+    tryConvertUTF8ToLatin1(latin1String,
+                           encoding,
+                           (uint8_t*)bufferHolder.get(),
+                           bufferSize,
+                           encodingHint);
   } else {
     LWNODE_CHECK(encodingHint == Encoding::kUnknown);
-    Loader::tryConvertUTF8ToLatin1(
-        latin1String, encoding, buffer, bufferSize, encodingHint);
+    tryConvertUTF8ToLatin1(latin1String,
+                           encoding,
+                           (uint8_t*)bufferHolder.get(),
+                           bufferSize,
+                           encodingHint);
   }
 
   if (encoding == Encoding::kUtf16) {
@@ -190,24 +176,53 @@ FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
     }
   }
 
-  return FileData(bufferHolder.release(), bufferSize, encoding);
+  return FileData(bufferHolder.release(), bufferSize, encoding, filename);
+}
+
+FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
+  FileScope fileScope(filename.c_str(), "rb");
+
+  std::FILE* file = fileScope.file();
+
+  if (!file) {
+    return FileData();
+  }
+
+  std::fseek(file, 0, SEEK_END);
+  long pos = std::ftell(file);
+  std::rewind(file);
+
+  LWNODE_CHECK(pos >= 0);
+
+  size_t bufferSize = (size_t)pos;
+  uint8_t* buffer = (uint8_t*)allocateStringBuffer(bufferSize + 1);
+  buffer[bufferSize] = '\0';
+
+  std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
+      buffer, freeStringBuffer);
+
+  if (std::fread(buffer, sizeof(uint8_t), bufferSize, file) == 0) {
+    return FileData();
+  }
+
+  return createFileDataForReloadableString(
+      filename, std::move(bufferHolder), bufferSize, encodingHint);
 }
 
 Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
-    std::string sourcePath,
-    void* preloadedData,
-    size_t preloadedDataLength,
-    Encoding encoding) {
+    const FileData fileData) {
   // NOTE: data and data->path should be managed by gc
   auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
       ReloadableSourceData();
+
+  auto& sourcePath = fileData.filePath;
   data->path_ = (char*)Memory::gcMallocAtomic(sourcePath.size() + 1);
   std::copy(sourcePath.begin(), sourcePath.end(), data->path_);
   data->path_[sourcePath.size()] = '\0';
 
-  data->preloadedData = preloadedData;
-  data->preloadedDataLength_ = preloadedDataLength;
-  data->encoding_ = encoding;
+  data->preloadedData = fileData.buffer;
+  data->preloadedDataLength_ = fileData.size;
+  data->encoding_ = fileData.encoding;
 
   return data;
 }
@@ -223,18 +238,15 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
   auto lwContext = ContextWrap::fromEscargot(state->context());
   auto isolate = lwContext->GetIsolate()->toV8();
 
-  FileData dest = Loader::readFile(fileName, Encoding::kUnknown);
+  FileData fileData = Loader::readFile(fileName, Encoding::kUnknown);
 
-  if (dest.buffer) {
-    auto data = Loader::ReloadableSourceData::create(
-        fileName, dest.buffer, dest.size, dest.encoding);
-
+  if (fileData.buffer) {
     HandleScope handleScope(isolate);
 
     v8::Local<v8::String> source =
-        Loader::NewReloadableString(
+        NewReloadableString(
             isolate,
-            data,
+            ReloadableSourceData::create(fileData),
             // Load-ReloadableSource
             [](void* userData) -> void* {
               auto data =

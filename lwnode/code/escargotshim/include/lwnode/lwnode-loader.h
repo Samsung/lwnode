@@ -17,6 +17,8 @@
 #pragma once
 
 #include <v8.h>
+#include <functional>
+#include <memory>
 #include <string>
 
 namespace Escargot {
@@ -32,26 +34,29 @@ struct FileData {
   void* buffer{nullptr};
   long int size{0};
   Encoding encoding{Encoding::kUnknown};
+  std::string filePath;
 
-  FileData(void* buffer_, long int size_, Encoding encoding_) {
+  FileData(void* buffer_,
+           long int size_,
+           Encoding encoding_,
+           const std::string& filePath_) {
     buffer = buffer_;
     size = size_;
     encoding = encoding_;
+    filePath = filePath_;
   }
   FileData() = default;
 };
 
 class Loader {
  public:
-  using U8String = std::basic_string<uint8_t, std::char_traits<uint8_t>>;
-
   static FileData readFile(std::string filename, const Encoding fileEncoding);
 
-  static void tryConvertUTF8ToLatin1(U8String& latin1String,
-                                     Encoding& encoding,
-                                     const uint8_t* buffer,
-                                     const size_t bufferSize,
-                                     const Encoding encodingHint);
+  static FileData createFileDataForReloadableString(
+      std::string filename,
+      std::unique_ptr<void, std::function<void(void*)>> bufferHolder,
+      size_t bufferSize,
+      const Encoding encodingHint);
 
   // should return string buffer
   typedef void* (*LoadCallback)(void* callbackData);
@@ -74,10 +79,7 @@ class Loader {
     }
     Encoding encoding() { return encoding_; }
 
-    static ReloadableSourceData* create(std::string sourcePath,
-                                        void* preloadedData,
-                                        size_t preloadedDataLength,
-                                        Encoding encoding);
+    static ReloadableSourceData* create(const FileData fileData);
 
    private:
     char* path_{nullptr};

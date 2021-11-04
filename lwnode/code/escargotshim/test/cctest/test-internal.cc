@@ -997,12 +997,10 @@ TEST(ReloadableString8) {
     LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
-        Loader::NewReloadableString(
-            isolate,
-            Loader::ReloadableSourceData::create(
-                filename, dest.buffer, dest.size, dest.encoding),
-            LoadReloadableSource,
-            UnloadReloadableSource)
+        Loader::NewReloadableString(isolate,
+                                    Loader::ReloadableSourceData::create(dest),
+                                    LoadReloadableSource,
+                                    UnloadReloadableSource)
             .ToLocalChecked())
         .ToLocalChecked()
         ->Run(context);
@@ -1045,8 +1043,7 @@ TEST(ReloadableString16) {
     FileData dest = Loader::readFile(filename, Encoding::kUnknown);
     LWNODE_CHECK_NOT_NULL(dest.buffer);
 
-    auto data = Loader::ReloadableSourceData::create(
-        filename, dest.buffer, dest.size / 2, dest.encoding);
+    auto data = Loader::ReloadableSourceData::create(dest);
 
     Escargot::StringRef* source = Escargot::StringRef::createReloadableString(
         IsolateWrap::fromV8(isolate)->vmInstance(),
@@ -1084,12 +1081,10 @@ TEST(ReloadableString16) {
     LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
-        Loader::NewReloadableString(
-            isolate,
-            Loader::ReloadableSourceData::create(
-                filename, dest.buffer, dest.size / 2, dest.encoding),
-            LoadReloadableSource,
-            UnloadReloadableSource)
+        Loader::NewReloadableString(isolate,
+                                    Loader::ReloadableSourceData::create(dest),
+                                    LoadReloadableSource,
+                                    UnloadReloadableSource)
             .ToLocalChecked())
         .ToLocalChecked()
         ->Run(context);

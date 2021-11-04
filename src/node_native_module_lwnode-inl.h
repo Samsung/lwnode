@@ -193,57 +193,8 @@ FileData readFileFromArchive(std::string filename,
   std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
       buffer, freeStringBuffer);
 
-  Loader::U8String latin1String;
-  Encoding encoding = Encoding::kUnknown;
-
-  if (encodingHint == Encoding::kAscii) {
-    encoding = Encoding::kAscii;
-  } else if (encodingHint == Encoding::kUtf16) {
-    encoding = Encoding::kUtf16;
-  } else if (encodingHint == Encoding::kLatin1) {
-    Loader::tryConvertUTF8ToLatin1(
-        latin1String, encoding, (uint8_t*)buffer, bufferSize, encodingHint);
-  } else {
-    CHECK(encodingHint == Encoding::kUnknown);
-    Loader::tryConvertUTF8ToLatin1(
-        latin1String, encoding, (uint8_t*)buffer, bufferSize, encodingHint);
-  }
-
-  if (encoding == Encoding::kUtf16) {
-    // Treat non-latin1 as UTF-8 and encode it as UTF-16 Little Endian.
-    if (encodingHint == Encoding::kUnknown) {
-      LWNODE_LOG_INFO("%s contains characters outside of the Latin1 range.",
-                      filename.c_str());
-    }
-
-    char* newStringBuffer = nullptr;
-    size_t newStringBufferSize = 0;
-
-    bool isConverted = convertUTF8ToUTF16le(&newStringBuffer,
-                                            &newStringBufferSize,
-                                            (const char*)bufferHolder.get(),
-                                            bufferSize);
-    if (isConverted == false) {
-      return FileData();
-    }
-
-    bufferHolder.reset(newStringBuffer);
-    bufferSize = newStringBufferSize;
-  } else {
-    if (encoding == Encoding::kLatin1) {
-      if (encodingHint == Encoding::kUnknown) {
-        LWNODE_LOG_INFO("%s contains Latin1 characters.", filename.c_str());
-      }
-
-      bufferSize = latin1String.length();
-      bufferHolder.reset(allocateStringBuffer(bufferSize + 1));
-      ((uint8_t*)bufferHolder.get())[bufferSize] = '\0';
-
-      memcpy(bufferHolder.get(), latin1String.data(), bufferSize);
-    }
-  }
-
-  return FileData(bufferHolder.release(), bufferSize, encoding);
+  return Loader::createFileDataForReloadableString(
+      filename, std::move(bufferHolder), bufferSize, encodingHint);
 }
 
 bool NativeModuleLoader::IsOneByte(const char* id) {
@@ -284,12 +235,9 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
     return MaybeLocal<String>();
   }
 
-  auto data = Loader::ReloadableSourceData::create(
-      filename, fileData.buffer, fileData.size, fileData.encoding);
-
   return Loader::NewReloadableString(
       isolate,
-      data,
+      Loader::ReloadableSourceData::create(fileData),
       // Load-ReloadableSource
       [](void* userData) -> void* {
         auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
