@@ -26,12 +26,12 @@ class ExecutionStateRef;
 
 namespace LWNode {
 
-enum Encoding { UNKNOWN, ONE_BYTE, ONE_BYTE_LATIN1, TWO_BYTE };
+enum class Encoding : uint8_t { kUnknown, kAscii, kLatin1, kUtf16 };
 
 struct FileData {
   void* buffer{nullptr};
   long int size{0};
-  Encoding encoding{ONE_BYTE};
+  Encoding encoding{Encoding::kUnknown};
 
   FileData(void* buffer_, long int size_, Encoding encoding_) {
     buffer = buffer_;
@@ -69,7 +69,8 @@ class Loader {
                                : preloadedDataLength_ / 2;
     }
     bool isOneByteString() {
-      return (encoding_ == ONE_BYTE) || (encoding_ == ONE_BYTE_LATIN1);
+      return (encoding_ == Encoding::kAscii) ||
+             (encoding_ == Encoding::kLatin1);
     }
     Encoding encoding() { return encoding_; }
 
@@ -81,7 +82,7 @@ class Loader {
    private:
     char* path_{nullptr};
     size_t preloadedDataLength_{0};
-    Encoding encoding_{UNKNOWN};
+    Encoding encoding_{Encoding::kUnknown};
     ReloadableSourceData() = default;
   };
 
