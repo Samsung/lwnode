@@ -172,7 +172,7 @@ bool readFileFromArchive(const std::string& archiveFilename,
 
 FileData readFileFromArchive(std::string filename,
                              const Encoding encodingHint) {
-  CHECK(encodingHint != UNKNOWN);
+  CHECK(encodingHint != Encoding::kUnknown);
 
   size_t bufferSize = 0;
   char* buffer = nullptr;
@@ -194,24 +194,24 @@ FileData readFileFromArchive(std::string filename,
       buffer, freeStringBuffer);
 
   Loader::U8String latin1String;
-  Encoding encoding = UNKNOWN;
+  Encoding encoding = Encoding::kUnknown;
 
-  if (encodingHint == ONE_BYTE) {
-    encoding = ONE_BYTE;
-  } else if (encodingHint == TWO_BYTE) {
-    encoding = TWO_BYTE;
-  } else if (encodingHint == ONE_BYTE_LATIN1) {
+  if (encodingHint == Encoding::kAscii) {
+    encoding = Encoding::kAscii;
+  } else if (encodingHint == Encoding::kUtf16) {
+    encoding = Encoding::kUtf16;
+  } else if (encodingHint == Encoding::kLatin1) {
     Loader::tryConvertUTF8ToLatin1(
         latin1String, encoding, (uint8_t*)buffer, bufferSize, encodingHint);
   } else {
-    CHECK(encodingHint == UNKNOWN);
+    CHECK(encodingHint == Encoding::kUnknown);
     Loader::tryConvertUTF8ToLatin1(
         latin1String, encoding, (uint8_t*)buffer, bufferSize, encodingHint);
   }
 
-  if (encoding == TWO_BYTE) {
+  if (encoding == Encoding::kUtf16) {
     // Treat non-latin1 as UTF-8 and encode it as UTF-16 Little Endian.
-    if (encodingHint == UNKNOWN) {
+    if (encodingHint == Encoding::kUnknown) {
       LWNODE_LOG_INFO("%s contains characters outside of the Latin1 range.",
                       filename.c_str());
     }
@@ -230,8 +230,8 @@ FileData readFileFromArchive(std::string filename,
     bufferHolder.reset(newStringBuffer);
     bufferSize = newStringBufferSize;
   } else {
-    if (encoding == ONE_BYTE_LATIN1) {
-      if (encodingHint == UNKNOWN) {
+    if (encoding == Encoding::kLatin1) {
+      if (encodingHint == Encoding::kUnknown) {
         LWNODE_LOG_INFO("%s contains Latin1 characters.", filename.c_str());
       }
 
@@ -276,8 +276,8 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
     Isolate* isolate, const char* id) {
   std::string filename = getFileNameOnArchive(id);
 
-  FileData fileData =
-      readFileFromArchive(filename, (IsOneByte(id) ? ONE_BYTE : TWO_BYTE));
+  FileData fileData = readFileFromArchive(
+      filename, (IsOneByte(id) ? Encoding::kAscii : Encoding::kUtf16));
 
   if (fileData.buffer == nullptr) {
     ERROR_AND_ABORT("Failed to open builtins");
