@@ -129,6 +129,7 @@ echo "Building:" %{target}
 CFLAGS+=' -Os '
 CXXFLAGS+=' -Os '
 
+# building liblwnode.so
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
             --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
@@ -139,6 +140,14 @@ CXXFLAGS+=' -Os '
 %if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
   ninja -C %{target_src} %{target_lib}
 %endif
+
+# building a static lwnode executable
+./configure --tizen --without-npm \
+            --without-inspector --without-node-code-cache --without-node-snapshot \
+            --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
+            --enable-reload-script --enable-external-builtin-script \
+            --dest-os linux --dest-cpu '%{tizen_arch}' \
+            --ninja %{?engine_config} %{?extra_config}
 ninja -C %{target_src} %{target}
 
 
