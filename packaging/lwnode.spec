@@ -117,6 +117,12 @@ LDFLAGS+="-fsanitize=address"
 %define lib_type_config --shared
 %endif
 
+%if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
+  %define libshared --shared-zlib --shared-cares
+%else
+  %define libshared --shared-zlib --shared-cares --shared-openssl --shared-nghttp2
+%endif
+
 %if "%{?feature_mode}" == "production"
   echo -e "\033[0;32m"production"\033[0m"
 %else
@@ -132,7 +138,7 @@ CXXFLAGS+=' -Os '
 # building liblwnode.so
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
-            --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
+            --with-intl none %{?libshared} \
             --enable-reload-script --enable-external-builtin-script \
             --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?engine_config} %{?extra_config} %{?lib_type_config}
@@ -144,7 +150,7 @@ CXXFLAGS+=' -Os '
 # building a static lwnode executable
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
-            --with-intl none --shared-openssl --shared-zlib --shared-cares --shared-nghttp2 \
+            --with-intl none %{?libshared} \
             --enable-reload-script --enable-external-builtin-script \
             --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?engine_config} %{?extra_config}
@@ -174,8 +180,8 @@ cp %{target_src}/%{target} %{buildroot}%{_bindir}
 cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
 %clean
-rm ./*.list
-rm ./*.manifest
+rm -fr ./*.list
+rm -fr ./*.manifest
 
 %post
 /sbin/ldconfig
