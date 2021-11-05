@@ -19,7 +19,6 @@ P /.circleci
 - /doc
 - /deps/npm
 - /deps/zlib
-- /deps/openssl
 - /tools/node_modules
 - /tools/gyp/tools/Xcode
 - .git
