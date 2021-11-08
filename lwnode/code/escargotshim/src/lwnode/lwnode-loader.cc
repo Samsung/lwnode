@@ -179,7 +179,12 @@ FileData Loader::createFileDataForReloadableString(
   return FileData(bufferHolder.release(), bufferSize, encoding, filename);
 }
 
-FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
+SourceReader* SourceReader::getInstance() {
+  static SourceReader s_singleton;
+  return &s_singleton;
+}
+
+FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
   FileScope fileScope(filename.c_str(), "rb");
 
   std::FILE* file = fileScope.file();
@@ -205,12 +210,12 @@ FileData Loader::readFile(std::string filename, const Encoding encodingHint) {
     return FileData();
   }
 
-  return createFileDataForReloadableString(
+  return Loader::createFileDataForReloadableString(
       filename, std::move(bufferHolder), bufferSize, encodingHint);
 }
 
 Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
-    const FileData fileData) {
+    const FileData fileData, SourceReaderInterface* sourceReader) {
   // NOTE: data and data->path should be managed by gc
   auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
       ReloadableSourceData();
@@ -223,6 +228,7 @@ Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
   data->preloadedData = fileData.buffer;
   data->preloadedDataLength_ = fileData.size;
   data->encoding_ = fileData.encoding;
+  data->sourceReader_ = sourceReader;
 
   return data;
 }
@@ -238,62 +244,21 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
   auto lwContext = ContextWrap::fromEscargot(state->context());
   auto isolate = lwContext->GetIsolate()->toV8();
 
-  FileData fileData = Loader::readFile(fileName, Encoding::kUnknown);
+  auto sourceReader = SourceReader::getInstance();
+  FileData fileData = sourceReader->read(fileName, Encoding::kUnknown);
 
-  if (fileData.buffer) {
-    HandleScope handleScope(isolate);
-
-    v8::Local<v8::String> source =
-        NewReloadableString(
-            isolate,
-            ReloadableSourceData::create(fileData),
-            // Load-ReloadableSource
-            [](void* userData) -> void* {
-              auto data =
-                  reinterpret_cast<Loader::ReloadableSourceData*>(userData);
-
-              LWNODE_LOG_INFO("  * Load: %d (%d) %p %s (+%.2f kB)",
-                              ++s_stat.loaded,
-                              s_stat.reloaded,
-                              data->preloadedData,
-                              data->path(),
-                              (float)data->preloadedDataLength() / 1024);
-
-              if (data->preloadedData) {
-                auto buffer = data->preloadedData;
-                data->preloadedData = nullptr;
-                return buffer;  // move memory ownership to js engine
-              }
-              s_stat.reloaded++;
-
-              FileData dest = Loader::readFile(data->path(), data->encoding());
-              LWNODE_CHECK_NOT_NULL(dest.buffer);
-              return dest.buffer;
-            },
-            // Unload-ReloadableSource
-            [](void* preloadedData, void* userData) -> void {
-              auto data =
-                  reinterpret_cast<Loader::ReloadableSourceData*>(userData);
-
-              LWNODE_LOG_INFO("* Unload: %d (%d) %p %s (-%.2f kB)",
-                              --s_stat.loaded,
-                              s_stat.reloaded,
-                              preloadedData,
-                              data->path(),
-                              (float)data->preloadedDataLength() / 1024);
-
-              if (data->preloadedData) {
-                freeStringBuffer(data->preloadedData);
-                data->preloadedData = nullptr;
-              }
-              freeStringBuffer(preloadedData);
-            })
-            .ToLocalChecked();
-
-    return CVAL(*source)->value()->asString();
+  if (fileData.buffer == nullptr) {
+    return ValueRef::createUndefined();
   }
 
-  return ValueRef::createUndefined();
+  HandleScope handleScope(isolate);
+
+  v8::Local<v8::String> source =
+      NewReloadableString(isolate,
+                          ReloadableSourceData::create(fileData, sourceReader))
+          .ToLocalChecked();
+
+  return CVAL(*source)->value()->asString();
 }
 
 MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
@@ -307,6 +272,50 @@ MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
   } else if (data->stringLength() > v8::String::kMaxLength) {
     result = MaybeLocal<String>();
   } else {
+    if (loadCallback == nullptr && unloadCallback == nullptr) {
+      // set default load/unload callbacks
+      loadCallback = [](void* userData) -> void* {
+        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
+
+        LWNODE_LOG_INFO("  Load: %d (%d) %p %s (+%.2f kB)",
+                        ++s_stat.loaded,
+                        s_stat.reloaded,
+                        data->preloadedData,
+                        data->path(),
+                        (float)data->preloadedDataLength() / 1024);
+
+        if (data->preloadedData) {
+          auto buffer = data->preloadedData;
+          data->preloadedData = nullptr;
+          return buffer;  // move memory ownership to js engine
+        }
+        s_stat.reloaded++;
+
+        FileData fileData =
+            data->sourceReader()->read(data->path(), data->encoding());
+
+        LWNODE_CHECK_NOT_NULL(fileData.buffer);
+        return fileData.buffer;
+      };
+
+      unloadCallback = [](void* preloadedData, void* userData) -> void {
+        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
+
+        LWNODE_LOG_INFO(" Unload: %d (%d) %p %s (-%.2f kB)",
+                        --s_stat.loaded,
+                        s_stat.reloaded,
+                        preloadedData,
+                        data->path(),
+                        (float)data->preloadedDataLength() / 1024);
+
+        if (data->preloadedData) {
+          freeStringBuffer(data->preloadedData);
+          data->preloadedData = nullptr;
+        }
+        freeStringBuffer(preloadedData);
+      };
+    }
+
     Escargot::StringRef* reloadableString =
         Escargot::StringRef::createReloadableString(
             IsolateWrap::fromV8(isolate)->vmInstance(),
@@ -315,6 +324,7 @@ MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
             data,  // data should be gc-managed.
             loadCallback,
             unloadCallback);
+
     result = v8::Utils::NewLocal<String>(isolate, reloadableString);
   }
 
