@@ -217,17 +217,51 @@ static std::string getFileNameOnArchive(const char* id) {
   return filename;
 }
 
-struct Stat {
-  int loaded{0};
-  int reloaded{0};
+class SourceReaderOnArchive : public SourceReaderInterface {
+ public:
+  static SourceReaderOnArchive* getInstance() {
+    static SourceReaderOnArchive s_singleton;
+    return &s_singleton;
+  }
+
+  FileData read(std::string filename, const Encoding encodingHint) {
+    CHECK(encodingHint != Encoding::kUnknown);
+
+    size_t bufferSize = 0;
+    char* buffer = nullptr;
+
+    static std::string s_externalBuiltinsPath;
+
+    if (s_externalBuiltinsPath.empty()) {
+      std::string executablePath = getSelfProcPath();
+      executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
+      s_externalBuiltinsPath =
+          executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
+    }
+
+    if (readFileFromArchive(
+            s_externalBuiltinsPath, filename, &buffer, &bufferSize) == false) {
+      return FileData();
+    }
+
+    std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
+        buffer, freeStringBuffer);
+
+    return Loader::createFileDataForReloadableString(
+        filename, std::move(bufferHolder), bufferSize, encodingHint);
+  }
+
+ private:
+  SourceReaderOnArchive() = default;
 };
-static Stat s_stat;
 
 MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
     Isolate* isolate, const char* id) {
   std::string filename = getFileNameOnArchive(id);
 
-  FileData fileData = readFileFromArchive(
+  auto sourceReader = SourceReaderOnArchive::getInstance();
+
+  FileData fileData = sourceReader->read(
       filename, (IsOneByte(id) ? Encoding::kAscii : Encoding::kUtf16));
 
   if (fileData.buffer == nullptr) {
@@ -236,49 +270,7 @@ MaybeLocal<String> NativeModuleLoader::LoadExternalBuiltinSource(
   }
 
   return Loader::NewReloadableString(
-      isolate,
-      Loader::ReloadableSourceData::create(fileData),
-      // Load-ReloadableSource
-      [](void* userData) -> void* {
-        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
-
-        LWNODE_LOG_INFO("  Load: %d (%d) %p %s (+%.2f kB)",
-                        ++s_stat.loaded,
-                        s_stat.reloaded,
-                        data->preloadedData,
-                        data->path(),
-                        (float)data->preloadedDataLength() / 1024);
-
-        if (data->preloadedData) {
-          auto buffer = data->preloadedData;
-          data->preloadedData = nullptr;
-          return buffer;  // move memory ownership to js engine
-        }
-
-        s_stat.reloaded++;
-
-        FileData fileData = readFileFromArchive(data->path(), data->encoding());
-
-        CHECK_NOT_NULL(fileData.buffer);
-        return fileData.buffer;
-      },
-      // Unload-ReloadableSource
-      [](void* preloadedData, void* userData) -> void {
-        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
-
-        LWNODE_LOG_INFO("Unload: %d (%d) %p %s (-%.2f kB)",
-                        --s_stat.loaded,
-                        s_stat.reloaded,
-                        preloadedData,
-                        data->path(),
-                        (float)data->preloadedDataLength() / 1024);
-
-        if (data->preloadedData) {
-          freeStringBuffer(data->preloadedData);
-          data->preloadedData = nullptr;
-        }
-        freeStringBuffer(preloadedData);
-      });
+      isolate, Loader::ReloadableSourceData::create(fileData, sourceReader));
 }
 
 }  // namespace native_module
