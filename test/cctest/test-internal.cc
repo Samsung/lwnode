@@ -918,7 +918,10 @@ static void* LoadReloadableSource(void* userData) {
     return buffer;
   }
   LWNODE_LOG_INFO("reload");
-  FileData dest = Loader::readFile(data->path(), Encoding::kUnknown);
+
+  auto sourceReader = SourceReader::getInstance();
+  FileData dest = sourceReader->read(data->path(), Encoding::kUnknown);
+
   LWNODE_CHECK_NOT_NULL(dest.buffer);
   return dest.buffer;
 }
@@ -993,14 +996,17 @@ TEST(ReloadableString8) {
     const bool isOneByteString = true;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = Loader::readFile(filename, Encoding::kUnknown);
+    auto sourceReader = SourceReader::getInstance();
+    FileData dest = sourceReader->read(filename, Encoding::kUnknown);
+
     LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
-        Loader::NewReloadableString(isolate,
-                                    Loader::ReloadableSourceData::create(dest),
-                                    LoadReloadableSource,
-                                    UnloadReloadableSource)
+        Loader::NewReloadableString(
+            isolate,
+            Loader::ReloadableSourceData::create(dest, sourceReader),
+            LoadReloadableSource,
+            UnloadReloadableSource)
             .ToLocalChecked())
         .ToLocalChecked()
         ->Run(context);
@@ -1040,10 +1046,11 @@ TEST(ReloadableString16) {
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = Loader::readFile(filename, Encoding::kUnknown);
+    auto sourceReader = SourceReader::getInstance();
+    FileData dest = sourceReader->read(filename, Encoding::kUnknown);
     LWNODE_CHECK_NOT_NULL(dest.buffer);
 
-    auto data = Loader::ReloadableSourceData::create(dest);
+    auto data = Loader::ReloadableSourceData::create(dest, sourceReader);
 
     Escargot::StringRef* source = Escargot::StringRef::createReloadableString(
         IsolateWrap::fromV8(isolate)->vmInstance(),
@@ -1077,14 +1084,17 @@ TEST(ReloadableString16) {
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
-    FileData dest = Loader::readFile(filename, Encoding::kUnknown);
+    auto sourceReader = SourceReader::getInstance();
+    FileData dest = sourceReader->read(filename, Encoding::kUnknown);
+
     LWNODE_CHECK_NOT_NULL(dest.buffer);
     v8::Script::Compile(
         context,
-        Loader::NewReloadableString(isolate,
-                                    Loader::ReloadableSourceData::create(dest),
-                                    LoadReloadableSource,
-                                    UnloadReloadableSource)
+        Loader::NewReloadableString(
+            isolate,
+            Loader::ReloadableSourceData::create(dest, sourceReader),
+            LoadReloadableSource,
+            UnloadReloadableSource)
             .ToLocalChecked())
         .ToLocalChecked()
         ->Run(context);

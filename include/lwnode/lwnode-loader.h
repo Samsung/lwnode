@@ -48,26 +48,30 @@ struct FileData {
   FileData() = default;
 };
 
+class SourceReaderInterface {
+ public:
+  virtual FileData read(std::string filename, const Encoding encodingHint) = 0;
+};
+
+class SourceReader : public SourceReaderInterface {
+ public:
+  static SourceReader* getInstance();
+  FileData read(std::string filename, const Encoding encodingHint) override;
+
+ private:
+  SourceReader() = default;
+};
+
 class Loader {
  public:
-  static FileData readFile(std::string filename, const Encoding fileEncoding);
-
-  static FileData createFileDataForReloadableString(
-      std::string filename,
-      std::unique_ptr<void, std::function<void(void*)>> bufferHolder,
-      size_t bufferSize,
-      const Encoding encodingHint);
-
-  // should return string buffer
-  typedef void* (*LoadCallback)(void* callbackData);
-  // should free memoryPtr
-  typedef void (*UnloadCallback)(void* memoryPtr, void* callbackData);
-
   class ReloadableSourceData {
    public:
     void* preloadedData{nullptr};
 
     const char* path() { return path_; }
+    Encoding encoding() { return encoding_; }
+    SourceReaderInterface* sourceReader() { return sourceReader_; }
+
     size_t preloadedDataLength() { return preloadedDataLength_; }
     size_t stringLength() {
       return isOneByteString() ? preloadedDataLength_
@@ -77,16 +81,28 @@ class Loader {
       return (encoding_ == Encoding::kAscii) ||
              (encoding_ == Encoding::kLatin1);
     }
-    Encoding encoding() { return encoding_; }
 
-    static ReloadableSourceData* create(const FileData fileData);
+    static ReloadableSourceData* create(const FileData fileData,
+                                        SourceReaderInterface* sourceReader);
 
    private:
     char* path_{nullptr};
     size_t preloadedDataLength_{0};
     Encoding encoding_{Encoding::kUnknown};
     ReloadableSourceData() = default;
+    SourceReaderInterface* sourceReader_{nullptr};
   };
+
+  // should return string buffer
+  typedef void* (*LoadCallback)(void* callbackData);
+  // should free memoryPtr
+  typedef void (*UnloadCallback)(void* memoryPtr, void* callbackData);
+
+  static FileData createFileDataForReloadableString(
+      std::string filename,
+      std::unique_ptr<void, std::function<void(void*)>> bufferHolder,
+      size_t bufferSize,
+      const Encoding encodingHint);
 
   static Escargot::ValueRef* CreateReloadableSourceFromFile(
       Escargot::ExecutionStateRef* state, std::string fileName);
@@ -94,8 +110,8 @@ class Loader {
   static v8::MaybeLocal<v8::String> NewReloadableString(
       v8::Isolate* isolate,
       ReloadableSourceData* data,
-      LoadCallback loadCallback,
-      UnloadCallback unloadCallback);
+      LoadCallback loadCallback = nullptr,
+      UnloadCallback unloadCallback = nullptr);
 };
 
 bool convertUTF8ToUTF16le(char** buffer,
