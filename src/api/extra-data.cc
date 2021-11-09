@@ -61,7 +61,7 @@ void InternalFieldData::setInternalFieldCount(int size) {
 
   // TODO: throw internal error
   if (size <= 0) {
-    LWNODE_DLOG_ERROR("InternalField: The size is negative");
+    LWNODE_DLOG_ERROR("InternalField: Invalid field count: %d\n", size);
     return;
   }
 

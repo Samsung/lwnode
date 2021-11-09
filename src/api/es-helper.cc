@@ -740,23 +740,6 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
       target);
 }
 
-ObjectData* ObjectRefHelper::createExtraDataIfNotExist(ObjectRef* object) {
-  void* data = object->extraData();
-  if (data == nullptr) {
-    data = new ObjectData();
-    LWNODE_DLOG_WARN("createExtraDataIfNotExist(): %p", data);
-    ObjectRefHelper::setExtraData(object, reinterpret_cast<ObjectData*>(data));
-  }
-  return reinterpret_cast<ObjectData*>(data);
-}
-
-void ObjectRefHelper::setInternalFieldCount(ObjectRef* object, int size) {
-  auto data = createExtraDataIfNotExist(object);
-  LWNODE_DCHECK_NOT_NULL(data);
-
-  data->setInternalFieldCount(size);
-}
-
 int ObjectRefHelper::getInternalFieldCount(ObjectRef* object) {
   auto data = getExtraData(object);
   if (data == nullptr) {
@@ -851,6 +834,14 @@ void ExtraDataHelper::setExtraData(ObjectRef* callSite, StackTraceData* data) {
     LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
   }
   callSite->setExtraData(data);
+}
+
+void ExtraDataHelper::setExtraData(ObjectRef* object, ObjectData* data) {
+  auto extraData = object->extraData();
+  if (extraData) {
+    LWNODE_DLOG_WARN("Replacing ExtraData: Is this intended?");
+  }
+  object->setExtraData(data);
 }
 
 void ObjectTemplateRefHelper::setInternalFieldCount(ObjectTemplateRef* otpl,

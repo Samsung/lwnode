@@ -106,7 +106,6 @@ class ObjectRefHelper {
   static bool hasExtraData(ObjectRef* object);
   static ObjectData* getExtraData(ObjectRef* object);
 
-  static void setInternalFieldCount(ObjectRef* object, int size);
   static int getInternalFieldCount(ObjectRef* object);
   static void setInternalField(ObjectRef* object,
                                int idx,
@@ -120,8 +119,6 @@ class ObjectRefHelper {
   static StringRef* getConstructorName(ContextRef* context, ObjectRef* object);
 
  private:
-  static ObjectData* createExtraDataIfNotExist(ObjectRef* object);
-
   static ValueRef* getOwnPropertyAttributes(ExecutionStateRef* state,
                                             ObjectRef* object,
                                             ValueRef* key);
@@ -150,6 +147,7 @@ class ExtraDataHelper {
   static void setExtraData(ObjectRef* exceptionObject,
                            ExceptionObjectData* data);
   static void setExtraData(ObjectRef* callSite, StackTraceData* data);
+  static void setExtraData(ObjectRef* object, ObjectData* data);
 };
 
 class ObjectTemplateRefHelper {
