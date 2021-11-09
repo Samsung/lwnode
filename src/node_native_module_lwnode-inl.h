@@ -66,7 +66,7 @@ static ArchiveFileScope s_archiveFileScope;
 static std::map<std::string, UnzFileCachedInfo> s_unzFileInfoDictionary;
 
 std::string getSelfProcPath() {
-  char path[PATH_MAX];
+  char path[PATH_MAX + 1];
   ssize_t length = readlink("/proc/self/exe", path, PATH_MAX);
   if (length < 0) {
     ERROR_AND_ABORT("readlink fails");
@@ -92,9 +92,9 @@ bool readCurrentFileFromArchive(const unzFile file,
     freeStringBuffer(buffer);
     buffer = nullptr;
     result = false;
+  } else {
+    (*buffer)[*fileSize] = '\0';
   }
-
-  (*buffer)[*fileSize] = '\0';
 
   unzCloseCurrentFile(file);
   return result;
