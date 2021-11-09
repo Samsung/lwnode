@@ -167,6 +167,12 @@ def get_lwnode_gyp_options():
   options.verbose = False
 
   return args
+
+def configure_lwnode(o):
+  o['variables']['javascript_engine'] = 'escargot' if options.engine == 'escargot' else 'v8'
+  if options.engine == 'escargot' :
+    o['variables']['lwnode_external_builtin_script'] = b(options.enable_external_builtin_script)
+    o['variables']['lwnode_reload_script'] = b(options.enable_reload_script)
 # end of @lwnode
 
 # Options should be in alphabetical order but keep --prefix at the top,
@@ -1904,6 +1910,10 @@ configure_intl(output)
 configure_static(output)
 configure_inspector(output)
 configure_section_file(output)
+# @lwnode
+configure_lwnode(output)
+# end of @lwnode
+
 
 # Forward OSS-Fuzz settings
 output['variables']['ossfuzz'] = b(options.ossfuzz)
