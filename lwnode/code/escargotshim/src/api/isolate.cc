@@ -352,30 +352,31 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
       // 1. create internal field on Init
       if (type == VMInstanceRef::PromiseHookType::Init) {
         LWNODE_DCHECK(v8::Promise::kEmbedderFieldCount > 0);
-        if (ObjectRefHelper::getInternalFieldCount(promise) == 0) {
-          ObjectRefHelper::setInternalFieldCount(promise,
-                                                 Promise::kEmbedderFieldCount);
-          /*
-            @note
-            In Node.js, promise internal field count is supposed to be set to 1.
-
-            reference:
-            - configure.py: v8_promise_internal_field_count = 1
-            - tools/v8_gypfiles/features.gypi: V8_PROMISE_INTERNAL_FIELD_COUNT
-            - deps/v8/src/heap/factory.cc: Factory::NewJSPromise()
-
-            v8 sets Smi::zero() to promise's internal fields, which are:
-              - Number from getInternalField
-              - nullptr from GetAlignedPointerFromInternalField
-
-            In lwnode, the returned value will be:
-              - Undefined from getInternalField
-              - nullptr from GetAlignedPointerFromInternalField
-
-            The difference from getInternalField seems not that meaningful in
-            Node.js.
-          */
-        }
+        // In Node.js, a promise always sets the internal field count to 1.
+        //
+        // reference:
+        // - configure.py: v8_promise_internal_field_count = 1
+        // - tools/v8_gypfiles/features.gypi: V8_PROMISE_INTERNAL_FIELD_COUNT
+        // - deps/v8/src/heap/factory.cc: Factory::NewJSPromise()
+        //
+        // v8 initializes the promise's internal fields with Smi::zero().
+        // These values are interpreted differently depending on getters.
+        //   - Number is returned from getInternalField()
+        //   - nullptr is returned from GetAlignedPointerFromInternalField()
+        //
+        // In constrast, lwnode interprets the same values as follows.
+        //   - Undefined is returned from getInternalField()
+        //   - nullptr is returned from GetAlignedPointerFromInternalField()
+        //
+        // This difference does not seem to make a different behaviour in
+        // node.js
+        //
+        // This promise was newly created by Escargot internally
+        LWNODE_CHECK(!ExtraDataHelper::getExtraData(promise));
+        ExtraDataHelper::setExtraData(promise, new ObjectData());
+        ExtraDataHelper::getExtraData(promise)
+            ->asInternalFieldData()
+            ->setInternalFieldCount(v8::Promise::kEmbedderFieldCount);
       }
 
       // 2. run PromiseHook

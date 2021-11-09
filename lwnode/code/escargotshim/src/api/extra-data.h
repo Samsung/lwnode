@@ -22,6 +22,7 @@
 #include "v8.h"
 
 namespace EscargotShim {
+class InternalFieldData;
 class FunctionTemplateData;
 class ObjectTemplateData;
 class FunctionData;
@@ -36,6 +37,7 @@ using namespace Escargot;
 
 class ExtraData : public gc {
  public:
+  virtual bool isInternalFieldData() const { return false; }
   virtual bool isFunctionTemplateData() const { return false; }
   virtual bool isObjectTemplateData() const { return false; }
   virtual bool isObjectData() const { return false; }
@@ -44,6 +46,11 @@ class ExtraData : public gc {
   virtual bool isExceptionObjectData() const { return false; }
   virtual bool isStackTraceData() const { return false; }
   virtual bool isGlobalObjectData() const { return false; }
+
+  InternalFieldData* asInternalFieldData() {
+    LWNODE_CHECK(isInternalFieldData());
+    return reinterpret_cast<InternalFieldData*>(this);
+  }
 
   FunctionTemplateData* asFunctionTemplateData() {
     LWNODE_CHECK(isFunctionTemplateData());
@@ -88,13 +95,14 @@ class ExtraData : public gc {
 
 class InternalFieldData : public ExtraData {
  public:
+  InternalFieldData() = default;
+  InternalFieldData(int count) { setInternalFieldCount(count); }
+  bool isInternalFieldData() const override { return true; }
+
   virtual int internalFieldCount();
   virtual void setInternalFieldCount(int size);
   virtual void* internalField(int idx);
   virtual void setInternalField(int idx, void* lwValue);
-
- protected:
-  InternalFieldData() = default;
 
  private:
   bool isValidIndex(int idx);
@@ -169,7 +177,6 @@ class ObjectData : public TemplateData {
   ObjectData(ObjectTemplateRef* objectTemplate);
 
   bool isObjectData() const override { return true; }
-  bool isObjectTemplateData() const override { return false; }
 
   void setFunctionObject(FunctionObjectRef* functionObject) {
     LWNODE_CHECK(functionObject_ == nullptr);
@@ -186,12 +193,10 @@ class ObjectData : public TemplateData {
 
 class FunctionData : public ObjectData {
  public:
-  FunctionData() = default;
   FunctionData(FunctionTemplateRef* functionTemplate)
       : ObjectData(functionTemplate) {}
 
   bool isFunctionData() const override { return true; }
-  bool isFunctionTemplateData() const override { return false; }
 
   v8::Isolate* isolate();
   v8::FunctionCallback callback();
@@ -202,6 +207,7 @@ class FunctionData : public ObjectData {
   std::string toString();
 
  private:
+  FunctionData() = default;
 };
 
 class ExternalObjectData : public ObjectData {
