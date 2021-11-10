@@ -162,9 +162,7 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
   auto esTarget = CVAL(*target)->value()->asObject();
 
-#if !defined(NDEBUG)
   EvalResultHelper::attachBuiltinPrint(esContext, esTarget);
-#endif
 
   SetMethod(esContext, esTarget, "PssUsage", PssUsage);
   SetMethod(esContext, esTarget, "RssUsage", RssUsage);

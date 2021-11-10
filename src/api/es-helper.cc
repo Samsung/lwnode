@@ -609,9 +609,9 @@ Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
       compileResult.script.get());
 
   if (r.isSuccessful() == false) {
-    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",
-                    TRACE_ARGS2,
-                    EvalResultHelper::getErrorString(context, r).c_str());
+    LWNODE_LOG_INTERNAL("Execute:\n  %s (%s:%d)\n%s",
+                        TRACE_ARGS2,
+                        EvalResultHelper::getErrorString(context, r).c_str());
   }
   return r;
 }
@@ -640,7 +640,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
         ss << " ";
       }
 
-      LWNODE_DLOG_RAW("%s", ss.str().c_str());
+      LWNODE_LOG_INTERNAL("%s", ss.str().c_str());
     }
     return ValueRef::createUndefined();
   };
@@ -664,7 +664,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
         ss << " ";
       }
 
-      LWNODE_DLOG_RAW("%s", ss.str().c_str());
+      LWNODE_LOG_INTERNAL("%s", ss.str().c_str());
     }
     return ValueRef::createUndefined();
   };
@@ -680,7 +680,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
       maxStackSize = argv[0]->toUint32(state);
     }
 
-    LWNODE_DLOG_RAW(
+    LWNODE_LOG_INTERNAL(
         "%s",
         getCallStackString(state->computeStackTraceData(), maxStackSize)
             .c_str());
