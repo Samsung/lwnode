@@ -121,6 +121,11 @@ if (common.hasIntl) {
   expectedModules.add('NativeModule punycode');
 }
 
+// @lwnode
+if (process.config.variables.javascript_engine) {
+  expectedModules.add('NativeModule internal/lwnode/setup');
+}
+
 if (process.features.inspector) {
   expectedModules.add('Internal Binding inspector');
   expectedModules.add('NativeModule internal/inspector_async_hook');
