@@ -60,7 +60,6 @@
         'src/api/global-handles.cc',
         'src/api/function.cc',
         'src/api/object.cc',
-        'src/api/serializer.cc',
         'src/api/stack-trace.cc',
         'src/lwnode/lwnode.cc',
         'src/lwnode/lwnode-loader.cc',
