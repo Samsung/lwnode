@@ -50,10 +50,10 @@ void ValueSerializer::Delegate::FreeBufferMemory(void* buffer) {
 }
 
 struct ValueSerializer::PrivateData {
-  explicit PrivateData(Isolate* i, ValueSerializer::Delegate* delegate)
-      : isolate(i), serializer(i, delegate) {}
-  Isolate* isolate;
-  EscargotShim::ValueSerializer serializer;
+  explicit PrivateData(ValueSerializer::Delegate* delegate)
+      : delegate(delegate) {}
+  ValueSerializer::Delegate* delegate;
+  std::ostringstream stream;
 };
 
 ValueSerializer::ValueSerializer(Isolate* isolate)
@@ -62,26 +62,33 @@ ValueSerializer::ValueSerializer(Isolate* isolate)
 }
 
 ValueSerializer::ValueSerializer(Isolate* isolate, Delegate* delegate)
-    : private_(new PrivateData(isolate, delegate)) {}
+    : private_(new PrivateData(delegate)) {}
 
 ValueSerializer::~ValueSerializer() {
   delete private_;
 }
 
 void ValueSerializer::WriteHeader() {
-  private_->serializer.WriteHeader();
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT_WORKAROUND);
 }
 
 void ValueSerializer::SetTreatArrayBufferViewsAsHostObjects(bool mode) {}
 
 Maybe<bool> ValueSerializer::WriteValue(Local<Context> context,
                                         Local<Value> value) {
-  bool result = private_->serializer.WriteValue(CVAL(*value)->value());
+  bool result =
+      SerializerRef::serializeInto(CVAL(*value)->value(), private_->stream);
   return Just(result);
 }
 
 std::pair<uint8_t*, size_t> ValueSerializer::Release() {
-  return std::make_pair(nullptr, 0);
+  auto serializerString = private_->stream.str();
+  auto data = const_cast<uint8_t*>(
+      reinterpret_cast<const uint8_t*>(serializerString.data()));
+
+  private_->stream.str("");
+  private_->stream.clear();
+  return std::make_pair(data, serializerString.size());
 }
 
 void ValueSerializer::TransferArrayBuffer(uint32_t transfer_id,
@@ -90,15 +97,15 @@ void ValueSerializer::TransferArrayBuffer(uint32_t transfer_id,
 }
 
 void ValueSerializer::WriteUint32(uint32_t value) {
-  LWNODE_RETURN_VOID;
+  SerializerRef::serializeInto(ValueRef::create(value), private_->stream);
 }
 
 void ValueSerializer::WriteUint64(uint64_t value) {
-  LWNODE_RETURN_VOID;
+  SerializerRef::serializeInto(ValueRef::create(value), private_->stream);
 }
 
 void ValueSerializer::WriteDouble(double value) {
-  LWNODE_RETURN_VOID;
+  SerializerRef::serializeInto(ValueRef::create(value), private_->stream);
 }
 
 void ValueSerializer::WriteRawBytes(const void* source, size_t length) {
