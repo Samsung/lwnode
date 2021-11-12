@@ -206,7 +206,6 @@ test/parallel/test-util-inspect-long-running.js
 test/parallel/test-util-inspect.js
 test/parallel/test-util-internal.js
 test/parallel/test-util-types.js
-test/parallel/test-v8-deserialize-buffer.js
 test/parallel/test-v8-flags.js
 test/parallel/test-v8-getheapsnapshot-twice.js
 test/parallel/test-v8-serdes.js

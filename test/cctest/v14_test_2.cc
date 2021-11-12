@@ -175,3 +175,89 @@ THREADED_TEST(MultiSetInternalFields) {
   CompileRun("b.onread");
   CHECK(!onread_flag);
 }
+
+class SerializerDelegate : public ValueSerializer::Delegate {
+ public:
+  explicit SerializerDelegate(Isolate* isolate) : isolate_(isolate) {}
+  void ThrowDataCloneError(Local<String> message) override {
+    isolate_->ThrowException(Exception::Error(message));
+  }
+
+ private:
+  Isolate* isolate_;
+};
+
+class DeserializerDelegate : public ValueDeserializer::Delegate {
+ public:
+};
+
+struct MallocedBuffer {
+  uint8_t* data;
+  size_t size;
+
+  MallocedBuffer(uint8_t* data, size_t size) : data(data), size(size) {}
+
+  ~MallocedBuffer() { free(data); }
+};
+
+THREADED_TEST(SerializeWriteReadValue) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  SerializerDelegate serializerdelegate(isolate);
+  ValueSerializer serializer(isolate, &serializerdelegate);
+
+  // Number
+  double testNumber = 12.25;
+  Local<Value> input = v8_num(testNumber);
+  serializer.WriteValue(env.local(), input);
+
+  // String
+  const char* testString = "Serialize!';";
+  input = v8_str(testString);
+  serializer.WriteValue(env.local(), input);
+
+  // Boolean
+  input = Boolean::New(isolate, false);
+  serializer.WriteValue(env.local(), input);
+
+  // Undefined
+  input = v8::Undefined(isolate);
+  serializer.WriteValue(env.local(), input);
+
+  // Null
+  input = v8::Null(isolate);
+  serializer.WriteValue(env.local(), input);
+
+  std::pair<uint8_t*, size_t> data = serializer.Release();
+  CHECK(data.first);
+  MallocedBuffer buffer(data.first, data.second);
+
+  ValueDeserializer deserializer(isolate, buffer.data, buffer.size);
+
+  // Number
+  Local<Value> output;
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsNumber());
+  CHECK_EQ(testNumber, output->NumberValue(env.local()).FromJust());
+
+  // String
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsString());
+  String::Utf8Value outputString(env->GetIsolate(), output);
+  CHECK_EQ(0, strcmp(*outputString, testString));
+
+  // Boolean
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsBoolean());
+  CHECK(!output->BooleanValue(isolate));
+
+  // Undefined
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsUndefined());
+
+  // Null
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsNull());
+}
