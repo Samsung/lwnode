@@ -286,7 +286,7 @@ TEST(internal_Escargot_ShadowObject) {
          ObjectRef* self,
          ValueRef* receiver,
          void* data,
-         const TemplatePropertyNameRef& propertyName) -> OptionalRef<ValueRef> {
+         ValueRef* propertyName) -> OptionalRef<ValueRef> {
     return Escargot::OptionalRef<Escargot::ValueRef>();
   };
 
@@ -295,7 +295,7 @@ TEST(internal_Escargot_ShadowObject) {
          ObjectRef* self,
          ValueRef* receiver,
          void* data,
-         const TemplatePropertyNameRef& propertyName,
+         ValueRef* propertyName,
          ValueRef* value) -> OptionalRef<ValueRef> {
     return Escargot::OptionalRef<Escargot::ValueRef>();
   };
@@ -435,7 +435,7 @@ TEST(internal_Escargot_Extends) {
   auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
 
   esPrototypeTemplate->set(
-      TemplatePropertyNameRef(StringRef::createFromUTF8("RunInThisContext")),
+      StringRef::createFromUTF8("RunInThisContext"),
       FunctionTemplateRef::create(
           AtomicStringRef::emptyAtomicString(),
           0,
@@ -641,12 +641,11 @@ enum InternalFields {
 static void mixinProtoMethod(FunctionTemplateRef* ft) {
   ObjectTemplateRef* esPrototypeTemplate = ft->prototypeTemplate();
 
-  esPrototypeTemplate->set(
-      TemplatePropertyNameRef(StringRef::createFromUTF8("isStreamBase")),
-      ValueRef::create(true),
-      true,
-      true,
-      true);
+  esPrototypeTemplate->set(StringRef::createFromUTF8("isStreamBase"),
+                           ValueRef::create(true),
+                           true,
+                           true,
+                           true);
 
   {
     // v8::ObjectTemplate::PrototypeTemplate()->SetAccessor

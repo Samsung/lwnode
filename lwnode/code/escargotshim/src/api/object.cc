@@ -166,16 +166,6 @@ void ObjectTemplateUtils::SetAccessor(ObjectTemplateRef* esObjectTemplate,
                                       F setter,
                                       Local<Value> data,
                                       PropertyAttribute attribute) {
-  auto esName = CVAL(*name)->value();
-  TemplatePropertyNameRef esPropertyName;
-  if (esName->isString()) {
-    esPropertyName = TemplatePropertyNameRef(esName->asString());
-  } else if (esName->isSymbol()) {
-    esPropertyName = TemplatePropertyNameRef(esName->asSymbol());
-  } else {
-    LWNODE_CHECK(false);
-  }
-
   auto accessorWrapData = new NativeDataAccessorPropertyDataWrap<T, F>(
       lwIsolate->toV8(),
       name,
@@ -187,7 +177,7 @@ void ObjectTemplateUtils::SetAccessor(ObjectTemplateRef* esObjectTemplate,
       !(attribute & v8::DontDelete));
 
   esObjectTemplate->setNativeDataAccessorProperty(
-      esPropertyName, accessorWrapData, true);
+      CVAL(*name)->value(), accessorWrapData, true);
 }
 
 }  // namespace EscargotShim

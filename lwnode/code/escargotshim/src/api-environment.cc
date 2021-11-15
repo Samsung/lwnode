@@ -164,8 +164,7 @@ Local<Context> v8::Context::New(
     ObjectTemplateRef* esGlobalTemplate =
         VAL(*global_template.ToLocalChecked())->otpl();
 
-    if (esGlobalTemplate->has(TemplatePropertyNameRef(
-            StringRef::createFromASCII("constructor")))) {
+    if (esGlobalTemplate->has(StringRef::createFromASCII("constructor"))) {
       LWNODE_UNIMPLEMENT;
     }
 
