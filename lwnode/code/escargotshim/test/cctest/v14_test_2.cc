@@ -261,3 +261,18 @@ THREADED_TEST(SerializeWriteReadValue) {
   CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
   CHECK(output->IsNull());
 }
+
+THREADED_TEST(Shebang) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::ScriptCompiler::Source script_source(v8_str("#!/usr/bin/node"));
+  v8::TryCatch try_catch(CcTest::isolate());
+  v8::Local<v8::Function> fun =
+      v8::ScriptCompiler::CompileFunctionInContext(
+          env.local(), &script_source, 0, nullptr, 0, nullptr)
+          .ToLocalChecked();
+  CHECK(!fun.IsEmpty());
+  CHECK(!try_catch.HasCaught());
+}
