@@ -22,6 +22,19 @@ using namespace EscargotShim;
 
 namespace v8 {
 
+static void handleShebang(StringRef* source) {
+  if (source->charAt(0) == '#' && source->charAt(1) == '!') {
+    auto stringBuffer = source->stringBufferAccessData();
+    if (stringBuffer.has8BitContent) {
+      ((unsigned char*)stringBuffer.buffer)[0] = '/';
+      ((unsigned char*)stringBuffer.buffer)[1] = '/';
+    } else {
+      ((char16_t*)stringBuffer.buffer)[0] = '/';
+      ((char16_t*)stringBuffer.buffer)[1] = '/';
+    }
+  }
+}
+
 // --- S c r i p t s ---
 
 // Internally, UnboundScript is a SharedFunctionInfo, and Script is a
@@ -367,6 +380,8 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
 
   auto esContext = VAL(*v8_context)->context()->get();
   auto esSource = VAL(*source->source_string)->value()->asString();
+
+  handleShebang(esSource);
 
   GCVector<ValueRef*> arguments_list;
 
