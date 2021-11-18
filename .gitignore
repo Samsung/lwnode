@@ -144,6 +144,7 @@ __pycache__
 *~
 
 # === lwnode ===
+.circleci/gbs.conf
 kuep_net_signer.sh
 bdwgcUsage.dat
 
