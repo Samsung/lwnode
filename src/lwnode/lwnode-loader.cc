@@ -78,7 +78,11 @@ class FileScope {
   FileScope(const char* path, const char* mode) {
     file_ = std::fopen(path, mode);
   }
-  ~FileScope() { std::fclose(file_); }
+  ~FileScope() {
+    if (file_) {
+      std::fclose(file_);
+    }
+  }
   std::FILE* file() { return file_; }
 
  private:
@@ -189,7 +193,7 @@ FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
 
   std::FILE* file = fileScope.file();
 
-  if (!file) {
+  if (file == nullptr) {
     return FileData();
   }
 
