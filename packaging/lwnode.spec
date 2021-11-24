@@ -84,7 +84,7 @@ gcc --version
 ## Build rules for each profile
 ##############################################
 
-%ifarch armv7l
+%ifarch armv7l armv7hl
 %define tizen_arch arm
 %endif
 %ifarch aarch64
