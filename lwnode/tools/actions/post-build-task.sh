@@ -16,6 +16,8 @@
 
 set -e
 
+SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1; pwd )"
+
 show_output_info() {
   ! [[ -z $2 ]] && echo && find $1 -name "lwnode" -o -name "*.so*" | grep -v "/obj" | xargs strip -v $2
   echo; find $1 -name "lwnode" -o -name "*.so*" | grep -v "/obj\|TOC\|/licenses" | xargs size -t
@@ -41,7 +43,7 @@ unpack_rpm() {
   rm -rf $dest_path/usr $dest_path/lwnode.tar
 }
 
-create_build_info() {
+create_build_info_sh() {
   local filename="build-info.txt"
   local dest_path=$1
   local target_path=$dest_path/$filename
@@ -52,6 +54,11 @@ create_build_info() {
   echo $(git log -1 --format=%h) >> $target_path
   echo $(git log -1 --format=%ct) >> $target_path
   echo $(git rev-parse --abbrev-ref HEAD) >> $target_path
+}
+
+create_build_info() {
+  local dest_path=$1
+  bash -c "node $SCRIPT_PATH/build-info.mjs $dest_path"
 }
 
 post() {

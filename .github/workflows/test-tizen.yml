@@ -15,8 +15,6 @@ jobs:
     timeout-minutes: 10
     outputs:
       hash: ${{ steps.vars.outputs.hash }}
-      timestamp: ${{ steps.vars.outputs.timestamp }}
-      branch: ${{ steps.vars.outputs.branch }}
     steps:
       - name: Checkout source
         uses: CODE-Actions/checkout@v2
@@ -26,16 +24,14 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=hash::$(git log -1 --format=%h)"
-          echo "::set-output name=timestamp::$(git log -1 --format=%ct)"
-          echo "::set-output name=branch::$(git rev-parse --abbrev-ref HEAD)"
       - name: Build RPMs
         run: |
-          gbs -c .circleci/gbs.conf \
+          $(which gbs) -c .circleci/gbs.conf \
           build -B ~/GBS-ROOT/lwnode -A armv7l \
           --include-all --incremental -P profile.t65std \
           --define 'lib_type static'
       - name: Post build tasks
-        run: lwnode/tools/ci-task/post-build-task.sh
+        run: lwnode/tools/actions/post-build-task.sh
       - name: Copy the outputs
         env:
           TARGET_PATH: /home/tv/github
@@ -54,9 +50,7 @@ jobs:
       - name: Run test on target
         env:
           HASH: ${{ needs.build.outputs.hash }}
-          TIMESTAMP: ${{ needs.build.outputs.timestamp }}
-          BRANCH: ${{ needs.build.outputs.branch }}
-          HOST_GHPATH: /mnt/rat2/github
+          HOST_ROOT_PATH: /mnt/rat2/github
         run: |
           cd /home/github/remote-job-runner
           npm start
