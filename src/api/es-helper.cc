@@ -52,13 +52,13 @@ EvalResult ObjectRefHelper::setProperty(ContextRef* context,
       context,
       [](ExecutionStateRef* state,
          ObjectRef* object,
-         ValueRef* param1,
-         ValueRef* param2) -> ValueRef* {
+         ValueRef* key,
+         ValueRef* value) -> ValueRef* {
         // 1. if failed because of its descriptor or strict mode, ObjectRef::set
         // returns false, but evalResult will has no error.
         // 2. if failed because of throwing an exception, evalResult will be an
         // error.
-        return ValueRef::create(object->set(state, param1, param2));
+        return ValueRef::create(object->set(state, key, value));
       },
       object,
       key,
@@ -68,77 +68,77 @@ EvalResult ObjectRefHelper::setProperty(ContextRef* context,
 ValueRef* ObjectRefHelper::getOwnPropertyAttributes(ExecutionStateRef* state,
                                                     ObjectRef* object,
                                                     ValueRef* key) {
-  auto val = object->getOwnPropertyDescriptor(state, key);
-  if (val->isUndefined()) {
+  auto descriptor = object->getOwnPropertyDescriptor(state, key);
+  if (descriptor->isUndefined()) {
     return ValueRef::createUndefined();
   }
 
-  int attr = ObjectRef::PresentAttribute::NotPresent;
+  int attribute = ObjectRef::PresentAttribute::NotPresent;
 
-  bool isWritable = val->asObject()
+  bool isWritable = descriptor->asObject()
                         ->get(state, StringRef::createFromASCII("writable"))
                         ->asBoolean();
-  bool isEnumerable = val->asObject()
+  bool isEnumerable = descriptor->asObject()
                           ->get(state, StringRef::createFromASCII("enumerable"))
                           ->asBoolean();
   bool isConfigurable =
-      val->asObject()
+      descriptor->asObject()
           ->get(state, StringRef::createFromASCII("configurable"))
           ->asBoolean();
 
   if (isWritable) {
-    attr = attr | ObjectRef::PresentAttribute::WritablePresent;
+    attribute = attribute | ObjectRef::PresentAttribute::WritablePresent;
   } else {
-    attr = attr | ObjectRef::PresentAttribute::NonWritablePresent;
+    attribute = attribute | ObjectRef::PresentAttribute::NonWritablePresent;
   }
 
   if (isEnumerable) {
-    attr = attr | ObjectRef::PresentAttribute::EnumerablePresent;
+    attribute = attribute | ObjectRef::PresentAttribute::EnumerablePresent;
   } else {
-    attr = attr | ObjectRef::PresentAttribute::NonEnumerablePresent;
+    attribute = attribute | ObjectRef::PresentAttribute::NonEnumerablePresent;
   }
 
   if (isConfigurable) {
-    attr = attr | ObjectRef::PresentAttribute::ConfigurablePresent;
+    attribute = attribute | ObjectRef::PresentAttribute::ConfigurablePresent;
   } else {
-    attr = attr | ObjectRef::PresentAttribute::NonConfigurablePresent;
+    attribute = attribute | ObjectRef::PresentAttribute::NonConfigurablePresent;
   }
 
-  return ValueRef::create(attr);
+  return ValueRef::create(attribute);
 }
 
-EvalResult ObjectRefHelper::getPropertyAttributes(ContextRef* context,
-                                                  ObjectRef* object,
-                                                  ValueRef* key,
-                                                  bool skipPrototype) {
+EvalResult ObjectRefHelper::getPropertyAttributes(
+    ContextRef* context,
+    ObjectRef* object,
+    ValueRef* key,
+    bool skipTraversingPrototypeChain) {
   LWNODE_DCHECK_NOT_NULL(object);
   LWNODE_DCHECK_NOT_NULL(key);
 
-  EvalResult r = Evaluator::execute(
+  return Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
          ObjectRef* object,
          ValueRef* key,
-         bool skipPrototype) -> ValueRef* {
+         bool skipTraversingPrototypeChain) -> ValueRef* {
         LWNODE_DCHECK_NOT_NULL(object);
         LWNODE_DCHECK_NOT_NULL(key);
 
-        ValueRef* attr = ValueRef::createUndefined();
-        for (ObjectRef* o = object; o;
-             o = o->getPrototypeObject(state).value()) {
-          attr = getOwnPropertyAttributes(state, o, key);
-          if (skipPrototype || !attr->isUndefined()) {
+        ValueRef* attribute = ValueRef::createUndefined();
+
+        for (ObjectRef* currentObject = object; currentObject;
+             currentObject = currentObject->getPrototypeObject(state).value()) {
+          attribute = getOwnPropertyAttributes(state, currentObject, key);
+          if (skipTraversingPrototypeChain || !attribute->isUndefined()) {
             break;
           }
         }
 
-        return attr;
+        return attribute;
       },
       object,
       key,
-      skipPrototype);
-
-  return r;
+      skipTraversingPrototypeChain);
 }
 
 EvalResult ObjectRefHelper::getProperty(ContextRef* context,
@@ -302,16 +302,16 @@ ObjectRef* ObjectRefHelper::getPrototype(ContextRef* context,
 
 EvalResult ObjectRefHelper::setPrototype(ContextRef* context,
                                          ObjectRef* object,
-                                         ValueRef* proto) {
+                                         ValueRef* prototype) {
   auto r = Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
          ObjectRef* object,
-         ValueRef* proto) -> ValueRef* {
-        return ValueRef::create(object->setPrototype(state, proto));
+         ValueRef* prototype) -> ValueRef* {
+        return ValueRef::create(object->setPrototype(state, prototype));
       },
       object,
-      proto);
+      prototype);
 
   LWNODE_CHECK(r.isSuccessful());
   return r;
@@ -354,8 +354,8 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
          ContextRef* context,
          SymbolRef* privateValueSymbol,
          ObjectRef* object,
-         ValueRef* param1,
-         ValueRef* param2) -> ValueRef* {
+         ValueRef* key,
+         ValueRef* value) -> ValueRef* {
         ValueRef* hiddenValuesRef = object->get(state, privateValueSymbol);
 
         ObjectRef* hiddenValuesObject = nullptr;
@@ -382,7 +382,7 @@ EvalResult ObjectRefHelper::setPrivate(ContextRef* context,
           hiddenValuesObject = hiddenValuesRef->asObject();
         }
 
-        hiddenValuesObject->set(state, param1, param2);
+        hiddenValuesObject->set(state, key, value);
 
         return ValueRef::create(true);
       },
@@ -915,8 +915,8 @@ void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
 
 // --- StringRefHelper ---
 
-bool StringRefHelper::isAsciiString(StringRef* str) {
-  auto bufferData = str->stringBufferAccessData();
+bool StringRefHelper::isAsciiString(StringRef* string) {
+  auto bufferData = string->stringBufferAccessData();
 
   if (!bufferData.has8BitContent) {
     return false;

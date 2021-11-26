@@ -56,10 +56,11 @@ class ObjectRefHelper {
                                    ObjectRef* object,
                                    ValueRef* key);
 
-  static EvalResult getPropertyAttributes(ContextRef* context,
-                                          ObjectRef* object,
-                                          ValueRef* key,
-                                          bool skipPrototype = false);
+  static EvalResult getPropertyAttributes(
+      ContextRef* context,
+      ObjectRef* object,
+      ValueRef* key,
+      bool skipTraversingPrototypeChain = false);
 
   static EvalResult hasProperty(ContextRef* context,
                                 ObjectRef* object,
