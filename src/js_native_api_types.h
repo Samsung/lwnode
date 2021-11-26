@@ -152,8 +152,8 @@ typedef enum {
 
 #ifdef NAPI_EXPERIMENTAL
 typedef struct {
-  uint64_t lower;
-  uint64_t upper;
+  uint64_t lower = 0;
+  uint64_t upper = 0;
 } napi_type_tag;
 #endif  // NAPI_EXPERIMENTAL
 
