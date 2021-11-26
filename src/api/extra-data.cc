@@ -239,8 +239,9 @@ ExceptionObjectData::ExceptionObjectData(
 
 GCVector<StackTraceData*>* ExceptionObjectData::stackTrace(
     ObjectRef* exceptionObject) {
-  auto exceptionObjectData =
-      ExtraDataHelper::getExtraData(exceptionObject)->asExceptionObjectData();
+  auto extraData = ExtraDataHelper::getExtraData(exceptionObject);
+  LWNODE_CHECK(extraData);
+  auto exceptionObjectData = extraData->asExceptionObjectData();
 
   return exceptionObjectData->stackTrace();
 }

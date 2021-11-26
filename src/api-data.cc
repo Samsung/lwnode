@@ -1121,8 +1121,6 @@ Maybe<bool> v8::Object::DefineProperty(v8::Local<v8::Context> context,
     API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
     return Just(r.result->asBoolean());
   }
-
-  return Just(false);
 }
 
 Maybe<bool> v8::Object::SetPrivate(Local<Context> context,
