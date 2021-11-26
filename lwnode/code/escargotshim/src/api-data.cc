@@ -62,8 +62,8 @@ bool Value::IsFunction() const {
 }
 
 bool Value::IsName() const {
-  auto esValue = CVAL(this)->value();
-  return esValue->isString() || esValue->isSymbol();
+  auto esSelf = CVAL(this)->value();
+  return esSelf->isString() || esSelf->isSymbol();
 }
 
 bool Value::FullIsString() const {
@@ -161,11 +161,11 @@ bool Value::IsBoolean() const {
 }
 
 bool Value::IsExternal() const {
-  auto esValue = CVAL(this)->value();
-  if (!esValue->isObject()) {
+  auto esSelf = CVAL(this)->value();
+  if (!esSelf->isObject()) {
     return false;
   }
-  auto data = ObjectRefHelper::getExtraData(esValue->asObject());
+  auto data = ObjectRefHelper::getExtraData(esSelf->asObject());
   return data && data->isExternalObjectData();
 }
 
@@ -175,13 +175,13 @@ bool Value::IsInt32() const {
   if (esSelf->isInt32()) {
     return true;
   } else if (esSelf->isNumber()) {
-    double val = esSelf->asNumber();
-    bool rangeOk = false;
-    if (std::numeric_limits<int32_t>::min() <= val &&
-        val <= std::numeric_limits<int32_t>::max()) {
-      rangeOk = true;
+    double value = esSelf->asNumber();
+    bool isInRange = false;
+    if (std::numeric_limits<int32_t>::min() <= value &&
+        value <= std::numeric_limits<int32_t>::max()) {
+      isInRange = true;
     }
-    return isInteger(esSelf) && rangeOk;
+    return isInteger(esSelf) && isInRange;
   }
 
   return false;
@@ -193,12 +193,12 @@ bool Value::IsUint32() const {
   if (esSelf->isUInt32()) {
     return true;
   } else if (esSelf->isNumber()) {
-    double val = esSelf->asNumber();
-    bool rangeOk = false;
-    if (0 <= val && val <= std::numeric_limits<uint32_t>::max()) {
-      rangeOk = true;
+    double value = esSelf->asNumber();
+    bool isInRange = false;
+    if (0 <= value && value <= std::numeric_limits<uint32_t>::max()) {
+      isInRange = true;
     }
-    return isInteger(esSelf) && rangeOk;
+    return isInteger(esSelf) && isInRange;
   }
 
   return false;
@@ -213,16 +213,16 @@ bool Value::IsRegExp() const {
 }
 
 bool Value::IsAsyncFunction() const {
-  auto esValue = CVAL(this)->value();
+  auto esSelf = CVAL(this)->value();
 
-  if (esValue->isFunctionObject() == false) {
+  if (esSelf->isFunctionObject() == false) {
     return false;
   }
 
   auto esPureContext =
       ContextRef::create(IsolateWrap::GetCurrent()->vmInstance());
   auto esString =
-      ObjectRefHelper::getConstructorName(esPureContext, esValue->asObject());
+      ObjectRefHelper::getConstructorName(esPureContext, esSelf->asObject());
 
   return StringRefHelper::equalsWithASCIIString(esString, "AsyncFunction");
 }
@@ -256,17 +256,17 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 
   auto esContext = VAL(*context)->context()->get();
 
-  auto esValue = CVAL(this)->value();
-  if (esValue->isString()) {
-    return Utils::NewLocal<String>(lwIsolate->toV8(), esValue);
+  auto esSelf = CVAL(this)->value();
+  if (esSelf->isString()) {
+    return Utils::NewLocal<String>(lwIsolate->toV8(), esSelf);
   }
 
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* state, ValueRef* esValue) -> ValueRef* {
-        return esValue->toString(state);
+      [](ExecutionStateRef* state, ValueRef* esSelf) -> ValueRef* {
+        return esSelf->toString(state);
       },
-      esValue);
+      esSelf);
 
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<String>());
 
@@ -280,14 +280,13 @@ MaybeLocal<String> Value::ToDetailString(Local<Context> context) const {
 MaybeLocal<Object> Value::ToObject(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Object>());
   auto esContext = VAL(*context)->context()->get();
-  auto esValue = CVAL(this)->value();
 
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* state, ValueRef* esValue) -> ValueRef* {
-        return esValue->toObject(state);
+      [](ExecutionStateRef* state, ValueRef* esSelf) -> ValueRef* {
+        return esSelf->toObject(state);
       },
-      esValue);
+      CVAL(this)->value());
   API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Object>());
 
   return Utils::NewLocal<Object>(lwIsolate->toV8(), r.result);
@@ -298,21 +297,19 @@ MaybeLocal<BigInt> Value::ToBigInt(Local<Context> context) const {
 }
 
 bool Value::BooleanValue(Isolate* v8_isolate) const {
-  Local<Boolean> val = ToBoolean(v8_isolate);
-  return val->Value();
+  return ToBoolean(v8_isolate)->Value();
 }
 
 Local<Boolean> Value::ToBoolean(Isolate* v8_isolate) const {
   API_ENTER(v8_isolate, Local<Boolean>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  auto esValue = CVAL(this)->value();
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
-        return ValueRef::create(esValue->toBoolean(esState));
+      [](ExecutionStateRef* esState, ValueRef* esSelf) -> ValueRef* {
+        return ValueRef::create(esSelf->toBoolean(esState));
       },
-      esValue);
+      CVAL(this)->value());
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Boolean>());
 
@@ -323,13 +320,12 @@ MaybeLocal<Number> Value::ToNumber(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Number>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  auto esValue = CVAL(this)->value();
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
-        return ValueRef::create(esValue->toNumber(esState));
+      [](ExecutionStateRef* esState, ValueRef* esSelf) -> ValueRef* {
+        return ValueRef::create(esSelf->toNumber(esState));
       },
-      esValue);
+      CVAL(this)->value());
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Number>());
 
@@ -340,13 +336,12 @@ MaybeLocal<Integer> Value::ToInteger(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Integer>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  auto esValue = CVAL(this)->value();
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
-        return ValueRef::create(esValue->toInteger(esState));
+      [](ExecutionStateRef* esState, ValueRef* esSelf) -> ValueRef* {
+        return ValueRef::create(esSelf->toInteger(esState));
       },
-      esValue);
+      CVAL(this)->value());
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Integer>());
 
@@ -357,13 +352,12 @@ MaybeLocal<Int32> Value::ToInt32(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Int32>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  auto esValue = CVAL(this)->value();
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
-        return ValueRef::create(esValue->toInt32(esState));
+      [](ExecutionStateRef* esState, ValueRef* esSelf) -> ValueRef* {
+        return ValueRef::create(esSelf->toInt32(esState));
       },
-      esValue);
+      CVAL(this)->value());
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Int32>());
 
@@ -374,13 +368,12 @@ MaybeLocal<Uint32> Value::ToUint32(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Uint32>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
-  auto esValue = CVAL(this)->value();
   EvalResult r = Evaluator::execute(
       esContext,
-      [](ExecutionStateRef* esState, ValueRef* esValue) -> ValueRef* {
-        return ValueRef::create(esValue->toUint32(esState));
+      [](ExecutionStateRef* esState, ValueRef* esSelf) -> ValueRef* {
+        return ValueRef::create(esSelf->toUint32(esState));
       },
-      esValue);
+      CVAL(this)->value());
 
   API_HANDLE_EXCEPTION(r, lwIsolate, Local<Uint32>());
 
@@ -389,7 +382,6 @@ MaybeLocal<Uint32> Value::ToUint32(Local<Context> context) const {
 
 i::Isolate* i::IsolateFromNeverReadOnlySpaceObject(i::Address obj) {
   LWNODE_RETURN_NULLPTR;
-  ;
 }
 
 bool i::ShouldThrowOnError(i::Isolate* isolate) {
@@ -619,9 +611,9 @@ void v8::RegExp::CheckCast(v8::Value* that) {
 }
 
 Maybe<double> Value::NumberValue(Local<Context> context) const {
-  auto lwValue = CVAL(this)->value();
-  if (lwValue->isNumber()) {
-    return Just(lwValue->asNumber());
+  auto esSelf = CVAL(this)->value();
+  if (esSelf->isNumber()) {
+    return Just(esSelf->asNumber());
   }
 
   API_ENTER_WITH_CONTEXT(context, Nothing<double>());
@@ -631,7 +623,7 @@ Maybe<double> Value::NumberValue(Local<Context> context) const {
       [](ExecutionStateRef* esState, ValueRef* self) {
         return ValueRef::create(self->toNumber(esState));
       },
-      lwValue);
+      esSelf);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<double>());
 
   return Just(r.result->asNumber());
@@ -685,18 +677,18 @@ Maybe<uint32_t> Value::Uint32Value(Local<Context> context) const {
   API_ENTER_WITH_CONTEXT(context, Nothing<uint32_t>());
   auto lwContext = lwIsolate->GetCurrentContext();
 
-  uint32_t val = 0;
+  uint32_t value = 0;
   auto r = Evaluator::execute(
       lwContext->get(),
-      [](ExecutionStateRef* esState, ValueRef* self, uint32_t* val) {
-        *val = self->toUint32(esState);
-        return ValueRef::create(*val);
+      [](ExecutionStateRef* esState, ValueRef* self, uint32_t* value) {
+        *value = self->toUint32(esState);
+        return ValueRef::create(*value);
       },
       CVAL(this)->value(),
-      &val);
+      &value);
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<uint32_t>());
 
-  return Just(val);
+  return Just(value);
 }
 
 MaybeLocal<Uint32> Value::ToArrayIndex(Local<Context> context) const {
@@ -741,7 +733,6 @@ Maybe<bool> Value::Equals(Local<Context> context, Local<Value> that) const {
 }
 
 bool Value::StrictEquals(Local<Value> that) const {
-  auto esValue = CVAL(this)->value();
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
 
@@ -750,8 +741,7 @@ bool Value::StrictEquals(Local<Value> that) const {
       [](ExecutionStateRef* esState,
          ValueRef* self,
          ValueRef* that) -> ValueRef* {
-        bool r = self->equalsTo(esState, that);
-        return ValueRef::create(r);
+        return ValueRef::create(self->equalsTo(esState, that));
       },
       CVAL(this)->value(),
       CVAL(*that)->value());
@@ -786,7 +776,6 @@ bool Value::SameValue(Local<Value> that) const {
 
 Local<String> Value::TypeOf(v8::Isolate* external_isolate) {
   API_ENTER_NO_EXCEPTION(external_isolate);
-  auto esSelf = CVAL(this)->value();
   auto lwContext = lwIsolate->GetCurrentContext();
 
   auto r = Evaluator::execute(
@@ -813,7 +802,8 @@ Local<String> Value::TypeOf(v8::Isolate* external_isolate) {
         return ValueRef::create(
             StringRef::createFromASCII(type.data(), type.length()));
       },
-      esSelf);
+      CVAL(this)->value());
+
   LWNODE_CHECK(r.isSuccessful());
 
   return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
@@ -822,9 +812,7 @@ Local<String> Value::TypeOf(v8::Isolate* external_isolate) {
 Maybe<bool> Value::InstanceOf(v8::Local<v8::Context> context,
                               v8::Local<v8::Object> object) {
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto esSelf = CVAL(this)->value();
   auto lwContext = lwIsolate->GetCurrentContext();
-  auto esObject = CVAL(*object)->value()->asObject();
 
   auto r = Evaluator::execute(
       lwContext->get(),
@@ -833,8 +821,9 @@ Maybe<bool> Value::InstanceOf(v8::Local<v8::Context> context,
          ObjectRef* object) -> ValueRef* {
         return ValueRef::create(self->instanceOf(esState, object));
       },
-      esSelf,
-      esObject);
+      CVAL(this)->value(),
+      CVAL(*object)->value()->asObject());
+
   API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
 
   return Just(r.result->asBoolean());
@@ -891,7 +880,7 @@ PropertyDescriptor::PrivateData::PrivateData(Escargot::ValueRef* get,
 }
 
 PropertyDescriptor::PrivateData::~PrivateData() {
-  if (!isExternalDescriptor) {
+  if (!isExternalDescriptor_) {
     delete descriptor_;
     descriptor_ = nullptr;
   }
@@ -901,7 +890,7 @@ void PropertyDescriptor::PrivateData::setDescriptor(
     Escargot::ObjectPropertyDescriptorRef* descriptor) {
   LWNODE_CHECK_NULL(descriptor_);
   descriptor_ = descriptor;
-  isExternalDescriptor = true;
+  isExternalDescriptor_ = true;
 }
 
 v8::PropertyDescriptor::PropertyDescriptor() : private_(new PrivateData()) {}
@@ -1073,43 +1062,44 @@ Maybe<bool> v8::Object::DefineProperty(v8::Local<v8::Context> context,
   auto esObject = CVAL(this)->value()->asObject();
   auto esKey = CVAL(*key)->value();
 
-  ObjectRef::PresentAttribute attr = ObjectRef::PresentAttribute::NotPresent;
+  ObjectRef::PresentAttribute attribute =
+      ObjectRef::PresentAttribute::NotPresent;
 
   if (descriptor.has_writable()) {
     if (descriptor.writable()) {
-      attr = static_cast<ObjectRef::PresentAttribute>(
-          attr | ObjectRef::PresentAttribute::WritablePresent);
+      attribute = static_cast<ObjectRef::PresentAttribute>(
+          attribute | ObjectRef::PresentAttribute::WritablePresent);
     } else {
-      attr = static_cast<ObjectRef::PresentAttribute>(
-          attr | ObjectRef::PresentAttribute::NonWritablePresent);
+      attribute = static_cast<ObjectRef::PresentAttribute>(
+          attribute | ObjectRef::PresentAttribute::NonWritablePresent);
     }
   }
 
   if (descriptor.has_enumerable()) {
     if (descriptor.enumerable()) {
-      attr = static_cast<ObjectRef::PresentAttribute>(
-          attr | ObjectRef::PresentAttribute::EnumerablePresent);
+      attribute = static_cast<ObjectRef::PresentAttribute>(
+          attribute | ObjectRef::PresentAttribute::EnumerablePresent);
     } else {
-      attr = static_cast<ObjectRef::PresentAttribute>(
-          attr | ObjectRef::PresentAttribute::NonEnumerablePresent);
+      attribute = static_cast<ObjectRef::PresentAttribute>(
+          attribute | ObjectRef::PresentAttribute::NonEnumerablePresent);
     }
   }
 
   if (descriptor.has_configurable()) {
     if (descriptor.enumerable()) {
-      attr = static_cast<ObjectRef::PresentAttribute>(
-          attr | ObjectRef::PresentAttribute::ConfigurablePresent);
+      attribute = static_cast<ObjectRef::PresentAttribute>(
+          attribute | ObjectRef::PresentAttribute::ConfigurablePresent);
     } else {
-      attr = static_cast<ObjectRef::PresentAttribute>(
-          attr | ObjectRef::PresentAttribute::NonConfigurablePresent);
+      attribute = static_cast<ObjectRef::PresentAttribute>(
+          attribute | ObjectRef::PresentAttribute::NonConfigurablePresent);
     }
   }
 
   if (descriptor.has_value()) {
-    ObjectRef::DataPropertyDescriptor desc(CVAL(*descriptor.value())->value(),
-                                           attr);
-    auto r =
-        ObjectRefHelper::defineDataProperty(esContext, esObject, esKey, desc);
+    ObjectRef::DataPropertyDescriptor dataDescriptor(
+        CVAL(*descriptor.value())->value(), attribute);
+    auto r = ObjectRefHelper::defineDataProperty(
+        esContext, esObject, esKey, dataDescriptor);
     API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
     return Just(r.result->asBoolean());
   } else if (descriptor.has_get()) {
@@ -1117,16 +1107,17 @@ Maybe<bool> v8::Object::DefineProperty(v8::Local<v8::Context> context,
     if (descriptor.has_set()) {
       setter = CVAL(*descriptor.set())->value();
     }
-    ObjectRef::AccessorPropertyDescriptor desc(
-        CVAL(*descriptor.get())->value(), setter, attr);
+    ObjectRef::AccessorPropertyDescriptor accessorDescriptor(
+        CVAL(*descriptor.get())->value(), setter, attribute);
     auto r = ObjectRefHelper::defineAccessorProperty(
-        esContext, esObject, esKey, desc);
+        esContext, esObject, esKey, accessorDescriptor);
     API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
     return Just(r.result->asBoolean());
   } else {
-    ObjectRef::DataPropertyDescriptor desc(ValueRef::createUndefined(), attr);
-    auto r =
-        ObjectRefHelper::defineDataProperty(esContext, esObject, esKey, desc);
+    ObjectRef::DataPropertyDescriptor dataDescriptor(
+        ValueRef::createUndefined(), attribute);
+    auto r = ObjectRefHelper::defineDataProperty(
+        esContext, esObject, esKey, dataDescriptor);
     API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
     return Just(r.result->asBoolean());
   }
@@ -1198,8 +1189,9 @@ Maybe<PropertyAttribute> v8::Object::GetPropertyAttributes(
     return Just(PropertyAttribute::None);
   }
 
-  PropertyAttribute attr = static_cast<PropertyAttribute>(r.result->asUInt32());
-  return Just(attr);
+  PropertyAttribute attribute =
+      static_cast<PropertyAttribute>(r.result->asUInt32());
+  return Just(attribute);
 }
 
 MaybeLocal<Value> v8::Object::GetOwnPropertyDescriptor(Local<Context> context,
@@ -1636,8 +1628,9 @@ Maybe<PropertyAttribute> v8::Object::GetRealNamedPropertyAttributes(
     return Just(PropertyAttribute::None);
   }
 
-  auto attr = static_cast<ObjectRef::PresentAttribute>(r.result->asUInt32());
-  return Just(V8Helper::toPropertyAttribute(attr));
+  auto attribute =
+      static_cast<ObjectRef::PresentAttribute>(r.result->asUInt32());
+  return Just(V8Helper::toPropertyAttribute(attribute));
 }
 
 Local<v8::Object> v8::Object::Clone() {
@@ -2249,23 +2242,23 @@ template <typename T, typename F>
 static T getValue(ValueRef* esValue, F toValue) {
   auto lwContext = IsolateWrap::GetCurrent()->GetCurrentContext();
   LWNODE_CHECK(lwContext != nullptr);
-  T v = 0;
+  T outValue = 0;
   auto r = Evaluator::execute(
       lwContext->get(),
-      [](ExecutionStateRef* esState, ValueRef* esValue, T* v, F toValue)
+      [](ExecutionStateRef* esState, ValueRef* esValue, T* outValue, F toValue)
           -> ValueRef* {
-        *v = toValue(esValue, esState);
+        *outValue = toValue(esValue, esState);
         return esValue;
       },
       esValue,
-      &v,
+      &outValue,
       toValue);
 
   if (!r.isSuccessful()) {
     LWNODE_RETURN_0;  // TODO: handle error
   }
 
-  return v;
+  return outValue;
 }
 
 double Number::Value() const {
@@ -2367,13 +2360,4 @@ void v8::Object::SetAlignedPointerInInternalFields(int argc,
   LWNODE_RETURN_VOID;
 }
 
-// static void* ExternalValue(i::Object obj) {
-//   // Obscure semantics for undefined, but somehow checked in our unit
-//   tests... if (obj.IsUndefined()) {
-//     return nullptr;
-//   }
-//   i::Object foreign = i::JSObject::cast(obj).GetEmbedderField(0);
-//   return
-//   reinterpret_cast<void*>(i::Foreign::cast(foreign).foreign_address());
-// }
 }  // namespace v8

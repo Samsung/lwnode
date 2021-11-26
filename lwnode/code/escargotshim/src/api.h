@@ -117,7 +117,7 @@ class Utils {
 };
 
 // @lwnode
-struct v8::PropertyDescriptor::PrivateData {
+class v8::PropertyDescriptor::PrivateData {
  public:
   PrivateData() = default;
   PrivateData(Escargot::ObjectPropertyDescriptorRef& esDescriptor);
@@ -130,7 +130,7 @@ struct v8::PropertyDescriptor::PrivateData {
   Escargot::ObjectPropertyDescriptorRef* descriptor() { return descriptor_; }
 
  private:
-  bool isExternalDescriptor{false};
+  bool isExternalDescriptor_{false};
   Escargot::ObjectPropertyDescriptorRef* descriptor_{nullptr};
 };
 // end @lwnode
