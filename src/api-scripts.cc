@@ -291,11 +291,6 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
     return MaybeLocal<UnboundScript>();
   }
 
-  // wrap the parsed script with the current isolate
-  // auto lwValue = ValueWrap::createScript(result.script.get());
-
-  // ExtraData extra(1, lwIsolate);
-  // lwValue->setExtra(std::move(extra));
   return Utils::NewLocal<UnboundScript>(v8_isolate, result.script.get());
 }
 
@@ -315,7 +310,9 @@ MaybeLocal<Script> ScriptCompiler::Compile(Local<Context> context,
   auto maybe =
       CompileUnboundInternal(isolate, source, options, no_cache_reason);
   Local<UnboundScript> result;
-  if (!maybe.ToLocal(&result)) return MaybeLocal<Script>();
+  if (!maybe.ToLocal(&result)) {
+    return MaybeLocal<Script>();
+  }
   v8::Context::Scope scope(context);
   return result->BindToCurrentContext();
 }

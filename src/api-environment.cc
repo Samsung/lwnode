@@ -444,30 +444,30 @@ Local<String> v8::String::Concat(Isolate* v8_isolate,
   auto rightStrBufferData = esRightStr->stringBufferAccessData();
 
   size_t nchars = leftStrBufferData.length + rightStrBufferData.length;
-  size_t charSize = sizeof(char16_t);
-  Local<String> r;
+
+  Local<String> result;
 
   if (leftStrBufferData.has8BitContent && rightStrBufferData.has8BitContent) {
-    unsigned char* buf = new unsigned char[nchars];
-    memcpy(buf, leftStrBufferData.buffer, leftStrBufferData.length);
-    memcpy(buf + leftStrBufferData.length,
+    unsigned char* buffer = new unsigned char[nchars];
+    memcpy(buffer, leftStrBufferData.buffer, leftStrBufferData.length);
+    memcpy(buffer + leftStrBufferData.length,
            rightStrBufferData.buffer,
            rightStrBufferData.length);
 
-    r = Utils::NewLocal<String>(v8_isolate,
-                                StringRef::createFromLatin1(buf, nchars));
-    delete[] buf;
+    result = Utils::NewLocal<String>(
+        v8_isolate, StringRef::createFromLatin1(buffer, nchars));
+    delete[] buffer;
   } else {
-    char16_t* buf = new char16_t[nchars];
-    copyStringToTwoByteArray(buf, esLeftStr);
-    copyStringToTwoByteArray(buf + leftStrBufferData.length, esRightStr);
+    char16_t* buffer = new char16_t[nchars];
+    copyStringToTwoByteArray(buffer, esLeftStr);
+    copyStringToTwoByteArray(buffer + leftStrBufferData.length, esRightStr);
 
-    r = Utils::NewLocal<String>(v8_isolate,
-                                StringRef::createFromUTF16(buf, nchars));
-    delete[] buf;
+    result = Utils::NewLocal<String>(
+        v8_isolate, StringRef::createFromUTF16(buffer, nchars));
+    delete[] buffer;
   }
 
-  return r;
+  return result;
 }
 
 MaybeLocal<String> v8::String::NewExternalTwoByte(
@@ -563,9 +563,9 @@ Local<v8::Value> v8::NumberObject::New(Isolate* isolate, double value) {
   EvalResult r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* esState, double value) -> ValueRef* {
-        auto obj = NumberObjectRef::create(esState);
-        obj->setPrimitiveValue(esState, ValueRef::create(value));
-        return obj;
+        auto object = NumberObjectRef::create(esState);
+        object->setPrimitiveValue(esState, ValueRef::create(value));
+        return object;
       },
       value);
   LWNODE_CHECK(r.isSuccessful());
@@ -594,9 +594,9 @@ Local<v8::Value> v8::BooleanObject::New(Isolate* isolate, bool value) {
   EvalResult r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* esState, bool value) -> ValueRef* {
-        auto b = BooleanObjectRef::create(esState);
-        b->setPrimitiveValue(esState, ValueRef::create(value));
-        return b;
+        auto object = BooleanObjectRef::create(esState);
+        object->setPrimitiveValue(esState, ValueRef::create(value));
+        return object;
       },
       value);
   LWNODE_CHECK(r.isSuccessful());
@@ -619,9 +619,9 @@ Local<v8::Value> v8::StringObject::New(Isolate* v8_isolate,
   EvalResult r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* esState, StringRef* esValue) -> ValueRef* {
-        auto obj = StringObjectRef::create(esState);
-        obj->setPrimitiveValue(esState, esValue);
-        return obj;
+        auto object = StringObjectRef::create(esState);
+        object->setPrimitiveValue(esState, esValue);
+        return object;
       },
       esValue);
   LWNODE_CHECK(r.isSuccessful());
@@ -645,9 +645,9 @@ Local<v8::Value> v8::SymbolObject::New(Isolate* isolate, Local<Symbol> value) {
   EvalResult r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* esState, SymbolRef* esValue) -> ValueRef* {
-        auto obj = SymbolObjectRef::create(esState);
-        obj->setPrimitiveValue(esState, esValue);
-        return obj;
+        auto object = SymbolObjectRef::create(esState);
+        object->setPrimitiveValue(esState, esValue);
+        return object;
       },
       esValue);
   LWNODE_CHECK(r.isSuccessful());
@@ -750,15 +750,15 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
       [](ExecutionStateRef* state,
          RegExpObjectRef* self,
          StringRef* subject) -> ValueRef* {
-        RegExpObjectRef::RegexMatchResult r;
-        self->match(state, subject, r, false, 0);
+        RegExpObjectRef::RegexMatchResult result;
+        self->match(state, subject, result, false, 0);
 
-        if (r.m_matchResults.empty()) {
+        if (result.m_matchResults.empty()) {
           return ValueRef::createNull();
         }
 
         auto vector = ValueVectorRef::create();
-        for (auto tokens : r.m_matchResults) {
+        for (auto tokens : result.m_matchResults) {
           for (auto token : tokens) {
             auto match = subject->substring(token.m_start, token.m_end);
             vector->pushBack(match);
@@ -777,17 +777,13 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
 Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
   API_ENTER_NO_EXCEPTION(isolate);
   auto lwContext = lwIsolate->GetCurrentContext();
-  uint64_t len = 0;
-  if (length > 0) {
-    len = length;
-  }
 
   auto r = Evaluator::execute(
       lwContext->get(),
-      [](ExecutionStateRef* esState, uint64_t len) -> ValueRef* {
-        return ArrayObjectRef::create(esState, len);
+      [](ExecutionStateRef* esState, int length) -> ValueRef* {
+        return ArrayObjectRef::create(esState, static_cast<uint64_t>(length));
       },
-      len);
+      (length >= 0) ? length : 0);
   LWNODE_CHECK(r.isSuccessful());
 
   return Utils::NewLocal<Array>(isolate, r.result);
@@ -1115,8 +1111,7 @@ Local<Array> Set::AsArray() const {
         for (auto entry = itr->next(esState);
              entry->asObject()->get(esState, done)->isFalse();
              entry = itr->next(esState)) {
-          auto val = entry->asObject()->get(esState, value);
-          vector->pushBack(val);
+          vector->pushBack(entry->asObject()->get(esState, value));
         }
 
         return ArrayObjectRef::create(esState, vector);
@@ -2606,9 +2601,8 @@ String::Utf8Value::~Utf8Value() {
 
 String::Value::Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
     : str_(nullptr), length_(0) {
-  MaybeLocal<String> s = obj->ToString(isolate->GetCurrentContext());
   Local<String> str;
-  if (!s.ToLocal(&str)) {
+  if (!obj->ToString(isolate->GetCurrentContext()).ToLocal(&str)) {
     return;
   }
 

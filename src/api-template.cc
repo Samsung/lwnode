@@ -125,12 +125,12 @@ static ValueRef* FunctionTemplateNativeFunction(
   auto calleeExtraData = ExtraDataHelper::getExtraData(callee.value());
   LWNODE_DCHECK_NOT_NULL(calleeExtraData);
 
-  FunctionData* fnData = nullptr;
+  FunctionData* functionData = nullptr;
   // callee->extraData() is one of two types below
   if (calleeExtraData->isFunctionData()) {
-    fnData = calleeExtraData->asFunctionData();
+    functionData = calleeExtraData->asFunctionData();
   } else if (calleeExtraData->isFunctionTemplateData()) {
-    fnData = new FunctionData(
+    functionData = new FunctionData(
         calleeExtraData->asFunctionTemplateData()->functionTemplate());
   } else {
     LWNODE_CHECK(false);
@@ -196,7 +196,7 @@ static ValueRef* FunctionTemplateNativeFunction(
 
   auto lwIsolate = IsolateWrap::GetCurrent();
   if (!newTarget.hasValue() &&
-      !fnData->checkSignature(state, thisValue->asObject())) {
+      !functionData->checkSignature(state, thisValue->asObject())) {
     lwIsolate->ScheduleThrow(TypeErrorObjectRef::create(
         state, StringRef::createFromASCII("Illegal invocation")));
     lwIsolate->ThrowErrorIfHasException(state);
@@ -205,16 +205,16 @@ static ValueRef* FunctionTemplateNativeFunction(
   }
 
   Local<Value> result;
-  if (fnData->callback()) {
+  if (functionData->callback()) {
     LWNODE_CALL_TRACE_ID(TEMPLATE, "> Call JS callback");
-    FunctionCallbackInfoWrap info(fnData->isolate(),
+    FunctionCallbackInfoWrap info(functionData->isolate(),
                                   thisValue,
                                   thisValue,
                                   newTarget,
-                                  VAL(fnData->callbackData()),
+                                  VAL(functionData->callbackData()),
                                   argc,
                                   argv);
-    fnData->callback()(info);
+    functionData->callback()(info);
     lwIsolate->ThrowErrorIfHasException(state);
     result = info.GetReturnValue().Get();
   }
@@ -438,15 +438,15 @@ MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
 
 bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
   LWNODE_CALL_TRACE();
-  auto esSelf = CVAL(this)->ftpl();
+  auto esSelfFunctionTemplate = CVAL(this)->ftpl();
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "FunctionTemplate(%p)::HasInstance(): %p",
                            CVAL(this)->ftpl(),
                            CVAL(*value)->value()->asObject());
   LWNODE_CALL_TRACE_ID_LOG(
       EXTRADATA,
-      "FunctionTemplate(%p)::HasInstance: ExtraData: %p, %p?",
-      esSelf,
+      "FunctionTemplate(%p)::HasInstance: ExtraData: %p, %p",
+      esSelfFunctionTemplate,
       ExtraDataHelper::getExtraData(CVAL(this)->ftpl()),
       ExtraDataHelper::getExtraData(CVAL(*value)->value()->asObject()));
 
@@ -467,7 +467,7 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
         "FunctionTemplate(%p)::HasInstance: Existing ExtraData: %p",
-        esSelf,
+        esSelfFunctionTemplate,
         extraData->asObjectData());
 
     if (extraData->asObjectData()->objectTemplate()) {
@@ -483,8 +483,10 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
     LWNODE_CHECK(false);
   }
 
-  for (auto p = esOtherFunctionTemplate; p; p = p->parent().value()) {
-    if (esSelf == p) {
+  for (auto functionTemplate = esOtherFunctionTemplate;
+       functionTemplate != nullptr;
+       functionTemplate = functionTemplate->parent().value()) {
+    if (esSelfFunctionTemplate == functionTemplate) {
       return true;
     }
   }
@@ -630,8 +632,7 @@ void ObjectTemplate::SetHandler(
       handlerConfiguration->m_namedPropertyHandler.getter(v8PropertyName, info);
 
       if (info.hasReturnValue()) {
-        Local<Value> ret = info.GetReturnValue().Get();
-        return CVAL(*ret)->value();
+        return CVAL(*info.GetReturnValue().Get())->value();
       }
 
       return Escargot::OptionalRef<Escargot::ValueRef>();
@@ -663,8 +664,7 @@ void ObjectTemplate::SetHandler(
           v8PropertyName, v8::Utils::ToLocal<Value>(esValue), info);
 
       if (info.hasReturnValue()) {
-        Local<Value> ret = info.GetReturnValue().Get();
-        if (ret->IsFalse()) {
+        if (info.GetReturnValue().Get()->IsFalse()) {
           return Escargot::OptionalRef<Escargot::ValueRef>(
               ValueRef::create(false));
         }
@@ -698,7 +698,7 @@ void ObjectTemplate::SetHandler(
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
       handlerConfiguration->m_namedPropertyHandler.query(v8PropertyName, info);
-      Local<Value> ret = info.GetReturnValue().Get();
+
       if (info.hasReturnValue()) {
         bool hasNone = (handlerConfiguration->m_namedPropertyHandler.flags ==
                         PropertyHandlerFlags::kNone);
@@ -746,8 +746,7 @@ void ObjectTemplate::SetHandler(
                                                            info);
 
       if (info.hasReturnValue()) {
-        Local<Value> ret = info.GetReturnValue().Get();
-        return CVAL(*ret)->value();
+        return CVAL(*info.GetReturnValue().Get())->value();
       }
 
       return Escargot::OptionalRef<Escargot::ValueRef>();
@@ -774,15 +773,16 @@ void ObjectTemplate::SetHandler(
       handlerConfiguration->m_namedPropertyHandler.enumerator(info);
 
       if (info.hasReturnValue()) {
-        Local<Value> ret = info.GetReturnValue().Get();
-        auto esArray = CVAL(*ret)->value()->asArrayObject();
+        auto esArray =
+            CVAL(*info.GetReturnValue().Get())->value()->asArrayObject();
         auto length = esArray->length(state);
-        auto v = ValueVectorRef::create(length);
+        auto vector = ValueVectorRef::create(length);
 
         for (size_t i = 0; i < length; i++) {
-          v->set(i, esArray->get(state, ValueRef::create(i))->toString(state));
+          vector->set(
+              i, esArray->get(state, ValueRef::create(i))->toString(state));
         }
-        return v;
+        return vector;
       }
 
       return ValueVectorRef::create(0);
@@ -790,13 +790,13 @@ void ObjectTemplate::SetHandler(
   }
 
   if (config.definer) {
-    esHandlerData.definer =
-        [](ExecutionStateRef* state,
-           ObjectRef* esSelf,
-           ValueRef* esReceiver,
-           void* data,
-           ValueRef* propertyName,
-           const ObjectPropertyDescriptorRef& esDesc) -> OptionalRef<ValueRef> {
+    esHandlerData.definer = [](ExecutionStateRef* state,
+                               ObjectRef* esSelf,
+                               ValueRef* esReceiver,
+                               void* data,
+                               ValueRef* propertyName,
+                               const ObjectPropertyDescriptorRef& esDescriptor)
+        -> OptionalRef<ValueRef> {
       auto handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
 
       if (!handlerConfiguration->m_namedPropertyHandler.definer) {
@@ -811,15 +811,15 @@ void ObjectTemplate::SetHandler(
           esReceiver,
           VAL(*handlerConfiguration->m_namedPropertyHandler.data));
 
-      PropertyDescriptor desc;
-      desc.get_private()->setDescriptor(
-          const_cast<ObjectPropertyDescriptorRef*>(&esDesc));
+      PropertyDescriptor descriptor;
+      descriptor.get_private()->setDescriptor(
+          const_cast<ObjectPropertyDescriptorRef*>(&esDescriptor));
       handlerConfiguration->m_namedPropertyHandler.definer(
-          v8PropertyName, desc, info);
+          v8PropertyName, descriptor, info);
 
       if (info.hasReturnValue()) {
-        Local<Value> ret = info.GetReturnValue().Get();
-        return Escargot::OptionalRef<Escargot::ValueRef>(CVAL(*ret)->value());
+        return Escargot::OptionalRef<Escargot::ValueRef>(
+            CVAL(*info.GetReturnValue().Get())->value());
       }
       return Escargot::OptionalRef<Escargot::ValueRef>();
     };
@@ -850,8 +850,8 @@ void ObjectTemplate::SetHandler(
                                                               info);
 
       if (info.hasReturnValue()) {
-        Local<Value> ret = info.GetReturnValue().Get();
-        return Escargot::OptionalRef<Escargot::ValueRef>(CVAL(*ret)->value());
+        return Escargot::OptionalRef<Escargot::ValueRef>(
+            CVAL(*info.GetReturnValue().Get())->value());
       }
 
       return Escargot::OptionalRef<Escargot::ValueRef>();
