@@ -461,6 +461,65 @@ StringRef* ObjectRefHelper::getConstructorName(ContextRef* context,
   return r.result->asString();
 }
 
+ArrayObjectRef* ArrayObjectRefHelper::create(ContextRef* context,
+                                             const uint64_t length) {
+  auto result = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, uint64_t length) -> ValueRef* {
+        return ArrayObjectRef::create(state, length);
+      },
+      length);
+  LWNODE_CHECK(result.isSuccessful());
+  return result.result->asArrayObject();
+}
+
+ArrayObjectRef* ArrayObjectRefHelper::create(ContextRef* context,
+                                             ValueVectorRef* elements) {
+  auto result = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ValueVectorRef* elements) -> ValueRef* {
+        return ArrayObjectRef::create(state, elements);
+      },
+      elements);
+  LWNODE_CHECK(result.isSuccessful());
+  return result.result->asArrayObject();
+}
+
+uint64_t ArrayObjectRefHelper::length(ContextRef* context,
+                                      ArrayObjectRef* object) {
+  uint64_t output = 0;
+  auto result = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ArrayObjectRef* object,
+         uint64_t* output) -> ValueRef* {
+        *output = object->length(state);
+        return ValueRef::createUndefined();
+      },
+      object,
+      &output);
+  LWNODE_CHECK(result.isSuccessful());
+  return output;
+}
+
+ValueRef* ArrayObjectRefHelper::get(ContextRef* context,
+                                    ArrayObjectRef* object,
+                                    ValueRef::ValueIndex index) {
+  auto result =
+      ObjectRefHelper::getProperty(context, object, ValueRef::create(index));
+  LWNODE_CHECK(result.isSuccessful());
+  return result.result;
+}
+
+void ArrayObjectRefHelper::set(ContextRef* context,
+                               ArrayObjectRef* object,
+                               ValueRef::ValueIndex index,
+                               ValueRef* value) {
+  auto result = ObjectRefHelper::setProperty(
+      context, object, ValueRef::create(index), value);
+  LWNODE_CHECK(result.isSuccessful());
+}
+
 static std::string getCodeLine(const std::string& codeString, int errorLine) {
   if (errorLine < 1 || codeString.empty()) {
     return "";
