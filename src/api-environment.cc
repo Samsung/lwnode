@@ -776,55 +776,32 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
 
 Local<v8::Array> v8::Array::New(Isolate* isolate, int length) {
   API_ENTER_NO_EXCEPTION(isolate);
-  auto lwContext = lwIsolate->GetCurrentContext();
-
-  auto r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState, int length) -> ValueRef* {
-        return ArrayObjectRef::create(esState, static_cast<uint64_t>(length));
-      },
-      (length >= 0) ? length : 0);
-  LWNODE_CHECK(r.isSuccessful());
-
-  return Utils::NewLocal<Array>(isolate, r.result);
+  return Utils::NewLocal<Array>(
+      isolate,
+      ArrayObjectRefHelper::create(lwIsolate->GetCurrentContext()->get(),
+                                   (length >= 0) ? length : 0));
 }
 
 Local<v8::Array> v8::Array::New(Isolate* isolate,
                                 Local<Value>* elements,
                                 size_t length) {
   API_ENTER_NO_EXCEPTION(isolate);
-  auto lwContext = lwIsolate->GetCurrentContext();
 
   auto vector = ValueVectorRef::create();
   for (size_t i = 0; i < length; i++) {
     vector->pushBack(VAL(**(elements + i))->value());
   }
 
-  auto r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState, ValueVectorRef* vector) -> ValueRef* {
-        return ArrayObjectRef::create(esState, vector);
-      },
-      vector);
-  LWNODE_CHECK(r.isSuccessful());
-
-  return Utils::NewLocal<Array>(isolate, r.result);
+  return Utils::NewLocal<Array>(
+      isolate,
+      ArrayObjectRefHelper::create(lwIsolate->GetCurrentContext()->get(),
+                                   vector));
 }
 
 uint32_t v8::Array::Length() const {
-  auto esArrayObject = CVAL(this)->value()->asArrayObject();
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
-
-  auto r = Evaluator::execute(
-      lwContext->get(),
-      [](ExecutionStateRef* esState, ArrayObjectRef* object) -> ValueRef* {
-        return ValueRef::create(object->length(esState));
-      },
-      esArrayObject);
-  API_HANDLE_EXCEPTION(r, lwIsolate, 0);
-
-  return r.result->asUInt32();
+  return static_cast<uint32_t>(ArrayObjectRefHelper::length(
+      IsolateWrap::GetCurrent()->GetCurrentContext()->get(),
+      CVAL(this)->value()->asArrayObject()));
 }
 
 Local<v8::Map> v8::Map::New(Isolate* isolate) {

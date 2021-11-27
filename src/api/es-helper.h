@@ -125,6 +125,20 @@ class ObjectRefHelper {
                                             ValueRef* key);
 };
 
+class ArrayObjectRefHelper {
+ public:
+  static ArrayObjectRef* create(ContextRef* context, const uint64_t length);
+  static ArrayObjectRef* create(ContextRef* context, ValueVectorRef* elements);
+  static uint64_t length(ContextRef* context, ArrayObjectRef* object);
+  static ValueRef* get(ContextRef* context,
+                       ArrayObjectRef* object,
+                       ValueRef::ValueIndex index);
+  static void set(ContextRef* context,
+                  ArrayObjectRef* object,
+                  ValueRef::ValueIndex index,
+                  ValueRef* value);
+};
+
 class ObjectTemplateData;
 class FunctionTemplateData;
 class FunctionData;
