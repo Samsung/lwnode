@@ -273,7 +273,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   GlobalHandles* globalHandles_ = nullptr;
 
   PersistentRefHolder<IsolateWrap> release_lock_;
-  ValueWrap* globalSlot_[internal::Internals::kRootIndexSize];
+  ValueWrap* globalSlot_[internal::Internals::kRootIndexSize]{};
 
   ThreadManager* threadManager_ = nullptr;
 };
