@@ -210,9 +210,11 @@ FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
   std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
       buffer, freeStringBuffer);
 
-  if (std::fread(buffer, sizeof(uint8_t), bufferSize, file) == 0) {
+  size_t readBytes = std::fread(buffer, sizeof(uint8_t), bufferSize, file);
+  if (readBytes == 0) {
     return FileData();
   }
+  LWNODE_CHECK(readBytes == bufferSize);
 
   return Loader::createFileDataForReloadableString(
       filename, std::move(bufferHolder), bufferSize, encodingHint);

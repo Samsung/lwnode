@@ -257,20 +257,24 @@ void GCHeap::printStatus(bool forcePrint) {
   LWNODE_DLOG_INFO("[HOLD]");
   printAddress(persistents_,
                [](std::stringstream& stream, const HeapSegment& iter) {
+                 std::ios_base::fmtflags flags(stream.flags());
                  stream << std::setw(15) << std::right
                         << GC_UNWRAP_PERSISTENT_POINTER(iter.first) << " ("
                         << "S" << std::setw(3) << iter.second.strong << " W"
                         << std::setw(3) << iter.second.weak << ") ";
+                 stream.flags(flags);
                });
 
   LWNODE_DLOG_INFO(CLR_GREEN "------------------" CLR_RESET);
   LWNODE_DLOG_INFO("[PHANTOM]");
   printAddress(weakPhantoms_,
                [](std::stringstream& stream, const HeapSegment& iter) {
+                 std::ios_base::fmtflags flags(stream.flags());
                  stream << std::setw(15) << std::right
                         << GC_UNWRAP_WEAK_POINTER(iter.first) << " ("
                         << "S" << std::setw(3) << iter.second.strong << " W"
                         << std::setw(3) << iter.second.weak << ") ";
+                 stream.flags(flags);
                });
 
   LWNODE_DLOG_INFO(CLR_GREEN "------------------" CLR_RESET);
