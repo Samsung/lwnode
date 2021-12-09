@@ -64,7 +64,6 @@ create_build_info() {
 post() {
   unpack_rpm lwnode rpm
   show_output_info rpm
-  create_build_info rpm
 }
 
 if [ $? -eq 0 ]; then

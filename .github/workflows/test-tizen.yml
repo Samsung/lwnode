@@ -31,7 +31,9 @@ jobs:
           --include-all --incremental -P profile.t65std \
           --define 'lib_type static'
       - name: Post build tasks
-        run: lwnode/tools/actions/post-build-task.sh
+        run: |
+          lwnode/tools/actions/post-build-task.sh
+          node /home/github/tools/build-info.mjs rpm
       - name: Copy the outputs
         env:
           TARGET_PATH: /home/tv/github
