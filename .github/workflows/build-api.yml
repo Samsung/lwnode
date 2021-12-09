@@ -1,0 +1,33 @@
+name: Build Api
+
+on:
+  push:
+    branches:
+    - v14
+
+jobs:
+  build:
+    runs-on: [ code-default ]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: CODE-Actions/checkout@v2
+        with:
+          submodule: true
+      - name: Generate Api
+        run: |
+          sudo apt -y install doxygen graphviz
+          doxygen docs/Doxyfile
+          cp -fr docs/api /tmp
+      - name: Checkout Api branch
+        uses: CODE-Actions/checkout@v2
+        with:
+          ref: gh-pages
+      - name: Publish Api
+        run: |
+          cp -fr /tmp/api docs
+          git config --global user.name 'Ryan Hyun Choi'
+          git config --global user.email 'ryan.choi@samsung.com'
+          git add -A
+          git commit -m '[auto commit] Update doc'
+          git push
