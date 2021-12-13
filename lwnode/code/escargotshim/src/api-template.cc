@@ -626,19 +626,22 @@ struct ObjectTemplateLocalDataHelper {
   std::unique_ptr<PropertyCallbackInfoWrap<T>> info;
 };
 
-void ObjectTemplate::SetHandler(
-    const NamedPropertyHandlerConfiguration& config) {
-  ObjectTemplateRef* esObjectTemplate = CVAL(this)->otpl();
-  HandlerConfiguration* handlerConfiguration =
-      new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
+class TemplateNamedPropertyHandlerCallbackHelper {
+ public:
+  TemplateNamedPropertyHandlerCallbackHelper(
+      const NamedPropertyHandlerConfiguration* config)
+      : config_(config) {}
 
-  ObjectTemplateNamedPropertyHandlerData esHandlerData;
-  if (config.getter) {
-    esHandlerData.getter = [](ExecutionStateRef* state,
-                              ObjectRef* esSelf,
-                              ValueRef* esReceiver,
-                              void* data,
-                              ValueRef* propertyName) -> OptionalRef<ValueRef> {
+  TemplateNamedPropertyHandlerGetterCallback getGetterCallback() {
+    if (!config_->getter) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data,
+              ValueRef* propertyName) -> OptionalRef<ValueRef> {
       ObjectTemplateLocalDataHelper<v8::Value> localData(
           esSelf, esReceiver, propertyName, data);
 
@@ -657,13 +660,17 @@ void ObjectTemplate::SetHandler(
     };
   }
 
-  if (config.setter) {
-    esHandlerData.setter = [](ExecutionStateRef* state,
-                              ObjectRef* esSelf,
-                              ValueRef* esReceiver,
-                              void* data,
-                              ValueRef* propertyName,
-                              ValueRef* esValue) -> OptionalRef<ValueRef> {
+  Escargot::TemplateNamedPropertyHandlerSetterCallback getSetterCallback() {
+    if (!config_->setter) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data,
+              ValueRef* propertyName,
+              ValueRef* esValue) -> OptionalRef<ValueRef> {
       ObjectTemplateLocalDataHelper<v8::Value> localData(
           esSelf, esReceiver, propertyName, data);
 
@@ -689,13 +696,16 @@ void ObjectTemplate::SetHandler(
     };
   }
 
-  if (config.query) {
-    esHandlerData.query =
-        [](ExecutionStateRef* state,
-           ObjectRef* esSelf,
-           ValueRef* esReceiver,
-           void* data,
-           ValueRef* propertyName) -> TemplatePropertyAttribute {
+  TemplateNamedPropertyHandlerQueryCallback getQueryCallback() {
+    if (!config_->query) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data,
+              ValueRef* propertyName) -> TemplatePropertyAttribute {
       ObjectTemplateLocalDataHelper<v8::Integer> localData(
           esSelf, esReceiver, propertyName, data);
 
@@ -729,13 +739,16 @@ void ObjectTemplate::SetHandler(
     };
   }
 
-  if (config.deleter) {
-    esHandlerData.deleter =
-        [](ExecutionStateRef* state,
-           ObjectRef* esSelf,
-           ValueRef* esReceiver,
-           void* data,
-           ValueRef* propertyName) -> OptionalRef<ValueRef> {
+  TemplateNamedPropertyHandlerDeleteCallback getDeleteCallback() {
+    if (!config_->deleter) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data,
+              ValueRef* propertyName) -> OptionalRef<ValueRef> {
       ObjectTemplateLocalDataHelper<v8::Boolean> localData(
           esSelf, esReceiver, propertyName, data);
 
@@ -754,11 +767,15 @@ void ObjectTemplate::SetHandler(
     };
   }
 
-  if (config.enumerator) {
-    esHandlerData.enumerator = [](ExecutionStateRef* state,
-                                  ObjectRef* esSelf,
-                                  ValueRef* esReceiver,
-                                  void* data) -> ValueVectorRef* {
+  TemplateNamedPropertyHandlerEnumerationCallback getEnumerationCallback() {
+    if (!config_->enumerator) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data) -> ValueVectorRef* {
       ObjectTemplateLocalDataHelper<v8::Array> localData(
           esSelf, esReceiver, nullptr, data);
 
@@ -787,14 +804,19 @@ void ObjectTemplate::SetHandler(
     };
   }
 
-  if (config.definer) {
-    esHandlerData.definer = [](ExecutionStateRef* state,
-                               ObjectRef* esSelf,
-                               ValueRef* esReceiver,
-                               void* data,
-                               ValueRef* propertyName,
-                               const ObjectPropertyDescriptorRef& esDescriptor)
-        -> OptionalRef<ValueRef> {
+  TemplateNamedPropertyHandlerDefineOwnPropertyCallback
+  getDefineOwnPropertyCallback() {
+    if (!config_->definer) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data,
+              ValueRef* propertyName,
+              const ObjectPropertyDescriptorRef& esDescriptor)
+               -> OptionalRef<ValueRef> {
       ObjectTemplateLocalDataHelper<v8::Value> localData(
           esSelf, esReceiver, propertyName, data);
 
@@ -816,13 +838,17 @@ void ObjectTemplate::SetHandler(
     };
   }
 
-  if (config.descriptor) {
-    esHandlerData.descriptor =
-        [](ExecutionStateRef* state,
-           ObjectRef* esSelf,
-           ValueRef* esReceiver,
-           void* data,
-           ValueRef* propertyName) -> OptionalRef<ValueRef> {
+  TemplateNamedPropertyHandlerGetPropertyDescriptorCallback
+  getGetPropertyDescriptorCallback() {
+    if (!config_->descriptor) {
+      return nullptr;
+    }
+
+    return [](ExecutionStateRef* state,
+              ObjectRef* esSelf,
+              ValueRef* esReceiver,
+              void* data,
+              ValueRef* propertyName) -> OptionalRef<ValueRef> {
       ObjectTemplateLocalDataHelper<v8::Value> localData(
           esSelf, esReceiver, propertyName, data);
 
@@ -841,6 +867,27 @@ void ObjectTemplate::SetHandler(
       return Escargot::OptionalRef<Escargot::ValueRef>();
     };
   }
+
+ private:
+  const NamedPropertyHandlerConfiguration* config_ = nullptr;
+};
+
+void ObjectTemplate::SetHandler(
+    const NamedPropertyHandlerConfiguration& config) {
+  ObjectTemplateRef* esObjectTemplate = CVAL(this)->otpl();
+  HandlerConfiguration* handlerConfiguration =
+      new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
+
+  ObjectTemplateNamedPropertyHandlerData esHandlerData;
+
+  TemplateNamedPropertyHandlerCallbackHelper helper(&config);
+  esHandlerData.getter = helper.getGetterCallback();
+  esHandlerData.setter = helper.getSetterCallback();
+  esHandlerData.query = helper.getQueryCallback();
+  esHandlerData.deleter = helper.getDeleteCallback();
+  esHandlerData.enumerator = helper.getEnumerationCallback();
+  esHandlerData.definer = helper.getDefineOwnPropertyCallback();
+  esHandlerData.descriptor = helper.getGetPropertyDescriptorCallback();
 
   esHandlerData.data = handlerConfiguration;
   esObjectTemplate->setNamedPropertyHandler(esHandlerData);
