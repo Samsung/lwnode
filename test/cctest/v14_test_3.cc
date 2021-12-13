@@ -1015,3 +1015,56 @@ TEST(ChainSignatureCheckCustom) {
     CHECK_EQ(42, result->Int32Value(context.local()).FromJust());
   }
 }
+
+void templateHandlerCallbackGet(
+    Local<Name> property, const v8::PropertyCallbackInfo<v8::Value>& info) {
+  if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
+          .FromJust()) {
+    info.GetReturnValue().Set(v8_str("yes"));
+  }
+}
+
+void templateHandlerCallbackSet(
+    Local<Name> property,
+    v8::Local<v8::Value> value,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+  if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
+          .FromJust()) {
+    info.GetReturnValue().Set(v8_str("yes"));
+  }
+}
+
+void templateHandlerCallbackQuery(
+    Local<Name> property, const v8::PropertyCallbackInfo<v8::Integer>& info) {
+  if (property->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("foo"))
+          .FromJust()) {
+    info.GetReturnValue().Set(v8_int(0));
+  }
+}
+
+THREADED_TEST(TemplateHandlerCallbackCustom) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  {
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(
+        v8::NamedPropertyHandlerConfiguration(templateHandlerCallbackGet));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("1")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), 1).FromJust());
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  }
+  {
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(
+        v8::NamedPropertyHandlerConfiguration(templateHandlerCallbackGet,
+                                              templateHandlerCallbackSet,
+                                              templateHandlerCallbackQuery));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
+  }
+}
