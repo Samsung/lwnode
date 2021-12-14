@@ -35,10 +35,11 @@ enum FlagType : flag_t {
   UseStrict = 1 << 2,
   DisableIdleGC = 1 << 3,
   TopLevelWait = 1 << 4,
+  AllowCodeGenerationFromString = 1 << 5,
   // lwnode
-  TraceCall = 1 << 5,
-  TraceGC = 1 << 6,
-  InternalLog = 1 << 7,
+  TraceCall = 1 << 9,
+  TraceGC = 1 << 10,
+  InternalLog = 1 << 11,
 };
 
 class LWNODE_EXPORT Flags {
@@ -50,6 +51,9 @@ class LWNODE_EXPORT Flags {
   static bool isTraceCallEnabled(std::string id = "*");
   static bool isTraceGCEnabled() { return s_flags & FlagType::TraceGC; }
   static bool isInternalLogEnabled() { return s_flags & FlagType::InternalLog; }
+  static bool isCodeGenerationFromStringAllowed() {
+    return s_flags & FlagType::AllowCodeGenerationFromString;
+  }
 
   static void setTraceCallId(std::string id) { s_trace_ids.insert(id); }
   static void setNagativeTraceCallId(std::string id) {

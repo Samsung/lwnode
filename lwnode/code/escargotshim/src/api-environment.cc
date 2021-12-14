@@ -253,7 +253,9 @@ Local<v8::Object> Context::GetExtrasBindingObject() {
                                  lwContext->GetExtrasBindingObject());
 }
 
-void Context::AllowCodeGenerationFromStrings(bool allow) {}
+void Context::AllowCodeGenerationFromStrings(bool allow) {
+  LWNODE_RETURN_VOID;
+}
 
 bool Context::IsCodeGenerationFromStringsAllowed() {
   LWNODE_RETURN_FALSE;

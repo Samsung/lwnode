@@ -5,6 +5,9 @@ require('../common');
 // their environment when evaluated. When run in 0.10 `test()` fails with a
 // `ReferenceError`. See https://github.com/nodejs/node/issues/2245 for details.
 
+// @lwnode
+// Flags: --allow-code-generation-from-strings
+
 const assert = require('assert');
 
 function test() {
