@@ -175,7 +175,11 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
       // @check https://github.sec.samsung.net/lws/node-escargot/issues/394
       flags |= FlagType::TopLevelWait;
       checked = true;
-    } else if (strEquals("--trace-gc", arg)) {
+    } else if (strEquals("--allow-code-generation-from-strings", arg)) {
+      flags |= FlagType::AllowCodeGenerationFromString;
+      checked = true;
+    }
+    else if (strEquals("--trace-gc", arg)) {
       flags |= FlagType::TraceGC;
       checked = true;
     } else if (strStartsWith(arg, "--trace-call")) {

@@ -68,6 +68,35 @@ static bool createGlobals(ContextRef* context) {
             StringRef::createFromASCII("stackTraceLimit"),
             ValueRef::create(
                 20));  // TODO: get number from '--stack-trace-limit' options
+
+        if (Flags::isCodeGenerationFromStringAllowed() == false) {
+          // @note --disallow-code-generation-from-strings as default
+          state->context()->globalObject()->defineDataProperty(
+              state,
+              StringRef::createFromASCII("eval"),
+              FunctionObjectRef::create(
+                  state,
+                  FunctionObjectRef::NativeFunctionInfo(
+                      AtomicStringRef::emptyAtomicString(),
+                      [](ExecutionStateRef* state,
+                         ValueRef* thisValue,
+                         size_t argc,
+                         ValueRef** argv,
+                         bool isConstructCall) -> ValueRef* {
+                        state->throwException(EvalErrorObjectRef::create(
+                            state,
+                            StringRef::createFromASCII(
+                                "Code generation from strings disallowed for "
+                                "this context")));
+                        return ValueRef::createUndefined();
+                      },
+                      0,
+                      true,
+                      false)),
+              false,
+              false,
+              false);
+        }
         return ValueRef::createUndefined();
       });
   LWNODE_CHECK(r.isSuccessful());
