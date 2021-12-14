@@ -142,6 +142,9 @@ void InitializeTest::TearDown() {
 int main(int argc, char* argv[]) {
   printf("============= Start EscargotShim Test ============= \n");
 
+  EscargotShim::Flags::add(
+      EscargotShim::FlagType::AllowCodeGenerationFromString);
+
   for (int i = 1; i < argc; i++) {
     std::string arg(argv[i]);
 

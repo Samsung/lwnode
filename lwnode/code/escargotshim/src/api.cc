@@ -178,8 +178,7 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     } else if (strEquals("--allow-code-generation-from-strings", arg)) {
       flags |= FlagType::AllowCodeGenerationFromString;
       checked = true;
-    }
-    else if (strEquals("--trace-gc", arg)) {
+    } else if (strEquals("--trace-gc", arg)) {
       flags |= FlagType::TraceGC;
       checked = true;
     } else if (strStartsWith(arg, "--trace-call")) {
