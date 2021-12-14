@@ -20,6 +20,8 @@
 
 #include "string-util.h"
 
+#include <sstream>
+
 // Magic values subtracted from a buffer value during UTF8 conversion.
 // This table contains as many values as there might be trailing bytes
 // in a UTF-8 sequence.
@@ -49,4 +51,16 @@ bool UTF8Sequence::convertUTF8ToLatin1(
   }
 
   return true;
+}
+
+std::vector<std::string> strSplit(const std::string& str, char delimiter) {
+  std::vector<std::string> tokens;
+  std::stringstream ss(str);
+  std::string token;
+
+  while (getline(ss, token, delimiter)) {
+    tokens.push_back(token);
+  }
+
+  return tokens;
 }

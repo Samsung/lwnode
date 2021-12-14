@@ -22,6 +22,8 @@
 
 #include "misc.h"
 
+#include <vector>
+
 namespace EscargotShim {
 class Constants {
  public:
@@ -55,6 +57,8 @@ template <size_t N>
 bool strStartsWith(const char* str, const char (&prefix)[N]) {
   return strncmp(str, prefix, N - 1) == 0;
 }
+
+std::vector<std::string> strSplit(const std::string& str, char delimiter);
 
 class UTF8Sequence {
  public:

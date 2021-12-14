@@ -60,6 +60,8 @@ class LWNODE_EXPORT Flags {
     s_negative_trace_ids.insert(id);
   }
 
+  static void shrinkArgumentList(int* argc, char** argv);
+
  private:
   static std::set<std::string> s_trace_ids;
   static std::set<std::string> s_negative_trace_ids;

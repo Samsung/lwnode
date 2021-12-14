@@ -42,4 +42,14 @@ bool Flags::isTraceCallEnabled(std::string id) {
   return true;
 }
 
+void Flags::shrinkArgumentList(int* argc, char** argv) {
+  int count = 0;
+  for (int idx = 0; idx < *argc; idx++) {
+    if (argv[idx]) {
+      argv[count++] = argv[idx];
+    }
+  }
+  *argc = count;
+}
+
 }  // namespace EscargotShim
