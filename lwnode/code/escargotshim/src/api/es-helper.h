@@ -148,8 +148,43 @@ class ExtraDataHelper {
     return (ExtraData*)object->extraData();
   }
 
-  static ExtraData* getExtraData(TemplateRef* esTemplate) {
-    return (ExtraData*)esTemplate->instanceExtraData();
+  static FunctionData* getFunctionExtraData(ObjectRef* functionObject) {
+    auto extraData = (ExtraData*)functionObject->extraData();
+    if (extraData) {
+      return extraData->asFunctionData();
+    }
+
+    return nullptr;
+  }
+
+  static ObjectTemplateData* getObjectTemplateExtraData(
+      ObjectRef* objectTemplate) {
+    auto extraData = (ExtraData*)objectTemplate->extraData();
+    if (extraData) {
+      return extraData->asObjectTemplateData();
+    }
+
+    return nullptr;
+  }
+
+  static ObjectTemplateData* getObjectTemplateExtraData(
+      ObjectTemplateRef* objectTemplate) {
+    auto extraData = (ExtraData*)objectTemplate->instanceExtraData();
+    if (extraData) {
+      return extraData->asObjectTemplateData();
+    }
+
+    return nullptr;
+  }
+
+  static FunctionTemplateData* getFunctionTemplateExtraData(
+      FunctionTemplateRef* functionTemplate) {
+    auto extraData = (ExtraData*)functionTemplate->instanceExtraData();
+    if (extraData) {
+      return extraData->asFunctionTemplateData();
+    }
+
+    return nullptr;
   }
 
   // Only allow the following (Object, extraData) pairs when adding extraData

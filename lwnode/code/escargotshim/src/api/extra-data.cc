@@ -105,8 +105,7 @@ void* InternalFieldData::internalField(int idx) {
 }
 
 ObjectData::ObjectData(ObjectTemplateRef* objectTemplate)
-    : TemplateData(ExtraDataHelper::getExtraData(objectTemplate)
-                       ->asObjectTemplateData()
+    : TemplateData(ExtraDataHelper::getObjectTemplateExtraData(objectTemplate)
                        ->functionTemplate()),
       objectTemplate_(objectTemplate) {}
 
@@ -136,8 +135,8 @@ ObjectData* ObjectTemplateData::createObjectData(
 
 v8::Isolate* FunctionData::isolate() {
   if (functionTemplate_) {
-    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
-                                    ->asFunctionTemplateData();
+    auto functionTemplateData =
+        ExtraDataHelper::getFunctionTemplateExtraData(functionTemplate_);
     return functionTemplateData->isolate();
   }
 
@@ -146,8 +145,8 @@ v8::Isolate* FunctionData::isolate() {
 
 v8::FunctionCallback FunctionData::callback() {
   if (functionTemplate_) {
-    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
-                                    ->asFunctionTemplateData();
+    auto functionTemplateData =
+        ExtraDataHelper::getFunctionTemplateExtraData(functionTemplate_);
     return functionTemplateData->callback();
   }
 
@@ -156,8 +155,8 @@ v8::FunctionCallback FunctionData::callback() {
 
 v8::Value* FunctionData::callbackData() {
   if (functionTemplate_) {
-    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
-                                    ->asFunctionTemplateData();
+    auto functionTemplateData =
+        ExtraDataHelper::getFunctionTemplateExtraData(functionTemplate_);
     return functionTemplateData->callbackData();
   }
 
@@ -166,8 +165,8 @@ v8::Value* FunctionData::callbackData() {
 
 v8::Signature* FunctionData::signature() {
   if (functionTemplate_) {
-    auto functionTemplateData = ExtraDataHelper::getExtraData(functionTemplate_)
-                                    ->asFunctionTemplateData();
+    auto functionTemplateData =
+        ExtraDataHelper::getFunctionTemplateExtraData(functionTemplate_);
     return functionTemplateData->signature();
   }
 
