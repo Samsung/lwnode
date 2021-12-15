@@ -66,6 +66,7 @@
       'defines': [
         'ESCARGOT_ENABLE_TYPEDARRAY=1',
         'ESCARGOT_ENABLE_PROMISE=1',
+        'ESCARGOT_USE_CUSTOM_LOGGING=1',
       ],
       'include_dirs': [
         '<(escargot_dir)/src/api',
@@ -87,6 +88,7 @@
           'cmake', '<(escargot_dir)', '-B<(output_dir)',
           '-GNinja',
           '-DESCARGOT_SMALL_CONFIG=1',
+          '-DESCARGOT_USE_CUSTOM_LOGGING=ON',
           '-DESCARGOT_ARCH=<(target_arch)',
           '-DESCARGOT_MODE=<(build_mode)',
           '-DESCARGOT_HOST=<(build_host)',

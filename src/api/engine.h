@@ -48,6 +48,9 @@ class Platform : public PlatformRef {
                                    StringRef* src,
                                    PromiseObjectRef* promise) override;
 
+  void customInfoLogger(const char* format, va_list args) override {}
+  void customErrorLogger(const char* format, va_list args) override {}
+
   std::vector<std::tuple<std::string /* abs path */,
                          ContextRef*,
                          PersistentRefHolder<ScriptRef>>>
