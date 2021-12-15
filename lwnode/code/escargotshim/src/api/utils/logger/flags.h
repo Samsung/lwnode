@@ -29,17 +29,33 @@ namespace EscargotShim {
 
 typedef uint16_t flag_t;
 
-enum FlagType : flag_t {
-  Empty = 0,
-  ExposeGC = 1 << 1,
-  UseStrict = 1 << 2,
-  DisableIdleGC = 1 << 3,
-  TopLevelWait = 1 << 4,
-  AllowCodeGenerationFromString = 1 << 5,
-  // lwnode
-  TraceCall = 1 << 9,
-  TraceGC = 1 << 10,
-  InternalLog = 1 << 11,
+class Flag {
+ public:
+  enum Type : flag_t {
+    Empty = 0,
+    ExposeGC = 1 << 1,
+    UseStrict = 1 << 2,
+    DisableIdleGC = 1 << 3,
+    TopLevelWait = 1 << 4,
+    AllowCodeGenerationFromString = 1 << 5,
+    // lwnode
+    TraceCall = 1 << 9,
+    TraceGC = 1 << 10,
+    InternalLog = 1 << 11,
+    LWNodeOther = 1 << 14,
+  };
+
+  Flag(std::string name, Type type, bool useAsPrefix = false)
+      : name_(name), type_(type), useAsPrefix_(useAsPrefix) {}
+
+  std::string name() { return name_; }
+  Type type() { return type_; }
+  bool isPrefixOf(const std::string& name);
+
+ private:
+  std::string name_;
+  Type type_ = Type::Empty;
+  bool useAsPrefix_ = false;
 };
 
 class LWNODE_EXPORT Flags {
@@ -49,16 +65,15 @@ class LWNODE_EXPORT Flags {
   static flag_t get() { return s_flags; };
 
   static bool isTraceCallEnabled(std::string id = "*");
-  static bool isTraceGCEnabled() { return s_flags & FlagType::TraceGC; }
-  static bool isInternalLogEnabled() { return s_flags & FlagType::InternalLog; }
+  static bool isTraceGCEnabled() { return s_flags & Flag::Type::TraceGC; }
+  static bool isInternalLogEnabled() {
+    return s_flags & Flag::Type::InternalLog;
+  }
   static bool isCodeGenerationFromStringAllowed() {
-    return s_flags & FlagType::AllowCodeGenerationFromString;
+    return s_flags & Flag::Type::AllowCodeGenerationFromString;
   }
 
-  static void setTraceCallId(std::string id) { s_trace_ids.insert(id); }
-  static void setNagativeTraceCallId(std::string id) {
-    s_negative_trace_ids.insert(id);
-  }
+  static void setTraceCallId(const std::string& id);
 
   static void shrinkArgumentList(int* argc, char** argv);
 

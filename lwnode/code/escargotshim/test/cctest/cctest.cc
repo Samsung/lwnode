@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
   printf("============= Start EscargotShim Test ============= \n");
 
   EscargotShim::Flags::add(
-      EscargotShim::FlagType::AllowCodeGenerationFromString);
+      EscargotShim::Flag::Type::AllowCodeGenerationFromString);
 
   for (int i = 1; i < argc; i++) {
     std::string arg(argv[i]);
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
       ::testing::GTEST_FLAG(filter) = f.c_str();
 #if defined(CCTEST_ENGINE_ESCARGOT)
     } else if (startsWith(arg, std::string("--trace-call"))) {
-      EscargotShim::Flags::add(EscargotShim::FlagType::TraceCall);
+      EscargotShim::Flags::add(EscargotShim::Flag::Type::TraceCall);
 
       std::string str(arg);
       std::string::size_type pos = str.find_first_of('=');
@@ -162,15 +162,11 @@ int main(int argc, char* argv[]) {
         std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
         std::string token;
         while (std::getline(ss, token, ',')) {
-          if (token.find('-') == 0) {
-            EscargotShim::Flags::setNagativeTraceCallId(token.substr(1));
-          } else {
-            EscargotShim::Flags::setTraceCallId(token);
-          }
+          EscargotShim::Flags::setTraceCallId(token);
         }
       }
     } else if (startsWith(arg, std::string("--trace-gc"))) {
-      EscargotShim::Flags::add(EscargotShim::FlagType::TraceGC);
+      EscargotShim::Flags::add(EscargotShim::Flag::Type::TraceGC);
 #endif
     } else {
       printf("unknown options: %s\n", argv[i]);

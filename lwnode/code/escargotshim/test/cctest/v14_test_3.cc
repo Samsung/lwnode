@@ -1068,3 +1068,55 @@ THREADED_TEST(TemplateHandlerCallbackCustom) {
     CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
   }
 }
+
+THREADED_TEST(SetGetFlagsCustom) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  std::string userOptions[] = {"program.exe",
+                               "--expose-gc",
+                               "--use-strict",
+                               "--off-idlegc",
+                               "--harmony-top-level-await",
+                               "--allow-code-generation-from-strings",
+                               "--trace-gc",
+                               "--trace-call=",
+                               "--internal-log",
+                               "--trace-debug",
+                               "--debug",
+                               "--stack-size=",
+                               "--nolazy"};
+  int arrayLength = sizeof(userOptions) / sizeof(userOptions[0]);
+
+  std::unique_ptr<char*[]> argv(new char*[arrayLength]);
+  for (int i = 1; i < arrayLength; i++) {
+    argv[i] = (char*)userOptions[i].c_str();
+  }
+
+  EscargotShim::flag_t optionsBackup = EscargotShim::Flags::get();
+
+  v8::V8::SetFlagsFromCommandLine(&arrayLength, argv.get(), true);
+  EscargotShim::flag_t options = EscargotShim::Flags::get();
+
+  CHECK((options & EscargotShim::Flag::Type::ExposeGC) ==
+        EscargotShim::Flag::Type::ExposeGC);
+  CHECK((options & EscargotShim::Flag::Type::UseStrict) ==
+        EscargotShim::Flag::Type::UseStrict);
+  CHECK((options & EscargotShim::Flag::Type::DisableIdleGC) ==
+        EscargotShim::Flag::Type::DisableIdleGC);
+  CHECK((options & EscargotShim::Flag::Type::TopLevelWait) ==
+        EscargotShim::Flag::Type::TopLevelWait);
+  CHECK((options & EscargotShim::Flag::Type::AllowCodeGenerationFromString) ==
+        EscargotShim::Flag::Type::AllowCodeGenerationFromString);
+  CHECK((options & EscargotShim::Flag::Type::TraceGC) ==
+        EscargotShim::Flag::Type::TraceGC);
+  CHECK((options & EscargotShim::Flag::Type::TraceCall) ==
+        EscargotShim::Flag::Type::TraceCall);
+  CHECK((options & EscargotShim::Flag::Type::InternalLog) ==
+        EscargotShim::Flag::Type::InternalLog);
+  CHECK((options & EscargotShim::Flag::Type::LWNodeOther) ==
+        EscargotShim::Flag::Type::Empty);
+
+  EscargotShim::Flags::set(optionsBackup);
+}

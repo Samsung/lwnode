@@ -153,78 +153,71 @@ void V8::SetFlagsFromString(const char* str, size_t length) {
   LWNODE_RETURN_VOID;
 }
 
+static Flag validFlags[] = {
+    Flag("--expose-gc", Flag::Type::ExposeGC),
+    Flag("--use-strict", Flag::Type::UseStrict),
+    Flag("--off-idlegc", Flag::Type::DisableIdleGC),
+    Flag("--harmony-top-level-await", Flag::Type::TopLevelWait),
+    Flag("--allow-code-generation-from-strings",
+         Flag::Type::AllowCodeGenerationFromString),
+    Flag("--trace-gc", Flag::Type::TraceGC),
+    Flag("--trace-call=", Flag::Type::TraceCall, true),
+    Flag("--internal-log", Flag::Type::InternalLog),
+    Flag("--trace-debug", Flag::Type::LWNodeOther, true),
+    Flag("--debug", Flag::Type::LWNodeOther, true),
+    Flag("--stack-size=", Flag::Type::LWNodeOther, true),
+    Flag("--nolazy", Flag::Type::LWNodeOther, true),
+};
+
+static Flag::Type findFlag(const std::string& name) {
+  std::string normalized = name;
+  std::replace(normalized.begin(), normalized.end(), '_', '-');
+
+  for (auto flag : validFlags) {
+    if ((flag.name() == normalized) || flag.isPrefixOf(normalized)) {
+      return flag.type();
+    }
+  }
+
+  return Flag::Type::Empty;
+}
+
 void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
-  flag_t flags = FlagType::Empty;
+  flag_t userOptions = Flag::Type::Empty;
 
   for (int i = 1; i < *argc; i++) {
-    char* arg = argv[i];
-    bool checked = false;
+    std::string userOption = argv[i];
+    bool isValidToRemove = false;
 
-    if (strEquals("--expose-gc", arg) || strEquals("--expose_gc", arg)) {
-      flags |= FlagType::ExposeGC;
-      checked = true;
-    } else if (strEquals("--use-strict", arg) ||
-               strEquals("--use_strict", arg)) {
-      flags |= FlagType::UseStrict;
-      checked = true;
-    } else if (strEquals("--off-idlegc", arg) ||
-               strEquals("--off_idlegc", arg)) {
-      flags |= FlagType::DisableIdleGC;
-      checked = true;
-    } else if (strEquals("--harmony-top-level-await", arg)) {
-      // @check https://github.sec.samsung.net/lws/node-escargot/issues/394
-      flags |= FlagType::TopLevelWait;
-      checked = true;
-    } else if (strEquals("--allow-code-generation-from-strings", arg)) {
-      flags |= FlagType::AllowCodeGenerationFromString;
-      checked = true;
-    } else if (strEquals("--trace-gc", arg)) {
-      flags |= FlagType::TraceGC;
-      checked = true;
-    } else if (strStartsWith(arg, "--trace-call")) {
-      flags |= FlagType::TraceCall;
-      checked = true;
-
-      std::string str(arg);
-      std::string::size_type pos = str.find_first_of('=');
-      if (std::string::npos != pos) {
-        std::stringstream ss(str.substr(pos + 1));  // +1 for skipping =
-        std::string token;
-        while (std::getline(ss, token, ',')) {
-          if (token.find('-') == 0) {
-            Flags::setNagativeTraceCallId(token.substr(1));
-          } else {
-            Flags::setTraceCallId(token);
-          }
-        }
-      }
-    } else if (strEquals("--internal-log", arg)) {
-      flags |= FlagType::InternalLog;
-      checked = true;
-    } else if (remove_flags && (strStartsWith(arg, "--debug") ||
-                                strStartsWith(arg, "--stack-size=") ||
-                                strStartsWith(arg, "--nolazy") ||
-                                strStartsWith(arg, "--trace_debug"))) {
-      checked = true;
-    } else {
-      LWNODE_DLOG_WARN("'%s' flag is ignored", arg);
+    // @check https://github.sec.samsung.net/lws/node-escargot/issues/394
+    flag_t nameType = findFlag(userOption);
+    if (nameType == Flag::Type::Empty) {
+      LWNODE_DLOG_WARN("'%s' flag is ignored", userOption.c_str());
+      continue;
     }
 
-    if (checked && remove_flags) {
+    if (nameType != Flag::Type::LWNodeOther) {
+      userOptions |= nameType;
+    }
+
+    if (nameType == Flag::Type::TraceCall) {
+      std::string traceCallOption = userOption.substr(
+          userOption.find_first_of('=') + 1);  // +1 for skipping '='
+      auto tokens = strSplit(traceCallOption, ',');
+      for (auto token : tokens) {
+        Flags::setTraceCallId(token);
+      }
+    }
+
+    if (remove_flags) {
       argv[i] = nullptr;
     }
   }
 
-  Flags::set(flags);
+  Flags::set(userOptions);
 
   if (remove_flags) {
-    int count = 0;
-    for (int idx = 0; idx < *argc; idx++) {
-      if (argv[idx]) {
-        argv[count++] = argv[idx];
-      }
-    }
-    *argc = count;
+    Flags::shrinkArgumentList(argc, argv);
   }
 }
 
