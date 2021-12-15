@@ -905,17 +905,16 @@ void ExtraDataHelper::setExtraData(ObjectRef* object, ObjectData* data) {
 
 void ObjectTemplateRefHelper::setInternalFieldCount(ObjectTemplateRef* otpl,
                                                     int size) {
-  auto objectTemplateData =
-      ExtraDataHelper::getExtraData(otpl)->asObjectTemplateData();
+  auto objectTemplateData = ExtraDataHelper::getObjectTemplateExtraData(otpl);
   objectTemplateData->setInternalFieldCount(size);
 }
 
 int ObjectTemplateRefHelper::getInternalFieldCount(ObjectTemplateRef* otpl) {
-  auto data = ExtraDataHelper::getExtraData(otpl);
+  auto data = ExtraDataHelper::getObjectTemplateExtraData(otpl);
   if (data == nullptr) {
     return 0;
   }
-  return data->asObjectTemplateData()->internalFieldCount();
+  return data->internalFieldCount();
 }
 
 // --- ExceptionHelper ---

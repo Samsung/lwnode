@@ -1120,3 +1120,37 @@ THREADED_TEST(SetGetFlagsCustom) {
 
   EscargotShim::Flags::set(optionsBackup);
 }
+
+static void simpleCallbackCustom(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+  info.GetReturnValue().Set(v8_num(10 + info.Length()));
+}
+
+template <typename Callback>
+static void functionTemplateCallbackCustom(Callback callback) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::ObjectTemplate> object_template =
+      v8::ObjectTemplate::New(isolate);
+  object_template->Set(
+      isolate, "callback", v8::FunctionTemplate::New(isolate, callback));
+  v8::Local<v8::Object> object =
+      object_template->NewInstance(env.local()).ToLocalChecked();
+  CHECK((*env)->Global()->Set(env.local(), v8_str("obj"), object).FromJust());
+
+  v8::Local<v8::Script> script;
+  script = v8_compile("obj.callback(1)");
+  for (int i = 0; i < 30; i++) {
+    CHECK_EQ(11, v8_run_int32value(script));
+  }
+  script = v8_compile("obj.callback(1, 2)");
+  for (int i = 0; i < 30; i++) {
+    CHECK_EQ(12, v8_run_int32value(script));
+  }
+}
+
+THREADED_PROFILED_TEST(FunctionTemplateCallbackCustom) {
+  functionTemplateCallbackCustom(simpleCallbackCustom);
+}
