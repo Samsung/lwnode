@@ -67,7 +67,7 @@ jobs:
           command: tools/test.py -J -p dots --report --time
                   --timeout 240 --repeat 1
                   --skip-tests=$(paste -sd, lwnode/code/escargotshim/test/jstester/skip_list.txt)
-                  test/parallel
+                  test/parallel test/regression
       - run:
           name: Copy outputs
           command: |

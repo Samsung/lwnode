@@ -158,6 +158,17 @@ static ValueRef* CreateReloadableSourceFromFile(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 }
 
+static ValueRef* checkIfHandledAsOneByteString(ExecutionStateRef* state,
+                                               ValueRef* thisValue,
+                                               size_t argc,
+                                               ValueRef** argv,
+                                               bool isConstructCall) {
+  if (argc > 0 && argv[0]->isString()) {
+    return ValueRef::create(argv[0]->asString()->has8BitContent());
+  }
+  return ValueRef::createUndefined();
+}
+
 void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
   auto esTarget = CVAL(*target)->value()->asObject();
@@ -168,6 +179,10 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   SetMethod(esContext, esTarget, "RssUsage", RssUsage);
   SetMethod(esContext, esTarget, "PssSwapUsage", PssSwapUsage);
   SetMethod(esContext, esTarget, "MemSnapshot", MemSnapshot);
+  SetMethod(esContext,
+            esTarget,
+            "checkIfHandledAsOneByteString",
+            checkIfHandledAsOneByteString);
 #ifdef LWNODE_USE_RELOAD_SCRIPT
   SetMethod(esContext,
             esTarget,
