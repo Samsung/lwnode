@@ -16,14 +16,24 @@
 
 #include "flags.h"
 
+#include <algorithm>
+
 namespace EscargotShim {
 
-flag_t Flags::s_flags = FlagType::Empty;
+bool Flag::isPrefixOf(const std::string& name) {
+  if (useAsPrefix_ && (name.find(name_) != std::string::npos)) {
+    return true;
+  }
+
+  return false;
+}
+
+flag_t Flags::s_flags = Flag::Type::Empty;
 std::set<std::string> Flags::s_trace_ids;
 std::set<std::string> Flags::s_negative_trace_ids;
 
 bool Flags::isTraceCallEnabled(std::string id) {
-  if (!(s_flags & FlagType::TraceCall)) {
+  if (!(s_flags & Flag::Type::TraceCall)) {
     return false;
   }
 
@@ -40,6 +50,15 @@ bool Flags::isTraceCallEnabled(std::string id) {
   }
 
   return true;
+}
+
+void Flags::setTraceCallId(const std::string& id) {
+  if (id.find('-') == 0) {
+    s_negative_trace_ids.insert(id.substr(1));
+    return;
+  }
+
+  s_trace_ids.insert(id);
 }
 
 void Flags::shrinkArgumentList(int* argc, char** argv) {
