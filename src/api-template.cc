@@ -107,22 +107,8 @@ void FunctionTemplate::Inherit(v8::Local<FunctionTemplate> value) {
       ExtraDataHelper::getFunctionTemplateExtraData(esThatFunctionTemplate));
 }
 
-// e.g.,
-// sig_obj()
-// var s = new sig_obj();
-//  target: sig_obj == constructor obj, thisValue: s
-// s.x();
-//  target: null, thisValue: s
-static ValueRef* FunctionTemplateNativeFunction(
-    ExecutionStateRef* state,
-    ValueRef* thisValue,
-    size_t argc,
-    ValueRef** argv,
-    OptionalRef<ObjectRef> newTarget) {
-  Escargot::OptionalRef<Escargot::FunctionObjectRef> callee =
-      state->resolveCallee();
-
-  auto calleeExtraData = ExtraDataHelper::getExtraData(callee.value());
+static FunctionData* getFunctionDataFromCallee(FunctionObjectRef* callee) {
+  auto calleeExtraData = ExtraDataHelper::getExtraData(callee);
   LWNODE_DCHECK_NOT_NULL(calleeExtraData);
 
   FunctionData* functionData = nullptr;
@@ -136,59 +122,66 @@ static ValueRef* FunctionTemplateNativeFunction(
     LWNODE_CHECK(false);
   }
 
-  LWNODE_CALL_TRACE_ID(TEMPLATE,
-                       "es: %p newTarget: %s",
-                       thisValue,
-                       strBool(newTarget.hasValue()));
+  return functionData;
+}
 
-  if (newTarget.hasValue()) {
-    auto targetData = ExtraDataHelper::getFunctionExtraData(newTarget.value());
-    if (targetData) {
-      LWNODE_CALL_TRACE_ID_LOG(EXTRADATA, "targetData: %p", targetData);
-      // newTarget was created from JavaScript using Template.
-      // functionData was created from FunctionTemplate::GetFunction()
-      auto objectTemplate = targetData->functionTemplate()->instanceTemplate();
+static void setExtraDataToNewObjectInstance(ValueRef* thisValue,
+                                            ObjectRef* newTarget) {
+  auto targetData = ExtraDataHelper::getFunctionExtraData(newTarget);
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA, "targetData: %p", targetData);
 
-      auto newInstance = thisValue->asObject();
-      auto newInstanceObjectTemplateData =
-          ExtraDataHelper::getObjectTemplateExtraData(newInstance);
-      ObjectData* newObjectData = nullptr;
-      if (newInstanceObjectTemplateData) {
-        // 1. newInstanceObjectTemplateData was created from
-        // FunctionTemplate::InstanceTemplate()
-        LWNODE_CALL_TRACE_ID_LOG(
-            EXTRADATA, "Existing Data: %p", newInstanceObjectTemplateData);
-        newObjectData =
-            newInstanceObjectTemplateData->createObjectData(objectTemplate);
-        // Replace ObjectTemplateData with correct ObjectData
-        ObjectRefHelper::setExtraData(newInstance, newObjectData, true);
-      } else {
-        auto objectTemplateData =
-            ExtraDataHelper::getObjectTemplateExtraData(objectTemplate);
-        if (objectTemplateData) {
-          // 2. newInstance was created from ObjectTemplate
-          newObjectData = objectTemplateData->createObjectData(objectTemplate);
-          ObjectRefHelper::setExtraData(newInstance, newObjectData);
-        } else {
-          // 3. newInstance was created from FunctionTemplate::GetFunction(),
-          // with "var s = new S();" in Javascript
-          newObjectData = new ObjectData(targetData->functionTemplate());
-          ObjectRefHelper::setExtraData(newInstance, newObjectData);
-        }
-      }
+  if (!targetData) {
+    return;
+  }
 
-      LWNODE_CALL_TRACE_ID_LOG(EXTRADATA, "New ExtraData: %p", newObjectData);
+  // newTarget was created from JavaScript using Template.
+  // targetData was created from FunctionTemplate::GetFunction()
+  auto objectTemplate = targetData->functionTemplate()->instanceTemplate();
+
+  auto newInstance = thisValue->asObject();
+  auto newInstanceObjectTemplateData =
+      ExtraDataHelper::getObjectTemplateExtraData(newInstance);
+  ObjectData* newObjectData = nullptr;
+  if (newInstanceObjectTemplateData) {
+    // 1. newInstanceObjectTemplateData was created from
+    // FunctionTemplate::InstanceTemplate()
+    LWNODE_CALL_TRACE_ID_LOG(
+        EXTRADATA, "Existing Data: %p", newInstanceObjectTemplateData);
+    newObjectData =
+        newInstanceObjectTemplateData->createObjectData(objectTemplate);
+    // Replace ObjectTemplateData with correct ObjectData
+    ObjectRefHelper::setExtraData(newInstance, newObjectData, true);
+  } else {
+    auto objectTemplateData =
+        ExtraDataHelper::getObjectTemplateExtraData(objectTemplate);
+    if (objectTemplateData) {
+      // 2. newInstance was created from ObjectTemplate
+      newObjectData = objectTemplateData->createObjectData(objectTemplate);
+      ObjectRefHelper::setExtraData(newInstance, newObjectData);
+    } else {
+      // 3. newInstance was created from FunctionTemplate::GetFunction(),
+      // with "var s = new S();" in Javascript
+      newObjectData = new ObjectData(targetData->functionTemplate());
+      ObjectRefHelper::setExtraData(newInstance, newObjectData);
     }
   }
 
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA, "New ExtraData: %p", newObjectData);
+}
+
+static ValueRef* runNativeFunctionCallback(ExecutionStateRef* state,
+                                           FunctionData* functionData,
+                                           ValueRef* thisValue,
+                                           ObjectRef* newTarget,
+                                           size_t argc,
+                                           ValueRef** argv) {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  if (!newTarget.hasValue() &&
-      !functionData->checkSignature(state, thisValue->asObject())) {
+  if (!functionData->checkSignature(state, thisValue->asObject())) {
     lwIsolate->ScheduleThrow(TypeErrorObjectRef::create(
         state, StringRef::createFromASCII("Illegal invocation")));
     lwIsolate->ThrowErrorIfHasException(state);
     LWNODE_DLOG_ERROR("Signature mismatch!");
-    return ValueRef::createUndefined();
+    return nullptr;
   }
 
   Local<Value> result;
@@ -206,15 +199,48 @@ static ValueRef* FunctionTemplateNativeFunction(
     result = info.GetReturnValue().Get();
   }
 
-  if (newTarget.hasValue()) {
-    return thisValue;
-  }
-
   if (!result.IsEmpty()) {
     return VAL(*result)->value();
   }
 
   return ValueRef::createUndefined();
+}
+
+// e.g.,
+// sig_obj()
+// var s = new sig_obj();
+//  target: sig_obj == constructor obj, thisValue: s
+// s.x();
+//  target: null, thisValue: s
+static ValueRef* FunctionTemplateNativeFunction(
+    ExecutionStateRef* state,
+    ValueRef* thisValue,
+    size_t argc,
+    ValueRef** argv,
+    OptionalRef<ObjectRef> newTarget) {
+  LWNODE_CALL_TRACE_ID(TEMPLATE,
+                       "es: %p newTarget: %s",
+                       thisValue,
+                       strBool(newTarget.hasValue()));
+
+  FunctionData* functionData =
+      getFunctionDataFromCallee(state->resolveCallee().value());
+
+  if (newTarget.hasValue()) {
+    setExtraDataToNewObjectInstance(thisValue, newTarget.value());
+  }
+
+  ValueRef* result = runNativeFunctionCallback(
+      state, functionData, thisValue, newTarget.value(), argc, argv);
+  if (result == nullptr) {
+    return ValueRef::createUndefined();
+  }
+
+  if (newTarget.hasValue()) {
+    return thisValue;
+  }
+
+  return result;
 }
 
 Local<FunctionTemplate> FunctionTemplate::New(Isolate* isolate,
