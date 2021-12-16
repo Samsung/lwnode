@@ -13280,7 +13280,7 @@ static void UnlockForAMoment(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 
-THREADED_TEST(LockUnlockLock) {
+THREADED_TEST(DISABLED_LockUnlockLock) {
   {
     v8::Locker locker(CcTest::isolate());
     v8::HandleScope scope(CcTest::isolate());
