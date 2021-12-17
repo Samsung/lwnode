@@ -280,7 +280,7 @@ TEST(internal_Escargot_ShadowObject) {
   auto esPrototypeTemplate = esFunctionTemplate->prototypeTemplate();
 
   // SetHandler (setNamedPropertyHandler) on esInstanceTemplate
-  ObjectTemplateNamedPropertyHandlerData esNamedPropertyHandlerData;
+  ObjectTemplatePropertyHandlerConfiguration esNamedPropertyHandlerData;
   esNamedPropertyHandlerData.getter =
       [](ExecutionStateRef* state,
          ObjectRef* self,
