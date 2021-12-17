@@ -638,13 +638,13 @@ struct ObjectTemplateLocalDataHelper {
   std::unique_ptr<PropertyCallbackInfoWrap<T>> info;
 };
 
-class TemplateNamedPropertyHandlerCallbackHelper {
+class ObjectTemplatePropertyHandlerCallbackHelper {
  public:
-  TemplateNamedPropertyHandlerCallbackHelper(
+  ObjectTemplatePropertyHandlerCallbackHelper(
       const NamedPropertyHandlerConfiguration* config)
       : config_(config) {}
 
-  TemplateNamedPropertyHandlerGetterCallback getGetterCallback() {
+  PropertyHandlerGetterCallback getGetterCallback() {
     if (!config_->getter) {
       return nullptr;
     }
@@ -672,7 +672,7 @@ class TemplateNamedPropertyHandlerCallbackHelper {
     };
   }
 
-  Escargot::TemplateNamedPropertyHandlerSetterCallback getSetterCallback() {
+  Escargot::PropertyHandlerSetterCallback getSetterCallback() {
     if (!config_->setter) {
       return nullptr;
     }
@@ -708,7 +708,7 @@ class TemplateNamedPropertyHandlerCallbackHelper {
     };
   }
 
-  TemplateNamedPropertyHandlerQueryCallback getQueryCallback() {
+  PropertyHandlerQueryCallback getQueryCallback() {
     if (!config_->query) {
       return nullptr;
     }
@@ -717,12 +717,12 @@ class TemplateNamedPropertyHandlerCallbackHelper {
               ObjectRef* esSelf,
               ValueRef* esReceiver,
               void* data,
-              ValueRef* propertyName) -> TemplatePropertyAttribute {
+              ValueRef* propertyName) -> ObjectTemplatePropertyAttribute {
       ObjectTemplateLocalDataHelper<v8::Integer> localData(
           esSelf, esReceiver, propertyName, data);
 
       if (!localData.handlerConfiguration->m_namedPropertyHandler.query) {
-        return TemplatePropertyAttribute::TemplatePropertyAttributeNotExist;
+        return ObjectTemplatePropertyAttribute::PropertyAttributeNotExist;
       }
 
       localData.handlerConfiguration->m_namedPropertyHandler.query(
@@ -738,20 +738,20 @@ class TemplateNamedPropertyHandlerCallbackHelper {
              static_cast<int>(PropertyHandlerFlags::kHasNoSideEffect));
 
         if (hasNone) {
-          return TemplatePropertyAttribute::TemplatePropertyAttributeExist;
+          return ObjectTemplatePropertyAttribute::PropertyAttributeExist;
         } else if (hasNoSideEffect) {
-          return TemplatePropertyAttribute::TemplatePropertyAttributeEnumerable;
+          return ObjectTemplatePropertyAttribute::PropertyAttributeEnumerable;
         } else {
           LWNODE_UNIMPLEMENT;
         }
-        return TemplatePropertyAttribute::TemplatePropertyAttributeExist;
+        return ObjectTemplatePropertyAttribute::PropertyAttributeExist;
       }
 
-      return TemplatePropertyAttribute::TemplatePropertyAttributeNotExist;
+      return ObjectTemplatePropertyAttribute::PropertyAttributeNotExist;
     };
   }
 
-  TemplateNamedPropertyHandlerDeleteCallback getDeleteCallback() {
+  PropertyHandlerDeleteCallback getDeleteCallback() {
     if (!config_->deleter) {
       return nullptr;
     }
@@ -779,7 +779,7 @@ class TemplateNamedPropertyHandlerCallbackHelper {
     };
   }
 
-  TemplateNamedPropertyHandlerEnumerationCallback getEnumerationCallback() {
+  PropertyHandlerEnumerationCallback getEnumerationCallback() {
     if (!config_->enumerator) {
       return nullptr;
     }
@@ -816,8 +816,7 @@ class TemplateNamedPropertyHandlerCallbackHelper {
     };
   }
 
-  TemplateNamedPropertyHandlerDefineOwnPropertyCallback
-  getDefineOwnPropertyCallback() {
+  PropertyHandlerDefineOwnPropertyCallback getDefineOwnPropertyCallback() {
     if (!config_->definer) {
       return nullptr;
     }
@@ -850,7 +849,7 @@ class TemplateNamedPropertyHandlerCallbackHelper {
     };
   }
 
-  TemplateNamedPropertyHandlerGetPropertyDescriptorCallback
+  PropertyHandlerGetPropertyDescriptorCallback
   getGetPropertyDescriptorCallback() {
     if (!config_->descriptor) {
       return nullptr;
@@ -890,9 +889,9 @@ void ObjectTemplate::SetHandler(
   HandlerConfiguration* handlerConfiguration =
       new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
 
-  ObjectTemplateNamedPropertyHandlerData esHandlerData;
+  ObjectTemplatePropertyHandlerConfiguration esHandlerData;
 
-  TemplateNamedPropertyHandlerCallbackHelper helper(&config);
+  ObjectTemplatePropertyHandlerCallbackHelper helper(&config);
   esHandlerData.getter = helper.getGetterCallback();
   esHandlerData.setter = helper.getSetterCallback();
   esHandlerData.query = helper.getQueryCallback();
