@@ -33,7 +33,7 @@ template <typename T,
           typename Allocator = GCUtil::gc_malloc_allocator<T>>
 using GCVectorT = Starfish::Vector<T, Allocator, isEraseStrategyStrict>;
 
-#if !defined(NDEBUG)
+#if defined(GC_DEBUG)
 template <typename T,
           bool isEraseStrategyStrict = true,
           typename Allocator = GCUtil::gc_malloc_allocator<T>>
