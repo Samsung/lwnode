@@ -54,7 +54,7 @@ class GlobalWeakHandler {
       return 0;
     }
     LWNODE_CALL_TRACE_ID(
-        GLOBALHANDLES, "Clear weak values: %ld", weakValuesSize);
+        GLOBALHANDLES, "Clear weak values: %zu", weakValuesSize);
     for (auto& iter : weakValues_) {
       iter.second->releaseValue();
     }
@@ -231,7 +231,7 @@ bool GlobalHandles::makeWeak(ValueWrap* lwValue,
   g_globalWeakHandler.pushBlock(lwValue, std::move(block));
 
   LWNODE_CALL_TRACE_ID(
-      GLOBALHANDLES, "MakeWeak: %p(%ld)", lwValue, iter->second);
+      GLOBALHANDLES, "MakeWeak: %p(%zu)", lwValue, iter->second);
   persistentValues_.erase(iter);
   return true;
 }
