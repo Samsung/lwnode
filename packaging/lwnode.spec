@@ -107,7 +107,13 @@ LDFLAGS+="-fsanitize=address"
 %define target lwnode
 %define target_lib liblwnode
 %define target_src out/tizen/Release
-%define engine_config --without-bundled-v8 --engine escargot
+
+%if %{?static_escargot:0}%{!?static_escargot:1}
+  %define engine_config --without-bundled-v8 --engine escargot
+%else
+  %define engine_config --without-bundled-v8 --engine escargot --static-escargot
+%endif
+
 %else
 %define target node
 %define target_src out/v8/Release
@@ -130,10 +136,12 @@ LDFLAGS+="-fsanitize=address"
   %define extra_config --escargot-threading
 %endif
 
-echo "Building:" %{target}
 
 CFLAGS+=' -Os '
 CXXFLAGS+=' -Os '
+
+echo "Build Target:" %{target}
+echo $CFLAGS
 
 # building liblwnode.so
 ./configure --tizen --without-npm \
@@ -168,7 +176,9 @@ mkdir -p %{buildroot}%{_libdir}
 
 rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
 %if "%{node_engine}" == "escargot"
-  cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+  %if %{?static_escargot:0}%{!?static_escargot:1}
+    cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+  %endif
   %if "%{lib_type}" == "shared"
     cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
   %endif
@@ -198,7 +208,9 @@ rm -fr ./*.manifest
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
 %if "%{node_engine}" == "escargot"
-  %{_libdir}/libescargot.so
+  %if %{?static_escargot:0}%{!?static_escargot:1}
+    %{_libdir}/libescargot.so
+  %endif
   %if "%{lib_type}" == "shared"
     %{_libdir}/liblwnode.so*
   %endif
