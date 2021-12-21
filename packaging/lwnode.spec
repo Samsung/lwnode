@@ -46,6 +46,10 @@ BuildRequires: pkgconfig(openssl)
   %endif
 %endif
 
+%if 0%{?asan} == 1
+BuildRequires: libasan
+%endif
+
 ##############################################
 # Packages for profiles
 ##############################################
@@ -98,9 +102,7 @@ gcc --version
 %endif
 
 %if 0%{?asan} == 1
-CFLAGS+="-fsanitize=address -fsanitize-recover=address -U_FORTIFY_SOURCE -fno-omit-frame-pointer -fno-common"
-CXXFLAGS+="-fsanitize=address -fsanitize-recover=address -U_FORTIFY_SOURCE -fno-omit-frame-pointer -fno-common"
-LDFLAGS+="-fsanitize=address"
+%define asan_config --enable-asan
 %endif
 
 %if "%{node_engine}" == "escargot"
@@ -146,7 +148,7 @@ echo $CFLAGS
             --with-intl none %{?libshared} \
             --enable-reload-script --enable-external-builtin-script \
             --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --ninja %{?engine_config} %{?extra_config} %{?lib_type_config}
+            --ninja %{?engine_config} %{?extra_config} %{?lib_type_config} %{?asan_config}
 
 %if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
   ninja -C %{target_src} %{target_lib}
@@ -158,7 +160,7 @@ echo $CFLAGS
             --with-intl none %{?libshared} \
             --enable-reload-script --enable-external-builtin-script \
             --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --ninja %{?engine_config} %{?extra_config}
+            --ninja %{?engine_config} %{?extra_config} %{?asan_config}
 ninja -C %{target_src} %{target}
 
 
