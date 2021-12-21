@@ -1889,6 +1889,13 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
                         lwIsolate->GetCurrentContext()->get(), r)
                         .c_str());
 
+    if (Flags::isAbortOnUncaughtException()) {
+      if (!lwIsolate->abortOnUncaughtExceptionCallback() ||
+          lwIsolate->abortOnUncaughtExceptionCallback()(lwIsolate->toV8())) {
+        LWNODE_DLOG_INFO("Abort because of uncaught exception callback!");
+        abort();
+      }
+    }
     lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
     lwIsolate->ReportPendingMessages();
     return MaybeLocal<Value>();

@@ -40,22 +40,9 @@ test/parallel/test-crypto-worker-thread.js
 test/parallel/test-dgram-socket-buffer-size.js
 test/parallel/test-disable-proto-delete.js
 test/parallel/test-disable-proto-throw.js
-test/parallel/test-domain-abort-on-uncaught.js
 test/parallel/test-domain-async-id-map-leak.js
 test/parallel/test-domain-error-types.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-0.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-1.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-2.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-3.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-4.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-5.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-6.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-7.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-8.js
-test/parallel/test-domain-no-error-handler-abort-on-uncaught-9.js
 test/parallel/test-domain-set-uncaught-exception-capture-after-load.js
-test/parallel/test-domain-throw-error-then-throw-from-uncaught-exception-handler.js
-test/parallel/test-domain-with-abort-on-uncaught-exception.js
 test/parallel/test-error-prepare-stack-trace.js
 test/parallel/test-error-reporting.js
 test/parallel/test-error-serdes.js
@@ -118,7 +105,6 @@ test/parallel/test-net-write-fully-async-buffer.js
 test/parallel/test-net-write-fully-async-hex-string.js
 test/parallel/test-no-harmony-top-level-await.mjs
 test/parallel/test-npm-install.js
-test/parallel/test-os-userinfo-handles-getter-errors.js
 test/parallel/test-performance-eventlooputil.js
 test/parallel/test-performance-function.js
 test/parallel/test-performance-gc.js
@@ -135,8 +121,6 @@ test/parallel/test-process-emit-warning-from-native.js
 test/parallel/test-process-env-allowed-flags-are-documented.js
 test/parallel/test-process-env-symbols.js
 test/parallel/test-process-env.js
-test/parallel/test-process-exception-capture-should-abort-on-uncaught.js
-test/parallel/test-process-exception-capture.js
 test/parallel/test-process-exec-argv.js
 test/parallel/test-process-uncaught-exception-monitor.js
 test/parallel/test-process-versions.js
@@ -239,7 +223,6 @@ test/parallel/test-vm-module-import-meta.js
 test/parallel/test-vm-module-link.js
 test/parallel/test-vm-module-reevaluate.js
 test/parallel/test-vm-new-script-new-context.js
-test/parallel/test-vm-parse-abort-on-uncaught-exception.js
 test/parallel/test-vm-preserves-property.js
 test/parallel/test-vm-property-not-on-sandbox.js
 test/parallel/test-vm-proxies.js
@@ -301,7 +284,6 @@ test/parallel/test-worker-message-port-receive-message.js
 test/parallel/test-worker-message-port-terminate-transfer-list.js
 test/parallel/test-worker-message-port-transfer-closed.js
 test/parallel/test-worker-message-port-transfer-duplicate.js
-test/parallel/test-worker-message-port-transfer-fake-js-transferable-internal.js
 test/parallel/test-worker-message-port-transfer-fake-js-transferable.js
 test/parallel/test-worker-message-port-transfer-filehandle.js
 test/parallel/test-worker-message-port-transfer-native.js
