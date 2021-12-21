@@ -137,9 +137,6 @@ LDFLAGS+="-fsanitize=address"
 %endif
 
 
-CFLAGS+=' -Os '
-CXXFLAGS+=' -Os '
-
 echo "Build Target:" %{target}
 echo $CFLAGS
 
@@ -185,7 +182,10 @@ rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
 %endif
 
 # for devel files
-strip -v -g %{target_src}/%{target}
+%if %{?debug_symbols:0}%{!?debug_symbols:1}
+  strip -v -g %{target_src}/%{target}
+%endif
+
 cp %{target_src}/%{target} %{buildroot}%{_bindir}
 cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
