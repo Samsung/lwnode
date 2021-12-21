@@ -38,6 +38,7 @@ class Flag {
     DisableIdleGC = 1 << 3,
     TopLevelWait = 1 << 4,
     AllowCodeGenerationFromString = 1 << 5,
+    AbortOnUncaughtException = 1 << 6,
     // lwnode
     TraceCall = 1 << 9,
     TraceGC = 1 << 10,
@@ -71,6 +72,9 @@ class LWNODE_EXPORT Flags {
   }
   static bool isCodeGenerationFromStringAllowed() {
     return s_flags & Flag::Type::AllowCodeGenerationFromString;
+  }
+  static bool isAbortOnUncaughtException() {
+    return s_flags & Flag::Type::AbortOnUncaughtException;
   }
 
   static void setTraceCallId(const std::string& id);

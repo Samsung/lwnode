@@ -87,6 +87,11 @@ class Isolate : public gc {
     abort_on_uncaught_exception_callback_ = callback;
   }
 
+  v8::Isolate::AbortOnUncaughtExceptionCallback
+  abortOnUncaughtExceptionCallback() {
+    return abort_on_uncaught_exception_callback_;
+  }
+
   void AddMessageListenerWithErrorLevel(v8::MessageCallback callback) {
     LWNODE_DCHECK_NULL(message_callback_);
     message_callback_ = callback;

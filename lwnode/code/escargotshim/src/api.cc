@@ -160,6 +160,7 @@ static Flag validFlags[] = {
     Flag("--harmony-top-level-await", Flag::Type::TopLevelWait),
     Flag("--allow-code-generation-from-strings",
          Flag::Type::AllowCodeGenerationFromString),
+    Flag("--abort-on-uncaught-exception", Flag::Type::AbortOnUncaughtException),
     Flag("--trace-gc", Flag::Type::TraceGC),
     Flag("--trace-call=", Flag::Type::TraceCall, true),
     Flag("--internal-log", Flag::Type::InternalLog),
