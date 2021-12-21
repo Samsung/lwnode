@@ -324,6 +324,7 @@
           '-fno-omit-frame-pointer',
           '-fsanitize=address',
           '-fsanitize-address-use-after-scope',
+          '-Wno-maybe-uninitialized',
         ],
         'defines': [ 'LEAK_SANITIZER', 'V8_USE_ADDRESS_SANITIZER' ],
         'cflags!': [ '-fomit-frame-pointer' ],

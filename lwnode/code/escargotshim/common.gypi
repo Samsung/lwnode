@@ -4,7 +4,7 @@
     'target_os%': 'none',  # configure with --tizen
     'build_mode%': 'release',
     'build_host%': '<(OS)',
-    'build_asan%': '0',
+    'asan%': '0',
   },
   'target_defaults': {
     'defines': [ 'LWNODE=1' ],
@@ -57,7 +57,7 @@
           ],
         },
       }],
-      ['build_asan==1', {
+      ['asan==1', {
         'cflags+':    [ '-fsanitize=address', '-fno-omit-frame-pointer', '-fno-common', '-D_FORTIFY_SOURCE=2' ],
         'cflags_cc+': [ '-fsanitize=address', '-fno-omit-frame-pointer', '-fno-common', '-D_FORTIFY_SOURCE=2' ],
         'cflags!': [ '-fomit-frame-pointer' ],

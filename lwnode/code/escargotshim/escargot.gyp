@@ -4,7 +4,7 @@
     'target_arch%': '<(target_arch)',
     'target_os%': '<(target_os)',
     'build_host%': '<(build_host)',
-    'build_asan%': '<(build_asan)',
+    'asan%': '<(asan)',
     'escargot_dir%': 'deps/escargot',
     "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
     'escargot_threading%': '<(escargot_threading)',
@@ -94,7 +94,7 @@
           '-DESCARGOT_HOST=<(build_host)',
           '-DESCARGOT_OUTPUT=<(escargot_lib_type)',
           '-DESCARGOT_THREADING=<(escargot_threading)',
-          '-DESCARGOT_ASAN=<(build_asan)',
+          '-DESCARGOT_ASAN=<(asan)',
         ],
       },
       {
