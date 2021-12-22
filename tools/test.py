@@ -920,6 +920,8 @@ class Context(object):
         name = name.replace('out/', '')
       name = os.path.abspath(name + '.exe')
 
+    name = os.environ.get('VM_PATH', name)
+
     if not exists(name):
       raise ValueError('Could not find executable. Should be ' + name)
 
