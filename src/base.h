@@ -149,6 +149,18 @@ class EsScopeFunctionTemplate : public EsScopeTemplate {
 
 class EsScopeObjectTemplate : public EsScopeTemplate {
  public:
+  EsScopeObjectTemplate(const v8::ObjectTemplate* self)
+      : EsScopeTemplate(self) {}
+  EsScopeObjectTemplate(const v8::Local<v8::Context>& context,
+                        const v8::ObjectTemplate* self)
+      : EsScopeTemplate(context, self) {}
+
+  EscargotShim::ObjectTemplateRef* self() {
+    LWNODE_CHECK(self_->isObjectTemplate());
+    return reinterpret_cast<EscargotShim::ObjectTemplateRef*>(self_);
+  }
+
+ private:
 };
 
 }  // namespace EscargotShim
