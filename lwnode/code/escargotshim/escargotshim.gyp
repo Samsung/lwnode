@@ -33,6 +33,7 @@
         'src/api-template.cc',
         'src/api-additionals.cc',
         'src/api-experimental-serialization.cc',
+        'src/base.cc',
         'src/internal.cc',
         'src/init/v8.cc',
         'src/execution/v8threads.cc',

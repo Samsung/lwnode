@@ -16,7 +16,11 @@
 
 #pragma once
 
+#include "api.h"
 #include "unimplemented.h"
+
+#include <EscargotPublic.h>
+#include <v8.h>
 
 namespace EscargotShim {
 class ValueWrap;
@@ -71,6 +75,12 @@ class ValueWrap;
     return bailout_value;                                                      \
   }
 
+#define API_ENTER_AND_EXIT_IF_TERMINATING(ScopeType, context, returnValue)     \
+  ScopeType scope(context, this);                                              \
+  if (scope.isTerminating()) {                                                 \
+    return returnValue;                                                        \
+  }
+
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \
   V(Uint8, uint8, UINT8, uint8_t)                                              \
@@ -84,3 +94,61 @@ class ValueWrap;
   V(Uint8Clamped, uint8_clamped, UINT8_CLAMPED, uint8_t)                       \
   V(BigUint64, biguint64, BIGUINT64, uint64_t)                                 \
   V(BigInt64, bigint64, BIGINT64, int64_t)
+
+namespace EscargotShim {
+
+class EsScopeTemplate {
+ public:
+  EsScopeTemplate(const v8::Template* self = nullptr);
+  EsScopeTemplate(const v8::Local<v8::Context>& context,
+                  const v8::Template* self = nullptr);
+  EscargotShim::TemplateRef* self() { return self_; }
+
+  virtual v8::Isolate* v8Isolate() { return isolate_->toV8(); }
+
+  virtual Escargot::ContextRef* context() {
+    return isolate_->GetCurrentContext()->get();
+  }
+
+  virtual bool isTerminating() { return isolate_->IsExecutionTerminating(); }
+
+  virtual ValueRef* asValue(const v8::Local<v8::Value>& value) {
+    return CVAL(*value)->value();
+  }
+
+  virtual ValueRef* asValue(const v8::Local<v8::Name>& value) {
+    return CVAL(*value)->value();
+  }
+
+  virtual FunctionTemplateRef* asFunctionTemplate(
+      const v8::Local<v8::FunctionTemplate>& value) {
+    return CVAL(*value)->ftpl();
+  }
+
+ protected:
+  EscargotShim::IsolateWrap* isolate_ = nullptr;
+  EscargotShim::ContextWrap* context_ = nullptr;
+  EscargotShim::TemplateRef* self_ = nullptr;
+};
+
+class EsScopeFunctionTemplate : public EsScopeTemplate {
+ public:
+  EsScopeFunctionTemplate(const v8::FunctionTemplate* self)
+      : EsScopeTemplate(self) {}
+  EsScopeFunctionTemplate(const v8::Local<v8::Context>& context,
+                          const v8::FunctionTemplate* self)
+      : EsScopeTemplate(context, self) {}
+
+  EscargotShim::FunctionTemplateRef* self() {
+    LWNODE_CHECK(self_->isFunctionTemplate());
+    return reinterpret_cast<EscargotShim::FunctionTemplateRef*>(self_);
+  }
+
+ private:
+};
+
+class EsScopeObjectTemplate : public EsScopeTemplate {
+ public:
+};
+
+}  // namespace EscargotShim
