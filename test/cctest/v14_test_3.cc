@@ -15,9 +15,16 @@
  */
 
 #include "cctest.h"
+
 #include "v8.h"
 
+#include <EscargotPublic.h>
+
+#include "api/isolate.h"
+#include "base.h"
+
 using namespace v8;
+using namespace EscargotShim;
 
 // New internal TC
 TEST(StringNewFromUtf8Literal) {
@@ -1153,4 +1160,35 @@ static void functionTemplateCallbackCustom(Callback callback) {
 
 THREADED_PROFILED_TEST(FunctionTemplateCallbackCustom) {
   functionTemplateCallbackCustom(simpleCallbackCustom);
+}
+
+TEST(EsScopeTemplateCustom) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  {
+    EsScopeTemplate scope;
+    CHECK_EQ(scope.self(), nullptr);
+  }
+
+  {
+    auto v8Isolate = env->GetIsolate();
+    auto v8Context = v8Isolate->GetCurrentContext();
+    auto lwIsolate = IsolateWrap::fromV8(v8Isolate);
+    auto lwContext = IsolateWrap::fromV8(v8Isolate)->GetCurrentContext();
+
+    {
+      EsScopeTemplate scope(v8Context);
+      CHECK_EQ(scope.self(), nullptr);
+      CHECK_EQ(scope.context(), lwContext->get());
+      CHECK_EQ(scope.v8Isolate(), v8Isolate);
+    }
+
+    {
+      EsScopeFunctionTemplate scope(v8Context, nullptr);
+      CHECK_EQ(scope.context(), lwContext->get());
+      CHECK_EQ(scope.v8Isolate(), v8Isolate);
+    }
+  }
 }

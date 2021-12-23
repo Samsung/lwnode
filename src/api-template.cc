@@ -30,19 +30,22 @@ void Template::Set(v8::Local<Name> name,
   bool isEnumerable = !(attribute & DontEnum);
   bool isConfigurable = !(attribute & DontDelete);
 
-  TemplateRef* esTemplate = CVAL(this)->tpl();
-
+  EsScopeTemplate scope(this);
   // Name can be either a string or symbol
-  auto esName = CVAL(*name)->value();
   auto lwValue = CVAL(*value);
-
   if (lwValue->type() == HandleWrap::Type::ObjectTemplate ||
       lwValue->type() == HandleWrap::Type::FunctionTemplate) {
-    esTemplate->set(
-        esName, lwValue->tpl(), isWritable, isEnumerable, isConfigurable);
+    scope.self()->set(scope.asValue(name),
+                      lwValue->tpl(),
+                      isWritable,
+                      isEnumerable,
+                      isConfigurable);
   } else {
-    esTemplate->set(
-        esName, lwValue->value(), isWritable, isEnumerable, isConfigurable);
+    scope.self()->set(scope.asValue(name),
+                      lwValue->value(),
+                      isWritable,
+                      isEnumerable,
+                      isConfigurable);
   }
 }
 
@@ -57,8 +60,8 @@ void Template::SetAccessorProperty(v8::Local<v8::Name> name,
                                    v8::Local<FunctionTemplate> setter,
                                    v8::PropertyAttribute attribute,
                                    v8::AccessControl access_control) {
-  auto esTemplate = CVAL(this)->tpl();
-  auto esName = CVAL(*name)->value()->asString();
+  EsScopeTemplate scope(this);
+
   FunctionTemplateRef* esGetter = nullptr;
   if (!getter.IsEmpty()) {
     esGetter = CVAL(*getter)->ftpl();
@@ -68,20 +71,19 @@ void Template::SetAccessorProperty(v8::Local<v8::Name> name,
     esSetter = CVAL(*setter)->ftpl();
   }
 
-  esTemplate->setAccessorProperty(esName,
-                                  OptionalRef<FunctionTemplateRef>(esGetter),
-                                  OptionalRef<FunctionTemplateRef>(esSetter),
-                                  !(attribute & DontEnum),
-                                  !(attribute & DontDelete));
+  scope.self()->setAccessorProperty(scope.asValue(name)->asString(),
+                                    OptionalRef<FunctionTemplateRef>(esGetter),
+                                    OptionalRef<FunctionTemplateRef>(esSetter),
+                                    !(attribute & DontEnum),
+                                    !(attribute & DontDelete));
 }
 
 // --- F u n c t i o n   T e m p l a t e ---
 
 Local<ObjectTemplate> FunctionTemplate::PrototypeTemplate() {
-  FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
+  EsScopeFunctionTemplate scope(this);
 
-  return Utils::NewLocal(IsolateWrap::GetCurrent()->toV8(),
-                         esFunctionTemplate->prototypeTemplate());
+  return Utils::NewLocal(scope.v8Isolate(), scope.self()->prototypeTemplate());
 }
 
 void FunctionTemplate::SetPrototypeProviderTemplate(
@@ -90,20 +92,20 @@ void FunctionTemplate::SetPrototypeProviderTemplate(
 }
 
 void FunctionTemplate::Inherit(v8::Local<FunctionTemplate> value) {
-  auto esThisFunctionTemplate = CVAL(this)->ftpl();
-  auto esThatFunctionTemplate = CVAL(*value)->ftpl();
+  EsScopeFunctionTemplate scope(this);
 
+  auto esThatFunctionTemplate = scope.asFunctionTemplate(value);
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "FunctionTemplate(%p)::Inherit(): %p",
-                           esThisFunctionTemplate,
+                           scope.self(),
                            esThatFunctionTemplate);
 
-  esThisFunctionTemplate->inherit(esThatFunctionTemplate);
+  scope.self()->inherit(esThatFunctionTemplate);
   LWNODE_CALL_TRACE_ID_LOG(
       EXTRADATA,
       "FunctionTemplate(%p)::Inherit(): ExtraData1: %p, ExtraData2: %p",
-      esThisFunctionTemplate,
-      ExtraDataHelper::getFunctionTemplateExtraData(esThisFunctionTemplate),
+      scope.self(),
+      ExtraDataHelper::getFunctionTemplateExtraData(scope.self()),
       ExtraDataHelper::getFunctionTemplateExtraData(esThatFunctionTemplate));
 }
 
@@ -319,24 +321,23 @@ void FunctionTemplate::SetCallHandler(FunctionCallback callback,
     LWNODE_RETURN_VOID;
   }
 
-  Escargot::FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
+  EsScopeFunctionTemplate scope(this);
   auto functionTemplateData =
-      ExtraDataHelper::getFunctionTemplateExtraData(esFunctionTemplate);
+      ExtraDataHelper::getFunctionTemplateExtraData(scope.self());
   functionTemplateData->setCallback(callback);
   functionTemplateData->setCallbackData(*data);
 }
 
 Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
-  FunctionTemplateRef* esFunctionTemplate = CVAL(this)->ftpl();
-  LWNODE_CALL_TRACE_ID_LOG(
-      EXTRADATA, "InstanceTemplate(%p)", esFunctionTemplate);
+  EsScopeFunctionTemplate scope(this);
+  LWNODE_CALL_TRACE_ID_LOG(EXTRADATA, "InstanceTemplate(%p)", scope.self());
 
   auto functionTemplateData =
-      ExtraDataHelper::getFunctionTemplateExtraData(esFunctionTemplate);
+      ExtraDataHelper::getFunctionTemplateExtraData(scope.self());
   LWNODE_CHECK(functionTemplateData);
 
   // Only one instanceTemplate should exist.
-  auto esObjectTemplate = esFunctionTemplate->instanceTemplate();
+  auto esObjectTemplate = scope.self()->instanceTemplate();
   auto objectTemplateData =
       ExtraDataHelper::getObjectTemplateExtraData(esObjectTemplate);
   if (objectTemplateData) {
@@ -346,11 +347,11 @@ Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
                              esObjectTemplate,
                              objectTemplateData);
   } else {
-    auto objectTemplateData = new ObjectTemplateData(esFunctionTemplate);
+    auto objectTemplateData = new ObjectTemplateData(scope.self());
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
         "FunctionTemplate(%p)::InstanceTemplate(%p): New ExtarData: %p",
-        esFunctionTemplate,
+        scope.self(),
         esObjectTemplate,
         objectTemplateData);
     ExtraDataHelper::setExtraData(esObjectTemplate, objectTemplateData);
@@ -360,18 +361,16 @@ Local<ObjectTemplate> FunctionTemplate::InstanceTemplate() {
 }
 
 void FunctionTemplate::SetLength(int length) {
-  FunctionTemplateRef* self = CVAL(this)->ftpl();
-  self->setLength(length);
+  EsScopeFunctionTemplate scope(this);
+  scope.self()->setLength(length);
 }
 
 void FunctionTemplate::SetClassName(Local<String> name) {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
-  FunctionTemplateRef* self = CVAL(this)->ftpl();
+  EsScopeFunctionTemplate scope(this);
   auto esName = CVAL(*name)->value()->asString();
 
   auto r = Evaluator::execute(
-      lwContext->get(),
+      scope.context(),
       [](ExecutionStateRef* esState,
          FunctionTemplateRef* esFunctionTemplate,
          StringRef* esName) -> ValueRef* {
@@ -379,7 +378,7 @@ void FunctionTemplate::SetClassName(Local<String> name) {
             AtomicStringRef::create(esState->context(), esName));
         return ValueRef::createNull();
       },
-      self,
+      scope.self(),
       esName);
   LWNODE_CHECK(r.isSuccessful());
 }
@@ -398,17 +397,15 @@ void FunctionTemplate::RemovePrototype() {
 
 // Returns a unique function instance in the "current execution context"
 MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Function>(), TEMPLATE);
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esFunctionTemplate = CVAL(this)->ftpl();
-
-  auto esFunction = esFunctionTemplate->instantiate(esContext);
+  API_ENTER_AND_EXIT_IF_TERMINATING(
+      EsScopeFunctionTemplate, context, MaybeLocal<Function>());
+  auto esFunction = scope.self()->instantiate(scope.context());
   auto functionTemplateData =
-      ExtraDataHelper::getFunctionTemplateExtraData(esFunctionTemplate);
+      ExtraDataHelper::getFunctionTemplateExtraData(scope.self());
 
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "FunctionTemplate(%p)::GetFunction(%p)",
-                           esFunctionTemplate,
+                           scope.self(),
                            esFunction);
 
   auto functionData = ExtraDataHelper::getExtraData(esFunction);
@@ -416,18 +413,18 @@ MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
         "FunctionTemplate(%p)::GetFunction(%p): Existing functionData: %p",
-        esFunctionTemplate,
+        scope.self(),
         esFunction,
         functionData);
     if (functionData->isFunctionTemplateData()) {
       // This functionData was created by FunctionTemplate::New(), and
       // FunctionTemplateData was set in esFunction. We need to replace it with
       // a new FunctionData
-      auto newFunctionData = new FunctionData(esFunctionTemplate);
+      auto newFunctionData = new FunctionData(scope.self());
       LWNODE_CALL_TRACE_ID_LOG(
           EXTRADATA,
           "FunctionTemplate(%p)::GetFunction(%p): New functionData: %p",
-          esFunctionTemplate,
+          scope.self(),
           esFunction,
           newFunctionData);
       ExtraDataHelper::setExtraData(
@@ -442,7 +439,7 @@ MaybeLocal<v8::Function> FunctionTemplate::GetFunction(Local<Context> context) {
     LWNODE_CHECK(false);
   }
 
-  return Utils::NewLocal<Function>(lwIsolate->toV8(), esFunction);
+  return Utils::NewLocal<Function>(scope.v8Isolate(), esFunction);
 }
 
 MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
@@ -450,21 +447,20 @@ MaybeLocal<v8::Object> FunctionTemplate::NewRemoteInstance() {
 }
 
 bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
+  EsScopeFunctionTemplate scope(this);
   LWNODE_CALL_TRACE();
-  auto esSelfFunctionTemplate = CVAL(this)->ftpl();
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "FunctionTemplate(%p)::HasInstance(): %p",
-                           CVAL(this)->ftpl(),
-                           CVAL(*value)->value()->asObject());
+                           scope.self(),
+                           scope.asValue(value)->asObject());
   LWNODE_CALL_TRACE_ID_LOG(
       EXTRADATA,
       "FunctionTemplate(%p)::HasInstance: ExtraData: %p, %p",
-      esSelfFunctionTemplate,
-      ExtraDataHelper::getFunctionTemplateExtraData(CVAL(this)->ftpl()),
-      ExtraDataHelper::getExtraData(CVAL(*value)->value()->asObject()));
+      scope.self(),
+      ExtraDataHelper::getFunctionTemplateExtraData(scope.self()),
+      ExtraDataHelper::getExtraData(scope.asValue(value)->asObject()));
 
-  auto esContext = IsolateWrap::GetCurrent()->GetCurrentContext()->get();
-  auto esValue = CVAL(*value)->value();
+  auto esValue = scope.asValue(value);
   if (!esValue->isObject()) {
     return false;
   }
@@ -480,7 +476,7 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
         "FunctionTemplate(%p)::HasInstance: Existing ExtraData: %p",
-        esSelfFunctionTemplate,
+        scope.self(),
         extraData->asObjectData());
 
     if (extraData->asObjectData()->objectTemplate()) {
@@ -498,7 +494,7 @@ bool FunctionTemplate::HasInstance(v8::Local<v8::Value> value) {
   for (auto functionTemplate = esOtherFunctionTemplate;
        functionTemplate != nullptr;
        functionTemplate = functionTemplate->parent().value()) {
-    if (esSelfFunctionTemplate == functionTemplate) {
+    if (scope.self() == functionTemplate) {
       return true;
     }
   }
