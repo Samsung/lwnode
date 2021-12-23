@@ -881,7 +881,8 @@ class ObjectTemplatePropertyHandlerCallbackHelper {
 
 void ObjectTemplate::SetHandler(
     const NamedPropertyHandlerConfiguration& config) {
-  ObjectTemplateRef* esObjectTemplate = CVAL(this)->otpl();
+  EsScopeObjectTemplate scope(this);
+
   HandlerConfiguration* handlerConfiguration =
       new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
 
@@ -897,7 +898,7 @@ void ObjectTemplate::SetHandler(
   esHandlerData.descriptor = helper.getGetPropertyDescriptorCallback();
 
   esHandlerData.data = handlerConfiguration;
-  esObjectTemplate->setNamedPropertyHandler(esHandlerData);
+  scope.self()->setNamedPropertyHandler(esHandlerData);
 }
 
 void ObjectTemplate::MarkAsUndetectable() {
@@ -928,18 +929,19 @@ void ObjectTemplate::SetCallAsFunctionHandler(FunctionCallback callback,
 }
 
 int ObjectTemplate::InternalFieldCount() {
-  auto esObjectTemplate = CVAL(this)->otpl();
-  return ObjectTemplateRefHelper::getInternalFieldCount(esObjectTemplate);
+  EsScopeObjectTemplate scope(this);
+  return ObjectTemplateRefHelper::getInternalFieldCount(scope.self());
 }
 
 void ObjectTemplate::SetInternalFieldCount(int value) {
-  auto esObjectTemplate = CVAL(this)->otpl();
-  if (esObjectTemplate->didInstantiate()) {
+  EsScopeObjectTemplate scope(this);
+
+  if (scope.self()->didInstantiate()) {
     LWNODE_DLOG_WARN(
         "Don't modify internal field count after instantiating object");
     return;
   }
-  ObjectTemplateRefHelper::setInternalFieldCount(esObjectTemplate, value);
+  ObjectTemplateRefHelper::setInternalFieldCount(scope.self(), value);
 }
 
 bool ObjectTemplate::IsImmutableProto() {
@@ -951,18 +953,17 @@ void ObjectTemplate::SetImmutableProto() {
 }
 
 MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<v8::Object>(), TEMPLATE);
-  auto esContext = VAL(*context)->context()->get();
-  auto esObjectTemplate = CVAL(this)->otpl();
+  API_ENTER_AND_EXIT_IF_TERMINATING(
+      EsScopeObjectTemplate, context, MaybeLocal<v8::Object>());
 
-  auto esNewObject = esObjectTemplate->instantiate(esContext);
+  auto esNewObject = scope.self()->instantiate(scope.context());
   LWNODE_CALL_TRACE_ID_LOG(EXTRADATA,
                            "ObjectTemplate(%p)::NewInstance(): %p",
-                           esObjectTemplate,
+                           scope.self(),
                            esNewObject);
 
   auto objectTemplateData =
-      ExtraDataHelper::getObjectTemplateExtraData(esObjectTemplate);
+      ExtraDataHelper::getObjectTemplateExtraData(scope.self());
 
   auto objectData = ObjectRefHelper::getExtraData(esNewObject);
   if (objectData) {
@@ -972,19 +973,19 @@ MaybeLocal<v8::Object> ObjectTemplate::NewInstance(Local<Context> context) {
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
         "ObjectTemplate(%p)::NewInstance(): Existing Data: %p",
-        esObjectTemplate,
+        scope.self(),
         objectData);
-    auto objectData = objectTemplateData->createObjectData(esObjectTemplate);
+    auto objectData = objectTemplateData->createObjectData(scope.self());
     LWNODE_CALL_TRACE_ID_LOG(
         EXTRADATA,
         "ObjectTemplate(%p)::NewInstance() New objectData: %p",
-        esObjectTemplate,
+        scope.self(),
         objectData);
     ObjectRefHelper::setExtraData(esNewObject, objectData, true);
   } else {
     LWNODE_CHECK(false);
   }
 
-  return Utils::NewLocal<Object>(lwIsolate->toV8(), esNewObject);
+  return Utils::NewLocal<Object>(scope.v8Isolate(), esNewObject);
 }
 }  // namespace v8

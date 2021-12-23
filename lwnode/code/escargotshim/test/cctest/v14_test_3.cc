@@ -1190,5 +1190,11 @@ TEST(EsScopeTemplateCustom) {
       CHECK_EQ(scope.context(), lwContext->get());
       CHECK_EQ(scope.v8Isolate(), v8Isolate);
     }
+
+    {
+      EsScopeObjectTemplate scope(v8Context, nullptr);
+      CHECK_EQ(scope.context(), lwContext->get());
+      CHECK_EQ(scope.v8Isolate(), v8Isolate);
+    }
   }
 }
