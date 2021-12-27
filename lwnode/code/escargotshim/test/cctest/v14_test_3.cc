@@ -1198,3 +1198,46 @@ TEST(EsScopeTemplateCustom) {
     }
   }
 }
+
+TEST(EsScopeCustom) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  {
+    EsScope scope;
+    CHECK_EQ(scope.self(), nullptr);
+  }
+
+  {
+    auto v8Isolate = env->GetIsolate();
+    auto v8Context = v8Isolate->GetCurrentContext();
+    auto lwIsolate = IsolateWrap::fromV8(v8Isolate);
+    auto lwContext = IsolateWrap::fromV8(v8Isolate)->GetCurrentContext();
+
+    EsScope scope(v8Isolate);
+    CHECK_EQ(scope.self(), nullptr);
+    CHECK_EQ(scope.context(), lwContext->get());
+    CHECK_EQ(scope.v8Isolate(), v8Isolate);
+  }
+
+  {
+    auto v8Isolate = env->GetIsolate();
+    auto lwContext = IsolateWrap::fromV8(v8Isolate)->GetCurrentContext();
+    EscargotShim::EsScope scope(v8Isolate);
+    CHECK_EQ(scope.context(), lwContext->get());
+
+    auto esValue = ValueRef::create(-1);
+    uint32_t index = ValueRef::InvalidIndex32Value;
+    auto r = Evaluator::execute(
+        scope.context(),
+        [](ExecutionStateRef* state, ValueRef* self, uint32_t* index) {
+          *index = self->toIndex32(state);
+          return ValueRef::create(*index);
+        },
+        esValue,
+        &index);
+
+    CHECK_EQ(ValueRef::InvalidIndex32Value, index);
+  }
+}
