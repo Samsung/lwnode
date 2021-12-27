@@ -136,6 +136,35 @@ class v8::PropertyDescriptor::PrivateData {
 };
 // end @lwnode
 
+// v8 Extension
+class RegisteredExtension {
+ public:
+  static void Register(std::unique_ptr<Extension>);
+  static void UnregisterAll();
+  Extension* extension() const { return extension_.get(); }
+  RegisteredExtension* next() const { return next_; }
+  static RegisteredExtension* first_extension() { return first_extension_; }
+
+ private:
+  explicit RegisteredExtension(Extension*);
+  explicit RegisteredExtension(std::unique_ptr<Extension>);
+  std::unique_ptr<Extension> extension_;
+  RegisteredExtension* next_ = nullptr;
+  static RegisteredExtension* first_extension_;
+};
+
+class ExternalizeStringExtension : public v8::Extension {
+ public:
+  ExternalizeStringExtension() : v8::Extension("v8/externalize", kSource) {}
+  v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
+      v8::Isolate* isolate, v8::Local<v8::String> name) override;
+  static void Externalize(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void IsOneByte(const v8::FunctionCallbackInfo<v8::Value>& args);
+
+ private:
+  static const char* const kSource;
+};
+
 }  // namespace v8
 
 namespace {

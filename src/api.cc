@@ -161,6 +161,7 @@ static Flag validFlags[] = {
     Flag("--allow-code-generation-from-strings",
          Flag::Type::AllowCodeGenerationFromString),
     Flag("--abort-on-uncaught-exception", Flag::Type::AbortOnUncaughtException),
+    Flag("--expose-externalize-string", Flag::Type::ExposeExternalizeString),
     Flag("--trace-gc", Flag::Type::TraceGC),
     Flag("--trace-call=", Flag::Type::TraceCall, true),
     Flag("--internal-log", Flag::Type::InternalLog),
@@ -222,21 +223,24 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
   }
 }
 
-// RegisteredExtension* RegisteredExtension::first_extension_ = nullptr;
+RegisteredExtension* RegisteredExtension::first_extension_ = nullptr;
 
-// RegisteredExtension::RegisteredExtension(std::unique_ptr<Extension>
-// extension)
-//     : extension_(std::move(extension)) {}
+RegisteredExtension::RegisteredExtension(std::unique_ptr<Extension> extension)
+    : extension_(std::move(extension)) {
+  LWNODE_RETURN_VOID;
+}
 
-// // static
-// void RegisteredExtension::Register(std::unique_ptr<Extension> extension) {
-//   LWNODE_RETURN_VOID;
-// }
+void RegisteredExtension::Register(std::unique_ptr<Extension> extension) {
+  LWNODE_RETURN_VOID;
+}
 
-// // static
-// void RegisteredExtension::UnregisterAll() {
-//   LWNODE_RETURN_VOID;
-// }
+void RegisteredExtension::UnregisterAll() {
+  LWNODE_RETURN_VOID;
+}
+
+void RegisterExtension(std::unique_ptr<Extension> extension) {
+  RegisteredExtension::Register(std::move(extension));
+}
 
 Extension::Extension(const char* name,
                      const char* source,
@@ -251,6 +255,32 @@ Extension::Extension(const char* name,
       deps_(deps),
       auto_enable_(false) {
   LWNODE_UNIMPLEMENT;
+}
+
+const char* const ExternalizeStringExtension::kSource =
+    "native function externalizeString();"
+    "native function isOneByteString();"
+    "function x() { return 1; }";
+
+void ExternalizeStringExtension::Externalize(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {}
+
+void ExternalizeStringExtension::IsOneByte(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {}
+
+v8::Local<v8::FunctionTemplate>
+ExternalizeStringExtension::GetNativeFunctionTemplate(
+    v8::Isolate* isolate, v8::Local<v8::String> name) {
+  LWNODE_UNIMPLEMENT;
+
+  if (std::strcmp(*v8::String::Utf8Value(isolate, name), "externalizeString") ==
+      0) {
+    return v8::FunctionTemplate::New(isolate,
+                                     ExternalizeStringExtension::Externalize);
+  } else {
+    return v8::FunctionTemplate::New(isolate,
+                                     ExternalizeStringExtension::IsOneByte);
+  }
 }
 
 void ResourceConstraints::ConfigureDefaultsFromHeapSize(

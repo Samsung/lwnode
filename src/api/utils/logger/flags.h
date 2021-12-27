@@ -39,6 +39,7 @@ class Flag {
     TopLevelWait = 1 << 4,
     AllowCodeGenerationFromString = 1 << 5,
     AbortOnUncaughtException = 1 << 6,
+    ExposeExternalizeString = 1 << 7,
     // lwnode
     TraceCall = 1 << 9,
     TraceGC = 1 << 10,
