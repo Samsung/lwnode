@@ -81,6 +81,15 @@ class ValueWrap;
     return returnValue;                                                        \
   }
 
+#define API_ENTER_NO_TERMINATION_CHECK(ScopeType, isolate)                     \
+  ScopeType scope(isolate, this);
+
+#define API_EXIT_IF_EXCEPTION_OCCURRED(r, returnValue)                         \
+  if (!scope.isSuccessful(r)) {                                                \
+    scope.printDebug(r);                                                       \
+    return returnValue;                                                        \
+  }
+
 // V has parameters (Type, type, TYPE, C type)
 #define TYPED_ARRAYS(V)                                                        \
   V(Uint8, uint8, UINT8, uint8_t)                                              \
@@ -97,20 +106,22 @@ class ValueWrap;
 
 namespace EscargotShim {
 
-class EsScopeTemplate {
+class EsScope {
  public:
-  EsScopeTemplate(const v8::Template* self = nullptr);
-  EsScopeTemplate(const v8::Local<v8::Context>& context,
-                  const v8::Template* self = nullptr);
-  EscargotShim::TemplateRef* self() { return self_; }
+  EsScope(const v8::Value* self = nullptr) : EsScope(nullptr, self) {}
+  EsScope(v8::Isolate* isolate, const v8::Value* self = nullptr);
+  EsScope(const v8::Local<v8::Context>& context,
+          const v8::Value* self = nullptr);
 
+  Escargot::ValueRef* self() { return self_; }
+  virtual EscargotShim::IsolateWrap* lwIsolate() { return isolate_; }
   virtual v8::Isolate* v8Isolate() { return isolate_->toV8(); }
-
   virtual Escargot::ContextRef* context() {
+    if (context_) {
+      return context_->get();
+    }
     return isolate_->GetCurrentContext()->get();
   }
-
-  virtual bool isTerminating() { return isolate_->IsExecutionTerminating(); }
 
   virtual ValueRef* asValue(const v8::Local<v8::Value>& value) {
     return CVAL(*value)->value();
@@ -120,15 +131,60 @@ class EsScopeTemplate {
     return CVAL(*value)->value();
   }
 
+  void printDebug(Escargot::Evaluator::EvaluatorResult& r) {
+#if !defined(NDEBUG)
+    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",
+                    TRACE_ARGS2,
+                    EvalResultHelper::getErrorString(context(), r).c_str());
+#endif
+  }
+
+  bool isTerminating() { return isolate_->IsExecutionTerminating(); }
+
+  bool isSuccessful(Escargot::Evaluator::EvaluatorResult& r) {
+    if (!r.isSuccessful()) {
+      isolate_->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+      isolate_->ReportPendingMessages();
+      return false;
+    }
+    return true;
+  }
+
+ protected:
+  EscargotShim::IsolateWrap* isolate_ = nullptr;
+  EscargotShim::ContextWrap* context_ = nullptr;
+
+ private:
+  Escargot::ValueRef* self_ = nullptr;
+
+  void initSelf(const v8::Value* self) {
+    if (self) {
+      self_ = CVAL(self)->value();
+    }
+  }
+};
+
+class EsScopeTemplate : public EsScope {
+ public:
+  EsScopeTemplate(const v8::Template* self = nullptr);
+  EsScopeTemplate(const v8::Local<v8::Context>& context,
+                  const v8::Template* self = nullptr);
+  EscargotShim::TemplateRef* self() { return self_; }
+
   virtual FunctionTemplateRef* asFunctionTemplate(
       const v8::Local<v8::FunctionTemplate>& value) {
     return CVAL(*value)->ftpl();
   }
 
  protected:
-  EscargotShim::IsolateWrap* isolate_ = nullptr;
-  EscargotShim::ContextWrap* context_ = nullptr;
   EscargotShim::TemplateRef* self_ = nullptr;
+
+ private:
+  void initSelf(const v8::Template* self) {
+    if (self) {
+      self_ = CVAL(self)->tpl();
+    }
+  }
 };
 
 class EsScopeFunctionTemplate : public EsScopeTemplate {

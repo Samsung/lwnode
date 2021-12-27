@@ -807,11 +807,10 @@ uint32_t v8::Array::Length() const {
 }
 
 Local<v8::Map> v8::Map::New(Isolate* isolate) {
-  API_ENTER_NO_EXCEPTION(isolate);
-  auto esContext = lwIsolate->GetCurrentContext()->get();
+  EsScope scope(isolate);
 
   EvalResult r = Evaluator::execute(
-      esContext, [](ExecutionStateRef* esState) -> ValueRef* {
+      scope.context(), [](ExecutionStateRef* esState) -> ValueRef* {
         return MapObjectRef::create(esState);
       });
   LWNODE_CHECK(r.isSuccessful());
@@ -820,127 +819,108 @@ Local<v8::Map> v8::Map::New(Isolate* isolate) {
 }
 
 size_t v8::Map::Size() const {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
+  API_ENTER_NO_TERMINATION_CHECK(EsScope, nullptr);
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
         return ValueRef::create(esSelf->size(esState));
       },
-      esSelf);
+      scope.self()->asMapObject());
   LWNODE_CHECK(r.isSuccessful());
 
   return r.result->asNumber();
 }
 
 void Map::Clear() {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
+  API_ENTER_NO_TERMINATION_CHECK(EsScope, nullptr);
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
         esSelf->clear(esState);
         return ValueRef::createNull();
       },
-      esSelf);
+      scope.self()->asMapObject());
   LWNODE_CHECK(r.isSuccessful());
 }
 
 MaybeLocal<Value> Map::Get(Local<Context> context, Local<Value> key) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
-  auto esKey = CVAL(*key)->value();
+  API_ENTER_AND_EXIT_IF_TERMINATING(EsScope, context, MaybeLocal<Value>());
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState,
          MapObjectRef* esSelf,
          ValueRef* esKey) -> ValueRef* { return esSelf->get(esState, esKey); },
-      esSelf,
-      esKey);
-  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Value>());
+      scope.self()->asMapObject(),
+      scope.asValue(key));
+  API_EXIT_IF_EXCEPTION_OCCURRED(r, MaybeLocal<Value>());
 
-  return Utils::NewLocal<Value>(lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Value>(scope.v8Isolate(), r.result);
 }
 
 MaybeLocal<Map> Map::Set(Local<Context> context,
                          Local<Value> key,
                          Local<Value> value) {
-  API_ENTER_WITH_CONTEXT(context, MaybeLocal<Map>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
-  auto esKey = CVAL(*key)->value();
-  auto esValue = CVAL(*value)->value();
+  API_ENTER_AND_EXIT_IF_TERMINATING(EsScope, context, MaybeLocal<Map>());
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState,
          MapObjectRef* esSelf,
          ValueRef* esKey,
          ValueRef* esValue) -> ValueRef* {
         esSelf->set(esState, esKey, esValue);
-        return ValueRef::createNull();
+        return esSelf;
       },
-      esSelf,
-      esKey,
-      esValue);
-  API_HANDLE_EXCEPTION(r, lwIsolate, MaybeLocal<Map>());
+      scope.self()->asMapObject(),
+      scope.asValue(key),
+      scope.asValue(value));
+  API_EXIT_IF_EXCEPTION_OCCURRED(r, MaybeLocal<Map>());
 
-  return Utils::NewLocal<Map>(lwIsolate->toV8(), esSelf);
+  return Utils::NewLocal<Map>(scope.v8Isolate(), r.result);
 }
 
 Maybe<bool> Map::Has(Local<Context> context, Local<Value> key) {
-  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
-  auto esKey = CVAL(*key)->value();
+  API_ENTER_AND_EXIT_IF_TERMINATING(EsScope, context, Nothing<bool>());
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState,
          MapObjectRef* esSelf,
          ValueRef* esKey) -> ValueRef* {
         return ValueRef::create(esSelf->has(esState, esKey));
       },
-      esSelf,
-      esKey);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+      scope.self()->asMapObject(),
+      scope.asValue(key));
+  API_EXIT_IF_EXCEPTION_OCCURRED(r, Nothing<bool>());
 
   return Just(r.result->asBoolean());
 }
 
 Maybe<bool> Map::Delete(Local<Context> context, Local<Value> key) {
-  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
-  auto esKey = CVAL(*key)->value();
+  API_ENTER_AND_EXIT_IF_TERMINATING(EsScope, context, Nothing<bool>());
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState,
          MapObjectRef* esSelf,
          ValueRef* esKey) -> ValueRef* {
         return ValueRef::create(esSelf->deleteOperation(esState, esKey));
       },
-      esSelf,
-      esKey);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+      scope.self()->asMapObject(),
+      scope.asValue(key));
+  API_EXIT_IF_EXCEPTION_OCCURRED(r, Nothing<bool>());
 
   return Just(r.result->asBoolean());
 }
 
 Local<Array> Map::AsArray() const {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto esSelf = CVAL(this)->value()->asMapObject();
+  API_ENTER_NO_TERMINATION_CHECK(EsScope, nullptr);
 
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
         auto done = StringRef::createFromASCII("done");
         auto value = StringRef::createFromASCII("value");
@@ -963,10 +943,10 @@ Local<Array> Map::AsArray() const {
 
         return ArrayObjectRef::create(esState, vector);
       },
-      esSelf);
+      scope.self()->asMapObject());
   LWNODE_CHECK(r.isSuccessful());
 
-  return Utils::NewLocal<Array>(lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Array>(scope.v8Isolate(), r.result);
 }
 
 Local<v8::Set> v8::Set::New(Isolate* isolate) {
