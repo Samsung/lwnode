@@ -283,12 +283,13 @@ MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
       loadCallback = [](void* userData) -> void* {
         auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
 
-        LWNODE_LOG_INFO("  Load: %d (%d) %p %s (+%.2f kB)",
-                        ++s_stat.loaded,
-                        s_stat.reloaded,
-                        data->preloadedData,
-                        data->path(),
-                        (float)data->preloadedDataLength() / 1024);
+        LWNODE_CALL_TRACE_ID(LOADER,
+                             "  Load: %d (%d) %p %s (+%.2f kB)",
+                             ++s_stat.loaded,
+                             s_stat.reloaded,
+                             data->preloadedData,
+                             data->path(),
+                             (float)data->preloadedDataLength() / 1024);
 
         if (data->preloadedData) {
           auto buffer = data->preloadedData;
@@ -307,12 +308,13 @@ MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
       unloadCallback = [](void* preloadedData, void* userData) -> void {
         auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
 
-        LWNODE_LOG_INFO(" Unload: %d (%d) %p %s (-%.2f kB)",
-                        --s_stat.loaded,
-                        s_stat.reloaded,
-                        preloadedData,
-                        data->path(),
-                        (float)data->preloadedDataLength() / 1024);
+        LWNODE_CALL_TRACE_ID(LOADER,
+                             "Unload: %d (%d) %p %s (-%.2f kB)",
+                             --s_stat.loaded,
+                             s_stat.reloaded,
+                             preloadedData,
+                             data->path(),
+                             (float)data->preloadedDataLength() / 1024);
 
         if (data->preloadedData) {
           freeStringBuffer(data->preloadedData);
