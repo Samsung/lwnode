@@ -155,14 +155,11 @@ class RegisteredExtension {
 
 class ExternalizeStringExtension : public v8::Extension {
  public:
-  ExternalizeStringExtension() : v8::Extension("v8/externalize", kSource) {}
+  ExternalizeStringExtension() : v8::Extension("v8/externalize") {}
   v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
       v8::Isolate* isolate, v8::Local<v8::String> name) override;
-  static void Externalize(const v8::FunctionCallbackInfo<v8::Value>& args);
-  static void IsOneByte(const v8::FunctionCallbackInfo<v8::Value>& args);
 
  private:
-  static const char* const kSource;
 };
 
 }  // namespace v8

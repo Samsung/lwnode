@@ -131,6 +131,10 @@ class EsScope {
     return CVAL(*value)->value();
   }
 
+  virtual StringRef* asValue(const v8::Local<v8::String>& value) {
+    return CVAL(*value)->value()->asString();
+  }
+
   void printDebug(Escargot::Evaluator::EvaluatorResult& r) {
 #if !defined(NDEBUG)
     LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",
