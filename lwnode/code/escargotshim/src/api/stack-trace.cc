@@ -282,6 +282,24 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
         auto string = stream.str();
         return StringRef::createFromUTF8(string.data(), string.length());
       });
+
+  setCallSitePrototype(
+      context,
+      otpl,
+      "getFunction",
+      [](ExecutionStateRef* state,
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         bool isNewExpression) -> ValueRef* {
+        auto data = ObjectRefHelper::getExtraData(thisValue->asObject())
+                        ->asStackTraceData();
+        auto esFunction = data->callee();
+        if (esFunction.hasValue()) {
+          return esFunction.get();
+        }
+        return ValueRef::createUndefined();
+      });
 }
 
 CallSite::CallSite(ContextRef* context) {
