@@ -223,20 +223,18 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
   }
 }
 
+// v8::Extension
+
 RegisteredExtension* RegisteredExtension::first_extension_ = nullptr;
 
 RegisteredExtension::RegisteredExtension(std::unique_ptr<Extension> extension)
-    : extension_(std::move(extension)) {
-  LWNODE_RETURN_VOID;
-}
+    : extension_(std::move(extension)) {}
 
 void RegisteredExtension::Register(std::unique_ptr<Extension> extension) {
   RegisteredExtension* new_extension =
       new RegisteredExtension(std::move(extension));
   new_extension->next_ = first_extension_;
   first_extension_ = new_extension;
-
-  LWNODE_RETURN_VOID;
 }
 
 void RegisteredExtension::UnregisterAll() {
@@ -258,35 +256,110 @@ Extension::Extension(const char* name,
                          : (source ? static_cast<int>(strlen(source)) : 0)),
       dep_count_(dep_count),
       deps_(deps),
-      auto_enable_(false) {
-  LWNODE_UNIMPLEMENT;
+      auto_enable_(false) {}
+
+// --expose-externalize-string
+static ValueRef* externalizeString(ExecutionStateRef* state,
+                                   ValueRef* thisValue,
+                                   size_t argc,
+                                   ValueRef** argv,
+                                   OptionalRef<ObjectRef> newTarget) {
+  if (argc > 0 && argv[0]->isString()) {
+    return argv[0]->asString();
+  }
+
+  return ValueRef::createUndefined();
 }
 
-const char* const ExternalizeStringExtension::kSource =
-    "native function externalizeString();"
-    "native function isOneByteString();"
-    "function x() { return 1; }";
+static ValueRef* isOneByteString(ExecutionStateRef* state,
+                                 ValueRef* thisValue,
+                                 size_t argc,
+                                 ValueRef** argv,
+                                 OptionalRef<ObjectRef> newTarget) {
+  if (argc > 0 && argv[0]->isString()) {
+    auto bufferData = argv[0]->asString()->stringBufferAccessData();
 
-void ExternalizeStringExtension::Externalize(
-    const v8::FunctionCallbackInfo<v8::Value>& args) {}
+    bool allOneByte = true;
+    for (size_t i = 0; i < bufferData.length; i++) {
+      char16_t c = bufferData.charAt(i);
+      if (c > 255) {  // including all 8 bit code
+        allOneByte = false;
+        break;
+      }
+    }
 
-void ExternalizeStringExtension::IsOneByte(
-    const v8::FunctionCallbackInfo<v8::Value>& args) {}
+    return ValueRef::create(allOneByte);
+  }
+
+  return ValueRef::create(false);
+}
+
+// NOTE: --expose-externalize-string requires to define this dummy function
+static ValueRef* functionX(ExecutionStateRef* state,
+                           ValueRef* thisValue,
+                           size_t argc,
+                           ValueRef** argv,
+                           bool isConstructCall) {
+  return ValueRef::create(1);
+}
 
 v8::Local<v8::FunctionTemplate>
 ExternalizeStringExtension::GetNativeFunctionTemplate(
     v8::Isolate* isolate, v8::Local<v8::String> name) {
-  LWNODE_UNIMPLEMENT;
+  EsScope scope;
 
-  if (std::strcmp(*v8::String::Utf8Value(isolate, name), "externalizeString") ==
-      0) {
-    return v8::FunctionTemplate::New(isolate,
-                                     ExternalizeStringExtension::Externalize);
-  } else {
-    return v8::FunctionTemplate::New(isolate,
-                                     ExternalizeStringExtension::IsOneByte);
+  std::string externalizeStringFunction = "externalizeString";
+  std::string isOneByteStringFunction = "isOneByteString";
+
+  if (scope.asValue(name)->equalsWithASCIIString(
+          externalizeStringFunction.c_str(),
+          externalizeStringFunction.size())) {
+    auto esExternalizeStringFunctionTemplate =
+        FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),
+                                    1,
+                                    false,
+                                    false,
+                                    externalizeString);
+    auto externalizeStringData =
+        new FunctionTemplateData(esExternalizeStringFunctionTemplate,
+                                 isolate,
+                                 v8::FunctionCallback(),
+                                 nullptr,
+                                 nullptr);
+    ExtraDataHelper::setExtraData(esExternalizeStringFunctionTemplate,
+                                  externalizeStringData);
+
+    return Utils::NewLocal(isolate, esExternalizeStringFunctionTemplate);
+  } else if (scope.asValue(name)->equalsWithASCIIString(
+                 isOneByteStringFunction.c_str(),
+                 isOneByteStringFunction.size())) {
+    auto esOneByteStringFunctionTemplate = FunctionTemplateRef::create(
+        AtomicStringRef::emptyAtomicString(), 1, false, false, isOneByteString);
+    auto externalizeStringData =
+        new FunctionTemplateData(esOneByteStringFunctionTemplate,
+                                 isolate,
+                                 v8::FunctionCallback(),
+                                 nullptr,
+                                 nullptr);
+    ExtraDataHelper::setExtraData(esOneByteStringFunctionTemplate,
+                                  externalizeStringData);
+
+    return Utils::NewLocal(isolate, esOneByteStringFunctionTemplate);
   }
+
+  auto esEmptyFunctionTemplate = FunctionTemplateRef::create(
+      AtomicStringRef::emptyAtomicString(), 1, false, false, externalizeString);
+  auto emptyStringData = new FunctionTemplateData(esEmptyFunctionTemplate,
+                                                  isolate,
+                                                  v8::FunctionCallback(),
+                                                  nullptr,
+                                                  nullptr);
+  ExtraDataHelper::setExtraData(esEmptyFunctionTemplate, emptyStringData);
+
+  return Utils::NewLocal(isolate, esEmptyFunctionTemplate);
 }
+
+// -------------------------
 
 void ResourceConstraints::ConfigureDefaultsFromHeapSize(
     size_t initial_heap_size_in_bytes, size_t maximum_heap_size_in_bytes) {
