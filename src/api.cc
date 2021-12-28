@@ -231,6 +231,11 @@ RegisteredExtension::RegisteredExtension(std::unique_ptr<Extension> extension)
 }
 
 void RegisteredExtension::Register(std::unique_ptr<Extension> extension) {
+  RegisteredExtension* new_extension =
+      new RegisteredExtension(std::move(extension));
+  new_extension->next_ = first_extension_;
+  first_extension_ = new_extension;
+
   LWNODE_RETURN_VOID;
 }
 

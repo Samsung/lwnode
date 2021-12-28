@@ -77,6 +77,9 @@ class LWNODE_EXPORT Flags {
   static bool isAbortOnUncaughtException() {
     return s_flags & Flag::Type::AbortOnUncaughtException;
   }
+  static bool isExposeExternalizeString() {
+    return s_flags & Flag::Type::ExposeExternalizeString;
+  }
 
   static void setTraceCallId(const std::string& id);
 
