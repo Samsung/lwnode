@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#if !defined(LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION)
+#if defined(LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION)
 
 #include "api.h"
 #include "base.h"
@@ -52,13 +52,9 @@ void ValueSerializer::Delegate::FreeBufferMemory(void* buffer) {
 }
 
 struct ValueSerializer::PrivateData {
-  explicit PrivateData(ValueSerializer::Delegate* delegate)
-      : delegate(delegate) {}
-
-  ~PrivateData() {}
-
-  ValueSerializer::Delegate* delegate = nullptr;
-  std::ostringstream stream;
+  explicit PrivateData(Isolate* isolate, ValueSerializer::Delegate* delegate)
+      : serializer(IsolateWrap::fromV8(isolate), delegate) {}
+  EscargotShim::ValueSerializer serializer;
 };
 
 ValueSerializer::ValueSerializer(Isolate* isolate)
@@ -67,54 +63,27 @@ ValueSerializer::ValueSerializer(Isolate* isolate)
 }
 
 ValueSerializer::ValueSerializer(Isolate* isolate, Delegate* delegate)
-    : private_(new PrivateData(delegate)) {}
+    : private_(new PrivateData(isolate, delegate)) {}
 
 ValueSerializer::~ValueSerializer() {
   delete private_;
 }
 
 void ValueSerializer::WriteHeader() {
-  LWNODE_ONCE(LWNODE_UNIMPLEMENT_WORKAROUND);
+  private_->serializer.WriteHeader();
 }
 
 void ValueSerializer::SetTreatArrayBufferViewsAsHostObjects(bool mode) {}
 
 Maybe<bool> ValueSerializer::WriteValue(Local<Context> context,
                                         Local<Value> value) {
-  bool result =
-      SerializerRef::serializeInto(CVAL(*value)->value(), private_->stream);
-
-  if (!result) {
-    LWNODE_DLOG_WARN("ValueSerializer::WriteValue: Writing to the type of "
-                     "input value is not supported.")
-  }
+  bool result = private_->serializer.WriteValue(CVAL(*value)->value());
   return Just(result);
 }
 
 std::pair<uint8_t*, size_t> ValueSerializer::Release() {
-  auto str = private_->stream.str();
-  auto size = str.size();
-  LWNODE_CALL_TRACE_ID(SERIALIZER, "buffer size: %zu\n", size);
-
-  uint8_t* buffer = nullptr;
-
-  if (size > 0) {
-    if (private_->delegate) {
-      size_t allocatedSize = 0;
-      buffer = static_cast<uint8_t*>(private_->delegate->ReallocateBufferMemory(
-          buffer, size, &allocatedSize));
-      LWNODE_CHECK(size == allocatedSize);
-    } else {
-      buffer = static_cast<uint8_t*>(malloc(size * sizeof(uint8_t)));
-    }
-
-    memcpy(buffer, str.data(), str.length());
-  }
-
-  private_->stream.str("");
-  private_->stream.clear();
-
-  return std::make_pair(buffer, size);
+  auto result = private_->serializer.Release();
+  return result;
 }
 
 void ValueSerializer::TransferArrayBuffer(uint32_t transfer_id,
@@ -123,15 +92,15 @@ void ValueSerializer::TransferArrayBuffer(uint32_t transfer_id,
 }
 
 void ValueSerializer::WriteUint32(uint32_t value) {
-  SerializerRef::serializeInto(ValueRef::create(value), private_->stream);
+  LWNODE_RETURN_VOID;
 }
 
 void ValueSerializer::WriteUint64(uint64_t value) {
-  SerializerRef::serializeInto(ValueRef::create(value), private_->stream);
+  LWNODE_RETURN_VOID;
 }
 
 void ValueSerializer::WriteDouble(double value) {
-  SerializerRef::serializeInto(ValueRef::create(value), private_->stream);
+  LWNODE_RETURN_VOID;
 }
 
 void ValueSerializer::WriteRawBytes(const void* source, size_t length) {
@@ -139,26 +108,23 @@ void ValueSerializer::WriteRawBytes(const void* source, size_t length) {
 }
 
 MaybeLocal<Object> ValueDeserializer::Delegate::ReadHostObject(
-    Isolate* v8_isolate) {
-  LWNODE_RETURN_LOCAL(Object);
-}
+    Isolate* v8_isolate){LWNODE_RETURN_LOCAL(Object)}
 
 MaybeLocal<WasmModuleObject> ValueDeserializer::Delegate::GetWasmModuleFromId(
-    Isolate* v8_isolate, uint32_t id) {
-  LWNODE_RETURN_LOCAL(WasmModuleObject);
-}
+    Isolate* v8_isolate, uint32_t id){LWNODE_RETURN_LOCAL(WasmModuleObject)}
 
-MaybeLocal<SharedArrayBuffer>
-ValueDeserializer::Delegate::GetSharedArrayBufferFromId(Isolate* v8_isolate,
-                                                        uint32_t id) {
-  LWNODE_RETURN_LOCAL(SharedArrayBuffer);
+MaybeLocal<SharedArrayBuffer> ValueDeserializer::Delegate::
+    GetSharedArrayBufferFromId(Isolate* v8_isolate, uint32_t id) {
+  LWNODE_RETURN_LOCAL(SharedArrayBuffer)
 }
 
 struct ValueDeserializer::PrivateData {
-  explicit PrivateData(ValueDeserializer::Delegate* delegate)
-      : delegate(delegate) {}
-  ValueDeserializer::Delegate* delegate = nullptr;
-  std::istringstream stream;
+  explicit PrivateData(Isolate* isolate,
+                       Delegate* delegate,
+                       const uint8_t* data,
+                       size_t size)
+      : deserializer(IsolateWrap::fromV8(isolate), delegate, data, size) {}
+  EscargotShim::ValueDeserializer deserializer;
 };
 
 ValueDeserializer::ValueDeserializer(Isolate* isolate,
@@ -170,10 +136,7 @@ ValueDeserializer::ValueDeserializer(Isolate* isolate,
                                      const uint8_t* data,
                                      size_t size,
                                      Delegate* delegate)
-    : private_(new PrivateData(delegate)) {
-  private_->stream = std::istringstream(
-      std::string(reinterpret_cast<const char*>(data), size));
-}
+    : private_(new PrivateData(isolate, delegate, data, size)) {}
 
 ValueDeserializer::~ValueDeserializer() {
   delete private_;
@@ -195,9 +158,17 @@ uint32_t ValueDeserializer::GetWireFormatVersion() const {
 MaybeLocal<Value> ValueDeserializer::ReadValue(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto output = SerializerRef::deserializeFrom(esContext, private_->stream);
-
-  return Utils::NewLocal<Uint32>(lwIsolate->toV8(), output);
+  auto output = private_->deserializer.ReadValue(esContext);
+  if (!output.hasValue()) {
+    LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read value");
+    return Utils::NewLocal<Uint32>(
+        lwIsolate->toV8(),
+        ExceptionHelper::createErrorObject(
+            esContext,
+            ErrorObjectRef::Code::None,
+            StringRef::createFromASCII("Cannot read value")));
+  }
+  return Utils::NewLocal<Uint32>(lwIsolate->toV8(), output.get());
 }
 
 void ValueDeserializer::TransferArrayBuffer(uint32_t transfer_id,
