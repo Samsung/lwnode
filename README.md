@@ -5,6 +5,8 @@ which runs on top of [Escargot](https://github.com/Samsung/escargot),
 a memory optimized JavaScript Engine developed by Samsung Research,
 instead of the default V8 JS engine.
 
+Memory usage and binary footprint are reported [here](https://pages.github.sec.samsung.net/lws/lwnode-test-results).
+
 ## Supported Platforms
 * Ubuntu 18.04, 16.04
 * Tizen 4.0 and above
