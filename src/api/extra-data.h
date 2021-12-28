@@ -231,7 +231,8 @@ class StackTraceData : public ExtraData {
         functionName_(data.functionName),
         isConstructor_(data.isConstructor),
         isAssociatedWithJavaScriptCode_(data.isAssociatedWithJavaScriptCode),
-        isEval_(data.isEval) {}
+        isEval_(data.isEval),
+        callee_(data.callee) {}
 
   bool isStackTraceData() const override { return true; }
 
@@ -245,6 +246,7 @@ class StackTraceData : public ExtraData {
     return isAssociatedWithJavaScriptCode_;
   }
   bool isEval() const { return isEval_; }
+  OptionalRef<FunctionObjectRef> callee() { return callee_; }
 
  private:
   StringRef* src_{nullptr};
@@ -255,6 +257,7 @@ class StackTraceData : public ExtraData {
   bool isConstructor_{false};
   bool isAssociatedWithJavaScriptCode_{false};
   bool isEval_{false};
+  OptionalRef<FunctionObjectRef> callee_;
 };
 
 // NOTE: ExceptionObjectData does not use any InternalFields.
