@@ -32,6 +32,7 @@
         'src/api-serialization.cc',
         'src/api-template.cc',
         'src/api-additionals.cc',
+        'src/api-experimental-serialization.cc',
         'src/internal.cc',
         'src/init/v8.cc',
         'src/execution/v8threads.cc',
@@ -61,6 +62,7 @@
         'src/api/function.cc',
         'src/api/object.cc',
         'src/api/stack-trace.cc',
+        'src/api/serializer.cc',
         'src/lwnode/lwnode.cc',
         'src/lwnode/lwnode-loader.cc',
         'src/lwnode/lwnode-gc-strategy.cc',
@@ -111,6 +113,7 @@
         ['enable_experimental == "true"', {
           'defines': [
             'LWNODE_ENABLE_EXPERIMENTAL=1',
+            'LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION=1',
           ],
         }],
       ],
