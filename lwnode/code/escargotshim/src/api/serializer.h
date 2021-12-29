@@ -50,6 +50,7 @@ class ValueSerializer {
   template <typename T>
   void WriteZigZag(T value);
   void WriteString(StringRef* string);
+  bool WriteObject(ObjectRef* object);
   bool ExpandBuffer(size_t required_capacity);
   bool ThrowIfOutOfMemory();
 
@@ -70,7 +71,9 @@ class ValueDeserializer {
   ~ValueDeserializer(){};
 
   bool ReadTag(SerializationTag& tag);
-  OptionalRef<ValueRef> ReadValue(ContextRef* context);
+  bool CheckTag(SerializationTag tag);
+
+  OptionalRef<ValueRef> ReadValue();
 
  private:
   template <typename T>
@@ -78,6 +81,7 @@ class ValueDeserializer {
   template <typename T>
   bool ReadZigZag(T& value);
   bool ReadDouble(double& value);
+  bool ReadObject(ObjectRef* object);
   bool ReadRawBytes(size_t size, const uint8_t*& data);
 
   IsolateWrap* isolate_ = nullptr;

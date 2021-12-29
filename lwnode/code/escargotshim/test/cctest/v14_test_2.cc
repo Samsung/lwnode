@@ -272,6 +272,55 @@ THREADED_TEST(SerializeWriteReadValue) {
   CHECK(output->IsNull());
 }
 
+THREADED_TEST(SerializeWriteObject) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  const char* sample = "var rv = {};"
+                       "rv.alpha = 'hello';"
+                       "rv.beta = 123;"
+                       "rv;";
+
+  Local<Value> val = CompileRun(sample);
+  CHECK(val->IsObject());
+  Local<v8::Object> obj = val.As<v8::Object>();
+  obj->Set(env.local(), v8_str("gamma"), v8_bool(true)).FromJust();
+
+  SerializerDelegate serializerdelegate(isolate);
+  ValueSerializer serializer(isolate, &serializerdelegate);
+
+  serializer.WriteValue(env.local(), obj);
+
+  std::pair<uint8_t*, size_t> data = serializer.Release();
+  CHECK(data.first);
+  MallocedBuffer buffer(data.first, data.second);
+
+  ValueDeserializer deserializer(isolate, buffer.data, buffer.size);
+
+  Local<Value> output;
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsObject());
+  Local<v8::Object> outputObject = output.As<v8::Object>();
+  CHECK(
+      v8_str("hello")
+          ->Equals(
+              env.local(),
+              outputObject->Get(env.local(), v8_str("alpha")).ToLocalChecked())
+          .FromJust());
+  CHECK(v8_num(123)
+            ->Equals(
+                env.local(),
+                outputObject->Get(env.local(), v8_str("beta")).ToLocalChecked())
+            .FromJust());
+  CHECK(
+      v8_bool(true)
+          ->Equals(
+              env.local(),
+              outputObject->Get(env.local(), v8_str("gamma")).ToLocalChecked())
+          .FromJust());
+}
+
 THREADED_TEST(Shebang) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();

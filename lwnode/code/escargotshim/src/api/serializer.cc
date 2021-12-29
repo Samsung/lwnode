@@ -18,6 +18,7 @@
 
 #include <cmath>
 
+#include "base.h"
 #include "context.h"
 #include "es-helper.h"
 #include "isolate.h"
@@ -197,7 +198,9 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
   } else if (value->isFunctionObject()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isObject()) {
-    LWNODE_UNIMPLEMENT;
+    if (!WriteObject(value->asObject())) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot write object");
+    }
   } else {
     LWNODE_UNIMPLEMENT;
     return false;
@@ -273,6 +276,47 @@ void ValueSerializer::WriteString(StringRef* string) {
   } else {
     LWNODE_UNIMPLEMENT;
   }
+}
+
+bool ValueSerializer::WriteObject(ObjectRef* object) {
+  if (ObjectRefHelper::getInternalFieldCount(object) > 0) {
+    // TODO: WriteHostObject
+    LWNODE_UNIMPLEMENT;
+    return false;
+  }
+
+  auto esContext = lwIsolate_->GetCurrentContext()->get();
+  uint32_t propertiesWritten = 0;
+  WriteTag(SerializationTag::kBeginJSObject);
+  Escargot::ValueVectorRef* keys = nullptr;
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* state,
+         ObjectRef* object,
+         Escargot::ValueVectorRef** keys) -> ValueRef* {
+        *keys = object->ownPropertyKeys(state);
+        return ValueRef::createUndefined();
+      },
+      object,
+      &keys);
+  LWNODE_CHECK(r.isSuccessful());
+
+  for (size_t i = 0; i < keys->size(); i++) {
+    auto propValueResult =
+        ObjectRefHelper::getProperty(esContext, object, keys->at(i));
+    LWNODE_CHECK(propValueResult.isSuccessful());
+    bool success =
+        WriteValue(keys->at(i)) && WriteValue(propValueResult.result);
+    if (!success) {
+      return false;
+    }
+    propertiesWritten++;
+  }
+
+  WriteTag(SerializationTag::kEndJSObject);
+  WriteVarint<uint32_t>(propertiesWritten);
+
+  return true;
 }
 
 // base on v8
@@ -355,6 +399,20 @@ bool ValueDeserializer::ReadTag(SerializationTag& tag) {
   return true;
 }
 
+bool ValueDeserializer::CheckTag(SerializationTag check) {
+  SerializationTag tag;
+  size_t curPosition = position_;
+  do {
+    if (curPosition >= end_) {
+      return false;
+    }
+    tag = static_cast<SerializationTag>(buffer_[curPosition]);
+    curPosition++;
+  } while (tag == SerializationTag::kPadding);
+
+  return tag == check;
+}
+
 template <typename T>
 bool ValueDeserializer::ReadVarint(T& value) {
   // Reads an unsigned integer as a base-128 varint.
@@ -410,6 +468,43 @@ bool ValueDeserializer::ReadDouble(double& value) {
   return true;
 }
 
+bool ValueDeserializer::ReadObject(ObjectRef* object) {
+  size_t propertiesRead = 0;
+
+  while (!CheckTag(SerializationTag::kEndJSObject)) {
+    auto key = ReadValue();
+    if (!key.hasValue() || key.get()->isUndefinedOrNull()) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read key of object");
+      return false;
+    }
+    auto value = ReadValue();
+    if (!value.hasValue()) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read value of object");
+      return false;
+    }
+
+    ObjectRefHelper::setProperty(
+        isolate_->GetCurrentContext()->context()->get(),
+        object,
+        key.get(),
+        value.get());
+
+    propertiesRead++;
+  }
+
+  SerializationTag tag;
+  if (!ReadTag(tag)) {
+    return false;
+  }
+  if (tag == SerializationTag::kEndJSObject) {
+    uint32_t propertiesWritten;
+    if (ReadVarint<uint32_t>(propertiesWritten)) {
+      return propertiesRead == propertiesWritten;
+    }
+  }
+  return false;
+}
+
 bool ValueDeserializer::ReadRawBytes(size_t size, const uint8_t*& data) {
   if (size > end_ - position_) {
     return false;
@@ -420,7 +515,7 @@ bool ValueDeserializer::ReadRawBytes(size_t size, const uint8_t*& data) {
   return true;
 }
 
-OptionalRef<ValueRef> ValueDeserializer::ReadValue(ContextRef* context) {
+OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
   SerializationTag tag;
   if (!ReadTag(tag)) {
     LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read tag");
@@ -454,15 +549,25 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue(ContextRef* context) {
   } else if (tag == SerializationTag::kUint32) {
     uint32_t value = 0;
     if (!ReadVarint<uint32_t>(value)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read uint32 value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(value));
   } else if (tag == SerializationTag::kInt32) {
     int32_t value = 0;
     if (!ReadZigZag<int32_t>(value)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read int32 value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(value));
+  } else if (tag == SerializationTag::kBeginJSObject) {
+    auto esContext = isolate_->GetCurrentContext()->get();
+    auto object = ObjectRefHelper::create(esContext);
+    if (!ReadObject(object)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read object value");
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(ValueRef::create(object));
   } else {
     LWNODE_UNIMPLEMENT;
   }

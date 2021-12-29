@@ -158,7 +158,7 @@ uint32_t ValueDeserializer::GetWireFormatVersion() const {
 MaybeLocal<Value> ValueDeserializer::ReadValue(Local<Context> context) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<Value>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto output = private_->deserializer.ReadValue(esContext);
+  auto output = private_->deserializer.ReadValue();
   if (!output.hasValue()) {
     LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read value");
     return Utils::NewLocal<Uint32>(
