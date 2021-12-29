@@ -16,10 +16,12 @@
 
 #if defined(LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION)
 
-#include "serializer.h"
+#include <cmath>
+
 #include "context.h"
 #include "es-helper.h"
 #include "isolate.h"
+#include "serializer.h"
 
 using namespace Escargot;
 using namespace v8;
@@ -169,11 +171,15 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
       WriteTag(SerializationTag::kFalse);
     }
   } else if (value->isUInt32()) {
-    LWNODE_UNIMPLEMENT;
+    WriteTag(SerializationTag::kUint32);
+    WriteVarint<uint32_t>(value->asUInt32());
   } else if (value->isInt32()) {
-    LWNODE_UNIMPLEMENT;
+    WriteTag(SerializationTag::kInt32);
+    WriteZigZag<int32_t>(value->asInt32());
   } else if (value->isNumber()) {
-    LWNODE_UNIMPLEMENT;
+    WriteTag(SerializationTag::kDouble);
+    auto number = value->asNumber();
+    WriteRawBytes(&number, sizeof(number));
   } else if (value->isBigInt()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isArrayBufferObject()) {
@@ -181,7 +187,7 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
   } else if (value->isDataViewObject()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isString()) {
-    LWNODE_UNIMPLEMENT;
+    WriteString(value->asString());
   } else if (value->isTypedArrayObject()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isArrayObject()) {
@@ -223,6 +229,50 @@ uint8_t* ValueSerializer::ReserveRawBytes(size_t bytes) {
   }
   size_ = new_size;
   return &buffer_[old_size];
+}
+
+// base on v8
+template <typename T>
+void ValueSerializer::WriteVarint(T value) {
+  // Writes an unsigned integer as a base-128 varint.
+  // The number is written, 7 bits at a time, from the least significant to the
+  // most significant 7 bits. Each byte, except the last, has the MSB set.
+  // See also https://developers.google.com/protocol-buffers/docs/encoding
+  static_assert(std::is_integral<T>::value && std::is_unsigned<T>::value,
+                "Only unsigned integer types can be written as varints.");
+  uint8_t stack_buffer[sizeof(T) * 8 / 7 + 1];
+  uint8_t* next_byte = &stack_buffer[0];
+  do {
+    *next_byte = (value & 0x7F) | 0x80;
+    next_byte++;
+    value >>= 7;
+  } while (value);
+  *(next_byte - 1) &= 0x7F;
+  WriteRawBytes(stack_buffer, next_byte - stack_buffer);
+}
+
+template <typename T>
+void ValueSerializer::WriteZigZag(T value) {
+  // Writes a signed integer as a varint using ZigZag encoding (i.e. 0 is
+  // encoded as 0, -1 as 1, 1 as 2, -2 as 3, and so on).
+  // See also https://developers.google.com/protocol-buffers/docs/encoding
+  // Note that this implementation relies on the right shift being arithmetic.
+  static_assert(std::is_integral<T>::value && std::is_signed<T>::value,
+                "Only signed integer types can be written as zigzag.");
+  using UnsignedT = typename std::make_unsigned<T>::type;
+  WriteVarint((static_cast<UnsignedT>(value) << 1) ^
+              (value >> (8 * sizeof(T) - 1)));
+}
+
+void ValueSerializer::WriteString(StringRef* string) {
+  auto bufferData = string->stringBufferAccessData();
+  if (bufferData.has8BitContent) {
+    WriteTag(SerializationTag::kOneByteString);
+    WriteVarint<uint32_t>(bufferData.length);
+    WriteRawBytes(bufferData.buffer, bufferData.length * sizeof(uint8_t));
+  } else {
+    LWNODE_UNIMPLEMENT;
+  }
 }
 
 // base on v8
@@ -305,6 +355,71 @@ bool ValueDeserializer::ReadTag(SerializationTag& tag) {
   return true;
 }
 
+template <typename T>
+bool ValueDeserializer::ReadVarint(T& value) {
+  // Reads an unsigned integer as a base-128 varint.
+  // The number is written, 7 bits at a time, from the least significant to the
+  // most significant 7 bits. Each byte, except the last, has the MSB set.
+  // If the varint is larger than T, any more significant bits are discarded.
+  // See also https://developers.google.com/protocol-buffers/docs/encoding
+  static_assert(std::is_integral<T>::value && std::is_unsigned<T>::value,
+                "Only unsigned integer types can be read as varints.");
+  value = 0;
+  unsigned shift = 0;
+  bool has_another_byte;
+  do {
+    if (position_ >= end_) return false;
+    uint8_t byte = buffer_[position_];
+    if (V8_LIKELY(shift < sizeof(T) * 8)) {
+      value |= static_cast<T>(byte & 0x7F) << shift;
+      shift += 7;
+    }
+    has_another_byte = byte & 0x80;
+    position_++;
+  } while (has_another_byte);
+  return true;
+}
+
+template <typename T>
+bool ValueDeserializer::ReadZigZag(T& value) {
+  // Writes a signed integer as a varint using ZigZag encoding (i.e. 0 is
+  // encoded as 0, -1 as 1, 1 as 2, -2 as 3, and so on).
+  // See also https://developers.google.com/protocol-buffers/docs/encoding
+  static_assert(std::is_integral<T>::value && std::is_signed<T>::value,
+                "Only signed integer types can be read as zigzag.");
+  using UnsignedT = typename std::make_unsigned<T>::type;
+  UnsignedT unsigned_value;
+  if (!ReadVarint<UnsignedT>(unsigned_value)) {
+    return false;
+  }
+  value = static_cast<T>((unsigned_value >> 1) ^
+                         -static_cast<T>(unsigned_value & 1));
+  return true;
+}
+
+bool ValueDeserializer::ReadDouble(double& value) {
+  if (position_ > end_ - sizeof(double)) {
+    return false;
+  }
+  value = 0;
+  memcpy(&value, &buffer_[position_], sizeof(double));
+  position_ += sizeof(double);
+  if (std::isnan(value)) {
+    return false;
+  }
+  return true;
+}
+
+bool ValueDeserializer::ReadRawBytes(size_t size, const uint8_t*& data) {
+  if (size > end_ - position_) {
+    return false;
+  }
+
+  data = &buffer_[position_];
+  position_ += size;
+  return true;
+}
+
 OptionalRef<ValueRef> ValueDeserializer::ReadValue(ContextRef* context) {
   SerializationTag tag;
   if (!ReadTag(tag)) {
@@ -320,6 +435,34 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue(ContextRef* context) {
     return OptionalRef<ValueRef>(ValueRef::create(true));
   } else if (tag == SerializationTag::kFalse) {
     return OptionalRef<ValueRef>(ValueRef::create(false));
+  } else if (tag == SerializationTag::kDouble) {
+    double number = .0;
+    if (!ReadDouble(number)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read double value");
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(ValueRef::create(number));
+  } else if (tag == SerializationTag::kOneByteString) {
+    uint32_t length = 0;
+    const uint8_t* data;
+    if (!ReadVarint<uint32_t>(length) || !ReadRawBytes(length, data)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read one byte string value");
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(StringRef::createFromUTF8(
+        reinterpret_cast<const char*>(data), static_cast<size_t>(length)));
+  } else if (tag == SerializationTag::kUint32) {
+    uint32_t value = 0;
+    if (!ReadVarint<uint32_t>(value)) {
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(ValueRef::create(value));
+  } else if (tag == SerializationTag::kInt32) {
+    int32_t value = 0;
+    if (!ReadZigZag<int32_t>(value)) {
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(ValueRef::create(value));
   } else {
     LWNODE_UNIMPLEMENT;
   }

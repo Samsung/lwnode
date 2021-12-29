@@ -44,8 +44,13 @@ class ValueSerializer {
   void WriteTag(SerializationTag tag);
   void WriteRawBytes(const void* source, size_t length);
   uint8_t* ReserveRawBytes(size_t bytes);
-  bool ExpandBuffer(size_t required_capacity);
 
+  template <typename T>
+  void WriteVarint(T value);
+  template <typename T>
+  void WriteZigZag(T value);
+  void WriteString(StringRef* string);
+  bool ExpandBuffer(size_t required_capacity);
   bool ThrowIfOutOfMemory();
 
   IsolateWrap* lwIsolate_ = nullptr;
@@ -68,6 +73,13 @@ class ValueDeserializer {
   OptionalRef<ValueRef> ReadValue(ContextRef* context);
 
  private:
+  template <typename T>
+  bool ReadVarint(T& value);
+  template <typename T>
+  bool ReadZigZag(T& value);
+  bool ReadDouble(double& value);
+  bool ReadRawBytes(size_t size, const uint8_t*& data);
+
   IsolateWrap* isolate_ = nullptr;
   v8::ValueDeserializer::Delegate* delegate_ = nullptr;
   const uint8_t* buffer_ = nullptr;

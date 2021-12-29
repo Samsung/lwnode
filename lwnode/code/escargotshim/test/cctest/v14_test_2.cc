@@ -208,27 +208,28 @@ THREADED_TEST(SerializeWriteReadValue) {
   SerializerDelegate serializerdelegate(isolate);
   ValueSerializer serializer(isolate, &serializerdelegate);
 
-  // Number (TODO)
-  // double testNumber = 12.25;
-  // Local<Value> input = v8_num(testNumber);
-  // serializer.WriteValue(env.local(), input);
+  // Number
+  double testNumber = 12.25;
+  serializer.WriteValue(env.local(), v8_num(testNumber));
 
-  // String (TODO)
-  // const char* testString = "Serialize!';";
-  // input = v8_str(testString);
-  // serializer.WriteValue(env.local(), input);
+  // Integer
+  unsigned int testUint = 12;
+  serializer.WriteValue(env.local(), v8_int(testUint));
+  int testInt = -22;
+  serializer.WriteValue(env.local(), v8_int(testInt));
+
+  // String
+  const char* testString = "Serialize!'; ~12";
+  serializer.WriteValue(env.local(), v8_str(testString));
 
   // Boolean
-  Local<Value> input = Boolean::New(isolate, false);
-  serializer.WriteValue(env.local(), input);
+  serializer.WriteValue(env.local(), Boolean::New(isolate, false));
 
   // Undefined
-  input = v8::Undefined(isolate);
-  serializer.WriteValue(env.local(), input);
+  serializer.WriteValue(env.local(), v8::Undefined(isolate));
 
   // Null
-  input = v8::Null(isolate);
-  serializer.WriteValue(env.local(), input);
+  serializer.WriteValue(env.local(), v8::Null(isolate));
 
   std::pair<uint8_t*, size_t> data = serializer.Release();
   CHECK(data.first);
@@ -236,17 +237,26 @@ THREADED_TEST(SerializeWriteReadValue) {
 
   ValueDeserializer deserializer(isolate, buffer.data, buffer.size);
 
-  // Number (TODO)
+  // Number
   Local<Value> output;
-  // CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
-  // CHECK(output->IsNumber());
-  // CHECK_EQ(testNumber, output->NumberValue(env.local()).FromJust());
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsNumber());
+  CHECK_EQ(testNumber, output->NumberValue(env.local()).FromJust());
 
-  // String (TODO)
-  // CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
-  // CHECK(output->IsString());
-  // String::Utf8Value outputString(env->GetIsolate(), output);
-  // CHECK_EQ(0, strcmp(*outputString, testString));
+  // Integer
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsUint32());
+  CHECK_EQ(testUint, output->Int32Value(env.local()).FromJust());
+
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsInt32());
+  CHECK_EQ(testInt, output->Int32Value(env.local()).FromJust());
+
+  // String
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsString());
+  String::Utf8Value outputString(env->GetIsolate(), output);
+  CHECK_EQ(0, strcmp(*outputString, testString));
 
   // Boolean
   CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
