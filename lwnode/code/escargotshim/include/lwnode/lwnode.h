@@ -25,7 +25,7 @@ namespace LWNode {
 void InitializeProcessMethods(v8::Local<v8::Object> target,
                               v8::Local<v8::Context> context);
 
-void IdleGC(v8::Isolate* isolate);
+void IdleGC(v8::Isolate* isolate = nullptr);
 bool dumpSelfMemorySnapshot();
 
 class MessageLoop {
