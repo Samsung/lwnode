@@ -461,6 +461,37 @@ StringRef* ObjectRefHelper::getConstructorName(ContextRef* context,
   return r.result->asString();
 }
 
+void ObjectRefHelper::addNativeFunction(ContextRef* context,
+                                        ObjectRef* object,
+                                        StringRef* name,
+                                        NativeFunctionPointer function) {
+  Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* target,
+         StringRef* name,
+         NativeFunctionPointer nativeFunction) -> ValueRef* {
+        target->defineDataProperty(
+            state,
+            name,
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          nativeFunction,
+                                          0,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        return ValueRef::createUndefined();
+      },
+      object,
+      name,
+      function);
+}
+
 ArrayObjectRef* ArrayObjectRefHelper::create(ContextRef* context,
                                              const uint64_t length) {
   auto result = Evaluator::execute(
