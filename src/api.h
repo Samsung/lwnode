@@ -139,25 +139,36 @@ class v8::PropertyDescriptor::PrivateData {
 // v8 Extension
 class RegisteredExtension {
  public:
-  static void Register(std::unique_ptr<Extension>);
-  static void UnregisterAll();
-  Extension* extension() const { return extension_.get(); }
-  RegisteredExtension* next() const { return next_; }
-  static RegisteredExtension* first_extension() { return first_extension_; }
+  static void registerExtension(std::unique_ptr<Extension> extension);
+  static void unregisterAll();
+  static void applyAll(ContextRef* context);
 
  private:
-  explicit RegisteredExtension(Extension*);
-  explicit RegisteredExtension(std::unique_ptr<Extension>);
-  std::unique_ptr<Extension> extension_;
-  RegisteredExtension* next_ = nullptr;
-  static RegisteredExtension* first_extension_;
+  explicit RegisteredExtension(Extension*) {}
+  explicit RegisteredExtension(std::unique_ptr<Extension>) {}
+
+  static std::vector<std::unique_ptr<Extension>> extensions;
 };
 
-class ExternalizeStringExtension : public v8::Extension {
+class LwExtension : public v8::Extension {
  public:
-  ExternalizeStringExtension() : v8::Extension("v8/externalize") {}
+  LwExtension(const char* name) : v8::Extension(name) {}
+
+  v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
+      v8::Isolate* isolate, v8::Local<v8::String> name) override {
+    return Local<FunctionTemplate>();
+  };
+
+  virtual void apply(ContextRef* context) = 0;
+};
+
+class ExternalizeStringExtension : public LwExtension {
+ public:
+  ExternalizeStringExtension() : LwExtension("v8/externalize") {}
   v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
       v8::Isolate* isolate, v8::Local<v8::String> name) override;
+
+  void apply(ContextRef* context) override;
 
   FunctionTemplateRef* createExternalizeString(
       EscargotShim::IsolateWrap* isolate);

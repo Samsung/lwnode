@@ -1253,6 +1253,12 @@ TEST(ExtensionCustom) {
     v8::TryCatch try_catch(v8Isolate);
     Local<String> s = CompileRun("externalizeString").As<String>();
     CHECK(try_catch.HasCaught());
+
+    s = CompileRun("isOneByteString").As<String>();
+    CHECK(try_catch.HasCaught());
+
+    s = CompileRun("x").As<String>();
+    CHECK(try_catch.HasCaught());
   }
 
   {
@@ -1269,6 +1275,14 @@ TEST(ExtensionCustom) {
     char buf[10] = {0};
     int len = s->WriteUtf8(v8Isolate, buf);
     CHECK_EQ(0, strcmp(buf, "ok"));
+
+    Local<Boolean> b = CompileRun("isOneByteString('ok')").As<Boolean>();
+    CHECK(!try_catch.HasCaught());
+    CHECK(b->Value());
+
+    Local<Integer> r = CompileRun("x()").As<Integer>();
+    CHECK(!try_catch.HasCaught());
+    CHECK_EQ(r->Value(), 1);
   }
 
   EscargotShim::Flags::set(optionsBackup);
