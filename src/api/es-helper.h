@@ -119,6 +119,11 @@ class ObjectRefHelper {
   static ObjectRef* toObject(ContextRef* context, ValueRef* value);
   static StringRef* getConstructorName(ContextRef* context, ObjectRef* object);
 
+  static void addNativeFunction(ContextRef* context,
+                                ObjectRef* object,
+                                StringRef* name,
+                                NativeFunctionPointer function);
+
  private:
   static ValueRef* getOwnPropertyAttributes(ExecutionStateRef* state,
                                             ObjectRef* object,
