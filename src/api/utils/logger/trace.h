@@ -30,12 +30,12 @@
 
 #define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
   if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
-    LWNODE_DLOG_RAW(TRACE_TAG_FMT " " COUNTER_FMT TRACE_FMT                    \
-                                  " " CLR_RESET FIRST_ARG(__VA_ARGS__)         \
-                                      CLR_RESET,                               \
-                    TRACE_TAG_ARG(#id),                                        \
-                    COUNTER_ARG(#id),                                          \
-                    TRACE_ARGS2 LEFT_ARGS(__VA_ARGS__));                       \
+    LWNODE_LOG_RAW(TRACE_TAG_FMT " " COUNTER_FMT TRACE_FMT                     \
+                                 " " CLR_RESET FIRST_ARG(__VA_ARGS__)          \
+                                     CLR_RESET,                                \
+                   TRACE_TAG_ARG(#id),                                         \
+                   COUNTER_ARG(#id),                                           \
+                   TRACE_ARGS2 LEFT_ARGS(__VA_ARGS__));                        \
   }
 
 #define LWNODE_CALL_TRACE_ID(id, ...)                                          \

@@ -193,7 +193,9 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
 
 void IdleGC(v8::Isolate* isolate) {
   LWNODE_LOG_INFO("IdleGC");
-  IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+  if (isolate) {
+    IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
+  }
   Escargot::Memory::gc();
   malloc_trim(0);
 }

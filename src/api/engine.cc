@@ -369,7 +369,6 @@ void Engine::dispose() {
   unregisterGCEventListeners();
 
   gcHeap_.release();
-  MemoryUtil::gcFull();
   GC_invoke_finalizers();
 
   Globals::finalize();
