@@ -227,24 +227,26 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
 
 // v8::Extension
 
-RegisteredExtension* RegisteredExtension::first_extension_ = nullptr;
-
-RegisteredExtension::RegisteredExtension(std::unique_ptr<Extension> extension)
-    : extension_(std::move(extension)) {}
-
-void RegisteredExtension::Register(std::unique_ptr<Extension> extension) {
-  RegisteredExtension* new_extension =
-      new RegisteredExtension(std::move(extension));
-  new_extension->next_ = first_extension_;
-  first_extension_ = new_extension;
-}
-
-void RegisteredExtension::UnregisterAll() {
-  LWNODE_RETURN_VOID;
-}
+std::vector<std::unique_ptr<Extension>> RegisteredExtension::extensions;
 
 void RegisterExtension(std::unique_ptr<Extension> extension) {
-  RegisteredExtension::Register(std::move(extension));
+  RegisteredExtension::registerExtension(std::move(extension));
+}
+
+void RegisteredExtension::registerExtension(
+    std::unique_ptr<Extension> extension) {
+  extensions.push_back(std::move(extension));
+}
+
+void RegisteredExtension::unregisterAll() {
+  extensions.clear();
+}
+
+void RegisteredExtension::applyAll(ContextRef* context) {
+  for (auto& extension : extensions) {
+    auto lwExtension = reinterpret_cast<LwExtension*>(extension.get());
+    lwExtension->apply(context);
+  }
 }
 
 Extension::Extension(const char* name,
@@ -371,6 +373,86 @@ FunctionTemplateRef* ExternalizeStringExtension::createXFunction(
   ExtraDataHelper::setExtraData(functionTemplate, extraData);
 
   return functionTemplate;
+}
+
+void ExternalizeStringExtension::apply(ContextRef* context) {
+  Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         GlobalObjectRef* target,
+         StringRef* name,
+         NativeFunctionPointer nativeFunction) -> ValueRef* {
+        target->defineDataProperty(
+            state,
+            name,
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          nativeFunction,
+                                          0,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        return ValueRef::createUndefined();
+      },
+      context->globalObject(),
+      StringRef::createFromASCII("externalizeString"),
+      ExternalizeStringExtension::externalizeStringCallback);
+
+  Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         GlobalObjectRef* target,
+         StringRef* name,
+         NativeFunctionPointer nativeFunction) -> ValueRef* {
+        target->defineDataProperty(
+            state,
+            name,
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          nativeFunction,
+                                          0,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        return ValueRef::createUndefined();
+      },
+      context->globalObject(),
+      StringRef::createFromASCII("isOneByteString"),
+      ExternalizeStringExtension::isOneByteStringCallback);
+
+  Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         GlobalObjectRef* target,
+         StringRef* name,
+         NativeFunctionPointer nativeFunction) -> ValueRef* {
+        target->defineDataProperty(
+            state,
+            name,
+            FunctionObjectRef::create(state,
+                                      FunctionObjectRef::NativeFunctionInfo(
+                                          AtomicStringRef::emptyAtomicString(),
+                                          nativeFunction,
+                                          0,
+                                          true,
+                                          false)),
+            true,
+            true,
+            true);
+
+        return ValueRef::createUndefined();
+      },
+      context->globalObject(),
+      StringRef::createFromASCII("x"),
+      ExternalizeStringExtension::xFunctionCallback);
 }
 
 // -------------------------
