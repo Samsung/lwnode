@@ -274,7 +274,9 @@ void ValueSerializer::WriteString(StringRef* string) {
     WriteVarint<uint32_t>(bufferData.length);
     WriteRawBytes(bufferData.buffer, bufferData.length * sizeof(uint8_t));
   } else {
-    LWNODE_UNIMPLEMENT;
+    WriteTag(SerializationTag::kTwoByteString);
+    WriteVarint<uint32_t>(bufferData.length);
+    WriteRawBytes(bufferData.buffer, bufferData.length * sizeof(uint16_t));
   }
 }
 
@@ -546,6 +548,16 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     }
     return OptionalRef<ValueRef>(StringRef::createFromUTF8(
         reinterpret_cast<const char*>(data), static_cast<size_t>(length)));
+  } else if (tag == SerializationTag::kTwoByteString) {
+    uint32_t length = 0;
+    const uint8_t* data;
+    if (!ReadVarint<uint32_t>(length) ||
+        !ReadRawBytes(length * sizeof(uint16_t), data)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read two byte string value");
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(StringRef::createFromUTF16(
+        reinterpret_cast<const char16_t*>(data), static_cast<size_t>(length)));
   } else if (tag == SerializationTag::kUint32) {
     uint32_t value = 0;
     if (!ReadVarint<uint32_t>(value)) {
