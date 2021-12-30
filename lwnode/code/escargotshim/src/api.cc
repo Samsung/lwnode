@@ -154,6 +154,7 @@ void V8::SetFlagsFromString(const char* str, size_t length) {
 }
 
 static Flag validFlags[] = {
+    // v8 flags
     Flag("--expose-gc", Flag::Type::ExposeGC),
     Flag("--use-strict", Flag::Type::UseStrict),
     Flag("--off-idlegc", Flag::Type::DisableIdleGC),
@@ -162,13 +163,14 @@ static Flag validFlags[] = {
          Flag::Type::AllowCodeGenerationFromString),
     Flag("--abort-on-uncaught-exception", Flag::Type::AbortOnUncaughtException),
     Flag("--expose-externalize-string", Flag::Type::ExposeExternalizeString),
-    Flag("--trace-gc", Flag::Type::TraceGC),
-    Flag("--trace-call=", Flag::Type::TraceCall, true),
-    Flag("--internal-log", Flag::Type::InternalLog),
     Flag("--trace-debug", Flag::Type::LWNodeOther, true),
     Flag("--debug", Flag::Type::LWNodeOther, true),
     Flag("--stack-size=", Flag::Type::LWNodeOther, true),
     Flag("--nolazy", Flag::Type::LWNodeOther, true),
+    // lwnode flags
+    Flag("--trace-gc", Flag::Type::TraceGC),
+    Flag("--trace-call=", Flag::Type::TraceCall, true),
+    Flag("--internal-log", Flag::Type::InternalLog),
 };
 
 static Flag::Type findFlag(const std::string& name) {

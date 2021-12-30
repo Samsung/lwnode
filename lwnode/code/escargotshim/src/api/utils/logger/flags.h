@@ -80,6 +80,7 @@ class LWNODE_EXPORT Flags {
   static bool isExposeExternalizeString() {
     return s_flags & Flag::Type::ExposeExternalizeString;
   }
+  static bool isExposeGCEnabled() { return s_flags & Flag::Type::ExposeGC; }
 
   static void setTraceCallId(const std::string& id);
 
