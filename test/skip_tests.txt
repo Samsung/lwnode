@@ -44,7 +44,7 @@ test/parallel/test-domain-async-id-map-leak.js
 test/parallel/test-domain-error-types.js
 test/parallel/test-domain-set-uncaught-exception-capture-after-load.js
 test/parallel/test-error-prepare-stack-trace.js
-test/parallel/test-error-reporting.js
+test/parallel/test-error-reporting.js # (errorMessage) 마지막 test가 error message 불일치
 test/parallel/test-error-serdes.js
 test/parallel/test-errors-systemerror.js
 test/parallel/test-eslint-alphabetize-errors.js
