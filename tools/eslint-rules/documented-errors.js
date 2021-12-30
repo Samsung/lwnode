@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const { isDefiningError } = require('./rules-utils.js');
 
-const doc = fs.readFileSync(path.resolve(__dirname, '../../doc/api/errors.md'),
+// @lwnode
+const doc = fs.readFileSync(path.resolve(__dirname, './errors.md'),
                             'utf8');
 
 function isInDoc(code) {
