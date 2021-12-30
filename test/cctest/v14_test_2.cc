@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include <codecvt>
+#include <locale>
+#include <string>
+
 #include "cctest.h"
 #include "v8.h"
 
@@ -218,10 +222,6 @@ THREADED_TEST(SerializeWriteReadValue) {
   int testInt = -22;
   serializer.WriteValue(env.local(), v8_int(testInt));
 
-  // String
-  const char* testString = "Serialize!'; ~12";
-  serializer.WriteValue(env.local(), v8_str(testString));
-
   // Boolean
   serializer.WriteValue(env.local(), Boolean::New(isolate, false));
 
@@ -252,12 +252,6 @@ THREADED_TEST(SerializeWriteReadValue) {
   CHECK(output->IsInt32());
   CHECK_EQ(testInt, output->Int32Value(env.local()).FromJust());
 
-  // String
-  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
-  CHECK(output->IsString());
-  String::Utf8Value outputString(env->GetIsolate(), output);
-  CHECK_EQ(0, strcmp(*outputString, testString));
-
   // Boolean
   CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
   CHECK(output->IsBoolean());
@@ -270,6 +264,48 @@ THREADED_TEST(SerializeWriteReadValue) {
   // Null
   CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
   CHECK(output->IsNull());
+}
+
+THREADED_TEST(SerializeWriteReadString) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  SerializerDelegate serializerdelegate(isolate);
+  ValueSerializer serializer(isolate, &serializerdelegate);
+
+  // 8bit String
+  const char* test8BitString = "Serialize!'; ~12";
+  serializer.WriteValue(env.local(), v8_str(test8BitString));
+
+  // 16bit String
+  uint16_t test16BitString[2] = {0xD800, 0xDC00};
+  Local<String> test16BitLocalString =
+      String::NewFromTwoByte(
+          env->GetIsolate(), test16BitString, v8::NewStringType::kNormal, 2)
+          .ToLocalChecked();
+
+  serializer.WriteValue(env.local(), test16BitLocalString);
+
+  std::pair<uint8_t*, size_t> data = serializer.Release();
+  CHECK(data.first);
+  MallocedBuffer buffer(data.first, data.second);
+
+  ValueDeserializer deserializer(isolate, buffer.data, buffer.size);
+
+  Local<Value> output;
+
+  // 8bit String
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsString());
+  String::Utf8Value output8bitString(env->GetIsolate(), output);
+  CHECK_EQ(0, strcmp(*output8bitString, test8BitString));
+
+  // 16bit String
+  CHECK(deserializer.ReadValue(env.local()).ToLocal(&output));
+  CHECK(output->IsString());
+  CHECK(output->Equals(isolate->GetCurrentContext(), test16BitLocalString)
+            .FromJust());
 }
 
 THREADED_TEST(SerializeWriteObject) {
