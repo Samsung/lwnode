@@ -1241,3 +1241,35 @@ TEST(EsScopeCustom) {
     CHECK_EQ(ValueRef::InvalidIndex32Value, index);
   }
 }
+
+TEST(ExtensionCustom) {
+  EscargotShim::flag_t optionsBackup = EscargotShim::Flags::get();
+
+  {
+    LocalContext env;
+    v8::Isolate* v8Isolate = env->GetIsolate();
+    v8::HandleScope scope(v8Isolate);
+
+    v8::TryCatch try_catch(v8Isolate);
+    Local<String> s = CompileRun("externalizeString").As<String>();
+    CHECK(try_catch.HasCaught());
+  }
+
+  {
+    EscargotShim::Flags::set(Flag::Type::ExposeExternalizeString);
+
+    LocalContext env;
+    v8::Isolate* v8Isolate = env->GetIsolate();
+    v8::HandleScope scope(v8Isolate);
+
+    v8::TryCatch try_catch(v8Isolate);
+    Local<String> s = CompileRun("externalizeString('ok')").As<String>();
+    CHECK(!try_catch.HasCaught());
+
+    char buf[10] = {0};
+    int len = s->WriteUtf8(v8Isolate, buf);
+    CHECK_EQ(0, strcmp(buf, "ok"));
+  }
+
+  EscargotShim::Flags::set(optionsBackup);
+}

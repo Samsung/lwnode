@@ -134,50 +134,6 @@ static bool createGlobals(ContextRef* context) {
 }
 
 // ContextWrap
-
-static ValueRef* externalizeString(ExecutionStateRef* state,
-                                   ValueRef* thisValue,
-                                   size_t argc,
-                                   ValueRef** argv,
-                                   bool isConstructCall) {
-  if (argc > 0 && argv[0]->isString()) {
-    return argv[0]->asString();
-  }
-
-  return ValueRef::createUndefined();
-}
-
-static ValueRef* isOneByteString(ExecutionStateRef* state,
-                                 ValueRef* thisValue,
-                                 size_t argc,
-                                 ValueRef** argv,
-                                 bool isConstructCall) {
-  if (argc > 0 && argv[0]->isString()) {
-    auto bufferData = argv[0]->asString()->stringBufferAccessData();
-
-    bool allOneByte = true;
-    for (size_t i = 0; i < bufferData.length; i++) {
-      char16_t c = bufferData.charAt(i);
-      if (c > 255) {  // including all 8 bit code
-        allOneByte = false;
-        break;
-      }
-    }
-
-    return ValueRef::create(allOneByte);
-  }
-
-  return ValueRef::create(false);
-}
-
-static ValueRef* functionX(ExecutionStateRef* state,
-                           ValueRef* thisValue,
-                           size_t argc,
-                           ValueRef** argv,
-                           bool isConstructCall) {
-  return ValueRef::create(1);
-}
-
 ContextWrap::ContextWrap(IsolateWrap* isolate) {
   isolate_ = isolate;
 
@@ -225,7 +181,7 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
           },
           context_->globalObject(),
           StringRef::createFromASCII("externalizeString"),
-          externalizeString);
+          ExternalizeStringExtension::externalizeStringCallback);
 
       Evaluator::execute(
           context_,
@@ -252,7 +208,7 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
           },
           context_->globalObject(),
           StringRef::createFromASCII("isOneByteString"),
-          isOneByteString);
+          ExternalizeStringExtension::isOneByteStringCallback);
 
       Evaluator::execute(
           context_,
@@ -279,7 +235,7 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
           },
           context_->globalObject(),
           StringRef::createFromASCII("x"),
-          functionX);
+          ExternalizeStringExtension::xFunctionCallback);
     }
   }
 }

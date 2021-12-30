@@ -261,11 +261,13 @@ Extension::Extension(const char* name,
       auto_enable_(false) {}
 
 // --expose-externalize-string
-static ValueRef* externalizeString(ExecutionStateRef* state,
-                                   ValueRef* thisValue,
-                                   size_t argc,
-                                   ValueRef** argv,
-                                   OptionalRef<ObjectRef> newTarget) {
+
+ValueRef* ExternalizeStringExtension::externalizeStringCallback(
+    ExecutionStateRef* state,
+    ValueRef* thisValue,
+    size_t argc,
+    ValueRef** argv,
+    bool isConstructCall) {
   if (argc > 0 && argv[0]->isString()) {
     return argv[0]->asString();
   }
@@ -273,92 +275,102 @@ static ValueRef* externalizeString(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 }
 
-static ValueRef* isOneByteString(ExecutionStateRef* state,
-                                 ValueRef* thisValue,
-                                 size_t argc,
-                                 ValueRef** argv,
-                                 OptionalRef<ObjectRef> newTarget) {
+ValueRef* ExternalizeStringExtension::isOneByteStringCallback(
+    ExecutionStateRef* state,
+    ValueRef* thisValue,
+    size_t argc,
+    ValueRef** argv,
+    bool isConstructCall) {
   if (argc > 0 && argv[0]->isString()) {
-    auto bufferData = argv[0]->asString()->stringBufferAccessData();
-
-    bool allOneByte = true;
-    for (size_t i = 0; i < bufferData.length; i++) {
-      char16_t c = bufferData.charAt(i);
-      if (c > 255) {  // including all 8 bit code
-        allOneByte = false;
-        break;
-      }
-    }
-
-    return ValueRef::create(allOneByte);
+    return ValueRef::create(
+        StringRefHelper::isOneByteString(argv[0]->asString()));
   }
-
   return ValueRef::create(false);
 }
 
 // NOTE: --expose-externalize-string requires to define this dummy function
-static ValueRef* functionX(ExecutionStateRef* state,
-                           ValueRef* thisValue,
-                           size_t argc,
-                           ValueRef** argv,
-                           bool isConstructCall) {
+// i.e., function x() { return 1; }
+ValueRef* ExternalizeStringExtension::xFunctionCallback(
+    ExecutionStateRef* state,
+    ValueRef* thisValue,
+    size_t argc,
+    ValueRef** argv,
+    bool isConstructCall) {
   return ValueRef::create(1);
 }
 
 v8::Local<v8::FunctionTemplate>
 ExternalizeStringExtension::GetNativeFunctionTemplate(
     v8::Isolate* isolate, v8::Local<v8::String> name) {
-  EsScope scope;
+  EsScope scope(isolate);
+  std::string functionName = scope.asValue(name)->toStdUTF8String();
 
-  std::string externalizeStringFunction = "externalizeString";
-  std::string isOneByteStringFunction = "isOneByteString";
-
-  if (scope.asValue(name)->equalsWithASCIIString(
-          externalizeStringFunction.c_str(),
-          externalizeStringFunction.size())) {
-    auto esExternalizeStringFunctionTemplate =
-        FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),
-                                    1,
-                                    false,
-                                    false,
-                                    externalizeString);
-    auto externalizeStringData =
-        new FunctionTemplateData(esExternalizeStringFunctionTemplate,
-                                 isolate,
-                                 v8::FunctionCallback(),
-                                 nullptr,
-                                 nullptr);
-    ExtraDataHelper::setExtraData(esExternalizeStringFunctionTemplate,
-                                  externalizeStringData);
-
-    return Utils::NewLocal(isolate, esExternalizeStringFunctionTemplate);
-  } else if (scope.asValue(name)->equalsWithASCIIString(
-                 isOneByteStringFunction.c_str(),
-                 isOneByteStringFunction.size())) {
-    auto esOneByteStringFunctionTemplate = FunctionTemplateRef::create(
-        AtomicStringRef::emptyAtomicString(), 1, false, false, isOneByteString);
-    auto externalizeStringData =
-        new FunctionTemplateData(esOneByteStringFunctionTemplate,
-                                 isolate,
-                                 v8::FunctionCallback(),
-                                 nullptr,
-                                 nullptr);
-    ExtraDataHelper::setExtraData(esOneByteStringFunctionTemplate,
-                                  externalizeStringData);
-
-    return Utils::NewLocal(isolate, esOneByteStringFunctionTemplate);
+  FunctionTemplateRef* functionTemplate = nullptr;
+  if (functionName == "externalizeString") {
+    functionTemplate = createExternalizeString(scope.lwIsolate());
+  } else if (functionName == "isOneByteString") {
+    functionTemplate = createIsOneByteString(scope.lwIsolate());
+  } else {
+    functionTemplate = createXFunction(scope.lwIsolate());
   }
 
-  auto esEmptyFunctionTemplate = FunctionTemplateRef::create(
-      AtomicStringRef::emptyAtomicString(), 1, false, false, externalizeString);
-  auto emptyStringData = new FunctionTemplateData(esEmptyFunctionTemplate,
-                                                  isolate,
-                                                  v8::FunctionCallback(),
-                                                  nullptr,
-                                                  nullptr);
-  ExtraDataHelper::setExtraData(esEmptyFunctionTemplate, emptyStringData);
+  return Utils::NewLocal(isolate, functionTemplate);
+}
 
-  return Utils::NewLocal(isolate, esEmptyFunctionTemplate);
+FunctionTemplateRef* ExternalizeStringExtension::createExternalizeString(
+    IsolateWrap* isolate) {
+  auto functionTemplate = FunctionTemplateRef::create(
+      AtomicStringRef::emptyAtomicString(),
+      1,
+      false,
+      false,
+      ExternalizeStringExtension::externalizeString);
+
+  auto extraData = new FunctionTemplateData(functionTemplate,
+                                            isolate->toV8(),
+                                            v8::FunctionCallback(),
+                                            nullptr,
+                                            nullptr);
+
+  ExtraDataHelper::setExtraData(functionTemplate, extraData);
+
+  return functionTemplate;
+}
+
+FunctionTemplateRef* ExternalizeStringExtension::createIsOneByteString(
+    IsolateWrap* isolate) {
+  auto functionTemplate =
+      FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),
+                                  1,
+                                  false,
+                                  false,
+                                  ExternalizeStringExtension::isOneByteString);
+  auto extraData = new FunctionTemplateData(functionTemplate,
+                                            isolate->toV8(),
+                                            v8::FunctionCallback(),
+                                            nullptr,
+                                            nullptr);
+  ExtraDataHelper::setExtraData(functionTemplate, extraData);
+
+  return functionTemplate;
+}
+
+FunctionTemplateRef* ExternalizeStringExtension::createXFunction(
+    IsolateWrap* isolate) {
+  auto functionTemplate =
+      FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),
+                                  1,
+                                  false,
+                                  false,
+                                  ExternalizeStringExtension::xFunction);
+  auto extraData = new FunctionTemplateData(functionTemplate,
+                                            isolate->toV8(),
+                                            v8::FunctionCallback(),
+                                            nullptr,
+                                            nullptr);
+  ExtraDataHelper::setExtraData(functionTemplate, extraData);
+
+  return functionTemplate;
 }
 
 // -------------------------

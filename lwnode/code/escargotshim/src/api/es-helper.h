@@ -308,6 +308,7 @@ class StringRefHelper {
   }
 
   static bool isAsciiString(StringRef* str);
+  static bool isOneByteString(StringRef* str);
 };
 
 }  // namespace EscargotShim
