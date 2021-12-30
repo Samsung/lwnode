@@ -5,6 +5,9 @@
 #include "node_options-inl.h"
 #include "node_v8_platform-inl.h"
 #include "util-inl.h"
+#ifdef LWNODE
+#include "lwnode.h"
+#endif
 #if defined(LEAK_SANITIZER)
 #include <sanitizer/lsan_interface.h>
 #endif
@@ -225,7 +228,9 @@ int NodeMainInstance::Run() {
 // @lwnode
 // We prevent premature termination when detecting leak,
 // as our GC runs after shutting down node platform.
-#if 0
+#if LWNODE
+  LWNode::IdleGC();
+#else
 #if defined(LEAK_SANITIZER)
   __lsan_do_leak_check();
 #endif

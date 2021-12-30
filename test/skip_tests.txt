@@ -45,22 +45,8 @@ test/parallel/test-domain-error-types.js
 test/parallel/test-domain-set-uncaught-exception-capture-after-load.js
 test/parallel/test-error-prepare-stack-trace.js
 test/parallel/test-error-reporting.js # (errorMessage) 마지막 test가 error message 불일치
-test/parallel/test-error-serdes.js
 test/parallel/test-errors-systemerror.js
-test/parallel/test-eslint-alphabetize-errors.js
-test/parallel/test-eslint-crypto-check.js
 test/parallel/test-eslint-documented-errors.js
-test/parallel/test-eslint-duplicate-requires.js
-test/parallel/test-eslint-eslint-check.js
-test/parallel/test-eslint-inspector-check.js
-test/parallel/test-eslint-lowercase-name-for-primitive.js
-test/parallel/test-eslint-no-unescaped-regexp-dot.js
-test/parallel/test-eslint-prefer-assert-iferror.js
-test/parallel/test-eslint-prefer-assert-methods.js
-test/parallel/test-eslint-prefer-common-mustnotcall.js
-test/parallel/test-eslint-prefer-util-format-errors.js
-test/parallel/test-eslint-require-common-first.js
-test/parallel/test-eslint-required-modules.js
 test/parallel/test-event-capture-rejections.js
 test/parallel/test-events-uncaught-exception-stack.js
 test/parallel/test-freeze-intrinsics.js
@@ -284,7 +270,6 @@ test/parallel/test-worker-message-port-receive-message.js
 test/parallel/test-worker-message-port-terminate-transfer-list.js
 test/parallel/test-worker-message-port-transfer-closed.js
 test/parallel/test-worker-message-port-transfer-duplicate.js
-test/parallel/test-worker-message-port-transfer-fake-js-transferable.js
 test/parallel/test-worker-message-port-transfer-filehandle.js
 test/parallel/test-worker-message-port-transfer-native.js
 test/parallel/test-worker-message-port-transfer-self.js
