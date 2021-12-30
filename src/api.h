@@ -159,6 +159,51 @@ class ExternalizeStringExtension : public v8::Extension {
   v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
       v8::Isolate* isolate, v8::Local<v8::String> name) override;
 
+  FunctionTemplateRef* createExternalizeString(
+      EscargotShim::IsolateWrap* isolate);
+  FunctionTemplateRef* createIsOneByteString(
+      EscargotShim::IsolateWrap* isolate);
+  FunctionTemplateRef* createXFunction(EscargotShim::IsolateWrap* isolate);
+
+  static ValueRef* externalizeStringCallback(ExecutionStateRef* state,
+                                             ValueRef* thisValue,
+                                             size_t argc,
+                                             ValueRef** argv,
+                                             bool isConstructCall);
+  static ValueRef* externalizeString(ExecutionStateRef* state,
+                                     ValueRef* thisValue,
+                                     size_t argc,
+                                     ValueRef** argv,
+                                     OptionalRef<ObjectRef> newTarget) {
+    return externalizeStringCallback(state, thisValue, argc, argv, false);
+  }
+
+  static ValueRef* isOneByteStringCallback(ExecutionStateRef* state,
+                                           ValueRef* thisValue,
+                                           size_t argc,
+                                           ValueRef** argv,
+                                           bool isConstructCall);
+  static ValueRef* isOneByteString(ExecutionStateRef* state,
+                                   ValueRef* thisValue,
+                                   size_t argc,
+                                   ValueRef** argv,
+                                   OptionalRef<ObjectRef> newTarget) {
+    return isOneByteStringCallback(state, thisValue, argc, argv, false);
+  }
+
+  static ValueRef* xFunctionCallback(ExecutionStateRef* state,
+                                     ValueRef* thisValue,
+                                     size_t argc,
+                                     ValueRef** argv,
+                                     bool isConstructCall);
+  static ValueRef* xFunction(ExecutionStateRef* state,
+                             ValueRef* thisValue,
+                             size_t argc,
+                             ValueRef** argv,
+                             OptionalRef<ObjectRef> newTarget) {
+    return xFunctionCallback(state, thisValue, argc, argv, false);
+  }
+
  private:
 };
 

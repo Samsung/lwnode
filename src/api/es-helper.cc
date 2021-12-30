@@ -992,4 +992,17 @@ bool StringRefHelper::isAsciiString(StringRef* string) {
   return isAscii;
 }
 
+bool StringRefHelper::isOneByteString(StringRef* str) {
+  auto bufferData = str->stringBufferAccessData();
+
+  for (size_t i = 0; i < bufferData.length; i++) {
+    char16_t c = bufferData.charAt(i);
+    if (c > 255) {  // including all 8 bit code
+      return false;
+    }
+  }
+
+  return true;
+}
+
 }  // namespace EscargotShim
