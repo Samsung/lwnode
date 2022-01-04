@@ -26,7 +26,7 @@ jobs:
           echo "::set-output name=hash::$(git log -1 --format=%h)"
       - name: Build RPMs
         run: |
-          /usr/bin/gbs -c .circleci/gbs.conf \
+          tsp -nf /usr/bin/gbs -c .circleci/gbs.conf \
           build -B ~/GBS-ROOT/lwnode -A armv7l \
           --include-all --incremental -P profile.t65std \
           --define 'lib_type static'
@@ -55,4 +55,4 @@ jobs:
           HOST_ROOT_PATH: /mnt/rat2/github
         run: |
           cd /home/github/remote-job-runner
-          npm start
+          tsp -nf npm start
