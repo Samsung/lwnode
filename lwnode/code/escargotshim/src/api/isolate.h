@@ -250,6 +250,10 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   ThreadManager* thread_manager() { return threadManager_; }
 
+  void PerformMicrotaskCheckpoint() {
+    v8::MicrotasksScope::PerformCheckpoint(toV8(this));
+  }
+
  private:
   IsolateWrap();
 

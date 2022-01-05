@@ -1106,43 +1106,49 @@ Local<Promise> Promise::Resolver::GetPromise() {
 
 Maybe<bool> Promise::Resolver::Resolve(Local<Context> context,
                                        Local<Value> value) {
-  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto self = CVAL(this)->value()->asPromiseObject();
-
+  API_ENTER_AND_EXIT_IF_TERMINATING(EsScope, context, Nothing<bool>());
+  auto self = scope.self()->asPromiseObject();
   if (self->state() != Escargot::PromiseObjectRef::PromiseState::Pending) {
     return Just(true);
   }
 
+  auto esValueTofulfill = scope.asValue(value);
+  if (esValueTofulfill->isPromiseObject()) {
+    esValueTofulfill = esValueTofulfill->asPromiseObject()->promiseResult();
+  }
+
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* state,
          PromiseObjectRef* promise,
-         ValueRef* esValue,
+         ValueRef* value,
          EscargotShim::IsolateWrap* lwIsolate) -> ValueRef* {
-        promise->fulfill(state, esValue);
+        promise->fulfill(state, value);
         return ValueRef::createUndefined();
       },
       self,
-      CVAL(*value)->value(),
-      lwIsolate);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+      esValueTofulfill,
+      scope.lwIsolate());
+  API_EXIT_IF_EXCEPTION_OCCURRED(r, Nothing<bool>());
 
   return Just(true);
 }
 
 Maybe<bool> Promise::Resolver::Reject(Local<Context> context,
                                       Local<Value> value) {
-  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
-  auto esContext = lwIsolate->GetCurrentContext()->get();
-  auto self = CVAL(this)->value()->asPromiseObject();
-
+  API_ENTER_AND_EXIT_IF_TERMINATING(EsScope, context, Nothing<bool>());
+  auto self = scope.self()->asPromiseObject();
   if (self->state() != Escargot::PromiseObjectRef::PromiseState::Pending) {
     return Just(true);
   }
 
+  auto esValueToReject = scope.asValue(value);
+  if (esValueToReject->isPromiseObject()) {
+    esValueToReject = esValueToReject->asPromiseObject()->promiseResult();
+  }
+
   EvalResult r = Evaluator::execute(
-      esContext,
+      scope.context(),
       [](ExecutionStateRef* state,
          PromiseObjectRef* promise,
          ValueRef* esValue,
@@ -1151,9 +1157,9 @@ Maybe<bool> Promise::Resolver::Reject(Local<Context> context,
         return ValueRef::createUndefined();
       },
       self,
-      CVAL(*value)->value(),
-      lwIsolate);
-  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+      esValueToReject,
+      scope.lwIsolate());
+  API_EXIT_IF_EXCEPTION_OCCURRED(r, Nothing<bool>());
 
   return Just(true);
 }
@@ -2213,7 +2219,7 @@ void Isolate::SetPromiseRejectCallback(PromiseRejectCallback callback) {
 }
 
 void Isolate::PerformMicrotaskCheckpoint() {
-  LWNODE_RETURN_VOID;
+  IsolateWrap::fromV8(this)->PerformMicrotaskCheckpoint();
 }
 
 void Isolate::EnqueueMicrotask(Local<Function> v8_function) {
