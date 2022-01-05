@@ -46,11 +46,11 @@ test/parallel/test-errors-systemerror.js
 test/parallel/test-event-capture-rejections.js
 test/parallel/test-events-uncaught-exception-stack.js
 test/parallel/test-freeze-intrinsics.js
-test/parallel/test-fs-filehandle.js
+test/parallel/test-fs-filehandle.js # GC가 실행되며 node의 ~FileHandle()을 호출해야 함
 test/parallel/test-fs-promises-file-handle-close.js
-test/parallel/test-fs-readfile-error.js
-test/parallel/test-fs-utimes.js
-test/parallel/test-fs-write.js
+test/parallel/test-fs-readfile-error.js # warning emit, 즉 fs-filehandle.js와 일부 동일 문제
+test/parallel/test-fs-utimes.js # async와 관련있어 보임
+test/parallel/test-fs-write.js # 1개의 assert가 소스의 utf8과 latin1과의 인코딩 불일치
 test/parallel/test-gc-http-client-connaborted.js
 test/parallel/test-gc-http-client-onerror.js
 test/parallel/test-gc-http-client-timeout.js
