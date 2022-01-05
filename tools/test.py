@@ -1585,7 +1585,7 @@ def OuputTestResult(progress, skip_count, excluded_case_paths, options):
   if failed_count:
     skip_tests = options.skip_tests[:]
     skip_tests.extend(failed_case_paths)
-    skip_tests.extend(excluded_case_paths)
+    # skip_tests.extend(excluded_case_paths)
     skip_tests = list(set(skip_tests))
     skip_tests.sort()
     WriteFileWithList(SKIP_LIST_FILENAME, skip_tests)

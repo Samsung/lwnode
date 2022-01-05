@@ -14,15 +14,14 @@ test/parallel/test-async-local-storage-deep-stack.js
 test/parallel/test-async-wrap-pop-id-during-load.js
 test/parallel/test-buffer-alloc.js
 test/parallel/test-buffer-backing-arraybuffer.js
-test/parallel/test-buffer-constants.js
 test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
 test/parallel/test-buffer-constructor-outside-node-modules.js
-test/parallel/test-buffer-pool-untransferable.js
+test/parallel/test-buffer-pool-untransferable.js # worker_threads
 test/parallel/test-child-process-advanced-serialization.js
 test/parallel/test-child-process-fork-exec-path.js
 test/parallel/test-cli-eval.js
-test/parallel/test-cli-node-options.js
+test/parallel/test-cli-node-options.js # worker_threads
 test/parallel/test-cli-syntax-piped-bad.js
 test/parallel/test-cluster-advanced-serialization.js
 test/parallel/test-common-gc.js
@@ -32,7 +31,7 @@ test/parallel/test-crypto-cipheriv-decipheriv.js
 test/parallel/test-crypto-dh-leak.js
 test/parallel/test-crypto-dh.js
 test/parallel/test-crypto-fips.js
-test/parallel/test-crypto-key-objects-messageport.js
+test/parallel/test-crypto-key-objects-messageport.js # worker_threads
 test/parallel/test-crypto-sign-verify.js
 test/parallel/test-crypto-worker-thread.js
 test/parallel/test-dgram-socket-buffer-size.js
@@ -57,7 +56,6 @@ test/parallel/test-gc-http-client-onerror.js
 test/parallel/test-gc-http-client-timeout.js
 test/parallel/test-gc-net-timeout.js
 test/parallel/test-gc-tls-external-memory.js
-test/parallel/test-heapdump-async-hooks-init-promise.js
 test/parallel/test-http-deprecated-urls.js
 test/parallel/test-http-invalid-urls.js
 test/parallel/test-http-parser.js
@@ -65,8 +63,7 @@ test/parallel/test-http-same-map.js
 test/parallel/test-http-server-keepalive-req-gc.js
 test/parallel/test-http-timeout-client-warning.js
 test/parallel/test-http2-origin.js
-test/parallel/test-http2-ping-settings-heapdump.js
-test/parallel/test-http2-reset-flood.js
+test/parallel/test-http2-reset-flood.js # worker_threads
 test/parallel/test-http2-response-splitting.js
 test/parallel/test-http2-zero-length-header.js
 test/parallel/test-internal-errors.js
@@ -79,7 +76,7 @@ test/parallel/test-module-main-extension-lookup.js
 test/parallel/test-net-connect-memleak.js
 test/parallel/test-no-harmony-top-level-await.mjs
 test/parallel/test-npm-install.js
-test/parallel/test-performance-eventlooputil.js
+test/parallel/test-performance-eventlooputil.js # worker_threads
 test/parallel/test-performance-function.js
 test/parallel/test-performance-gc.js
 test/parallel/test-policy-dependencies.js
@@ -95,7 +92,7 @@ test/parallel/test-process-emit-warning-from-native.js
 test/parallel/test-process-env-allowed-flags-are-documented.js
 test/parallel/test-process-env-symbols.js
 test/parallel/test-process-env.js
-test/parallel/test-process-exec-argv.js
+test/parallel/test-process-exec-argv.js # worker_threads
 test/parallel/test-process-uncaught-exception-monitor.js
 test/parallel/test-process-versions.js
 test/parallel/test-promise-handled-rejection-no-warning.js
@@ -162,12 +159,6 @@ test/parallel/test-util-inspect-long-running.js
 test/parallel/test-util-inspect.js
 test/parallel/test-util-internal.js
 test/parallel/test-util-types.js
-test/parallel/test-v8-flags.js
-test/parallel/test-v8-getheapsnapshot-twice.js
-test/parallel/test-v8-serdes.js
-test/parallel/test-v8-stats.js
-test/parallel/test-v8-untrusted-code-mitigations.js
-test/parallel/test-v8-version-tag.js
 test/parallel/test-vm-attributes-property-not-on-sandbox.js
 test/parallel/test-vm-basic.js
 test/parallel/test-vm-cached-data.js
@@ -210,7 +201,6 @@ test/parallel/test-vm-syntax-error-stderr.js
 test/parallel/test-vm-timeout-escape-promise-2.js
 test/parallel/test-vm-timeout-escape-promise.js
 test/parallel/test-vm-timeout.js
-test/parallel/test-wasm-simple.js
 test/parallel/test-weakref.js
 test/parallel/test-whatwg-url-custom-href-side-effect.js
 test/parallel/test-whatwg-url-custom-properties.js
@@ -218,7 +208,6 @@ test/parallel/test-worker-abort-on-uncaught-exception-terminate.js
 test/parallel/test-worker-abort-on-uncaught-exception.js
 test/parallel/test-worker-arraybuffer-zerofill.js
 test/parallel/test-worker-cjs-workerdata.js
-test/parallel/test-worker-cleanexit-with-js.js
 test/parallel/test-worker-cleanexit-with-moduleload.js
 test/parallel/test-worker-cleanup-handles.js
 test/parallel/test-worker-console-listeners.js
@@ -284,10 +273,8 @@ test/parallel/test-worker-ref-onexit.js
 test/parallel/test-worker-ref.js
 test/parallel/test-worker-relative-path-double-dot.js
 test/parallel/test-worker-relative-path.js
-test/parallel/test-worker-resource-limits.js
 test/parallel/test-worker-safe-getters.js
 test/parallel/test-worker-sharedarraybuffer-from-worker-thread.js
-test/parallel/test-worker-stack-overflow-stack-size.js
 test/parallel/test-worker-stack-overflow.js
 test/parallel/test-worker-stdio-from-preload-module.js
 test/parallel/test-worker-stdio.js

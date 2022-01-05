@@ -1,4 +1,16 @@
-test-worker
 test-wasm
+
+# v8 is required
 test-v8
-test-vm
+test-heapdump-async-hooks-init-promise
+test-http2-ping-settings-heapdump
+test-process-exception-capture-should-abort-on-uncaught-setflagsfromstring
+test-worker-cleanexit-with-js
+test-worker-resource-limits
+test-worker-stack-overflow-stack-size
+
+# Out of memory
+test-buffer-constants
+
+# Out of memory https://github.sec.samsung.net/lws/node-escargot/issues/781
+test-net-bytes-written-large

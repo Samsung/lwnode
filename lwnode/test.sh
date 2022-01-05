@@ -18,7 +18,7 @@ set -e
 
 [[ -z $TEST_ROOT ]] && TEST_ROOT=$(pwd)/test
 [[ -z $SKIP_TESTS_PATH ]] && SKIP_TESTS_PATH=$TEST_ROOT/skip_tests.txt
-# [[ -z $UNSUPPORTED_TESTS_PATH ]] && UNSUPPORTED_TESTS_PATH=$TEST_ROOT/skip_features.txt
+[[ -z $UNSUPPORTED_TESTS_PATH ]] && UNSUPPORTED_TESTS_PATH=$TEST_ROOT/skip_features.txt
 # SKIP_TESTS_PATH=./skip_list.gen.txt
 
 echo root: $TEST_ROOT
@@ -32,12 +32,12 @@ function cleanup()
   rm -rf $TEST_ROOT/.tmp.*
 
   if [[ -z $VM_PATH ]]; then
-    ps -fu $user | grep 'Release\/lwnode' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+    ps -fu $user | grep 'Release\/lwnode' | grep -v grep | awk '{print $2" "$3}' | xargs -r kill -9
   else
-    ps -fu $user | grep $VM_PATH | grep -v grep | awk '{print $2}' | xargs -r kill -9
+    ps -fu $user | grep $VM_PATH | grep -v grep | awk '{print $2" "$3}' | xargs -r kill -9
   fi
-  # ps -fu $user | grep '.tmp.' | grep -v grep | awk '{print $2}' | xargs -r kill -9
-  ps -fu $user | grep 'defunct' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+  # ps -fu $user | grep '.tmp.' | grep -v grep | awk '{print $2" "$3}' | xargs -r kill -9
+  ps -fu $user | grep 'defunct' | grep -v grep | awk '{print $2" "$3}' | xargs -r kill -9
 
   echo -e "cleanup remaining processes"
 }
@@ -50,8 +50,10 @@ ARGS=$*
 SKIP_TEST_OPTION=
 UNSUPPORTED_TEST_OPTION=
 
-[[ -f $SKIP_TESTS_PATH ]] && SKIP_TEST_OPTION="--skip-tests=$(sed 's/\s#.*//g' $SKIP_TESTS_PATH | paste -sd,)"
-[[ -f $UNSUPPORTED_TESTS_PATH ]] && UNSUPPORTED_TEST_OPTION="--unsupported-tests=$(paste -sd, $UNSUPPORTED_TESTS_PATH)"
+[[ -f $SKIP_TESTS_PATH ]] && \
+  SKIP_TEST_OPTION="--skip-tests=$(sed 's/\s#.*//g' $SKIP_TESTS_PATH | paste -sd,)"
+[[ -f $UNSUPPORTED_TESTS_PATH ]] && \
+  UNSUPPORTED_TEST_OPTION="--unsupported-tests=$(sed '/#\|^$/d' $UNSUPPORTED_TESTS_PATH | paste -sd,)"
 
 if [[ -z ${ARGS[0]} ]]; then
   ARGS="test/parallel test/regression"

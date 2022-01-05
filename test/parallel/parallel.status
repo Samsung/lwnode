@@ -5,10 +5,6 @@ prefix parallel
 # sample-test                        : PASS,FLAKY
 
 [true] # This section applies to all platforms
-# @lwnode Out of memory
-test-net-bytes-written-large: SKIP
-# @lwnode Out of memory https://github.sec.samsung.net/lws/node-escargot/issues/781
-test-buffer-constants: SKIP
 
 [$system==win32]
 # https://github.com/nodejs/node/issues/20750
