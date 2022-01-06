@@ -357,6 +357,52 @@ THREADED_TEST(SerializeWriteObject) {
           .FromJust());
 }
 
+THREADED_TEST(SerializeWriteReadTypedArray) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  v8::Local<v8::Context> context(env.local());
+
+  SerializerDelegate serializerdelegate(isolate);
+  ValueSerializer serializer(isolate, &serializerdelegate);
+
+  Local<Value> val = CompileRun("new Uint8Array([0, 11, 22, 33]);");
+  CHECK(val->IsUint8Array());
+  serializer.WriteValue(context, val);
+
+  std::pair<uint8_t*, size_t> data = serializer.Release();
+  CHECK(data.first);
+  MallocedBuffer buffer(data.first, data.second);
+
+  ValueDeserializer deserializer(isolate, buffer.data, buffer.size);
+
+  Local<Value> output;
+  CHECK(deserializer.ReadValue(context).ToLocal(&output));
+  CHECK(output->IsUint8Array());
+  Local<v8::Uint8Array> outputArray = output.As<v8::Uint8Array>();
+  CHECK_EQ(4, outputArray->Length());
+  CHECK_EQ(0,
+           outputArray->Get(context, v8_str("0"))
+               .ToLocalChecked()
+               ->Int32Value(context)
+               .FromJust());
+  CHECK_EQ(11,
+           outputArray->Get(context, v8_str("1"))
+               .ToLocalChecked()
+               ->Int32Value(context)
+               .FromJust());
+  CHECK_EQ(22,
+           outputArray->Get(context, v8_str("2"))
+               .ToLocalChecked()
+               ->Int32Value(context)
+               .FromJust());
+  CHECK_EQ(33,
+           outputArray->Get(context, v8_str("3"))
+               .ToLocalChecked()
+               ->Int32Value(context)
+               .FromJust());
+}
+
 THREADED_TEST(Shebang) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();

@@ -154,9 +154,26 @@ enum class SerializationTag : uint8_t {
   kLegacyReservedRTCCertificate = 'k',
 };
 
+enum class ArrayBufferViewTag : uint8_t {
+  kInt8Array = 'b',
+  kUint8Array = 'B',
+  kUint8ClampedArray = 'C',
+  kInt16Array = 'w',
+  kUint16Array = 'W',
+  kInt32Array = 'd',
+  kUint32Array = 'D',
+  kFloat32Array = 'f',
+  kFloat64Array = 'F',
+  kBigInt64Array = 'q',
+  kBigUint64Array = 'Q',
+  kDataView = '?',
+};
+
 ValueSerializer::ValueSerializer(IsolateWrap* lwIsolate,
                                  v8::ValueSerializer::Delegate* delegate)
-    : lwIsolate_(lwIsolate), delegate_(delegate) {}
+    : lwIsolate_(lwIsolate), delegate_(delegate) {
+  LWNODE_CALL_TRACE_ID(SERIALIZER, "Create serializer");
+}
 
 void ValueSerializer::WriteHeader() {}
 
@@ -190,7 +207,10 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
   } else if (value->isString()) {
     WriteString(value->asString());
   } else if (value->isTypedArrayObject()) {
-    LWNODE_UNIMPLEMENT;
+    auto bufferView = value->asArrayBufferView();
+    auto result =
+        WriteArrayBuffer(bufferView->byteLength(), bufferView->rawBuffer());
+    return result && WriteArrayBufferView(value->asArrayBufferView());
   } else if (value->isArrayObject()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isSymbol()) {
@@ -321,6 +341,39 @@ bool ValueSerializer::WriteObject(ObjectRef* object) {
   return true;
 }
 
+bool ValueSerializer::WriteArrayBuffer(size_t length, uint8_t* bytes) {
+  WriteTag(SerializationTag::kArrayBuffer);
+  WriteVarint<uint32_t>(length);
+  WriteRawBytes(bytes, length);
+  return true;
+}
+
+bool ValueSerializer::WriteArrayBufferView(
+    ArrayBufferViewRef* arrayBufferView) {
+  WriteTag(SerializationTag::kArrayBufferView);
+
+  ArrayBufferViewTag typeTag = ArrayBufferViewTag::kInt8Array;
+
+  if (arrayBufferView->isDataViewObject()) {
+    typeTag = ArrayBufferViewTag::kDataView;
+  }
+#define TYPED_ARRAY_CASE(Type, type, TYPE, ctype)                              \
+  else if (arrayBufferView->is##Type##ArrayObject()) {                         \
+    typeTag = ArrayBufferViewTag::k##Type##Array;                              \
+  }
+  TYPED_ARRAYS(TYPED_ARRAY_CASE)
+#undef TYPED_ARRAY_CASE
+  else {
+    LWNODE_DLOG_ERROR("Serializer: Invalid buffer type");
+    return false;
+  }
+
+  WriteVarint(static_cast<uint8_t>(typeTag));
+  WriteVarint(static_cast<uint32_t>(arrayBufferView->byteOffset()));
+  WriteVarint(static_cast<uint32_t>(arrayBufferView->arrayLength()));
+  return true;
+}
+
 // base on v8
 bool ValueSerializer::ExpandBuffer(size_t required_capacity) {
   LWNODE_CHECK(required_capacity > capacity_);
@@ -387,7 +440,9 @@ ValueDeserializer::ValueDeserializer(IsolateWrap* lwIsolate,
       delegate_(delegate),
       buffer_(data),
       size_(size),
-      end_(size) {}
+      end_(size) {
+  LWNODE_CALL_TRACE_ID(SERIALIZER, "Create deserializer");
+}
 
 // base on v8
 bool ValueDeserializer::ReadTag(SerializationTag& tag) {
@@ -507,6 +562,71 @@ bool ValueDeserializer::ReadObject(ObjectRef* object) {
   return false;
 }
 
+bool ValueDeserializer::ReadArrayBuffer(
+    ArrayBufferObjectRef*& arrayBufferObject) {
+  uint32_t length = 0;
+  const uint8_t* bytes = nullptr;
+  if (!ReadVarint<uint32_t>(length) || !ReadRawBytes(length, bytes)) {
+    return false;
+  }
+
+  auto esContext = isolate_->GetCurrentContext()->get();
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, size_t byteLength) -> ValueRef* {
+        auto arrayBuffer = ArrayBufferObjectRef::create(esState);
+        arrayBuffer->allocateBuffer(esState, byteLength);
+        return arrayBuffer;
+      },
+      (size_t)length);
+  LWNODE_CHECK(r.isSuccessful());
+
+  auto backingStore =
+      BackingStoreRef::createDefaultNonSharedBackingStore(length);
+  arrayBufferObject = r.result->asArrayBufferObject();
+  arrayBufferObject->attachBuffer(backingStore);
+
+  memcpy(arrayBufferObject->rawBuffer(), bytes, length);
+
+  return true;
+}
+
+bool ValueDeserializer::ReadArrayBufferView(
+    ArrayBufferViewRef*& arrayBufferView, ArrayBufferObjectRef* abo) {
+  uint8_t tag = 0;
+  uint32_t byteOffset = 0;
+  uint32_t byteLength = 0;
+  uint32_t arrayLength = 0;
+
+  if (!ReadVarint<uint8_t>(tag) || !ReadVarint<uint32_t>(byteLength) ||
+      !ReadVarint<uint32_t>(arrayLength)) {
+    return false;
+  }
+
+  auto esContext = isolate_->GetCurrentContext()->get();
+
+  switch (static_cast<ArrayBufferViewTag>(tag)) {
+    case ArrayBufferViewTag::kDataView: {
+      return false;
+    }
+#define TYPED_ARRAY_CASE(Type, type, TYPE, ctype)                              \
+  case ArrayBufferViewTag::k##Type##Array:                                     \
+    arrayBufferView = ArrayBufferHelper::createView<Type##ArrayObjectRef>(     \
+        esContext,                                                             \
+        abo,                                                                   \
+        byteOffset,                                                            \
+        arrayLength,                                                           \
+        ArrayBufferHelper::ArrayType::kExternal##Type##Array);                 \
+    return true;
+      TYPED_ARRAYS(TYPED_ARRAY_CASE)
+#undef TYPED_ARRAY_CASE
+    default:
+      return false;
+  }
+
+  return false;
+}
+
 bool ValueDeserializer::ReadRawBytes(size_t size, const uint8_t*& data) {
   if (size > end_ - position_) {
     return false;
@@ -580,6 +700,23 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(object));
+  } else if (tag == SerializationTag::kArrayBuffer) {
+    ArrayBufferObjectRef* arrayBuffer = nullptr;
+    if (!ReadArrayBuffer(arrayBuffer)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read array buffer value");
+      return OptionalRef<ValueRef>();
+    }
+
+    if (CheckTag(SerializationTag::kArrayBufferView)) {
+      ReadTag(tag);
+      ArrayBufferViewRef* arrayBufferView = nullptr;
+      if (!ReadArrayBufferView(arrayBufferView, arrayBuffer)) {
+        LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read array buffer view value");
+        return OptionalRef<ValueRef>();
+      }
+      return OptionalRef<ValueRef>(arrayBufferView);
+    }
+    return OptionalRef<ValueRef>(arrayBuffer);
   } else {
     LWNODE_UNIMPLEMENT;
   }

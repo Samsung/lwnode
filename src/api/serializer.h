@@ -51,6 +51,8 @@ class ValueSerializer {
   void WriteZigZag(T value);
   void WriteString(StringRef* string);
   bool WriteObject(ObjectRef* object);
+  bool WriteArrayBuffer(size_t length, uint8_t* bytes);
+  bool WriteArrayBufferView(ArrayBufferViewRef* arrayBufferView);
   bool ExpandBuffer(size_t required_capacity);
   bool ThrowIfOutOfMemory();
 
@@ -82,6 +84,10 @@ class ValueDeserializer {
   bool ReadZigZag(T& value);
   bool ReadDouble(double& value);
   bool ReadObject(ObjectRef* object);
+  bool ReadArrayBuffer(ArrayBufferObjectRef*& arayBufferObject);
+  bool ReadArrayBufferView(ArrayBufferViewRef*& arrayBufferView,
+                           ArrayBufferObjectRef* arrayBufferObject);
+
   bool ReadRawBytes(size_t size, const uint8_t*& data);
 
   IsolateWrap* isolate_ = nullptr;
