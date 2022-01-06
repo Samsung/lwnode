@@ -17,7 +17,6 @@ test/parallel/test-buffer-backing-arraybuffer.js
 test/parallel/test-buffer-constructor-deprecation-error.js
 test/parallel/test-buffer-constructor-node-modules-paths.js
 test/parallel/test-buffer-constructor-outside-node-modules.js
-test/parallel/test-buffer-pool-untransferable.js # worker_threads
 test/parallel/test-child-process-advanced-serialization.js
 test/parallel/test-child-process-fork-exec-path.js
 test/parallel/test-cli-eval.js
