@@ -383,6 +383,12 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
 
   auto esContext = VAL(*v8_context)->context()->get();
   auto esSource = VAL(*source->source_string)->value()->asString();
+  StringRef* esSourceName = nullptr;
+  if (*source->resource_name) {
+    esSourceName = VAL(*source->resource_name)->value()->asString();
+  } else {
+    esSourceName = StringRef::emptyString();
+  }
 
   handleShebang(esSource);
 
@@ -391,18 +397,24 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
   for (size_t i = 0; i < arguments_count; i++) {
     arguments_list.push_back(VAL(*arguments[i])->value());
   }
-  arguments_list.push_back(esSource);
 
   EvalResult r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* state,
-         FunctionObjectRef* function,
-         const size_t argc,
+         StringRef* sourceName,
+         StringRef* source,
+         size_t argc,
          ValueRef** argv) -> ValueRef* {
-        LWNODE_CHECK(function->isConstructible());
-        return function->construct(state, argc, argv);
+        return FunctionObjectRef::create(
+            state,
+            sourceName,
+            AtomicStringRef::create(state->context(), "anonymous"),
+            argc,
+            argv,
+            source);
       },
-      esContext->globalObject()->function(),
+      esSourceName,
+      esSource,
       arguments_list.size(),
       arguments_list.data());
 
@@ -411,11 +423,7 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
     LWNODE_DLOG_ERROR("Evaluate");
     LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\nResource:\n  %s\n%s",
                     TRACE_ARGS2,
-                    VAL(*source->resource_name)
-                        ->value()
-                        ->asString()
-                        ->toStdUTF8String()
-                        .c_str(),
+                    esSourceName->toStdUTF8String().c_str(),
                     EvalResultHelper::getErrorString(
                         lwIsolate->GetCurrentContext()->get(), r)
                         .c_str());
