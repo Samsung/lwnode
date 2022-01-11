@@ -206,10 +206,6 @@ static std::string OnDiskFileName(const char* id) {
 
 MaybeLocal<String> NativeModuleLoader::LoadBuiltinModuleSource(Isolate* isolate,
                                                                const char* id) {
-#ifdef LWNODE_EXTERNAL_BUILTINS_FILENAME
-  return LoadExternalBuiltinSource(isolate, id);
-#endif
-
 #ifdef NODE_BUILTIN_MODULES_PATH
   std::string filename = OnDiskFileName(id);
 
@@ -242,7 +238,9 @@ MaybeLocal<String> NativeModuleLoader::LoadBuiltinModuleSource(Isolate* isolate,
 
   return String::NewFromUtf8(
       isolate, contents.c_str(), v8::NewStringType::kNormal, contents.length());
-#else
+#elif defined(LWNODE_EXTERNAL_BUILTINS_FILENAME)
+  return LoadExternalBuiltinSource(isolate, id);
+#else   // LWNODE_EXTERNAL_BUILTINS_FILENAME
   const auto source_it = source_.find(id);
   CHECK_NE(source_it, source_.end());
   return source_it->second.ToStringChecked(isolate);
