@@ -997,9 +997,13 @@ void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
     stack = message + "\n" + stack;
   }
 
-  errorObject->set(state,
-                   stackString,
-                   StringRef::createFromASCII(stack.data(), stack.length()));
+  errorObject->defineDataProperty(
+      state,
+      stackString,
+      StringRef::createFromASCII(stack.data(), stack.length()),
+      true,
+      false,
+      true);
 }
 
 // --- StringRefHelper ---
