@@ -26,7 +26,6 @@ test/parallel/test-cluster-advanced-serialization.js
 test/parallel/test-common-gc.js
 test/parallel/test-common-must-not-call.js
 test/parallel/test-console-table.js
-test/parallel/test-crypto-cipheriv-decipheriv.js
 test/parallel/test-crypto-dh-leak.js
 test/parallel/test-crypto-dh.js
 test/parallel/test-crypto-fips.js
@@ -47,7 +46,6 @@ test/parallel/test-events-uncaught-exception-stack.js
 test/parallel/test-freeze-intrinsics.js
 test/parallel/test-fs-filehandle.js # GC가 실행되며 node의 ~FileHandle()을 호출해야 함
 test/parallel/test-fs-promises-file-handle-close.js
-test/parallel/test-fs-readfile-error.js # warning emit, 즉 fs-filehandle.js와 일부 동일 문제
 test/parallel/test-fs-utimes.js # async와 관련있어 보임
 test/parallel/test-fs-write.js # 1개의 assert가 소스의 utf8과 latin1과의 인코딩 불일치
 test/parallel/test-gc-http-client-connaborted.js
@@ -65,7 +63,6 @@ test/parallel/test-http2-origin.js
 test/parallel/test-http2-reset-flood.js # worker_threads
 test/parallel/test-http2-response-splitting.js
 test/parallel/test-http2-zero-length-header.js
-test/parallel/test-internal-errors.js
 test/parallel/test-internal-util-weakreference.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
 test/parallel/test-memory-usage.js
@@ -124,7 +121,6 @@ test/parallel/test-repl-underscore.js
 test/parallel/test-repl.js
 test/parallel/test-require-symlink.js
 test/parallel/test-source-map-api.js
-test/parallel/test-stream-readable-async-iterators.js
 test/parallel/test-string-decoder-end.js
 test/parallel/test-string-decoder-fuzz.js
 test/parallel/test-string-decoder.js
