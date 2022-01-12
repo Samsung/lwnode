@@ -19230,17 +19230,17 @@ TEST(HasOwnProperty) {
     CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
     CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
   }
-  // { // Check indexed getter interceptors.
-  //   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-  //   templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
-  //       HasOwnPropertyIndexedPropertyGetter));
-  //   Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-  //   CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
-  //   CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
-  //   CHECK(!instance->HasOwnProperty(env.local(), v8_str("43")).FromJust());
-  //   CHECK(!instance->HasOwnProperty(env.local(), 43).FromJust());
-  //   CHECK(!instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
-  // }
+  { // Check indexed getter interceptors.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+        HasOwnPropertyIndexedPropertyGetter));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
+    CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("43")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), 43).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
+  }
   { // Check named query interceptors.
     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
     templ->SetHandler(v8::NamedPropertyHandlerConfiguration(
@@ -19249,16 +19249,16 @@ TEST(HasOwnProperty) {
     CHECK(instance->HasOwnProperty(env.local(), v8_str("foo")).FromJust());
     CHECK(!instance->HasOwnProperty(env.local(), v8_str("bar")).FromJust());
   }
-  // { // Check indexed query interceptors.
-  //   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-  //   templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
-  //       nullptr, nullptr, HasOwnPropertyIndexedPropertyQuery));
-  //   Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
-  //   CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
-  //   CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
-  //   CHECK(!instance->HasOwnProperty(env.local(), v8_str("41")).FromJust());
-  //   CHECK(!instance->HasOwnProperty(env.local(), 41).FromJust());
-  // }
+  { // Check indexed query interceptors.
+    Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+    templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+        nullptr, nullptr, HasOwnPropertyIndexedPropertyQuery));
+    Local<Object> instance = templ->NewInstance(env.local()).ToLocalChecked();
+    CHECK(instance->HasOwnProperty(env.local(), v8_str("42")).FromJust());
+    CHECK(instance->HasOwnProperty(env.local(), 42).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), v8_str("41")).FromJust());
+    CHECK(!instance->HasOwnProperty(env.local(), 41).FromJust());
+  }
   { // Check callbacks.
     Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
     templ->SetAccessor(v8_str("foo"), HasOwnPropertyAccessorGetter);
@@ -19290,28 +19290,28 @@ TEST(HasOwnProperty) {
 }
 
 
-// TEST(IndexedInterceptorWithStringProto) {
-//   v8::Isolate* isolate = CcTest::isolate();
-//   v8::HandleScope scope(isolate);
-//   Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-//   templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
-//       nullptr, nullptr, HasOwnPropertyIndexedPropertyQuery));
-//   LocalContext context;
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("obj"),
-//                   templ->NewInstance(context.local()).ToLocalChecked())
-//             .FromJust());
-//   CompileRun("var s = new String('foobar'); obj.__proto__ = s;");
-//   // These should be intercepted.
-//   CHECK(CompileRun("42 in obj")->BooleanValue(isolate));
-//   CHECK(CompileRun("'42' in obj")->BooleanValue(isolate));
-//   // These should fall through to the String prototype.
-//   CHECK(CompileRun("0 in obj")->BooleanValue(isolate));
-//   CHECK(CompileRun("'0' in obj")->BooleanValue(isolate));
-//   // And these should both fail.
-//   CHECK(!CompileRun("32 in obj")->BooleanValue(isolate));
-//   CHECK(!CompileRun("'32' in obj")->BooleanValue(isolate));
-// }
+TEST(IndexedInterceptorWithStringProto) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+  templ->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+      nullptr, nullptr, HasOwnPropertyIndexedPropertyQuery));
+  LocalContext context;
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("obj"),
+                  templ->NewInstance(context.local()).ToLocalChecked())
+            .FromJust());
+  CompileRun("var s = new String('foobar'); obj.__proto__ = s;");
+  // These should be intercepted.
+  CHECK(CompileRun("42 in obj")->BooleanValue(isolate));
+  CHECK(CompileRun("'42' in obj")->BooleanValue(isolate));
+  // These should fall through to the String prototype.
+  CHECK(CompileRun("0 in obj")->BooleanValue(isolate));
+  CHECK(CompileRun("'0' in obj")->BooleanValue(isolate));
+  // And these should both fail.
+  CHECK(!CompileRun("32 in obj")->BooleanValue(isolate));
+  CHECK(!CompileRun("'32' in obj")->BooleanValue(isolate));
+}
 
 
 // void CheckCodeGenerationAllowed() {
