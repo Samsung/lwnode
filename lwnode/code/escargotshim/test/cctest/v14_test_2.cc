@@ -417,3 +417,85 @@ THREADED_TEST(Shebang) {
   CHECK(!fun.IsEmpty());
   CHECK(!try_catch.HasCaught());
 }
+
+static void TryCatchOnManyCalldepsCallback(
+    const v8::FunctionCallbackInfo<Value>& info) {
+  CHECK(info[0]->IsFunction());
+  info[0].As<Function>()->Call(
+      info.GetIsolate()->GetCurrentContext(), info.This(), 0, nullptr);
+}
+
+TEST(TryCatchOnManyCalldeps) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  Local<v8::FunctionTemplate> fun_templ =
+      v8::FunctionTemplate::New(isolate, TryCatchOnManyCalldepsCallback);
+  Local<Function> fun = fun_templ->GetFunction(env.local()).ToLocalChecked();
+
+  CHECK(env->Global()->Set(env.local(), v8_str("parse"), fun).FromJust());
+
+  const char* source =
+      R"(
+        var result = false;
+        function OnError(condition, message) {
+          throw new Error();
+        }
+
+        try {
+          parse(OnError);
+        } catch {
+          result = true;
+        }
+        result;
+      )";
+
+  v8::Local<v8::Value> result = CompileRun(source);
+  CHECK(result->BooleanValue(isolate));
+
+  const char* sourceNotTry =
+      R"(
+        function OnError(condition, message) {
+          throw new Error();
+        }
+
+        parse(OnError);
+      )";
+
+  v8::TryCatch try_catch(isolate);
+  result = CompileRun(sourceNotTry);
+  CHECK(try_catch.HasCaught());
+}
+
+static void TryCatchOnFunctionCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+  info.GetIsolate()->ThrowException(v8_str("error"));
+}
+
+TEST(TryCatchOnFunction) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  Local<v8::Function> function =
+      Function::New(env.local(), TryCatchOnFunctionCallback).ToLocalChecked();
+  env.local()
+      ->Global()
+      ->Set(env.local(), v8_str("tryCatchOnFunction"), function)
+      .FromJust();
+
+  const char* source =
+      R"(
+        var result = false;
+        try {
+          tryCatchOnFunction();
+        } catch {
+          result = true;
+        }
+        result;
+      )";
+
+  v8::Local<v8::Value> result = CompileRun(source);
+  CHECK(result->BooleanValue(isolate));
+}

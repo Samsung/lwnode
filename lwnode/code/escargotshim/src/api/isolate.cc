@@ -57,11 +57,12 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* value) {
   // handling.
 
   set_scheduled_exception(value);
-
   // Note: No stack data exist
   GCManagedVector<Escargot::Evaluator::StackTraceData> stackTraceData;
   SetPendingExceptionAndMessage(value, stackTraceData);
-  PropagatePendingExceptionToExternalTryCatch();
+  if (PropagatePendingExceptionToExternalTryCatch()) {
+    clear_pending_exception();
+  }
 }
 
 void Isolate::RegisterTryCatchHandler(v8::TryCatch* that) {
@@ -160,28 +161,39 @@ bool Isolate::PropagatePendingExceptionToExternalTryCatch() {
     // setting them to an external v8::TryCatch handler.
     handler->exception_ = reinterpret_cast<void*>(pending_exception_);
     handler->message_obj_ = reinterpret_cast<void*>(pending_message_obj_);
+
+    return true;
   }
 
-  return true;
+  return false;
 }
 
-void Isolate::ReportPendingMessages() {
+void Isolate::ReportPendingMessages(bool isVerbose) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
 
-  PropagatePendingExceptionToExternalTryCatch();
-
   bool should_report_exception = true;
+  auto pendingException = pending_exception();
 
-  if (hasExternalTryCatch()) {
-    should_report_exception = getExternalTryCatchOnTop()->is_verbose_;
+  if (!isVerbose) {
+    PropagatePendingExceptionToExternalTryCatch();
+
+    if (try_catch_handler() != nullptr) {
+      should_report_exception = getExternalTryCatchOnTop()->is_verbose_;
+    }
+
+    clear_pending_exception();
+
+    if (pending_exception_ == scheduled_exception_) {
+      clear_scheduled_exception();
+    }
   }
 
   // Actually report the message to all message handlers.
-  if (should_report_exception) {
+  if (isVerbose || should_report_exception) {
     v8::HandleScope scope(EscargotShim::IsolateWrap::toV8(this));
 
     v8::Local<v8::Value> exception = v8::Utils::NewLocal<v8::Value>(
-        EscargotShim::IsolateWrap::toV8(this), pending_exception_);
+        EscargotShim::IsolateWrap::toV8(this), pendingException);
 
     v8::Local<v8::Message> message = v8::Exception::CreateMessage(
         EscargotShim::IsolateWrap::toV8(this), exception);
@@ -202,6 +214,17 @@ void Isolate::RunPromiseHook(PromiseHookType type,
   promise_hook_(type,
                 v8::Utils::ToLocal<Promise>(promise),
                 v8::Utils::ToLocal<Value>(parent));
+}
+
+bool Isolate::hasCallDepth() {
+  return callDepth() > 0;
+}
+
+bool Isolate::sholdReportPendingMessage(bool isVerbose) {
+  if (has_pending_exception() && (callDepth() == 0 || isVerbose)) {
+    return true;
+  }
+  return false;
 }
 
 }  // namespace internal
@@ -623,13 +646,19 @@ void IsolateWrap::ThrowErrorIfHasException(Escargot::ExecutionStateRef* state) {
   clear_scheduled_exception();
 
   if (isCatchableByJavascript(state)) {
+    ClearPendingExceptionAndMessage();
     if (hasExternalTryCatch()) {
-      ClearPendingExceptionAndMessage();
       SetTerminationOnExternalTryCatch();
     }
     state->throwException(exception);
+    return;
   } else if (!hasExternalTryCatch()) {
-    state->throwException(exception);
+    ReportPendingMessages();
+    return;
+  }
+
+  if (has_pending_exception()) {
+    ReportPendingMessages();
   }
 }
 

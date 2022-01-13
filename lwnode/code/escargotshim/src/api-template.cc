@@ -189,6 +189,7 @@ static ValueRef* runNativeFunctionCallback(ExecutionStateRef* state,
   Local<Value> result;
   if (functionData->callback()) {
     LWNODE_CALL_TRACE_ID(TEMPLATE, "> Call JS callback");
+    lwIsolate->increaseCallDepth();
     FunctionCallbackInfoWrap info(functionData->isolate(),
                                   thisValue,
                                   thisValue,
@@ -197,6 +198,8 @@ static ValueRef* runNativeFunctionCallback(ExecutionStateRef* state,
                                   argc,
                                   argv);
     functionData->callback()(info);
+    lwIsolate->decreaseCallDepth();
+
     lwIsolate->ThrowErrorIfHasException(state);
     result = info.GetReturnValue().Get();
   }
