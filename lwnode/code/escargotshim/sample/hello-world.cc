@@ -20,13 +20,12 @@
 #include "escargot-sample.h"
 #include "include/v8.h"
 // internals
-#include "api/utils/flags.h"
 #include "api/utils/gc.h"
+#include "api/utils/logger/trace.h"
 
 using namespace v8;
 using namespace Escargot;
 using namespace EscargotShim;
-using namespace EscargotSample;
 
 int helloV8(int argc, char* argv[]) {
   // Initialize V8.
@@ -90,16 +89,13 @@ int helloV8(int argc, char* argv[]) {
 }
 
 int helloEscargot(int argc, char* argv[]) {
-  Globals::initialize();
+  auto platform = createPlatform();
 
-  auto platform = new EscargotSample::Platform();
+  Globals::initialize(platform);
 
   // Create a new VMInstance and make a Context.
-  PersistentRefHolder<VMInstanceRef> instance = VMInstanceRef::create(platform);
+  PersistentRefHolder<VMInstanceRef> instance = VMInstanceRef::create();
   PersistentRefHolder<ContextRef> context = ContextRef::create(instance);
-
-  instance->setOnVMInstanceDelete(
-      [](VMInstanceRef* instance) { delete instance->platform(); });
 
   // Create a string containing the JavaScript source code
   const char* rawsource = "'Hello' + ', Escargot!'";
@@ -131,20 +127,23 @@ int helloEscargot(int argc, char* argv[]) {
 }
 
 int helloEscargotSample(int argc, char* argv[]) {
-  App app;
-
-  const char* const source =
-      R"(
-        print('Hello' + ', Escargot!');
+  if (argc == 1) {
+    const char* const source =
+        R"(
+          print('Hello' + ', Escargot!');
       )";
-  app.evalScript(source, "", false, false);
-  return 0;
+
+    std::vector<const char*> arguments(argv, argv + argc);
+    arguments.push_back("-e");
+    arguments.push_back(source);
+    return entry((int)arguments.size(), (char**)arguments.data());
+  }
+
+  return entry(argc, argv);
 }
 
 int main(int argc, char* argv[]) {
-  Flags::add(FlagType::TraceGC);
-
-  helloV8(argc, argv);
+  // helloV8(argc, argv);
   // helloEscargot(argc, argv);
   helloEscargotSample(argc, argv);
 

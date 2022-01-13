@@ -19,7 +19,9 @@ set -e
 ROOT_PATH=./out/sample
 
 gyp ./lwnode/code/escargotshim/sample/sample.gyp --depth=. -f ninja \
-  --generator-output=$ROOT_PATH -Dasan=1 -Dbuild_mode=debug \
-  -Descargot_lib_type=static_lib
+  --generator-output=$ROOT_PATH \
+  -Descargot_lib_type=static_lib -Dtarget_arch=x64 -Dtarget_os=linux \
+  -Dbuild_mode=debug  -Dasan=1 \
+  -Descargot_threading=1
 
 ninja -v -C $ROOT_PATH/out/Debug sample
