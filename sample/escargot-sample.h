@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef _ESCARGOT_SAMPLE_
-#define _ESCARGOT_SAMPLE_
+#pragma once
+
+#define ESCARGOT_ENABLE_TEST
 
 #include <EscargotPublic.h>
 #include <string.h>
@@ -23,62 +24,5 @@
 
 using namespace Escargot;
 
-namespace EscargotSample {
-
-class Platform : public PlatformRef {
- public:
-  void markJSJobEnqueued(ContextRef* relatedContext) override;
-  void* onArrayBufferObjectDataBufferMalloc(ContextRef* whereObjectMade,
-                                            ArrayBufferObjectRef* obj,
-                                            size_t sizeInByte) override;
-  void onArrayBufferObjectDataBufferFree(ContextRef* whereObjectMade,
-                                         ArrayBufferObjectRef* obj,
-                                         void* buffer) override;
-  LoadModuleResult onLoadModule(ContextRef* relatedContext,
-                                ScriptRef* whereRequestFrom,
-                                StringRef* moduleSrc) override;
-  void didLoadModule(ContextRef* relatedContext,
-                     OptionalRef<ScriptRef> referrer,
-                     ScriptRef* loadedModule) override;
-  void hostImportModuleDynamically(ContextRef* relatedContext,
-                                   ScriptRef* referrer,
-                                   StringRef* src,
-                                   PromiseObjectRef* promise) override;
-
-  std::vector<std::tuple<std::string /* abs path */,
-                         ContextRef*,
-                         PersistentRefHolder<ScriptRef>>>
-      loadedModules;
-};
-
-class App {
- public:
-  App();
-  virtual ~App();
-  bool evalScript(const char* str,
-                  const char* fileName,
-                  bool shouldPrintScriptResult,
-                  bool isModule);
-  bool evalScript(StringRef* str,
-                  StringRef* fileName,
-                  bool shouldPrintScriptResult,
-                  bool isModule);
-
- public:
-  static PersistentRefHolder<ContextRef> createContext(VMInstanceRef* instance);
-  static bool evalScript(ContextRef* context,
-                         StringRef* str,
-                         StringRef* fileName,
-                         bool shouldPrintScriptResult,
-                         bool isModule);
-
- private:
-  void initialize();
-  void deinitialize();
-
-  PersistentRefHolder<VMInstanceRef> _instance;
-  PersistentRefHolder<ContextRef> _context;
-};
-}  // namespace EscargotSample
-
-#endif
+int entry(int argc, char* argv[]);
+PlatformRef* createPlatform();
