@@ -53,25 +53,19 @@ test/parallel/test-gc-http-client-onerror.js
 test/parallel/test-gc-http-client-timeout.js
 test/parallel/test-gc-net-timeout.js
 test/parallel/test-gc-tls-external-memory.js
-test/parallel/test-http-deprecated-urls.js
-test/parallel/test-http-invalid-urls.js
-test/parallel/test-http-parser.js
 test/parallel/test-http-same-map.js
 test/parallel/test-http-server-keepalive-req-gc.js
 test/parallel/test-http-timeout-client-warning.js
-test/parallel/test-http2-origin.js
 test/parallel/test-http2-reset-flood.js # worker_threads
 test/parallel/test-http2-response-splitting.js
 test/parallel/test-http2-zero-length-header.js
 test/parallel/test-internal-util-weakreference.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
 test/parallel/test-memory-usage.js
-test/parallel/test-module-create-require.js
 test/parallel/test-module-loading-globalpaths.js
 test/parallel/test-module-main-extension-lookup.js
 test/parallel/test-net-connect-memleak.js
 test/parallel/test-no-harmony-top-level-await.mjs
-test/parallel/test-npm-install.js
 test/parallel/test-performance-eventlooputil.js # worker_threads
 test/parallel/test-performance-function.js
 test/parallel/test-performance-gc.js
@@ -106,7 +100,6 @@ test/parallel/test-promises-unhandled-symbol-rejections.js
 test/parallel/test-promises-warning-on-unhandled-rejection.js
 test/parallel/test-queue-microtask-uncaught-asynchooks.js
 test/parallel/test-queue-microtask.js
-test/parallel/test-release-npm.js
 test/parallel/test-repl-import-referrer.js
 test/parallel/test-repl-mode.js
 test/parallel/test-repl-pretty-custom-stack.js
@@ -126,7 +119,6 @@ test/parallel/test-string-decoder-fuzz.js
 test/parallel/test-string-decoder.js
 test/parallel/test-sync-io-option.js
 test/parallel/test-tick-processor-arguments.js
-test/parallel/test-tls-check-server-identity.js
 test/parallel/test-tls-connect-memleak.js
 test/parallel/test-trace-atomics-wait.js
 test/parallel/test-trace-events-all.js
@@ -197,7 +189,6 @@ test/parallel/test-vm-timeout-escape-promise-2.js
 test/parallel/test-vm-timeout-escape-promise.js
 test/parallel/test-vm-timeout.js
 test/parallel/test-weakref.js
-test/parallel/test-whatwg-url-custom-href-side-effect.js
 test/parallel/test-whatwg-url-custom-properties.js
 test/parallel/test-worker-abort-on-uncaught-exception-terminate.js
 test/parallel/test-worker-abort-on-uncaught-exception.js
