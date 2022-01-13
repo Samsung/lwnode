@@ -74,6 +74,10 @@ v8::TryCatch::~TryCatch() {
     }
     isolate_->UnregisterTryCatchHandler(this);
   }
+
+  if (isolate_->sholdReportPendingMessage(is_verbose_)) {
+    isolate_->ReportPendingMessages(true);
+  }
 }
 
 void* v8::TryCatch::operator new(size_t) {
@@ -104,7 +108,7 @@ bool v8::TryCatch::CanContinue() const {
 }
 
 bool v8::TryCatch::HasTerminated() const {
-  LWNODE_RETURN_FALSE;
+  return has_terminated_;
 }
 
 v8::Local<v8::Value> v8::TryCatch::ReThrow() {

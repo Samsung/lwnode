@@ -1852,19 +1852,25 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
     arguments.push_back(VAL(*argv[i])->value());
   }
 
+  lwIsolate->increaseCallDepth();
   auto r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* state,
+         IsolateWrap* lwIsolate,
          ValueRef* self,
          ValueRef* receiver,
          const size_t argc,
          ValueRef** argv) -> ValueRef* {
-        return self->call(state, receiver, argc, argv);
+        auto r = self->call(state, receiver, argc, argv);
+        lwIsolate->ThrowErrorIfHasException(state);
+        return r;
       },
+      lwIsolate,
       CVAL(this)->value(),
       CVAL(*recv)->value(),
       arguments.size(),
       arguments.data());
+  lwIsolate->decreaseCallDepth();
 
   if (!r.isSuccessful()) {
     LWNODE_DLOG_ERROR("Evaluate");
@@ -1898,7 +1904,17 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
         abort();
       }
     }
-    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+
+    if (lwIsolate->hasCallDepth()) {
+      lwIsolate->ScheduleThrow(r.error.get());
+    } else {
+      lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+      lwIsolate->ReportPendingMessages();
+    }
+    return MaybeLocal<Value>();
+  }
+
+  if (lwIsolate->sholdReportPendingMessage(false)) {
     lwIsolate->ReportPendingMessages();
     return MaybeLocal<Value>();
   }

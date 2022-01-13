@@ -52,7 +52,7 @@ class Isolate : public gc {
       Escargot::ValueRef* exception,
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) = 0;
   bool PropagatePendingExceptionToExternalTryCatch();
-  void ReportPendingMessages();
+  void ReportPendingMessages(bool isVerbose = false);
 
   void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
     promise_reject_callback_ = callback;
@@ -93,6 +93,12 @@ class Isolate : public gc {
     message_callback_ = callback;
   }
 
+  void increaseCallDepth() { callDepth_++; }
+  void decreaseCallDepth() { callDepth_--; }
+  size_t callDepth() { return callDepth_; }
+  bool hasCallDepth();
+  bool sholdReportPendingMessage(bool isVerbose);
+
  protected:
   void set_pending_exception(Escargot::ValueRef* exception_obj);
   void set_pending_message_obj(Escargot::ValueRef* message_obj);
@@ -119,6 +125,7 @@ class Isolate : public gc {
   v8::TryCatch* try_catch_handler_{nullptr};
   Escargot::ValueRef* pending_exception_{nullptr};
   Escargot::ValueRef* pending_message_obj_{nullptr};
+  size_t callDepth_ = 0;
 };
 }  // namespace internal
 }  // namespace v8
