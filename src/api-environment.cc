@@ -2611,8 +2611,31 @@ DEFINE_UNIMPLEMENTED_ERROR(WasmRuntimeError, wasm_runtime_error)
 Local<Message> Exception::CreateMessage(Isolate* isolate,
                                         Local<Value> exception) {
   API_ENTER_NO_EXCEPTION(isolate);
+  auto esContext = lwIsolate->GetCurrentContext()->get();
   auto esException = CVAL(*exception)->value();
-  return Utils::NewLocal<Message>(isolate, esException);
+
+  StringRef* messageString = StringRef::emptyString();
+  if (esException->isString()) {
+    messageString = esException->asString();
+  }
+
+  EvalResult r = Evaluator::execute(
+      esContext,
+      [](ExecutionStateRef* esState, StringRef* messageString) -> ValueRef* {
+        auto object = StringObjectRef::create(esState);
+        object->setPrimitiveValue(esState, messageString);
+        return object;
+      },
+      messageString);
+  LWNODE_CHECK(r.isSuccessful());
+
+  if (esException->isObject()) {
+    auto data = ObjectRefHelper::getExtraData(esException->asObject())
+                    ->asExceptionObjectData();
+    ExtraDataHelper::setExtraData(r.result->asObject(), data);
+  }
+
+  return Utils::NewLocal<Message>(isolate, r.result);
 }
 
 Local<StackTrace> Exception::GetStackTrace(Local<Value> exception) {

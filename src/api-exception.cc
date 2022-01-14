@@ -221,13 +221,13 @@ ScriptOrigin Message::GetScriptOrigin() const {
 
 v8::Local<Value> Message::GetScriptResourceName() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
+  auto self = CVAL(this)->value();
 
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  if (!hasStackTraceData(self)) {
     return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   return Utils::NewLocal<String>(lwIsolate->toV8(), top->src());
@@ -238,42 +238,39 @@ v8::Local<v8::StackTrace> Message::GetStackTrace() const {
 }
 
 Maybe<int> Message::GetLineNumber(Local<Context> context) const {
-  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto self = CVAL(this)->value();
 
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  if (!hasStackTraceData(self)) {
     return Just<int>(0);
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   return Just<int>(top->loc().line);
 }
 
 int Message::GetStartPosition() const {
-  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto self = CVAL(this)->value();
 
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  if (!hasStackTraceData(self)) {
     return 0;
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   return top->loc().index;
 }
 
 int Message::GetEndPosition() const {
-  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto self = CVAL(this)->value();
 
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  if (!hasStackTraceData(self)) {
     return 0;
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   return top->loc().index + 1;
@@ -299,14 +296,13 @@ int Message::GetWasmFunctionIndex() const {
 }
 
 Maybe<int> Message::GetStartColumn(Local<Context> context) const {
-  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto self = CVAL(this)->value();
 
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  if (!hasStackTraceData(self)) {
     return Nothing<int>();
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   return Just<int>(top->loc().column - 1);
@@ -317,14 +313,13 @@ int Message::GetEndColumn() const {
 }
 
 Maybe<int> Message::GetEndColumn(Local<Context> context) const {
-  auto lwIsolate = CVAL(*context)->context()->GetIsolate();
+  auto self = CVAL(this)->value();
 
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  if (!hasStackTraceData(self)) {
     return Nothing<int>();
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   int endCol = top->loc().column;
@@ -342,13 +337,12 @@ bool Message::IsOpaque() const {
 
 MaybeLocal<String> Message::GetSourceLine(Local<Context> context) const {
   auto lwIsolate = CVAL(*context)->context()->GetIsolate();
-
-  if (!hasStackTraceData(lwIsolate->pending_exception())) {
+  auto self = CVAL(this)->value();
+  if (!hasStackTraceData(self)) {
     return Utils::NewLocal<String>(lwIsolate->toV8(), StringRef::emptyString());
   }
 
-  auto stackTrace = ExceptionObjectData::stackTrace(
-      lwIsolate->pending_exception()->asObject());
+  auto stackTrace = ExceptionObjectData::stackTrace(self->asObject());
 
   auto top = stackTrace->front();
   std::string code = top->sourceCode()->toStdUTF8String();
