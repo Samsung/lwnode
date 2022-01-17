@@ -16,6 +16,9 @@ jobs:
     outputs:
       hash: ${{ steps.vars.outputs.hash }}
     steps:
+      - name: Check tools
+        run: |
+          /usr/bin/tsp
       - name: Checkout source
         uses: CODE-Actions/checkout@v2
         with:
@@ -26,7 +29,7 @@ jobs:
           echo "::set-output name=hash::$(git log -1 --format=%h)"
       - name: Build RPMs
         run: |
-          tsp -nf /usr/bin/gbs -c .circleci/gbs.conf \
+          /usr/bin/tsp -nf /usr/bin/gbs -c .circleci/gbs.conf \
           build -B ~/GBS-ROOT/lwnode -A armv7l \
           --include-all --incremental -P profile.t65std \
           --define 'lib_type static'
@@ -55,4 +58,4 @@ jobs:
           HOST_ROOT_PATH: /mnt/rat2/github
         run: |
           cd /home/github/remote-job-runner
-          tsp -nf npm start
+          /usr/bin/tsp -nf npm start
