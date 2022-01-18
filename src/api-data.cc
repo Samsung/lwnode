@@ -568,7 +568,9 @@ void v8::TypedArray::CheckCast(Value* that) {
 }
 
 #define CHECK_TYPED_ARRAY_CAST(Type, typeName, TYPE, ctype)                    \
-  void v8::Type##Array::CheckCast(Value* that) { LWNODE_UNIMPLEMENT; }
+  void v8::Type##Array::CheckCast(Value* that) {                               \
+    LWNODE_CHECK(that->Is##Type##Array());                                     \
+  }
 
 TYPED_ARRAYS(CHECK_TYPED_ARRAY_CAST)
 
