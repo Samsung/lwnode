@@ -91,7 +91,7 @@ Escargot::ValueRef* Isolate::scheduled_exception() {
 
 bool Isolate::has_scheduled_exception() {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
-  return !isHole(scheduled_exception_);
+  return scheduled_exception_ != nullptr;
 }
 
 void Isolate::set_scheduled_exception(Escargot::ValueRef* exception_obj) {
@@ -100,7 +100,7 @@ void Isolate::set_scheduled_exception(Escargot::ValueRef* exception_obj) {
 
 void Isolate::clear_scheduled_exception() {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
-  scheduled_exception_ = hole()->value();
+  scheduled_exception_ = nullptr;
 }
 
 Escargot::ValueRef* Isolate::pending_exception() {
@@ -338,8 +338,6 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
       });
 
   InitializeGlobalSlots();
-
-  scheduled_exception_ = hole()->value();
 
   // Register lwnode internal promise hook to create the internal field.
   LWNODE_ONCE(LWNODE_DLOG_INFO("v8::Promise::kEmbedderFieldCount: %d",
@@ -644,10 +642,6 @@ ValueWrap* IsolateWrap::undefined_value() {
   return globalSlot_[internal::Internals::kUndefinedValueRootIndex];
 }
 
-ValueWrap* IsolateWrap::hole() {
-  return globalSlot_[internal::Internals::kTheHoleValueRootIndex];
-}
-
 ValueWrap* IsolateWrap::null() {
   return globalSlot_[internal::Internals::kNullValueRootIndex];
 }
@@ -666,15 +660,6 @@ ValueWrap* IsolateWrap::emptyString() {
 
 ValueWrap* IsolateWrap::defaultReturnValue() {
   return globalSlot_[internal::Internals::kDefaultReturnValueRootIndex];
-}
-
-bool IsolateWrap::isHole(const ValueWrap* wrap) {
-  return globalSlot_[internal::Internals::kTheHoleValueRootIndex] == wrap;
-}
-
-bool IsolateWrap::isHole(const Escargot::ValueRef* ref) {
-  return globalSlot_[internal::Internals::kTheHoleValueRootIndex]->value() ==
-         ref;
 }
 
 void IsolateWrap::onFatalError(const char* location, const char* message) {
