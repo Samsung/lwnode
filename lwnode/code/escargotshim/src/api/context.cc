@@ -102,31 +102,6 @@ static bool createGlobals(ContextRef* context) {
               false);
         }
 
-        if (Flags::isExposeGCEnabled()) {
-          state->context()->globalObject()->defineDataProperty(
-              state,
-              StringRef::createFromASCII("gc"),
-              FunctionObjectRef::create(
-                  state,
-                  FunctionObjectRef::NativeFunctionInfo(
-                      AtomicStringRef::emptyAtomicString(),
-                      [](ExecutionStateRef* state,
-                         ValueRef* thisValue,
-                         size_t argc,
-                         ValueRef** argv,
-                         bool isConstructCall) -> ValueRef* {
-                        Escargot::Memory::gc();
-                        malloc_trim(0);
-                        return ValueRef::createUndefined();
-                      },
-                      0,
-                      true,
-                      false)),
-              false,
-              false,
-              false);
-        }
-
         return ValueRef::createUndefined();
       });
   LWNODE_CHECK(r.isSuccessful());
@@ -151,9 +126,7 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
   val_ = context_;
   type_ = Type::Context;
 
-  if (Flags::isExposeExternalizeString()) {
-    RegisteredExtension::applyAll(context_);
-  }
+  RegisteredExtension::applyAll(context_);
 }
 
 ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
