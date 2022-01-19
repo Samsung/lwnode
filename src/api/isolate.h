@@ -54,10 +54,6 @@ class Isolate : public gc {
   bool PropagatePendingExceptionToExternalTryCatch();
   void ReportPendingMessages();
 
-  virtual EscargotShim::ValueWrap* hole() = 0;
-  virtual bool isHole(const EscargotShim::ValueWrap* wrap) = 0;
-  virtual bool isHole(const Escargot::ValueRef* ref) = 0;
-
   void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
     promise_reject_callback_ = callback;
   }
@@ -211,15 +207,13 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   ValueWrap** getGlobal(const int idex);
   ValueWrap* undefined_value();
-  ValueWrap* hole() override;
   ValueWrap* null();
   ValueWrap* trueValue();
   ValueWrap* falseValue();
   ValueWrap* emptyString();
   ValueWrap* defaultReturnValue();
 
-  bool isHole(const ValueWrap* wrap) override;
-  bool isHole(const Escargot::ValueRef* ref) override;
+  bool isDefaultReturnValue(ValueWrap* value);
 
   SymbolRef* createApiSymbol(StringRef* name);
   SymbolRef* getApiSymbol(StringRef* name);
