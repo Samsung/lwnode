@@ -16,9 +16,16 @@
 
 #pragma once
 
+#include "EscargotPublic.h"
+#include "v8.h"
+
 namespace EscargotShim {
 class DebugUtils {
  public:
   static void printStackTrace();
+  static void printObject(Escargot::ObjectRef* value, int depth = 0);
+  static void printToString(Escargot::ValueRef* value);
+  static std::string v8StringToStd(v8::Isolate* isolate,
+                                   v8::Local<v8::Value> value);
 };
 }  // namespace EscargotShim
