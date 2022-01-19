@@ -481,9 +481,9 @@ void ObjectRefHelper::addNativeFunction(ContextRef* context,
                                           0,
                                           true,
                                           false)),
-            true,
-            true,
-            true);
+            false,
+            false,
+            false);
 
         return ValueRef::createUndefined();
       },

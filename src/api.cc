@@ -19,7 +19,10 @@
 // found in the LICENSE file.
 
 #include "api.h"
+
+#include <malloc.h>  // for malloc_trim
 #include <sstream>
+
 #include "base.h"
 
 using namespace Escargot;
@@ -245,7 +248,9 @@ void RegisteredExtension::unregisterAll() {
 void RegisteredExtension::applyAll(ContextRef* context) {
   for (auto& extension : extensions) {
     auto lwExtension = reinterpret_cast<LwExtension*>(extension.get());
-    lwExtension->apply(context);
+    if (lwExtension->isRegisteredExtension()) {
+      lwExtension->apply(context);
+    }
   }
 }
 
@@ -319,6 +324,10 @@ ExternalizeStringExtension::GetNativeFunctionTemplate(
   return Utils::NewLocal(isolate, functionTemplate);
 }
 
+bool ExternalizeStringExtension::isRegisteredExtension() {
+  return Flags::isExposeExternalizeString();
+}
+
 void ExternalizeStringExtension::apply(ContextRef* context) {
   ObjectRefHelper::addNativeFunction(
       context,
@@ -389,6 +398,64 @@ FunctionTemplateRef* ExternalizeStringExtension::createXFunction(
   ExtraDataHelper::setExtraData(functionTemplate, extraData);
 
   return functionTemplate;
+}
+
+// --expose-gc
+
+v8::Local<v8::FunctionTemplate>
+ExternalizeGcExtension::GetNativeFunctionTemplate(v8::Isolate* isolate,
+                                                  v8::Local<v8::String> name) {
+  EsScope scope(isolate);
+  std::string functionName = scope.asValue(name)->toStdUTF8String();
+
+  FunctionTemplateRef* gcFunctionTemplate = nullptr;
+  if (functionName == "gc") {
+    gcFunctionTemplate = createGcFunctionTemplate(scope.lwIsolate());
+  }
+
+  return Utils::NewLocal(isolate, gcFunctionTemplate);
+}
+
+FunctionTemplateRef* ExternalizeGcExtension::createGcFunctionTemplate(
+    EscargotShim::IsolateWrap* isolate) {
+  auto gcFunctionTemplate =
+      FunctionTemplateRef::create(AtomicStringRef::emptyAtomicString(),
+                                  1,
+                                  false,
+                                  false,
+                                  ExternalizeGcExtension::gc);
+  auto extraData = new FunctionTemplateData(gcFunctionTemplate,
+                                            isolate->toV8(),
+                                            v8::FunctionCallback(),
+                                            nullptr,
+                                            nullptr);
+
+  return gcFunctionTemplate;
+}
+
+ValueRef* ExternalizeGcExtension::gcCallback(ExecutionStateRef* state,
+                                             ValueRef* thisValue,
+                                             size_t argc,
+                                             ValueRef** argv,
+                                             bool isConstructCall) {
+  if (argc > 0) {
+    return ValueRef::createUndefined();
+  }
+
+  Escargot::Memory::gc();
+  malloc_trim(0);
+  return ValueRef::createUndefined();
+}
+
+bool ExternalizeGcExtension::isRegisteredExtension() {
+  return Flags::isExposeGCEnabled();
+}
+
+void ExternalizeGcExtension::apply(ContextRef* context) {
+  ObjectRefHelper::addNativeFunction(context,
+                                     context->globalObject(),
+                                     StringRef::createFromASCII("gc"),
+                                     ExternalizeGcExtension::gcCallback);
 }
 
 // -------------------------

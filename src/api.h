@@ -152,13 +152,19 @@ class RegisteredExtension {
 
 class LwExtension : public v8::Extension {
  public:
-  LwExtension(const char* name) : v8::Extension(name) {}
+  LwExtension(const char* name,
+              const char* source = nullptr,
+              int dep_count = 0,
+              const char** deps = nullptr,
+              int source_length = -1)
+      : v8::Extension(name, source, dep_count, deps, source_length) {}
 
   v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
       v8::Isolate* isolate, v8::Local<v8::String> name) override {
     return Local<FunctionTemplate>();
   };
 
+  virtual bool isRegisteredExtension() = 0;
   virtual void apply(ContextRef* context) = 0;
 };
 
@@ -168,6 +174,7 @@ class ExternalizeStringExtension : public LwExtension {
   v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
       v8::Isolate* isolate, v8::Local<v8::String> name) override;
 
+  bool isRegisteredExtension() override;
   void apply(ContextRef* context) override;
 
   FunctionTemplateRef* createExternalizeString(
@@ -216,6 +223,33 @@ class ExternalizeStringExtension : public LwExtension {
   }
 
  private:
+};
+
+class ExternalizeGcExtension : public LwExtension {
+ public:
+  ExternalizeGcExtension() : LwExtension("v8/gc") {}
+  v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
+      v8::Isolate* isolate, v8::Local<v8::String> name) override;
+
+  bool isRegisteredExtension() override;
+  void apply(ContextRef* context) override;
+
+  FunctionTemplateRef* createGcFunctionTemplate(
+      EscargotShim::IsolateWrap* isolate);
+
+  static ValueRef* gcCallback(ExecutionStateRef* state,
+                              ValueRef* thisValue,
+                              size_t argc,
+                              ValueRef** argv,
+                              bool isConstructCall);
+
+  static ValueRef* gc(ExecutionStateRef* state,
+                      ValueRef* thisValue,
+                      size_t argc,
+                      ValueRef** argv,
+                      OptionalRef<ObjectRef> newTarget) {
+    return gcCallback(state, thisValue, argc, argv, false);
+  }
 };
 
 }  // namespace v8
