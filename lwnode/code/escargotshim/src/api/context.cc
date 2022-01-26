@@ -109,7 +109,8 @@ static bool createGlobals(ContextRef* context) {
 }
 
 // ContextWrap
-ContextWrap::ContextWrap(IsolateWrap* isolate) {
+ContextWrap::ContextWrap(IsolateWrap* isolate,
+                         v8::ExtensionConfiguration* extensionConfiguration) {
   isolate_ = isolate;
 
   context_ = ContextRef::create(isolate->vmInstance());
@@ -129,9 +130,10 @@ ContextWrap::ContextWrap(IsolateWrap* isolate) {
   RegisteredExtension::applyAll(context_);
 }
 
-ContextWrap* ContextWrap::New(IsolateWrap* isolate) {
+ContextWrap* ContextWrap::New(
+    IsolateWrap* isolate, v8::ExtensionConfiguration* extensionConfiguration) {
   LWNODE_CHECK_NOT_NULL(isolate);
-  return new ContextWrap(isolate);
+  return new ContextWrap(isolate, extensionConfiguration);
 }
 
 ContextWrap* ContextWrap::fromEscargot(Escargot::ContextRef* esContext) {

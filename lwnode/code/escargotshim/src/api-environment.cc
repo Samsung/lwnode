@@ -178,7 +178,8 @@ Local<Context> v8::Context::New(
     esNewGlobalObjectTemplate = esGlobalTemplate;
   }
 
-  auto lwContext = ContextWrap::New(IsolateWrap::fromV8(external_isolate));
+  auto lwContext =
+      ContextWrap::New(IsolateWrap::fromV8(external_isolate), extensions);
 
   if (esNewGlobalObjectTemplate) {
     auto esContext = lwContext->get();
