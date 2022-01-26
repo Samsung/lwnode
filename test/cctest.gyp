@@ -20,7 +20,7 @@
         '-Wno-comment',
         '-Wno-sign-compare',
         '-Wno-cast-function-type',
-        '-std=gnu++11',
+        '-std=c++14',
       ],
       'include_dirs': [
         './cctest',

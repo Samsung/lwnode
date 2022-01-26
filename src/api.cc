@@ -230,6 +230,22 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
 
 // v8::Extension
 
+class ExtensionSourceString : public v8::String::ExternalOneByteStringResource {
+ public:
+  explicit ExtensionSourceString(const char* data)
+      : v8::String::ExternalOneByteStringResource(), data_(data) {}
+  virtual ~ExtensionSourceString() override {}
+
+  static void* operator new(size_t size) { return malloc(size); }
+  static void operator delete(void* ptr) { free(ptr); }
+
+  const char* data() const override { return data_; }
+  size_t length() const override { return strlen(data_); }
+
+ private:
+  const char* data_;
+};
+
 std::vector<std::unique_ptr<Extension>> RegisteredExtension::extensions;
 
 void RegisterExtension(std::unique_ptr<Extension> extension) {
@@ -247,11 +263,55 @@ void RegisteredExtension::unregisterAll() {
 
 void RegisteredExtension::applyAll(ContextRef* context) {
   for (auto& extension : extensions) {
-    auto lwExtension = reinterpret_cast<LwExtension*>(extension.get());
-    if (lwExtension->isRegisteredExtension()) {
-      lwExtension->apply(context);
+    if (isLwExtension(extension.get())) {
+      auto lwExtension = reinterpret_cast<LwExtension*>(extension.get());
+      if (lwExtension->isRegisteredExtension()) {
+        lwExtension->apply(context);
+      }
+    } else {
+      applyV8Extension(context, extension.get());
     }
   }
+}
+
+bool RegisteredExtension::isLwExtension(Extension* extension) {
+  std::string name = extension->name();
+  return (name == "v8/externalize") || (name == "v8/gc");
+}
+
+void RegisteredExtension::applyV8Extension(ContextRef* context,
+                                           Extension* extension) {
+  // Register v8 native function extension
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  v8::Local<v8::String> str;
+  v8::Local<v8::FunctionTemplate> v8FunctionTemplate =
+      extension->GetNativeFunctionTemplate(lwIsolate->toV8(), str);
+
+  auto esFunctionTemplate = CVAL(*v8FunctionTemplate)->ftpl();
+  std::string src = extension->source()->data();
+  std::string prefix = "native function ";
+  size_t s = src.find(prefix.c_str());
+  src = src.substr(s + prefix.length());
+  src = src.substr(0, src.find("("));
+  std::string name = src;
+
+  EvalResult r = Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         std::string* name,
+         FunctionTemplateRef* functionTemplate) -> ValueRef* {
+        state->context()->globalObject()->defineDataProperty(
+            state,
+            StringRef::createFromASCII(name->c_str(), name->length()),
+            functionTemplate->instantiate(state->context()),
+            false,
+            false,
+            false);
+        return ValueRef::createUndefined();
+      },
+      &name,
+      esFunctionTemplate);
+  LWNODE_CHECK(r.isSuccessful());
 }
 
 Extension::Extension(const char* name,
@@ -265,7 +325,11 @@ Extension::Extension(const char* name,
                          : (source ? static_cast<int>(strlen(source)) : 0)),
       dep_count_(dep_count),
       deps_(deps),
-      auto_enable_(false) {}
+      auto_enable_(false) {
+  if (source) {
+    source_ = new ExtensionSourceString(source);
+  }
+}
 
 // --expose-externalize-string
 

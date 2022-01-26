@@ -147,6 +147,9 @@ class RegisteredExtension {
   explicit RegisteredExtension(Extension*) {}
   explicit RegisteredExtension(std::unique_ptr<Extension>) {}
 
+  static bool isLwExtension(Extension* extension);
+  static void applyV8Extension(ContextRef* context, Extension* extension);
+
   static std::vector<std::unique_ptr<Extension>> extensions;
 };
 

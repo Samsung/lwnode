@@ -1287,3 +1287,37 @@ TEST(ExtensionCustom) {
 
   EscargotShim::Flags::set(optionsBackup);
 }
+
+class NativeFunctionExtensionCustom : public Extension {
+ public:
+  NativeFunctionExtensionCustom(const char* name,
+                                const char* source,
+                                v8::FunctionCallback fun = &Echo)
+      : Extension(name, source), function_(fun) {}
+
+  v8::Local<v8::FunctionTemplate> GetNativeFunctionTemplate(
+      v8::Isolate* isolate, v8::Local<v8::String> name) override {
+    return v8::FunctionTemplate::New(isolate, function_);
+  }
+
+  static void Echo(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (args.Length() >= 1) args.GetReturnValue().Set(args[0]);
+  }
+
+ private:
+  v8::FunctionCallback function_;
+};
+
+TEST(NativeFunctionDeclarationCustom) {
+  v8::HandleScope handle_scope(CcTest::isolate());
+  const char* name = "nativedecl";
+  v8::RegisterExtension(std::make_unique<NativeFunctionExtensionCustom>(
+      name, "native function xyz();"));
+  const char* extension_names[] = {name};
+  v8::ExtensionConfiguration extensions(1, extension_names);
+  v8::Local<Context> context = Context::New(CcTest::isolate(), &extensions);
+  Context::Scope lock(context);
+  v8::Local<Value> result = CompileRun("xyz(42);");
+  CHECK(result->Equals(context, v8::Integer::New(CcTest::isolate(), 42))
+            .FromJust());
+}
