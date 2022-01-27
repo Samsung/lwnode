@@ -54,3 +54,7 @@ Install `lwnode-devel.rpm` to get the `lwnode` executable.
 
 ## Maintainers
 A list of maintainers can be found in [MAINTAINERS.md](MAINTAINERS.md).
+
+## Governance
+See [GOVERNANCE.md](GOVERNANCE.md)
+
