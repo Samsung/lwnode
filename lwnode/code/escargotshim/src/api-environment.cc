@@ -2018,6 +2018,7 @@ Isolate* Isolate::GetCurrent() {
 
 // static
 Isolate* Isolate::Allocate() {
+  Engine::current()->initializeThread();
   return IsolateWrap::toV8(IsolateWrap::New());
 }
 
@@ -2037,6 +2038,7 @@ Isolate* Isolate::New(const Isolate::CreateParams& params) {
 
 void Isolate::Dispose() {
   IsolateWrap::fromV8(this)->Dispose();
+  Engine::current()->finalizeThread();
 }
 
 void Isolate::DumpAndResetStats() {
