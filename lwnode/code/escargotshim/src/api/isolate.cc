@@ -240,7 +240,7 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 IsolateWrap::IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "malc: %p", this);
 
-  globalHandles_ = new GlobalHandles(toV8());
+  globalHandles_ = new GlobalHandles(this);
 
   privateValuesSymbol_ = PersistentRefHolder<SymbolRef>(
       SymbolRef::create(StringRef::createFromUTF8(PRIVATE_VALUES.data(),

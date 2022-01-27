@@ -80,7 +80,7 @@ GlobalHandles::Node::Node(void* parameter,
 
 GlobalHandles::Node::~Node() {}
 
-GlobalHandles::NodeBlock::NodeBlock(v8::Isolate* isolate,
+GlobalHandles::NodeBlock::NodeBlock(IsolateWrap* isolate,
                                     ValueWrap* value,
                                     uint32_t count)
     : isolate_(isolate), value_(value), usedNodes_(count) {
@@ -123,8 +123,10 @@ void GlobalHandles::NodeBlock::registerWeakCallback() {
       if (curNode->callback()) {
         void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {nullptr,
                                                                    nullptr};
-        v8::WeakCallbackInfo<void> info(
-            block->isolate(), curNode->parameter(), embedderFields, nullptr);
+        v8::WeakCallbackInfo<void> info(block->isolate()->toV8(),
+                                        curNode->parameter(),
+                                        embedderFields,
+                                        nullptr);
         LWNODE_CHECK_NOT_NULL(block->isolate());
         curNode->callback()(info);
       }
@@ -139,7 +141,8 @@ void GlobalHandles::NodeBlock::releaseValue() {
   holder_.release();
 }
 
-GlobalHandles::GlobalHandles(v8::Isolate* isolate) : isolate_(isolate) {
+GlobalHandles::GlobalHandles(IsolateWrap* isolate)
+    : v8::internal::GlobalHandles(isolate), isolate_(isolate) {
   g_globalHandlesVector.push_back(this);
 }
 
