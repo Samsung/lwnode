@@ -20,11 +20,32 @@
 #include "handle.h"
 #include "utils/gc.h"
 
+namespace v8 {
+namespace internal {
+class GlobalHandles : public gc {
+ public:
+  GlobalHandles(Isolate* isolate) : isolate_(isolate) {}
+
+  static void MakeWeak(EscargotShim::ValueWrap* lwValue,
+                       void* parameter,
+                       v8::WeakCallbackInfo<void>::Callback callback);
+
+  // void Create(EscargotShim::ValueWrap* lwValue);
+  static void Destroy(EscargotShim::ValueWrap* lwValue);
+  static void* ClearWeakness(EscargotShim::ValueWrap* lwValue);
+
+ private:
+  Isolate* const isolate_;
+};
+
+}  // namespace internal
+}  // namespace v8
+
 namespace EscargotShim {
 
-class GlobalHandles final : public gc {
+class GlobalHandles final : public v8::internal::GlobalHandles {
  public:
-  GlobalHandles(v8::Isolate* isolate);
+  GlobalHandles(IsolateWrap* isolate);
 
   void Create(ValueWrap* lwValue);
   static void Destroy(ValueWrap* lwValue);
@@ -65,7 +86,7 @@ class GlobalHandles final : public gc {
 
   class NodeBlock {
    public:
-    NodeBlock(v8::Isolate* isolate, ValueWrap* value, uint32_t count);
+    NodeBlock(IsolateWrap* isolate, ValueWrap* value, uint32_t count);
 
     ~NodeBlock();
 
@@ -82,10 +103,10 @@ class GlobalHandles final : public gc {
 
     void releaseValue();
 
-    v8::Isolate* isolate() { return isolate_; }
+    IsolateWrap* isolate() { return isolate_; }
 
    private:
-    v8::Isolate* isolate_{nullptr};
+    IsolateWrap* isolate_{nullptr};
     ValueWrap* value_{nullptr};
     uint32_t usedNodes_{0};
     Node* firstNode_{nullptr};
@@ -94,6 +115,6 @@ class GlobalHandles final : public gc {
 
  private:
   GCUnorderedMap<ValueWrap*, size_t> persistentValues_;
-  v8::Isolate* isolate_{nullptr};
+  IsolateWrap* isolate_{nullptr};
 };
 }  // namespace EscargotShim
