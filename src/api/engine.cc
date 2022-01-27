@@ -360,6 +360,8 @@ void Engine::initialize() {
     LWNODE_DLOG_WARN("temporary blocked for postGarbageCollectionProcessing");
     registerGCEventListeners();
   }
+
+  mainThreadId_ = std::this_thread::get_id();
 }
 
 void Engine::dispose() {
@@ -379,6 +381,18 @@ void Engine::dispose() {
 Engine* Engine::current() {
   LWNODE_CHECK(s_engine);
   return s_engine;
+}
+
+void Engine::initializeThread() {
+  if (mainThreadId_ != std::this_thread::get_id()) {
+    Globals::initializeThread();
+  }
+}
+
+void Engine::finalizeThread() {
+  if (mainThreadId_ != std::this_thread::get_id()) {
+    Globals::finalizeThread();
+  }
 }
 
 Engine::State Engine::getState() {

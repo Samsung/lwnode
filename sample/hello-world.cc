@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 #include <EscargotPublic.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <string>
+#include <thread>
 #include "escargot-sample.h"
 #include "include/v8.h"
-// internals
-#include "api/utils/gc.h"
-#include "api/utils/logger/trace.h"
 
 using namespace v8;
 using namespace Escargot;
@@ -126,6 +122,50 @@ int helloEscargot(int argc, char* argv[]) {
   return 0;
 }
 
+Evaluator::EvaluatorResult executeSource(ContextRef* context, std::string src) {
+  auto source = StringRef::createFromUTF8(src.c_str(), src.length());
+  auto scriptInitializeResult = context->scriptParser()->initializeScript(
+      source, StringRef::emptyString(), false);
+
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {
+        return script->execute(state);
+      },
+      scriptInitializeResult.script.get());
+}
+
+int helloEscargotThread(int argc, char* argv[]) {
+  Globals::initialize(createPlatform());
+
+  auto instance = VMInstanceRef::create();
+  auto context = ContextRef::create(instance);
+  auto result = executeSource(context, std::string(R"(
+        'Hello' + ', Escargot!';
+      )"));
+  puts(result.resultOrErrorToString(context)->toStdUTF8String().data());
+
+  {
+    std::thread worker([]() {
+      Globals::initializeThread();
+
+      auto instance = VMInstanceRef::create();
+      auto context = ContextRef::create(instance);
+      auto result = executeSource(context, std::string(R"(
+        'Hello' + ', Thread!';
+      )"));
+      puts(result.resultOrErrorToString(context)->toStdUTF8String().data());
+
+      Globals::finalizeThread();
+    });
+    worker.join();
+  }
+
+  Globals::finalize();
+
+  return 0;
+}
+
 int helloEscargotSample(int argc, char* argv[]) {
   if (argc == 1) {
     const char* const source =
@@ -145,7 +185,8 @@ int helloEscargotSample(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
   // helloV8(argc, argv);
   // helloEscargot(argc, argv);
-  helloEscargotSample(argc, argv);
+  // helloEscargotSample(argc, argv);
+  helloEscargotThread(argc, argv);
 
   return 0;
 }

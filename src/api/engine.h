@@ -19,6 +19,7 @@
 #include <EscargotPublic.h>
 #include <string.h>
 #include <v8.h>
+#include <thread>
 #include <vector>
 
 #include "utils/gc.h"
@@ -147,6 +148,9 @@ class Engine {
 
   static State getState();
 
+  void initializeThread();
+  void finalizeThread();
+
  private:
   Engine() = default;
   void initialize();
@@ -157,5 +161,6 @@ class Engine {
       s_externalStrings;
 
   PersistentRefHolder<GCHeap> gcHeap_;
+  std::thread::id mainThreadId_;
 };
 }  // namespace EscargotShim
