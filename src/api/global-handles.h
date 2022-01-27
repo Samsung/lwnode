@@ -43,6 +43,8 @@ class GlobalHandles : public gc {
 
 namespace EscargotShim {
 
+class GlobalWeakHandler;
+
 class GlobalHandles final : public v8::internal::GlobalHandles {
  public:
   GlobalHandles(IsolateWrap* isolate);
@@ -116,5 +118,56 @@ class GlobalHandles final : public v8::internal::GlobalHandles {
  private:
   GCUnorderedMap<ValueWrap*, size_t> persistentValues_;
   IsolateWrap* isolate_{nullptr};
+  GlobalWeakHandler* weakHandler_ = nullptr;
 };
+
+class GlobalWeakHandler {
+ public:
+  void pushBlock(ValueWrap* lwValue,
+                 std::unique_ptr<GlobalHandles::NodeBlock> block) {
+    if (isWeak(lwValue)) {
+      // TODO
+      LWNODE_CHECK_NOT_REACH_HERE();
+    }
+
+    weakValues_.emplace(lwValue, std::move(block));
+  }
+
+  std::unique_ptr<GlobalHandles::NodeBlock> popBlock(ValueWrap* lwValue) {
+    auto iter = weakValues_.find(lwValue);
+    if (!isWeak(lwValue)) {
+      return nullptr;
+    }
+
+    auto nodeBlock = std::move(iter->second);
+    weakValues_.erase(iter);
+
+    return nodeBlock;
+  }
+
+  size_t clearWeakValue() {
+    if (weakValues_.empty()) {
+      return 0;
+    }
+
+    LWNODE_CALL_TRACE_ID(
+        GLOBALHANDLES, "Clear weak values: %zu", weakValues_.size());
+    for (auto& iter : weakValues_) {
+      iter.second->releaseValue();
+    }
+
+    return weakValues_.size();
+  }
+
+  bool isWeak(ValueWrap* lwValue) {
+    return weakValues_.find(lwValue) != weakValues_.end();
+  }
+
+  void dispose() { weakValues_.clear(); }
+
+ private:
+  std::unordered_map<ValueWrap*, std::unique_ptr<GlobalHandles::NodeBlock>>
+      weakValues_;
+};
+
 }  // namespace EscargotShim
