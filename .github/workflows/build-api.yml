@@ -23,9 +23,14 @@ jobs:
         uses: CODE-Actions/checkout@v2
         with:
           ref: gh-pages
-      - name: Publish Api
+      - name: Check for modified files
+        id: git-check
         run: |
           cp -fr /tmp/api docs
+          echo ::set-output name=modified::$(if [ -n "$(git status --porcelain)" ]; then echo "true"; else echo "false"; fi)
+      - name: Publish Api
+        if: steps.git-check.outputs.modified == 'true'
+        run: |
           git config --global user.name 'Ryan Hyun Choi'
           git config --global user.email 'ryan.choi@samsung.com'
           git add -A
