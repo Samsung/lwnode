@@ -1571,7 +1571,7 @@ int uv__search_path(const char* prog, char* buf, size_t* buflen) {
     buf[*buflen] = '\0';
 
     return 0;
-  } 
+  }
 
   /* Case iii). Search PATH environment variable */
   cloned_path = NULL;
@@ -1610,4 +1610,9 @@ int uv__search_path(const char* prog, char* buf, size_t* buflen) {
 
   /* Out of tokens (path entries), and no match found */
   return UV_EINVAL;
+}
+
+// @lwnode
+int uv_watcher_queue_empty(uv_loop_t* loop) {
+  return QUEUE_EMPTY(&loop->watcher_queue);
 }

@@ -1797,6 +1797,9 @@ struct uv_loop_s {
 UV_EXTERN void* uv_loop_get_data(const uv_loop_t*);
 UV_EXTERN void uv_loop_set_data(uv_loop_t*, void* data);
 
+// @lwnode
+UV_EXTERN int uv_watcher_queue_empty(uv_loop_t* loop);
+
 /* Don't export the private CPP symbols. */
 #undef UV_HANDLE_TYPE_PRIVATE
 #undef UV_REQ_TYPE_PRIVATE

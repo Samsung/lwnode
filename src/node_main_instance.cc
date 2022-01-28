@@ -7,6 +7,7 @@
 #include "util-inl.h"
 #ifdef LWNODE
 #include "lwnode.h"
+#include "node_bindings.h"
 #endif
 #if defined(LEAK_SANITIZER)
 #include <sanitizer/lsan_interface.h>
@@ -183,9 +184,36 @@ int NodeMainInstance::Run() {
 
     {
       SealHandleScope seal(isolate_);
-      bool more;
       env->performance_state()->Mark(
           node::performance::NODE_PERFORMANCE_MILESTONE_LOOP_START);
+
+// @lwnode
+#if defined(NODE_EVENT_LOOP_GLIB)
+  LWNode::NodeBindings::Platform platform  = {
+    .DrainVMTasks = [](Isolate* isolate) {
+      per_process::v8_platform.DrainVMTasks(isolate);
+    }
+  };
+
+  LWNode::NodeBindings::Environment environment = {
+    .isolate = std::bind(&Environment::isolate, env.get()),
+    .event_loop = std::bind(&Environment::event_loop, env.get()),
+    .is_stopping = std::bind(&Environment::is_stopping, env.get()),
+  };
+
+  LWNode::NodeBindings::Node node = {
+    .EmitBeforeExit = std::bind(EmitBeforeExit, env.get()),
+  };
+
+  LWNode::NodeBindings node_bindings;
+  node_bindings.Initialize(std::move(environment),
+                           std::move(platform),
+                           std::move(node));
+
+  node_bindings.StartEventLoop();
+
+#else
+      bool more;
       do {
         uv_run(env->event_loop(), UV_RUN_DEFAULT);
 
@@ -202,6 +230,26 @@ int NodeMainInstance::Run() {
         // event, or after running some callbacks.
         more = uv_loop_alive(env->event_loop());
       } while (more == true && !env->is_stopping());
+#endif
+// end of @lwnode
+#if 0
+      do {
+        uv_run(env->event_loop(), UV_RUN_DEFAULT);
+
+        per_process::v8_platform.DrainVMTasks(isolate_);
+
+        more = uv_loop_alive(env->event_loop());
+        if (more && !env->is_stopping()) continue;
+
+        if (!uv_loop_alive(env->event_loop())) {
+          EmitBeforeExit(env.get());
+        }
+
+        // Emit `beforeExit` if the loop became alive either after emitting
+        // event, or after running some callbacks.
+        more = uv_loop_alive(env->event_loop());
+      } while (more == true && !env->is_stopping());
+#endif
       env->performance_state()->Mark(
           node::performance::NODE_PERFORMANCE_MILESTONE_LOOP_EXIT);
     }
