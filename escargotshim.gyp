@@ -3,9 +3,11 @@
   'variables': {
     'library%': 'static_library',
     'tizen_device_api_dir': 'deps/tizen-device-api',
+    'node_bindings_dir': 'deps/node-bindings',
     'enable_escargotshim_asan%': 0,
     'enable_reload_script%': 'false',
     'enable_experimental%': 'false',
+    'include_node_bindings%': 'true',
   },
   'targets': [
     {
@@ -117,6 +119,11 @@
           'defines': [
             'LWNODE_ENABLE_EXPERIMENTAL=1',
             'LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION=1',
+          ],
+        }],
+        ['include_node_bindings == "true"', {
+          'dependencies': [
+            '<(node_bindings_dir)/node_bindings.gyp:node_bindings',
           ],
         }],
       ],
