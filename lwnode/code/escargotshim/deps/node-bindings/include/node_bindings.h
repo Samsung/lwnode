@@ -30,7 +30,7 @@ void EmitMessage(v8::Isolate* isolate, const char* fmt, ...);
 
 typedef struct uv_loop_s uv_loop_t;
 
-namespace nescargot {
+namespace LWNode {
 
 void push_aul_message(const char* message);
 void push_aul_termination_message();
@@ -41,17 +41,17 @@ class NodeBindings {
   virtual ~NodeBindings(){};
 
   struct Platform {
-    void (*PumpMessageLoop)(v8::Isolate* isolate);
-    void (*EnterIdleMode)(v8::Isolate* isolate);
+    void (*DrainVMTasks)(v8::Isolate* isolate);
   };
 
   struct Environment {
     std::function<v8::Isolate*()> isolate;
     std::function<uv_loop_t*()> event_loop;
+    std::function<bool()> is_stopping;
   };
 
   struct Node {
-    std::function<void()> EmitBeforeExit;
+    std::function<void(Environment* env)> EmitBeforeExit;
   };
 
   void Initialize(Environment&& env, Platform&& platform, Node&& node);
@@ -67,9 +67,8 @@ class NodeBindings {
   bool m_isInitialize = {false};
   bool m_hasMoreNodeTasks = {true};
   bool m_isTerminated = {false};
-  unsigned int m_idleCheckTimeoutID = {0};
 };
 
-}  // namespace nescargot
+}  // namespace LWNode
 
 #endif

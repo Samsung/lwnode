@@ -17,15 +17,15 @@
 #include <glib.h>
 #include <cassert>
 #include "uv.h"
-#include "node_bindings.h"
-#include "node_escargot_logger.h"
 #ifdef HOST_TIZEN
 #include "Extension.h"
 #endif
 
+#include "node_bindings.h"
+
 namespace glib {
 
-using namespace nescargot;
+using namespace LWNode;
 
 struct SourceData {
   GSource source;
@@ -61,7 +61,8 @@ static gboolean GmainLoopCheckCallback(GSource* source) {
           g_source_query_unix_fd(source, ((SourceData*)source)->tag));
 }
 
-static gboolean GmainLoopDispatchCallback(GSource* source, GSourceFunc callback,
+static gboolean GmainLoopDispatchCallback(GSource* source,
+                                          GSourceFunc callback,
                                           gpointer user_data) {
   assert(gcontext);
   g_main_context_iteration(gcontext, FALSE);
@@ -92,7 +93,8 @@ void GmainLoopInit(NodeBindings* self) {
 
   uvsource = g_source_new(&source_funcs, sizeof(SourceData));
   ((SourceData*)uvsource)->tag = g_source_add_unix_fd(
-      uvsource, uv_backend_fd(uv_default_loop()),
+      uvsource,
+      uv_backend_fd(uv_default_loop()),
       (GIOCondition)(G_IO_IN | G_IO_OUT | G_IO_ERR | G_IO_PRI));
   ((SourceData*)uvsource)->node_bindings = self;
 
@@ -131,13 +133,13 @@ void GmainLoopExit() {
 }  // namespace glib
 
 #ifdef HOST_TIZEN
-#include "Queue.hpp"
 #include <mutex>
 #include <thread>
+#include "Queue.hpp"
 
 #define NESCARGOT_AUL_TERMINATION_MESSAGE "AUL_TERMINATION"
 
-namespace nescargot {
+namespace LWNode {
 
 struct Task {
   std::string data;
@@ -161,10 +163,10 @@ void push_aul_message(const char* message) {
 void push_aul_termination_message() {
   push_aul_message(NESCARGOT_AUL_TERMINATION_MESSAGE);
 }
-}  // namespace nescargot
+}  // namespace LWNode
 #endif
 
-namespace nescargot {
+namespace LWNode {
 
 static void pump_aul_message(v8::Isolate* isolate, NodeBindings* bindings) {
 #ifdef HOST_TIZEN
@@ -181,11 +183,10 @@ static void pump_aul_message(v8::Isolate* isolate, NodeBindings* bindings) {
 
 NodeBindings::NodeBindings() {}
 
-void NodeBindings::Initialize(Environment&& env, Platform&& platform,
+void NodeBindings::Initialize(Environment&& env,
+                              Platform&& platform,
                               Node&& node) {
-  assert(platform.PumpMessageLoop);
-  assert(platform.EnterIdleMode);
-
+  assert(platform.DrainVMTasks);
   m_env = std::move(env);
   m_platform = std::move(platform);
   m_node = std::move(node);
@@ -198,10 +199,6 @@ void NodeBindings::StartEventLoop() {
   glib::GmainLoopInit(this);
 
   RunOnce();
-
-  // NOTE: We try an intense memory saving mode called Idle Mode.
-  // It will be exited once any javascript operation runs.
-  m_platform.EnterIdleMode(m_env.isolate());
 
   if (HasMoreTasks()) {
     glib::GmainLoopStart();
@@ -218,42 +215,22 @@ void NodeBindings::RunOnce() {
   auto isolate = m_env.isolate();
   auto event_loop = m_env.event_loop();
 
-  m_platform.PumpMessageLoop(isolate);
-  pump_aul_message(isolate, this);
+  uv_run(event_loop, UV_RUN_NOWAIT);
 
-  bool more = uv_run(event_loop, UV_RUN_NOWAIT);
+  m_platform.DrainVMTasks(isolate);
 
-  if (more == false) {
-    m_platform.PumpMessageLoop(isolate);
-    pump_aul_message(isolate, this);
-
-    m_node.EmitBeforeExit();
-
-    // Emit `beforeExit` if the loop became alive either after emitting
-    // event, or after running some callbacks.
-    more = uv_loop_alive(event_loop);
-    if (uv_run(event_loop, UV_RUN_NOWAIT) != 0) {
-      more = true;
-    }
-  }
-  m_hasMoreNodeTasks = more;
-
-  if (m_idleCheckTimeoutID) {
-    g_source_remove(m_idleCheckTimeoutID);
+  bool more = uv_loop_alive(m_env.event_loop());
+  if (more && !m_env.is_stopping()) {
+    return;
   }
 
-#ifndef IDLE_CHECK_TIMEOUT
-#define IDLE_CHECK_TIMEOUT 500
-#endif
-  m_idleCheckTimeoutID = g_timeout_add(
-      IDLE_CHECK_TIMEOUT,
-      [](gpointer data) -> gboolean {
-        NodeBindings* self = (NodeBindings*)data;
-        self->m_idleCheckTimeoutID = 0;
-        self->m_platform.EnterIdleMode(self->m_env.isolate());
-        return G_SOURCE_REMOVE;
-      },
-      this);
+  if (!uv_loop_alive(m_env.event_loop())) {
+    m_node.EmitBeforeExit(&m_env);
+  }
+
+  more = uv_loop_alive(m_env.event_loop());
+
+  m_hasMoreNodeTasks = (more == true && !m_env.is_stopping());
 }
 
-}  // namespace nescargot
+}  // namespace LWNode
