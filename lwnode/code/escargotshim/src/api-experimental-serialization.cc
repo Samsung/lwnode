@@ -143,7 +143,7 @@ ValueDeserializer::~ValueDeserializer() {
 }
 
 Maybe<bool> ValueDeserializer::ReadHeader(Local<Context> context) {
-  LWNODE_RETURN_MAYBE(bool)
+  return Just(true);
 }
 
 void ValueDeserializer::SetSupportsLegacyWireFormat(

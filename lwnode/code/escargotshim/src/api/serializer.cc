@@ -300,11 +300,26 @@ void ValueSerializer::WriteString(StringRef* string) {
   }
 }
 
+bool ValueSerializer::WriteHostObject(ObjectRef* object) {
+  WriteTag(SerializationTag::kHostObject);
+  if (!delegate_) {
+    // @note deps/v8/src/objects/value-serializer.cc(1006) throws an Error
+    LWNODE_CHECK(false);
+    return false;
+  }
+
+  v8::Isolate* v8_isolate = lwIsolate_->toV8();
+  Maybe<bool> result =
+      delegate_->WriteHostObject(v8_isolate, Utils::ToLocal<Object>(object));
+
+  LWNODE_CHECK(!result.IsNothing());
+  LWNODE_CHECK(result.ToChecked());
+  return ThrowIfOutOfMemory();
+}
+
 bool ValueSerializer::WriteObject(ObjectRef* object) {
   if (ObjectRefHelper::getInternalFieldCount(object) > 0) {
-    // TODO: WriteHostObject
-    LWNODE_UNIMPLEMENT;
-    return false;
+    return WriteHostObject(object);
   }
 
   auto esContext = lwIsolate_->GetCurrentContext()->get();
@@ -436,7 +451,7 @@ ValueDeserializer::ValueDeserializer(IsolateWrap* lwIsolate,
                                      v8::ValueDeserializer::Delegate* delegate,
                                      const uint8_t* data,
                                      const size_t size)
-    : isolate_(lwIsolate),
+    : lwIsolate_(lwIsolate),
       delegate_(delegate),
       buffer_(data),
       size_(size),
@@ -541,7 +556,7 @@ bool ValueDeserializer::ReadObject(ObjectRef* object) {
     }
 
     ObjectRefHelper::setProperty(
-        isolate_->GetCurrentContext()->context()->get(),
+        lwIsolate_->GetCurrentContext()->context()->get(),
         object,
         key.get(),
         value.get());
@@ -562,6 +577,21 @@ bool ValueDeserializer::ReadObject(ObjectRef* object) {
   return false;
 }
 
+bool ValueDeserializer::ReadHostObject(ObjectRef*& esObject) {
+  esObject = nullptr;
+  if (!delegate_) {
+    return false;
+  }
+  v8::Isolate* v8_isolate = lwIsolate_->toV8();
+  v8::Local<v8::Object> object;
+  if (!delegate_->ReadHostObject(v8_isolate).ToLocal(&object)) {
+    return false;
+  }
+
+  esObject = VAL(*object)->value()->asObject();
+  return true;
+}
+
 bool ValueDeserializer::ReadArrayBuffer(
     ArrayBufferObjectRef*& arrayBufferObject) {
   uint32_t length = 0;
@@ -570,7 +600,7 @@ bool ValueDeserializer::ReadArrayBuffer(
     return false;
   }
 
-  auto esContext = isolate_->GetCurrentContext()->get();
+  auto esContext = lwIsolate_->GetCurrentContext()->get();
   EvalResult r = Evaluator::execute(
       esContext,
       [](ExecutionStateRef* esState, size_t byteLength) -> ValueRef* {
@@ -603,7 +633,7 @@ bool ValueDeserializer::ReadArrayBufferView(
     return false;
   }
 
-  auto esContext = isolate_->GetCurrentContext()->get();
+  auto esContext = lwIsolate_->GetCurrentContext()->get();
 
   switch (static_cast<ArrayBufferViewTag>(tag)) {
     case ArrayBufferViewTag::kDataView: {
@@ -693,13 +723,20 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     }
     return OptionalRef<ValueRef>(ValueRef::create(value));
   } else if (tag == SerializationTag::kBeginJSObject) {
-    auto esContext = isolate_->GetCurrentContext()->get();
+    auto esContext = lwIsolate_->GetCurrentContext()->get();
     auto object = ObjectRefHelper::create(esContext);
     if (!ReadObject(object)) {
       LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read object value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(object));
+  } else if (tag == SerializationTag::kHostObject) {
+    ObjectRef* esObject = nullptr;
+    if (!ReadHostObject(esObject)) {
+      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read host object value");
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(esObject);
   } else if (tag == SerializationTag::kArrayBuffer) {
     ArrayBufferObjectRef* arrayBuffer = nullptr;
     if (!ReadArrayBuffer(arrayBuffer)) {
