@@ -674,6 +674,12 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     return OptionalRef<ValueRef>();
   }
 
+  std::stringstream ss;
+  ss << std::hex << std::this_thread::get_id();
+  std::string tid = ss.str();
+
+  LWNODE_CALL_TRACE_ID(SERIALIZER, "Parse %c (0x%s)", (char)tag, tid.c_str());
+
   if (tag == SerializationTag::kNull) {
     return OptionalRef<ValueRef>(ValueRef::createNull());
   } else if (tag == SerializationTag::kUndefined) {
@@ -685,7 +691,7 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
   } else if (tag == SerializationTag::kDouble) {
     double number = .0;
     if (!ReadDouble(number)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read double value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read double value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(number));
@@ -693,7 +699,7 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     uint32_t length = 0;
     const uint8_t* data;
     if (!ReadVarint<uint32_t>(length) || !ReadRawBytes(length, data)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read one byte string value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read one byte string value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(StringRef::createFromUTF8(
@@ -703,7 +709,7 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     const uint8_t* data;
     if (!ReadVarint<uint32_t>(length) ||
         !ReadRawBytes(length * sizeof(uint16_t), data)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read two byte string value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read two byte string value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(StringRef::createFromUTF16(
@@ -711,14 +717,14 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
   } else if (tag == SerializationTag::kUint32) {
     uint32_t value = 0;
     if (!ReadVarint<uint32_t>(value)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read uint32 value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read uint32 value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(value));
   } else if (tag == SerializationTag::kInt32) {
     int32_t value = 0;
     if (!ReadZigZag<int32_t>(value)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read int32 value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read int32 value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(value));
@@ -726,21 +732,21 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     auto esContext = lwIsolate_->GetCurrentContext()->get();
     auto object = ObjectRefHelper::create(esContext);
     if (!ReadObject(object)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read object value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read object value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(ValueRef::create(object));
   } else if (tag == SerializationTag::kHostObject) {
     ObjectRef* esObject = nullptr;
     if (!ReadHostObject(esObject)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read host object value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read host object value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(esObject);
   } else if (tag == SerializationTag::kArrayBuffer) {
     ArrayBufferObjectRef* arrayBuffer = nullptr;
     if (!ReadArrayBuffer(arrayBuffer)) {
-      LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read array buffer value");
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read array buffer value");
       return OptionalRef<ValueRef>();
     }
 
@@ -748,13 +754,16 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
       ReadTag(tag);
       ArrayBufferViewRef* arrayBufferView = nullptr;
       if (!ReadArrayBufferView(arrayBufferView, arrayBuffer)) {
-        LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read array buffer view value");
+        LWNODE_CALL_TRACE_ID_LOG(SERIALIZER,
+                                 "Cannot read array buffer view value");
         return OptionalRef<ValueRef>();
       }
       return OptionalRef<ValueRef>(arrayBufferView);
     }
     return OptionalRef<ValueRef>(arrayBuffer);
   } else {
+    LWNODE_CALL_TRACE_ID_LOG(
+        SERIALIZER, "Fail: %c (0x%s)", (char)tag, tid.c_str());
     LWNODE_UNIMPLEMENT;
   }
 
