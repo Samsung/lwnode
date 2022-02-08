@@ -30,7 +30,7 @@ using namespace LWNode;
 struct SourceData {
   GSource source;
   gpointer tag;
-  NodeBindings* node_bindings;
+  GmainLoopNodeBindings* node_bindings = nullptr;
 };
 
 // TODO: classify EventLoop if needed
@@ -71,7 +71,7 @@ static gboolean GmainLoopDispatchCallback(GSource* source,
     return G_SOURCE_REMOVE;
   }
 
-  NodeBindings* node_bindings = ((SourceData*)source)->node_bindings;
+  GmainLoopNodeBindings* node_bindings = ((SourceData*)source)->node_bindings;
 
   node_bindings->RunOnce();
 
@@ -82,7 +82,7 @@ static gboolean GmainLoopDispatchCallback(GSource* source,
   return G_SOURCE_CONTINUE;
 }
 
-void GmainLoopInit(NodeBindings* self) {
+void GmainLoopInit(GmainLoopNodeBindings* self) {
   gcontext = g_main_context_default();
   gmainLoop = g_main_loop_new(gcontext, FALSE);
   source_funcs = {
@@ -132,6 +132,8 @@ void GmainLoopExit() {
 
 }  // namespace glib
 
+// TODO: pump aul message for Tizen AUL application
+#if 0
 #ifdef HOST_TIZEN
 #include <mutex>
 #include <thread>
@@ -168,32 +170,29 @@ void push_aul_termination_message() {
 
 namespace LWNode {
 
-static void pump_aul_message(v8::Isolate* isolate, NodeBindings* bindings) {
-#ifdef HOST_TIZEN
-  // TODO: move the following to m_platform.PumpMessageLoop(isolate)
-  if (!g_queue.empty()) {
-    auto task = g_queue.pop();
-    node::EmitMessage(isolate, task.data.c_str());
-    if (task.data == std::string(NESCARGOT_AUL_TERMINATION_MESSAGE)) {
-      bindings->TerminateGMainLoop();
-    }
-  }
-#endif
+// static void pump_aul_message(v8::Isolate* isolate, GmainLoopNodeBindings* bindings) {
+// #ifdef HOST_TIZEN
+//   // TODO: move the following to m_platform.PumpMessageLoop(isolate)
+//   if (!g_queue.empty()) {
+//     auto task = g_queue.pop();
+//     node::EmitMessage(isolate, task.data.c_str());
+//     if (task.data == std::string(NESCARGOT_AUL_TERMINATION_MESSAGE)) {
+//       bindings->TerminateGMainLoop();
+//     }
+//   }
+// #endif
+// }
 }
+#endif
 
-NodeBindings::NodeBindings() {}
+namespace LWNode {
 
-void NodeBindings::Initialize(Environment&& env,
-                              Platform&& platform,
-                              Node&& node) {
-  assert(platform.DrainVMTasks);
-  m_env = std::move(env);
-  m_platform = std::move(platform);
-  m_node = std::move(node);
+GmainLoopNodeBindings::GmainLoopNodeBindings(GmainLoopWork* gmainLoopWork)
+    : gmainLoopWork_(gmainLoopWork) {
   m_isInitialize = true;
 }
 
-void NodeBindings::StartEventLoop() {
+void GmainLoopNodeBindings::StartEventLoop() {
   assert(m_isInitialize);
 
   glib::GmainLoopInit(this);
@@ -207,30 +206,12 @@ void NodeBindings::StartEventLoop() {
   glib::GmainLoopExit();
 }
 
-bool NodeBindings::HasMoreTasks() {
+bool GmainLoopNodeBindings::HasMoreTasks() {
   return (m_hasMoreNodeTasks && !m_isTerminated);
 }
 
-void NodeBindings::RunOnce() {
-  auto isolate = m_env.isolate();
-  auto event_loop = m_env.event_loop();
-
-  uv_run(event_loop, UV_RUN_NOWAIT);
-
-  m_platform.DrainVMTasks(isolate);
-
-  bool more = uv_loop_alive(m_env.event_loop());
-  if (more && !m_env.is_stopping()) {
-    return;
-  }
-
-  if (!uv_loop_alive(m_env.event_loop())) {
-    m_node.EmitBeforeExit(&m_env);
-  }
-
-  more = uv_loop_alive(m_env.event_loop());
-
-  m_hasMoreNodeTasks = (more == true && !m_env.is_stopping());
+void GmainLoopNodeBindings::RunOnce() {
+  m_hasMoreNodeTasks = gmainLoopWork_->RunOnce();
 }
 
 }  // namespace LWNode

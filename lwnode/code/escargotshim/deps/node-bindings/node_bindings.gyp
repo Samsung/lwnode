@@ -19,7 +19,7 @@
         'include',
       ],
       'sources': [
-        'src/node_bindings.cc'
+        'src/gmainloop_node_bindings.cc'
       ],
       'cflags': [
         '<!@(pkg-config --cflags glib-2.0)',
@@ -30,7 +30,6 @@
       ],
       'all_dependent_settings': {
         'defines': [
-          'NODE_EVENT_LOOP_GLIB',
         ],
         'include_dirs': [
           'include',

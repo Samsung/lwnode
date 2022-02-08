@@ -17,17 +17,6 @@
 #ifndef NODE_BINDINGS_H
 #define NODE_BINDINGS_H
 
-#include <functional>
-
-namespace v8 {
-class Isolate;
-}
-
-namespace node {
-class Environment;
-void EmitMessage(v8::Isolate* isolate, const char* fmt, ...);
-}  // namespace node
-
 typedef struct uv_loop_s uv_loop_t;
 
 namespace LWNode {
@@ -35,38 +24,26 @@ namespace LWNode {
 void push_aul_message(const char* message);
 void push_aul_termination_message();
 
-class NodeBindings {
+class GmainLoopWork {
  public:
-  NodeBindings();
-  virtual ~NodeBindings(){};
+  virtual bool RunOnce() = 0;
+};
 
-  struct Platform {
-    void (*DrainVMTasks)(v8::Isolate* isolate);
-  };
+class GmainLoopNodeBindings {
+ public:
+  GmainLoopNodeBindings(GmainLoopWork* bindingWork);
+  virtual ~GmainLoopNodeBindings(){};
 
-  struct Environment {
-    std::function<v8::Isolate*()> isolate;
-    std::function<uv_loop_t*()> event_loop;
-    std::function<bool()> is_stopping;
-  };
-
-  struct Node {
-    std::function<void(Environment* env)> EmitBeforeExit;
-  };
-
-  void Initialize(Environment&& env, Platform&& platform, Node&& node);
   void StartEventLoop();
   void RunOnce();
   bool HasMoreTasks();
   void TerminateGMainLoop() { m_isTerminated = true; }
 
  private:
-  Environment m_env;
-  Platform m_platform;
-  Node m_node;
   bool m_isInitialize = {false};
   bool m_hasMoreNodeTasks = {true};
   bool m_isTerminated = {false};
+  GmainLoopWork* gmainLoopWork_{nullptr};
 };
 
 }  // namespace LWNode
