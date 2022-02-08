@@ -37,7 +37,7 @@ class ValueSerializer {
                   v8::ValueSerializer::Delegate* delegate);
   void WriteHeader();
   bool WriteValue(ValueRef* value);
-
+  void WriteUint32(uint32_t value);
   std::pair<uint8_t*, size_t> Release();
 
  private:
@@ -77,6 +77,7 @@ class ValueDeserializer {
   bool CheckTag(SerializationTag tag);
 
   OptionalRef<ValueRef> ReadValue();
+  bool ReadUint32(uint32_t*& value);
 
  private:
   template <typename T>
