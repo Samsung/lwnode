@@ -39,6 +39,9 @@
 #include "node_revert.h"
 #include "node_v8_platform-inl.h"
 #include "node_version.h"
+#ifdef LWNODE // @lwnode
+#include "node_main_lw_runner-inl.h"
+#endif
 
 #if HAVE_OPENSSL
 #include "allocated_buffer-inl.h"  // Inlined functions needed by node_crypto.h
@@ -1071,10 +1074,9 @@ int Start(int argc, char** argv) {
   if (result.early_return) {
     return result.exit_code;
   }
-#ifdef LWNODE
-  // @lwndoe
-  ArrayBufferAllocator* allocator = nullptr;
-  // end of @lwnode
+
+  #if defined(LWNODE)
+  LWNode::LWNodeMainRunner nodeMainRunner; // @lwndoe
   {
     Isolate::CreateParams params;
     const std::vector<size_t>* indexes = nullptr;
@@ -1102,19 +1104,10 @@ int Start(int argc, char** argv) {
                                    result.exec_args,
                                    indexes);
 
-    // @lwnode
-    allocator = main_instance.arrayBufferAllocator();
-    // endof @lwnode
-    result.exit_code = main_instance.Run();
+    result.exit_code = nodeMainRunner.Run(main_instance); // @lwndoe
   }
-
-  TearDownOncePerProcess();
-  // @lwnode
-  v8::V8::ShutdownPlatform();
-  delete allocator;
-  // end of @lwnode
 #else
- {
+  {
     Isolate::CreateParams params;
     const std::vector<size_t>* indexes = nullptr;
     std::vector<intptr_t> external_references;
@@ -1142,9 +1135,9 @@ int Start(int argc, char** argv) {
                                    indexes);
     result.exit_code = main_instance.Run();
   }
+#endif
 
   TearDownOncePerProcess();
-#endif
   return result.exit_code;
 }
 

@@ -11,6 +11,11 @@
 #include "uv.h"
 #include "v8.h"
 
+// @lwnodes
+namespace LWNode {
+  class LWNodeMainRunner;
+}
+
 namespace node {
 
 // TODO(joyeecheung): align this with the Worker/WorkerThreadData class.
@@ -82,24 +87,15 @@ class NodeMainInstance {
 
   std::vector<std::string> args_;
   std::vector<std::string> exec_args_;
-#if LWNODE
-  // @lwnode
- public:
-  ArrayBufferAllocator* arrayBufferAllocator() {
-    return array_buffer_allocator_;
-  }
-
- private:
-  ArrayBufferAllocator* array_buffer_allocator_;
-#else
   std::unique_ptr<ArrayBufferAllocator> array_buffer_allocator_;
-#endif
 
   v8::Isolate* isolate_;
   MultiIsolatePlatform* platform_;
   std::unique_ptr<IsolateData> isolate_data_;
   bool owns_isolate_ = false;
   bool deserialize_mode_ = false;
+
+  friend class LWNode::LWNodeMainRunner; // @lwnodes
 };
 
 }  // namespace node

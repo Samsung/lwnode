@@ -5,10 +5,6 @@
 #include "node_options-inl.h"
 #include "node_v8_platform-inl.h"
 #include "util-inl.h"
-#ifdef LWNODE
-#include "lwnode.h"
-#include "node_bindings.h"
-#endif
 #if defined(LEAK_SANITIZER)
 #include <sanitizer/lsan_interface.h>
 #endif
@@ -55,61 +51,6 @@ std::unique_ptr<NodeMainInstance> NodeMainInstance::Create(
       new NodeMainInstance(isolate, event_loop, platform, args, exec_args));
 }
 
-#ifdef LWNODE
-NodeMainInstance::NodeMainInstance(
-    Isolate::CreateParams* params,
-    uv_loop_t* event_loop,
-    MultiIsolatePlatform* platform,
-    const std::vector<std::string>& args,
-    const std::vector<std::string>& exec_args,
-    const std::vector<size_t>* per_isolate_data_indexes)
-    : args_(args),
-      exec_args_(exec_args),
-// @lwnode
-#if 0
-      array_buffer_allocator_(ArrayBufferAllocator::Create()),
-#endif
-      array_buffer_allocator_(ArrayBufferAllocator::Create().release()),
-      isolate_(nullptr),
-      platform_(platform),
-      isolate_data_(nullptr),
-      owns_isolate_(true) {
-// @lwnode
-#if 0
-  params->array_buffer_allocator = array_buffer_allocator_.get();
-#endif
-  params->array_buffer_allocator = array_buffer_allocator_;
-  isolate_ = Isolate::Allocate();
-  CHECK_NOT_NULL(isolate_);
-  // Register the isolate on the platform before the isolate gets initialized,
-  // so that the isolate can access the platform during initialization.
-  platform->RegisterIsolate(isolate_, event_loop);
-  SetIsolateCreateParamsForNode(params);
-  Isolate::Initialize(isolate_, *params);
-
-  deserialize_mode_ = per_isolate_data_indexes != nullptr;
-  // If the indexes are not nullptr, we are not deserializing
-  CHECK_IMPLIES(deserialize_mode_, params->external_references != nullptr);
-  isolate_data_ = std::make_unique<IsolateData>(isolate_,
-                                                event_loop,
-                                                platform,
-// @lwnode
-#if 0
-                                                array_buffer_allocator_.get(),
-#endif
-                                                array_buffer_allocator_,
-                                                per_isolate_data_indexes);
-  IsolateSettings s;
-  SetIsolateMiscHandlers(isolate_, s);
-  if (!deserialize_mode_) {
-    // If in deserialize mode, delay until after the deserialization is
-    // complete.
-    SetIsolateErrorHandlers(isolate_, s);
-  }
-}
-
-#else
-
 NodeMainInstance::NodeMainInstance(
     Isolate::CreateParams* params,
     uv_loop_t* event_loop,
@@ -149,8 +90,6 @@ NodeMainInstance::NodeMainInstance(
     SetIsolateErrorHandlers(isolate_, s);
   }
 }
-
-#endif
 
 void NodeMainInstance::Dispose() {
   CHECK(!owns_isolate_);
@@ -184,36 +123,9 @@ int NodeMainInstance::Run() {
 
     {
       SealHandleScope seal(isolate_);
+      bool more;
       env->performance_state()->Mark(
           node::performance::NODE_PERFORMANCE_MILESTONE_LOOP_START);
-
-// @lwnode
-#if defined(NODE_EVENT_LOOP_GLIB)
-  LWNode::NodeBindings::Platform platform  = {
-    .DrainVMTasks = [](Isolate* isolate) {
-      per_process::v8_platform.DrainVMTasks(isolate);
-    }
-  };
-
-  LWNode::NodeBindings::Environment environment = {
-    .isolate = std::bind(&Environment::isolate, env.get()),
-    .event_loop = std::bind(&Environment::event_loop, env.get()),
-    .is_stopping = std::bind(&Environment::is_stopping, env.get()),
-  };
-
-  LWNode::NodeBindings::Node node = {
-    .EmitBeforeExit = std::bind(EmitBeforeExit, env.get()),
-  };
-
-  LWNode::NodeBindings node_bindings;
-  node_bindings.Initialize(std::move(environment),
-                           std::move(platform),
-                           std::move(node));
-
-  node_bindings.StartEventLoop();
-
-#else
-      bool more;
       do {
         uv_run(env->event_loop(), UV_RUN_DEFAULT);
 
@@ -230,26 +142,6 @@ int NodeMainInstance::Run() {
         // event, or after running some callbacks.
         more = uv_loop_alive(env->event_loop());
       } while (more == true && !env->is_stopping());
-#endif
-// end of @lwnode
-#if 0
-      do {
-        uv_run(env->event_loop(), UV_RUN_DEFAULT);
-
-        per_process::v8_platform.DrainVMTasks(isolate_);
-
-        more = uv_loop_alive(env->event_loop());
-        if (more && !env->is_stopping()) continue;
-
-        if (!uv_loop_alive(env->event_loop())) {
-          EmitBeforeExit(env.get());
-        }
-
-        // Emit `beforeExit` if the loop became alive either after emitting
-        // event, or after running some callbacks.
-        more = uv_loop_alive(env->event_loop());
-      } while (more == true && !env->is_stopping());
-#endif
       env->performance_state()->Mark(
           node::performance::NODE_PERFORMANCE_MILESTONE_LOOP_EXIT);
     }
@@ -273,15 +165,8 @@ int NodeMainInstance::Run() {
   }
 #endif
 
-// @lwnode
-// We prevent premature termination when detecting leak,
-// as our GC runs after shutting down node platform.
-#if LWNODE
-  LWNode::IdleGC();
-#else
 #if defined(LEAK_SANITIZER)
   __lsan_do_leak_check();
-#endif
 #endif
 
   return exit_code;
