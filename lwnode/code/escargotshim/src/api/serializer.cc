@@ -228,6 +228,10 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
   return true;
 }
 
+void ValueSerializer::WriteUint32(uint32_t value) {
+  WriteVarint<uint32_t>(value);
+}
+
 // base on v8
 void ValueSerializer::WriteTag(SerializationTag tag) {
   uint8_t raw_tag = static_cast<uint8_t>(tag);
@@ -768,6 +772,10 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
   }
 
   return OptionalRef<ValueRef>();
+}
+
+bool ValueDeserializer::ReadUint32(uint32_t*& value) {
+  return ReadVarint<uint32_t>(*value);
 }
 
 }  // namespace EscargotShim

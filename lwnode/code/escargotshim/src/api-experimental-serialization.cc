@@ -92,7 +92,7 @@ void ValueSerializer::TransferArrayBuffer(uint32_t transfer_id,
 }
 
 void ValueSerializer::WriteUint32(uint32_t value) {
-  LWNODE_RETURN_VOID;
+  private_->serializer.WriteUint32(value);
 }
 
 void ValueSerializer::WriteUint64(uint64_t value) {
@@ -108,14 +108,19 @@ void ValueSerializer::WriteRawBytes(const void* source, size_t length) {
 }
 
 MaybeLocal<Object> ValueDeserializer::Delegate::ReadHostObject(
-    Isolate* v8_isolate){LWNODE_RETURN_LOCAL(Object)}
+    Isolate* v8_isolate) {
+  LWNODE_RETURN_LOCAL(Object);
+}
 
 MaybeLocal<WasmModuleObject> ValueDeserializer::Delegate::GetWasmModuleFromId(
-    Isolate* v8_isolate, uint32_t id){LWNODE_RETURN_LOCAL(WasmModuleObject)}
+    Isolate* v8_isolate, uint32_t id) {
+  LWNODE_RETURN_LOCAL(WasmModuleObject);
+}
 
-MaybeLocal<SharedArrayBuffer> ValueDeserializer::Delegate::
-    GetSharedArrayBufferFromId(Isolate* v8_isolate, uint32_t id) {
-  LWNODE_RETURN_LOCAL(SharedArrayBuffer)
+MaybeLocal<SharedArrayBuffer>
+ValueDeserializer::Delegate::GetSharedArrayBufferFromId(Isolate* v8_isolate,
+                                                        uint32_t id) {
+  LWNODE_RETURN_LOCAL(SharedArrayBuffer);
 }
 
 struct ValueDeserializer::PrivateData {
@@ -182,7 +187,7 @@ void ValueDeserializer::TransferSharedArrayBuffer(
 }
 
 bool ValueDeserializer::ReadUint32(uint32_t* value) {
-  LWNODE_RETURN_FALSE;
+  return private_->deserializer.ReadUint32(value);
 }
 
 bool ValueDeserializer::ReadUint64(uint64_t* value) {
