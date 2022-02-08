@@ -281,6 +281,20 @@ bool RegisteredExtension::isLwExtension(Extension* extension) {
 
 void RegisteredExtension::applyV8Extension(ContextRef* context,
                                            Extension* extension) {
+  if (extension->source() == nullptr ||
+      extension->source()->data() == nullptr) {
+    LWNODE_LOG_WARN("Extension empty string");
+    return;
+  }
+
+  std::string src = extension->source()->data();
+  std::string prefix = "native function ";
+  size_t prefixPosition = src.find(prefix.c_str());
+  if (prefixPosition == std::string::npos) {
+    EvalResultHelper::compileRun(context, extension->source()->data());
+    return;
+  }
+
   // Register v8 native function extension
   auto lwIsolate = IsolateWrap::GetCurrent();
   v8::Local<v8::String> str;
@@ -288,10 +302,7 @@ void RegisteredExtension::applyV8Extension(ContextRef* context,
       extension->GetNativeFunctionTemplate(lwIsolate->toV8(), str);
 
   auto esFunctionTemplate = CVAL(*v8FunctionTemplate)->ftpl();
-  std::string src = extension->source()->data();
-  std::string prefix = "native function ";
-  size_t s = src.find(prefix.c_str());
-  src = src.substr(s + prefix.length());
+  src = src.substr(prefixPosition + prefix.length());
   src = src.substr(0, src.find("("));
   std::string name = src;
 
