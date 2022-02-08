@@ -7080,24 +7080,24 @@ THREADED_TEST(GlobalObjectTemplate) {
 }
 
 
-// static const char* kSimpleExtensionSource =
-//     "function Foo() {"
-//     "  return 4;"
-//     "}";
+static const char* kSimpleExtensionSource =
+    "function Foo() {"
+    "  return 4;"
+    "}";
 
 
-// TEST(SimpleExtensions) {
-//   v8::HandleScope handle_scope(CcTest::isolate());
-//   v8::RegisterExtension(
-//       std::make_unique<Extension>("simpletest", kSimpleExtensionSource));
-//   const char* extension_names[] = {"simpletest"};
-//   v8::ExtensionConfiguration extensions(1, extension_names);
-//   v8::Local<Context> context = Context::New(CcTest::isolate(), &extensions);
-//   Context::Scope lock(context);
-//   v8::Local<Value> result = CompileRun("Foo()");
-//   CHECK(result->Equals(context, v8::Integer::New(CcTest::isolate(), 4))
-//             .FromJust());
-// }
+TEST(SimpleExtensions) {
+  v8::HandleScope handle_scope(CcTest::isolate());
+  v8::RegisterExtension(
+      std::make_unique<Extension>("simpletest", kSimpleExtensionSource));
+  const char* extension_names[] = {"simpletest"};
+  v8::ExtensionConfiguration extensions(1, extension_names);
+  v8::Local<Context> context = Context::New(CcTest::isolate(), &extensions);
+  Context::Scope lock(context);
+  v8::Local<Value> result = CompileRun("Foo()");
+  CHECK(result->Equals(context, v8::Integer::New(CcTest::isolate(), 4))
+            .FromJust());
+}
 
 
 // static const char* kStackTraceFromExtensionSource =
