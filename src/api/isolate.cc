@@ -240,7 +240,7 @@ THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 IsolateWrap::IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "malc: %p", this);
 
-  globalHandles_ = new GlobalHandles(this);
+  global_handles_ = new GlobalHandles(this);
 
   privateValuesSymbol_ = PersistentRefHolder<SymbolRef>(
       SymbolRef::create(StringRef::createFromUTF8(PRIVATE_VALUES.data(),
@@ -270,7 +270,7 @@ IsolateWrap::IsolateWrap() {
 
 IsolateWrap::~IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "free: %p", this);
-  globalHandles_->Dispose();
+  global_handles_->Dispose();
   LWNODE_CALL_TRACE_GC_START();
   // NOTE: Called when this IsolateWrap is deallocated by gc
   LWNODE_CALL_TRACE_GC_END();
@@ -605,7 +605,7 @@ void IsolateWrap::ClearPendingExceptionAndMessage() {
 }
 
 void IsolateWrap::CollectGarbage() {
-  globalHandles_->PostGarbageCollectionProcessing();
+  global_handles_->PostGarbageCollectionProcessing();
 }
 
 void IsolateWrap::SetPendingExceptionAndMessage(

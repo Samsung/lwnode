@@ -21,6 +21,29 @@
 #include "base.h"
 #include "global-handles.h"
 
+namespace v8 {
+namespace internal {
+void GlobalHandles::Destroy(EscargotShim::ValueWrap* lwValue) {
+  auto isolate = EscargotShim::IsolateWrap::GetCurrent();
+  isolate->global_handles()->destroy(lwValue);
+}
+
+void GlobalHandles::MakeWeak(EscargotShim::ValueWrap* lwValue,
+                             void* parameter,
+                             v8::WeakCallbackInfo<void>::Callback callback) {
+  auto isolate = EscargotShim::IsolateWrap::GetCurrent();
+  isolate->global_handles()->makeWeak(lwValue, parameter, callback);
+}
+
+void* GlobalHandles::ClearWeakness(EscargotShim::ValueWrap* lwValue) {
+  auto isolate = EscargotShim::IsolateWrap::GetCurrent();
+  isolate->global_handles()->clearWeakness(lwValue);
+  return nullptr;
+}
+
+}  // namespace internal
+}  // namespace v8
+
 namespace EscargotShim {
 
 GlobalHandles::Node::Node(void* parameter,
@@ -89,7 +112,7 @@ void GlobalHandles::NodeBlock::registerWeakCallback() {
         }
         LWNODE_CALL_TRACE_GC_END();
       },
-      isolate_->GetCurrent()->globalHandles());
+      isolate_->GetCurrent()->global_handles());
 }
 
 void GlobalHandles::NodeBlock::releaseValue() {
@@ -109,7 +132,7 @@ void GlobalHandles::Dispose() {
   delete weakHandler_;
 }
 
-void GlobalHandles::Create(ValueWrap* lwValue) {
+void GlobalHandles::create(ValueWrap* lwValue) {
   auto iter = persistentValues_.find(lwValue);
   if (iter == persistentValues_.end()) {
     persistentValues_.emplace(lwValue, 1);
@@ -120,11 +143,6 @@ void GlobalHandles::Create(ValueWrap* lwValue) {
                          "Persistent value was created multiple times: %p",
                          lwValue);
   }
-}
-
-void GlobalHandles::Destroy(ValueWrap* lwValue) {
-  auto isolate = IsolateWrap::GetCurrent();
-  auto info = isolate->globalHandles()->destroy(lwValue);
 }
 
 bool GlobalHandles::destroy(ValueWrap* lwValue) {
@@ -147,13 +165,6 @@ size_t GlobalHandles::PostGarbageCollectionProcessing(
 #else
   return 0;
 #endif
-}
-
-void GlobalHandles::MakeWeak(ValueWrap* lwValue,
-                             void* parameter,
-                             v8::WeakCallbackInfo<void>::Callback callback) {
-  auto isolate = IsolateWrap::GetCurrent();
-  isolate->globalHandles()->makeWeak(lwValue, parameter, callback);
 }
 
 bool GlobalHandles::makeWeak(ValueWrap* lwValue,
@@ -179,20 +190,14 @@ bool GlobalHandles::makeWeak(ValueWrap* lwValue,
   return true;
 }
 
-void* GlobalHandles::ClearWeakness(ValueWrap* lwValue) {
-  auto isolate = IsolateWrap::GetCurrent();
-  isolate->globalHandles()->clearWeak(lwValue);
-  return nullptr;
-}
-
-bool GlobalHandles::clearWeak(ValueWrap* lwValue) {
+bool GlobalHandles::clearWeakness(ValueWrap* lwValue) {
   auto block = weakHandler_->popBlock(lwValue);
   if (!block) {
     return false;
   }
   LWNODE_CHECK(persistentValues_.find(lwValue) == persistentValues_.end());
   persistentValues_.emplace(lwValue, block->usedNodes());
-  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "ClearWeak: %p", lwValue);
+  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "clearWeakness: %p", lwValue);
   return true;
 }
 
