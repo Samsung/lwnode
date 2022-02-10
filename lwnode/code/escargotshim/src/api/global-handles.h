@@ -34,8 +34,10 @@ class GlobalHandles : public gc {
   static void Destroy(EscargotShim::ValueWrap* lwValue);
   static void* ClearWeakness(EscargotShim::ValueWrap* lwValue);
 
+  virtual size_t handles_count() = 0;
+
  private:
-  Isolate* const isolate_;
+  Isolate* const isolate_ = nullptr;
 };
 
 }  // namespace internal
@@ -49,25 +51,18 @@ class GlobalHandles final : public v8::internal::GlobalHandles {
  public:
   GlobalHandles(IsolateWrap* isolate);
 
-  void Create(ValueWrap* lwValue);
-  static void Destroy(ValueWrap* lwValue);
-  static void MakeWeak(ValueWrap* lwValue,
-                       void* parameter,
-                       v8::WeakCallbackInfo<void>::Callback callback);
-  static void* ClearWeakness(ValueWrap* lwValue);
+  void create(ValueWrap* lwValue);
 
   size_t PostGarbageCollectionProcessing(
       /*const v8::GCCallbackFlags gc_callback_flags*/);
 
-  bool destroy(ValueWrap* lwValue);
-
   bool makeWeak(ValueWrap* lwValue,
                 void* parameter,
                 v8::WeakCallbackInfo<void>::Callback callback);
+  bool clearWeakness(ValueWrap* lwValue);
+  bool destroy(ValueWrap* lwValue);
 
-  bool clearWeak(ValueWrap* lwValue);
-
-  size_t handles_count();
+  size_t handles_count() override;
 
   void Dispose();
 

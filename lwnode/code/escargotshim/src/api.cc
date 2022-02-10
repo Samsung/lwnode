@@ -566,7 +566,7 @@ i::Address* V8::GlobalizeReference(i::Isolate* isolate, i::Address* obj) {
   return reinterpret_cast<i::Address*>(persistent);
 #endif
 
-  IsolateWrap::fromV8(isolate)->globalHandles()->Create(VAL(obj));
+  IsolateWrap::fromV8(isolate)->global_handles()->create(VAL(obj));
   return obj;
 }
 

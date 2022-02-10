@@ -99,6 +99,8 @@ class Isolate : public gc {
   bool hasCallDepth();
   bool sholdReportPendingMessage(bool isVerbose);
 
+  EscargotShim::GlobalHandles* global_handles() { return global_handles_; }
+
  protected:
   void set_pending_exception(Escargot::ValueRef* exception_obj);
   void set_pending_message_obj(Escargot::ValueRef* message_obj);
@@ -120,6 +122,8 @@ class Isolate : public gc {
   v8::PrepareStackTraceCallback prepare_stack_trace_callback_{nullptr};
   v8::Isolate::AbortOnUncaughtExceptionCallback
       abort_on_uncaught_exception_callback_{nullptr};
+
+  EscargotShim::GlobalHandles* global_handles_ = nullptr;
 
  private:
   v8::TryCatch* try_catch_handler_{nullptr};
@@ -228,8 +232,6 @@ class IsolateWrap final : public v8::internal::Isolate {
   SymbolRef* createApiPrivateSymbol(StringRef* name);
   SymbolRef* getApiPrivateSymbol(StringRef* name);
 
-  GlobalHandles* globalHandles() { return globalHandles_; }
-
   void CollectGarbage();
 
   void SetPendingExceptionAndMessage(
@@ -279,8 +281,6 @@ class IsolateWrap final : public v8::internal::Isolate {
   std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
 
   VMInstanceRef* vmInstance_ = nullptr;
-
-  GlobalHandles* globalHandles_ = nullptr;
 
   PersistentRefHolder<IsolateWrap> release_lock_;
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize]{};

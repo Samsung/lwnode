@@ -13430,12 +13430,9 @@ static void WeakApiCallback(
 TEST(WeakCallbackApi) {
   LocalContext context;
   v8::Isolate* isolate = context->GetIsolate();
-#if defined(CCTEST_ENGINE_ESCARGOT)
-  e::GlobalHandles* globals = e::IsolateWrap::fromV8(isolate)->globalHandles();
-#else
   i::GlobalHandles* globals =
       reinterpret_cast<i::Isolate*>(isolate)->global_handles();
-#endif
+
   size_t initial_handles = globals->handles_count();
   {
     v8::HandleScope scope(isolate);
