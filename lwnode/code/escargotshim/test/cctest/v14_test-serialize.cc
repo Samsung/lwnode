@@ -54,7 +54,7 @@ class SerializeTest : public ::testing::Test {
     ValueSerializer serializer(isolate(), &serializerdelegate);
 
     v8::Local<v8::Value> values[] = {args...};
-    for (auto value : values) {
+    for (v8::Local<v8::Value>& value : values) {
       serializer.WriteValue(context(), value);
     }
 
@@ -69,11 +69,10 @@ class SerializeTest : public ::testing::Test {
       CHECK(deserializer.ReadValue(context()).ToLocal(&output));
 
       if (value->IsObject() && output->IsObject()) {
-        if (!equalsObject(value.As<Object>(), output.As<Object>() ) ) {
+        if (!equalsObject(value.As<Object>(), output.As<Object>())) {
           return false;
         }
-      }
-      else if (!output->Equals(context(), value).FromJust()) {
+      } else if (!output->Equals(context(), value).FromJust()) {
         return false;
       }
     }
@@ -90,7 +89,7 @@ class SerializeTest : public ::testing::Test {
     if (propertyNamesOfObjectA->Length() != propertyNamesOfObjectB->Length()) {
       return false;
     }
-    printf("size: %u\n", propertyNamesOfObjectA->Length());
+
     for (unsigned i = 0; i < propertyNamesOfObjectA->Length(); i++) {
       v8::Local<v8::Value> propertyName =
           propertyNamesOfObjectA->Get(context(), v8::Integer::New(isolate(), i))
@@ -174,7 +173,6 @@ SERIALIZE_TEST(WriteObject) {
 
   CHECK(serializeValueTest(obj));
 }
-
 
 SERIALIZE_TEST(WriteReadTypedArray) {
   v8::HandleScope scope(isolate());
