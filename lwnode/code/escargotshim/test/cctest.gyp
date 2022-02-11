@@ -31,6 +31,7 @@
         'cctest/v14_test_1.cc',
         'cctest/v14_test_2.cc',
         'cctest/v14_test_3.cc',
+        'cctest/v14_test-serialize.cc',
         'cctest/test-api.cc',
         'cctest/test-internal.cc',
         'cctest/test-strings.cc',
