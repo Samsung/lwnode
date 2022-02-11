@@ -90,7 +90,7 @@ class SerializeTest : public ::testing::Test {
     if (propertyNamesOfObjectA->Length() != propertyNamesOfObjectB->Length()) {
       return false;
     }
-
+    printf("size: %u\n", propertyNamesOfObjectA->Length());
     for (unsigned i = 0; i < propertyNamesOfObjectA->Length(); i++) {
       v8::Local<v8::Value> propertyName =
           propertyNamesOfObjectA->Get(context(), v8::Integer::New(isolate(), i))
@@ -180,4 +180,12 @@ SERIALIZE_TEST(WriteReadTypedArray) {
   v8::HandleScope scope(isolate());
 
   CHECK(serializeValueTest(CompileRun("new Uint8Array([0, 11, 22, 33]);")));
+  CHECK(serializeValueTest(CompileRun("new Int8Array([10, 0, -20]);")));
+  CHECK(serializeValueTest(CompileRun("new Uint16Array([42, 31]);")));
+  CHECK(serializeValueTest(CompileRun("new Int16Array([20, -40]);")));
+  CHECK(serializeValueTest(CompileRun("new Uint32Array([0, 10, 20, 30000]);")));
+  CHECK(serializeValueTest(CompileRun("new Int32Array([-50000, 50000]);")));
+  CHECK(serializeValueTest(CompileRun("new Float32Array([1.12, 10.23, 10]);")));
+  CHECK(serializeValueTest(CompileRun("new Float64Array([61.1, 71.3, 20]);")));
+  CHECK(serializeValueTest(CompileRun("new Uint8ClampedArray([21, 31]);")));
 }
