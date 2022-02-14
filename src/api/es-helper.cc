@@ -579,7 +579,7 @@ std::string EvalResultHelper::getCallStackString(
   oss << "Call Stack:" << std::endl;
   for (size_t i = 0; i < maxPrintStackSize; ++i) {
     const auto& iter = traceData[i];
-    const auto& resourceName = iter.src->toStdUTF8String();
+    const auto& resourceName = iter.srcName->toStdUTF8String();
     const auto& codeString = iter.sourceCode->toStdUTF8String();
     const int errorLine = iter.loc.line;
     const int errorColumn = iter.loc.column;
@@ -609,7 +609,7 @@ std::string EvalResultHelper::getCallStackStringAsNodeStyle(
 
   for (size_t i = 0; i < maxPrintStackSize; ++i) {
     const auto& iter = traceData[i];
-    const auto& resourceName = iter.src->toStdUTF8String();
+    const auto& resourceName = iter.srcName->toStdUTF8String();
     const auto& functionName = iter.functionName->toStdUTF8String();
     const int errorLine = iter.loc.line;
     const int errorColumn = iter.loc.column;
@@ -625,7 +625,7 @@ std::string EvalResultHelper::getCallStackStringAsNodeStyle(
 
 std::string EvalResultHelper::getErrorString(
     ContextRef* context, const Evaluator::EvaluatorResult& result) {
-  const auto& traceData = result.stackTraceData;
+  const auto& traceData = result.stackTrace;
   const auto& reasonString =
       result.resultOrErrorToString(context)->toStdUTF8String();
   const std::string separator = "  ";
@@ -634,7 +634,7 @@ std::string EvalResultHelper::getErrorString(
 
   if (traceData.size()) {
     const auto& lastTraceData = traceData[0];
-    const auto& resourceName = lastTraceData.src->toStdUTF8String();
+    const auto& resourceName = lastTraceData.srcName->toStdUTF8String();
     const auto& codeString = lastTraceData.sourceCode->toStdUTF8String();
     const int errorLine = lastTraceData.loc.line;
     const int errorColumn = lastTraceData.loc.column;
@@ -772,8 +772,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
 
     LWNODE_LOG_INTERNAL(
         "%s",
-        getCallStackString(state->computeStackTraceData(), maxStackSize)
-            .c_str());
+        getCallStackString(state->computeStackTrace(), maxStackSize).c_str());
 
     return ValueRef::createUndefined();
   };
@@ -990,7 +989,7 @@ void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
   }
 
   auto stack = EvalResultHelper::getCallStackStringAsNodeStyle(
-      state->computeStackTraceData(), 1);
+      state->computeStackTrace(), 1);
   auto message = errorObject->toString(state)->toStdUTF8String();
 
   if (message.length() > 0) {

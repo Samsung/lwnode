@@ -225,7 +225,7 @@ class ExternalObjectData : public ObjectData {
 class StackTraceData : public ExtraData {
  public:
   StackTraceData(const Escargot::Evaluator::StackTraceData& data)
-      : src_(data.src),
+      : src_(data.srcName),
         sourceCode_(data.sourceCode),
         loc_(data.loc),
         functionName_(data.functionName),
