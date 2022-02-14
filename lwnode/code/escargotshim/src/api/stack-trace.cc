@@ -108,7 +108,7 @@ static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
 
   auto exceptionObject = argv[0]->asObject();
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
-  auto stackTrace = state->computeStackTraceData();
+  auto stackTrace = state->computeStackTrace();
   auto stackTraceVector = ValueVectorRef::create();
 
   std::string filterFunctionName;

@@ -1908,7 +1908,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
     if (lwIsolate->hasCallDepth()) {
       lwIsolate->ScheduleThrow(r.error.get());
     } else {
-      lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+      lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
       lwIsolate->ReportPendingMessages();
     }
     return MaybeLocal<Value>();

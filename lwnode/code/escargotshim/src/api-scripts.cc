@@ -292,7 +292,7 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
     r.error = ExceptionHelper::createErrorObject(
         esPureContext, result.parseErrorCode, result.parseErrorMessage);
 
-    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
     lwIsolate->ReportPendingMessages();
     return MaybeLocal<UnboundScript>();
   }
@@ -428,7 +428,7 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
                         lwIsolate->GetCurrentContext()->get(), r)
                         .c_str());
 
-    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+    lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
     lwIsolate->ReportPendingMessages();
     return MaybeLocal<Function>();
   }

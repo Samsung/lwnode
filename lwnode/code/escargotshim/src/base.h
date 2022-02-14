@@ -70,7 +70,7 @@ class ValueWrap;
   if (!eval_result.isSuccessful()) {                                           \
     __DLOG_EVAL_EXCEPTION(eval_result);                                        \
     lwIsolate->SetPendingExceptionAndMessage(eval_result.error.get(),          \
-                                             eval_result.stackTraceData);      \
+                                             eval_result.stackTrace);          \
     lwIsolate->ReportPendingMessages();                                        \
     return bailout_value;                                                      \
   }
@@ -147,7 +147,7 @@ class EsScope {
 
   bool isSuccessful(Escargot::Evaluator::EvaluatorResult& r) {
     if (!r.isSuccessful()) {
-      isolate_->SetPendingExceptionAndMessage(r.error.get(), r.stackTraceData);
+      isolate_->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
       isolate_->ReportPendingMessages();
       return false;
     }
