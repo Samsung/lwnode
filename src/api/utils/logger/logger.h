@@ -19,27 +19,9 @@
 #include <string.h>
 #include <cstdio>
 
+#include "color.h"
 #include "flags.h"
-
-#define CLR_RESET "\033[0m"
-#define CLR_DIM "\033[0;2m"
-#define CLR_RED "\033[0;31m"
-#define CLR_GREEN "\033[0;32m"
-#define CLR_GREY "\033[0;37m"
-#define CLR_BLACK "\033[0;30m"
-#define CLR_YELLOW "\033[0;33m"
-#define CLR_BLUE "\033[0;34m"
-#define CLR_MAGENTA "\033[0;35m"
-#define CLR_CYAN "\033[0;36m"
-#define CLR_DARKGREY "\033[01;30m"
-#define CLR_BRED "\033[01;31m"
-#define CLR_BYELLOW "\033[01;33m"
-#define CLR_BBLUE "\033[01;34m"
-#define CLR_BMAGENTA "\033[01;35m"
-#define CLR_BCYAN "\033[01;36m"
-#define CLR_BGREEN "\033[01;32m"
-#define CLR_WHITE "\033[01;37m"
-#define CLR_REDBG "\033[0;41m"
+#include "logger-impl.h"
 
 std::string getPrettyFunctionName(const std::string fullname);
 std::string createCodeLocation(const char* functionName,
@@ -68,28 +50,41 @@ class IndentCounter {
 #define TRACE_ARGS2                                                            \
   getPrettyFunctionName(__PRETTY_FUNCTION__).c_str(), __FILENAME__, __LINE__
 
-#define LWNODE_LOG_RAW(fmt, ...)                                               \
-  do {                                                                         \
-    fprintf(stderr, fmt "\n", ##__VA_ARGS__);                                  \
-  } while (0);
+// loggers (release)
+#define LWNODE_LOG(tag) Logger(LogTYPED(LogTYPED::Type::tag).header())
+#define LWNODE_LOGF(tag, fmt, ...)                                             \
+  Logger(LogTYPED(LogTYPED::Type::tag).header()).print(fmt, ##__VA_ARGS__)
 
+#define LWNODE_LOGI(fmt, ...) LWNODE_LOGF(INFO, fmt, ##__VA_ARGS__)
+#define LWNODE_LOGW(fmt, ...) LWNODE_LOGF(WARN, fmt, ##__VA_ARGS__)
+#define LWNODE_LOGE(fmt, ...) LWNODE_LOGF(ERROR, fmt, ##__VA_ARGS__)
+
+#define LWNODE_LOG_RAW(fmt, ...) LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__)
+
+// loggers (internal)
 #if !defined(NDEBUG)
-#define LWNODE_LOG_INTERNAL(fmt, ...) LWNODE_LOG_RAW(fmt, ##__VA_ARGS__);
+#define LWNODE_LOG_INTERNAL(fmt, ...) LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__)
+#define LWNODE_LOG_INTERNAL_TAG(tag, fmt, ...)                                 \
+  LWNODE_LOGF(tag, fmt, ##__VA_ARGS__)
 #else
 #define LWNODE_LOG_INTERNAL(fmt, ...)                                          \
   if (EscargotShim::Flags::isInternalLogEnabled()) {                           \
-    LWNODE_LOG_RAW(fmt, ##__VA_ARGS__);                                        \
+    LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__);                                      \
+  }
+#define LWNODE_LOG_INTERNAL_TAG(tag, fmt, ...)                                 \
+  if (EscargotShim::Flags::isInternalLogEnabled()) {                           \
+    LWNODE_LOGF(tag, fmt, ##__VA_ARGS__);                                      \
   }
 #endif
 
 #define LWNODE_LOG_INFO(fmt, ...)                                              \
-  LWNODE_LOG_INTERNAL("INFO " fmt CLR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_INTERNAL_TAG(INFO, fmt, ##__VA_ARGS__)
 
 #define LWNODE_LOG_WARN(fmt, ...)                                              \
-  LWNODE_LOG_INTERNAL(CLR_YELLOW "WARN " fmt CLR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_INTERNAL_TAG(WARN, fmt, ##__VA_ARGS__)
 
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
-  LWNODE_LOG_INTERNAL(CLR_BRED "ERROR " fmt CLR_RESET, ##__VA_ARGS__);
+  LWNODE_LOG_INTERNAL_TAG(ERROR, fmt, ##__VA_ARGS__)
 
 #define LWNODE_UNIMPLEMENT                                                     \
   LWNODE_LOG_INTERNAL(CLR_RED "UNIMPLEMENTED " TRACE_FMT CLR_RESET,            \
@@ -104,8 +99,7 @@ class IndentCounter {
                       "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT CLR_RESET,   \
                       TRACE_ARGS2);
 
-// conditional loggers
-
+// loggers (debug)
 #if !defined(NDEBUG)
 #define LWNODE_DLOG_RAW(fmt, ...) LWNODE_LOG_RAW(fmt, ##__VA_ARGS__)
 #define LWNODE_DLOG_INFO(fmt, ...) LWNODE_LOG_INFO(fmt, ##__VA_ARGS__)
