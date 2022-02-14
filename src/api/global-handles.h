@@ -51,27 +51,24 @@ class GlobalHandles final : public v8::internal::GlobalHandles {
  public:
   GlobalHandles(IsolateWrap* isolate);
 
-  void create(ValueWrap* lwValue);
-
   size_t PostGarbageCollectionProcessing(
       /*const v8::GCCallbackFlags gc_callback_flags*/);
 
+  void create(ValueWrap* lwValue);
   bool makeWeak(ValueWrap* lwValue,
                 void* parameter,
                 v8::WeakCallbackInfo<void>::Callback callback);
   bool clearWeakness(ValueWrap* lwValue);
   bool destroy(ValueWrap* lwValue);
+  void dispose();
 
   size_t handles_count() override;
-
-  void Dispose();
 
   class Node {
    public:
     Node(void* parameter, v8::WeakCallbackInfo<void>::Callback callback);
-    ~Node();
-
     Node(const Node&) = delete;
+    ~Node();
 
     void* parameter() { return parameter_; }
     v8::WeakCallbackInfo<void>::Callback callback() { return callback_; }
@@ -84,13 +81,10 @@ class GlobalHandles final : public v8::internal::GlobalHandles {
   class NodeBlock {
    public:
     NodeBlock(IsolateWrap* isolate, ValueWrap* value, uint32_t count);
-
+    NodeBlock(const NodeBlock&) = delete;
     ~NodeBlock();
 
-    NodeBlock(const NodeBlock&) = delete;
-
     uint32_t usedNodes() { return usedNodes_; }
-
     Node* firstNode() { return firstNode_; }
     void setFirstNode(Node* node) { firstNode_ = node; }
 

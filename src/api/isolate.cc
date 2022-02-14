@@ -270,7 +270,7 @@ IsolateWrap::IsolateWrap() {
 
 IsolateWrap::~IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "free: %p", this);
-  global_handles_->Dispose();
+  global_handles_->dispose();
   LWNODE_CALL_TRACE_GC_START();
   // NOTE: Called when this IsolateWrap is deallocated by gc
   LWNODE_CALL_TRACE_GC_END();
