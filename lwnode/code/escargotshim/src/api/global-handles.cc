@@ -125,7 +125,7 @@ GlobalHandles::GlobalHandles(IsolateWrap* isolate)
   weakHandler_ = new GlobalWeakHandler();
 }
 
-void GlobalHandles::Dispose() {
+void GlobalHandles::dispose() {
   LWNODE_CALL_TRACE_ID(GLOBALHANDLES);
   persistentValues_.clear();
   weakHandler_->dispose();
