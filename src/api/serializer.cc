@@ -487,12 +487,7 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     return OptionalRef<ValueRef>();
   }
 
-  std::stringstream ss;
-  ss << std::hex << std::this_thread::get_id();
-  std::string tid = ss.str();
-
-  LWNODE_CALL_TRACE_ID_LOG(
-      SERIALIZER, "Parse %c (0x%s)", (char)tag, tid.c_str());
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Parse %c", (char)tag);
 
   if (tag == SerializationTag::kNull) {
     return OptionalRef<ValueRef>(ValueRef::createNull());
@@ -560,8 +555,7 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     }
     return OptionalRef<ValueRef>(arrayBuffer);
   } else {
-    LWNODE_CALL_TRACE_ID_LOG(
-        SERIALIZER, "Fail: %c (0x%s)", (char)tag, tid.c_str());
+    LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Fail: %c", (char)tag);
     LWNODE_UNIMPLEMENT;
   }
 
