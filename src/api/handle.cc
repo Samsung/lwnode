@@ -253,8 +253,7 @@ void* PersistentWrap::GlobalizeReference(v8::Isolate* isolate, void* address) {
 
 void PersistentWrap::DisposeGlobal(void* address) {
   PersistentWrap* persistent = reinterpret_cast<PersistentWrap*>(address);
-  LWNODE_CALL_TRACE_ID(
-      GCHEAP, "%s", persistent->getPersistentInfoString().c_str());
+  LWNODE_CALL_TRACE_ID(GCHEAP, "%s", persistent->getPersistentInfoString());
 
   LWNODE_DCHECK(persistent->location_ != Local);
 
@@ -265,9 +264,9 @@ void PersistentWrap::DisposeGlobal(void* address) {
 
 void PersistentWrap::dispose() {
   LWNODE_CALL_TRACE_ID(GCHEAP,
-                       "%s isFinalizerCalled: %s",
-                       getPersistentInfoString().c_str(),
-                       strBool(isFinalizerCalled));
+                       "%s isFinalizerCalled: %b",
+                       getPersistentInfoString(),
+                       isFinalizerCalled);
   if (isFinalizerCalled) {
     return;
   }

@@ -32,15 +32,15 @@ class ValueWrap;
 #define __TERMINATION_CHECK(lwIsolate, bailout_value)                          \
   if (lwIsolate->IsExecutionTerminating()) {                                   \
     LWNODE_DLOG_WARN(                                                          \
-        "%s (%s:%d) is ignored due to script execution being terminated.",     \
-        TRACE_ARGS2);                                                          \
+        "%s is ignored due to script execution being terminated.",             \
+        __CODE_LOCATION__);                                                    \
     return bailout_value;                                                      \
   }
 
 #if !defined(NDEBUG)
 #define __DLOG_EVAL_EXCEPTION(eval_result)                                     \
-  LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",                                \
-                  TRACE_ARGS2,                                                 \
+  LWNODE_DLOG_RAW("Execute:\n  %s\n%s",                                        \
+                  __CODE_LOCATION__,                                           \
                   EvalResultHelper::getErrorString(                            \
                       lwIsolate->GetCurrentContext()->get(), eval_result)      \
                       .c_str());
@@ -137,8 +137,8 @@ class EsScope {
 
   void printDebug(Escargot::Evaluator::EvaluatorResult& r) {
 #if !defined(NDEBUG)
-    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\n%s",
-                    TRACE_ARGS2,
+    LWNODE_DLOG_RAW("Execute:\n  %s\n%s",
+                    __CODE_LOCATION__,
                     EvalResultHelper::getErrorString(context(), r).c_str());
 #endif
   }

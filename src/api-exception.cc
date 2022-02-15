@@ -98,7 +98,7 @@ void v8::TryCatch::operator delete[](void*, size_t) {
 bool v8::TryCatch::HasCaught() const {
   bool hasCaught = (exception_ != nullptr);
 
-  LWNODE_CALL_TRACE_ID(TRYCATCH, "hasCaught: %s", strBool(hasCaught));
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "hasCaught: %b", hasCaught);
 
   return hasCaught;
 }
@@ -158,7 +158,7 @@ void v8::TryCatch::ResetInternal() {
 }
 
 void v8::TryCatch::SetVerbose(bool value) {
-  LWNODE_CALL_TRACE_ID(TRYCATCH, "%s", strBool(value));
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%b", value);
   is_verbose_ = value;
 }
 
@@ -168,7 +168,7 @@ bool v8::TryCatch::IsVerbose() const {
 }
 
 void v8::TryCatch::SetCaptureMessage(bool value) {
-  LWNODE_CALL_TRACE_ID(TRYCATCH, "%s", strBool(value));
+  LWNODE_CALL_TRACE_ID(TRYCATCH, "%b", value);
   capture_message_ = value;
 }
 

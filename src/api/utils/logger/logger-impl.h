@@ -25,9 +25,11 @@
 class LogFormatter {
  public:
   std::string header();
+  bool isEnabled() { return isEnabled_; }
 
  protected:
   virtual void printHeader(std::stringstream& stream) = 0;
+  bool isEnabled_{true};
 };
 
 class LogTYPED : public LogFormatter {
@@ -43,6 +45,11 @@ class LogTYPED : public LogFormatter {
 
  protected:
   Type type_{Type::RAW};
+};
+
+class LogINTERNAL : public LogTYPED {
+ public:
+  LogINTERNAL(Type type = Type::RAW);
 };
 
 class LogTRACE : public LogFormatter {
@@ -66,6 +73,7 @@ class Logger {
   };
 
   Logger(const std::string& header = "", std::shared_ptr<Output> out = nullptr);
+  Logger(LogFormatter&& formatter, std::shared_ptr<Output> out = nullptr);
   ~Logger();
 
   template <class T>
@@ -76,6 +84,10 @@ class Logger {
 
   template <typename T, typename... Args>
   Logger& print(const char* format, T value, Args... args) {
+    if (out_ == nullptr) {
+      return *this;
+    }
+
     while (*format) {
       if (*format == '%' && *(++format) != '%') {
         stream_ << value;
@@ -95,6 +107,8 @@ class Logger {
  private:
   std::shared_ptr<Output> out_;
   std::stringstream stream_;
+
+  void initialize(const std::string& header, std::shared_ptr<Output> out);
 };
 
 class StdOut : public Logger::Output {

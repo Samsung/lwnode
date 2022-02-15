@@ -24,7 +24,7 @@ using namespace Escargot;
 #define LOG_HANDLER(msg, ...)                                                  \
   do {                                                                         \
     if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
-      LWNODE_LOG_RAW(CLR_DIM msg CLR_RESET, ##__VA_ARGS__);                    \
+      LWNODE_LOGR(CLR_DIM msg CLR_RESET, ##__VA_ARGS__);                       \
     }                                                                          \
   } while (0)
 

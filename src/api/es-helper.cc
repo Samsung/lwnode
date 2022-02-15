@@ -699,8 +699,9 @@ Evaluator::EvaluatorResult EvalResultHelper::compileRun(ContextRef* context,
       compileResult.script.get());
 
   if (r.isSuccessful() == false) {
-    LWNODE_LOG_INTERNAL("Execute:\n  %s (%s:%d)\n%s",
-                        TRACE_ARGS2,
+    LWNODE_LOG_INTERNAL(RAW,
+                        "Execute:\n  %s\n%s",
+                        __CODE_LOCATION__,
                         EvalResultHelper::getErrorString(context, r).c_str());
   }
   return r;
@@ -730,7 +731,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
         ss << " ";
       }
 
-      LWNODE_LOG_INTERNAL("%s", ss.str().c_str());
+      LWNODE_LOG_INTERNAL(RAW, "%s", ss.str().c_str());
     }
     return ValueRef::createUndefined();
   };
@@ -754,7 +755,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
         ss << " ";
       }
 
-      LWNODE_LOG_INTERNAL("%s", ss.str().c_str());
+      LWNODE_LOG_INTERNAL(RAW, "%s", ss.str().c_str());
     }
     return ValueRef::createUndefined();
   };
@@ -771,6 +772,7 @@ void EvalResultHelper::attachBuiltinPrint(ContextRef* context,
     }
 
     LWNODE_LOG_INTERNAL(
+        RAW,
         "%s",
         getCallStackString(state->computeStackTrace(), maxStackSize).c_str());
 

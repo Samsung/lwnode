@@ -715,9 +715,9 @@ static FunctionTemplateRef* createFunctionTemplate(
          size_t argc,
          ValueRef** argv,
          OptionalRef<ObjectRef> newTarget) -> ValueRef* {
-        LWNODE_DLOG_INFO("FUNC: thisValue: %p newTarget.hasValue: %s",
+        LWNODE_DLOG_INFO("FUNC: thisValue: %p newTarget.hasValue: %b",
                          thisValue,
-                         strBool(newTarget.hasValue()));
+                         newTarget.hasValue());
 
         if (newTarget.hasValue()) {
           auto thisObject = thisValue->asObject();

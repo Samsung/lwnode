@@ -23,9 +23,8 @@
 
 // LWNODE_CALL_TRACE with ID
 #define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
-  if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
-    Logger(LogTRACE(#id, TRACE_ARGS).header()).print(__VA_ARGS__);             \
-  }
+  Logger(LogTRACE(#id, __PRETTY_FUNCTION__, __FILE_NAME__, __LINE__))          \
+      .print(__VA_ARGS__)
 
 #define LWNODE_CALL_TRACE_ID(id, ...)                                          \
   IndentCounter __counter(#id);                                                \
@@ -44,15 +43,12 @@
 #define LWNODE_CALL_TRACE_INDENT() LWNODE_CALL_TRACE_ID_INDENT(COMMON);
 #define LWNODE_CALL_TRACE_UNINDENT() LWNODE_CALL_TRACE_ID_UNINDENT(COMMON);
 
+// GC
 #define LWNODE_CALL_TRACE_GC_START(msg, ...)                                   \
-  if (EscargotShim::Flags::isTraceCallEnabled("gc")) {                         \
-    LWNODE_DLOG_INFO("GC: %s (%s:%d): " msg, TRACE_ARGS, ##__VA_ARGS__);       \
-  }
+  LWNODE_CALL_TRACE_ID_LOG(GC, "GC: %s", ##__VA_ARGS__)
 
 #define LWNODE_CALL_TRACE_GC_END(msg, ...)                                     \
-  if (EscargotShim::Flags::isTraceCallEnabled("gc")) {                         \
-    LWNODE_DLOG_INFO("GC: /%s (%s:%d): " msg, TRACE_ARGS, ##__VA_ARGS__);      \
-  }
+  LWNODE_CALL_TRACE_ID_LOG(GC, "GC: /%s", ##__VA_ARGS__)
 
 #else
 #define LWNODE_CALL_TRACE_ID(...)

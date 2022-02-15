@@ -1890,8 +1890,8 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
                       toStdStringWithoutException(esContext, esValue).c_str());
     }
 
-    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\nResource:\n  %s\n%s",
-                    TRACE_ARGS2,
+    LWNODE_DLOG_RAW("Execute:\n  %s\nResource:\n  %s\n%s",
+                    __CODE_LOCATION__,
                     "N/A",
                     EvalResultHelper::getErrorString(
                         lwIsolate->GetCurrentContext()->get(), r)
