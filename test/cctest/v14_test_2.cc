@@ -180,6 +180,42 @@ THREADED_TEST(MultiSetInternalFields) {
   CHECK(!onread_flag);
 }
 
+static bool calledInternalFieldsErrorCallback = false;
+
+void InternalFieldsErrorCallback(const char* location, const char* message) {
+  calledInternalFieldsErrorCallback = true;
+}
+
+THREADED_TEST(InternalFieldsErrorOnTemplate) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  isolate->SetFatalErrorHandler(InternalFieldsErrorCallback);
+  v8::HandleScope scope(isolate);
+
+  calledInternalFieldsErrorCallback = false;
+  Local<v8::ObjectTemplate> otpl = ObjectTemplate::New(isolate);
+  otpl->SetInternalFieldCount(-1);  // error!
+  CHECK(calledInternalFieldsErrorCallback);
+}
+
+THREADED_TEST(InternalFieldsErrorOnObject) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  isolate->SetFatalErrorHandler(InternalFieldsErrorCallback);
+  v8::HandleScope scope(isolate);
+
+  calledInternalFieldsErrorCallback = false;
+  Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  Local<v8::ObjectTemplate> instance_templ = templ->InstanceTemplate();
+  instance_templ->SetInternalFieldCount(1);
+  Local<v8::Object> object = templ->GetFunction(env.local())
+                                 .ToLocalChecked()
+                                 ->NewInstance(env.local())
+                                 .ToLocalChecked();
+  object->SetInternalField(5, v8_num(1));  // error!
+  CHECK(calledInternalFieldsErrorCallback);
+}
+
 THREADED_TEST(Shebang) {
   LocalContext env;
   v8::Isolate* isolate = env->GetIsolate();
