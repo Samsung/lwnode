@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-present Samsung Electronics Co., Ltd
+ * Copyright (c) 2022-present Samsung Electronics Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "logger.h"
+#include "logger-util.h"
 #include <assert.h>
 #include <regex>
 #include <set>
 #include <sstream>
+#include "flags.h"
 
 std::string getPrettyFunctionName(const std::string fullname) {
   std::smatch match;
@@ -53,26 +54,34 @@ static bool isIndentIdEnabled(std::string id) {
 }
 
 void IndentCounter::indent(std::string id) {
-  if (isIndentIdEnabled(id) == false) return;
+  if (isIndentIdEnabled(id) == false) {
+    return;
+  }
   s_deltaCount++;
 }
 
 void IndentCounter::unIndent(std::string id) {
-  if (isIndentIdEnabled(id) == false) return;
+  if (isIndentIdEnabled(id) == false) {
+    return;
+  }
   s_deltaCount--;
 }
 
 IndentCounter::IndentCounter(std::string id) {
   id_ = id;
 
-  if (isIndentIdEnabled(id) == false) return;
+  if (isIndentIdEnabled(id) == false) {
+    return;
+  }
 
   s_indentCount++;
   s_counterIds.insert(id);
 }
 
 IndentCounter::~IndentCounter() {
-  if (isIndentIdEnabled(id_) == false) return;
+  if (isIndentIdEnabled(id_) == false) {
+    return;
+  }
 
   s_indentCount--;
   s_counterIds.erase(id_);

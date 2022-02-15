@@ -24,9 +24,7 @@
 // LWNODE_CALL_TRACE with ID
 #define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \
   if (EscargotShim::Flags::isTraceCallEnabled(#id)) {                          \
-    Logger(                                                                    \
-        LogTRACE(#id, __PRETTY_FUNCTION__, __FILENAME__, __LINE__).header())   \
-        .print(__VA_ARGS__);                                                   \
+    Logger(LogTRACE(#id, TRACE_ARGS).header()).print(__VA_ARGS__);             \
   }
 
 #define LWNODE_CALL_TRACE_ID(id, ...)                                          \

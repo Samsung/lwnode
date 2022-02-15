@@ -22,26 +22,7 @@
 #include "color.h"
 #include "flags.h"
 #include "logger-impl.h"
-
-std::string getPrettyFunctionName(const std::string fullname);
-std::string createCodeLocation(const char* functionName,
-                               const char* filename,
-                               const int line);
-inline const char* strBool(bool value) {
-  return value ? "True" : "False";
-}
-
-class IndentCounter {
- public:
-  IndentCounter(std::string id);
-  ~IndentCounter();
-  static std::string getString(std::string id = "");
-  static void indent(std::string id);
-  static void unIndent(std::string id);
-
- private:
-  std::string id_;
-};
+#include "logger-util.h"
 
 #define __FILENAME__                                                           \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
