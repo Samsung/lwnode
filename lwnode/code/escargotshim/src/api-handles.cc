@@ -67,7 +67,7 @@ i::Address* HandleScope::CreateHandle(i::Isolate* isolate, i::Address value) {
 
   if (lwIsolate->isCurrentScopeSealed()) {
     lwIsolate->onFatalError(
-        createCodeLocation(TRACE_ARGS).c_str(),
+        __CODE_LOCATION__,
         "the current scope isn't allowed to allocate a handle");
   }
 

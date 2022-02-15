@@ -421,8 +421,8 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
   // note: expand API_HANDLE_EXCEPTION and add the resource name
   if (!r.isSuccessful()) {
     LWNODE_DLOG_ERROR("Evaluate");
-    LWNODE_DLOG_RAW("Execute:\n  %s (%s:%d)\nResource:\n  %s\n%s",
-                    TRACE_ARGS2,
+    LWNODE_DLOG_RAW("Execute:\n  %s\nResource:\n  %s\n%s",
+                    __CODE_LOCATION__,
                     esSourceName->toStdUTF8String().c_str(),
                     EvalResultHelper::getErrorString(
                         lwIsolate->GetCurrentContext()->get(), r)

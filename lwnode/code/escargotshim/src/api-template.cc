@@ -223,10 +223,8 @@ static ValueRef* FunctionTemplateNativeFunction(
     size_t argc,
     ValueRef** argv,
     OptionalRef<ObjectRef> newTarget) {
-  LWNODE_CALL_TRACE_ID(TEMPLATE,
-                       "es: %p newTarget: %s",
-                       thisValue,
-                       strBool(newTarget.hasValue()));
+  LWNODE_CALL_TRACE_ID(
+      TEMPLATE, "es: %p newTarget: %b", thisValue, newTarget.hasValue());
 
   FunctionData* functionData =
       getFunctionDataFromCallee(state->resolveCallee().value());

@@ -16,14 +16,19 @@
 
 #include <string>
 
-std::string getPrettyFunctionName(const std::string fullname);
+#define __FILE_NAME__                                                          \
+  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define __FUNCTION_NAME__ getPrettyFunctionName(__PRETTY_FUNCTION__)
+
+#define __CODE_LOCATION__                                                      \
+  createCodeLocation(__PRETTY_FUNCTION__, __FILE_NAME__, __LINE__).c_str()
+
 std::string createCodeLocation(const char* functionName,
                                const char* filename,
                                const int line);
 
-inline const char* strBool(bool value) {
-  return value ? "True" : "False";
-}
+std::string getPrettyFunctionName(const std::string fullname);
 
 class IndentCounter {
  public:

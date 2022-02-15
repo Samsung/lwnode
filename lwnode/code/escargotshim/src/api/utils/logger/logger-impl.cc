@@ -19,6 +19,7 @@
 #include <map>
 #include <thread>
 #include "color.h"
+#include "flags.h"
 #include "logger.h"
 
 // --- Formatter ---
@@ -69,10 +70,21 @@ void LogTYPED::printHeader(std::stringstream& stream) {
   }
 }
 
+LogINTERNAL::LogINTERNAL(Type type) : LogTYPED(type) {
+#if defined(NDEBUG)
+  isEnabled_ = EscargotShim::Flags::isInternalLogEnabled();
+#endif
+}
+
 LogTRACE::LogTRACE(std::string id,
                    const char* functionName,
                    const char* filename,
                    const int line) {
+  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) {
+    isEnabled_ = false;
+    return;
+  }
+
   id_ = id;
   functionName_ = createCodeLocation(functionName, filename, line);
 }
@@ -91,22 +103,40 @@ thread_local std::shared_ptr<StdOut> s_loggerOutput;
 
 Logger::Logger(const std::string& header, std::shared_ptr<Output> out)
     : out_(out) {
+  initialize(header, out);
+}
+
+Logger::Logger(LogFormatter&& formatter, std::shared_ptr<Output> out)
+    : out_(out) {
+  if (formatter.isEnabled()) {
+    initialize(formatter.header(), out_);
+  }
+}
+
+Logger::~Logger() {
+  if (out_ == nullptr) {
+    return;
+  }
+  stream_ << CLR_RESET << std::endl;
+  out_->flush(stream_);
+}
+
+void Logger::initialize(const std::string& header,
+                        std::shared_ptr<Output> out) {
   if (out_ == nullptr) {
     if (s_loggerOutput == nullptr) {
       s_loggerOutput = std::make_shared<StdOut>();
     }
     out_ = s_loggerOutput;
   }
-
   stream_ << header;
 }
 
-Logger::~Logger() {
-  stream_ << CLR_RESET << std::endl;
-  out_->flush(stream_);
-}
-
 Logger& Logger::print(const char* string_without_format_specifiers) {
+  if (out_ == nullptr) {
+    return *this;
+  }
+
   while (*string_without_format_specifiers) {
     if (*string_without_format_specifiers == '%' &&
         *(++string_without_format_specifiers) != '%') {
@@ -118,7 +148,9 @@ Logger& Logger::print(const char* string_without_format_specifiers) {
 }
 
 Logger& Logger::flush() {
-  out_->flush(stream_);
+  if (out_) {
+    out_->flush(stream_);
+  }
   stream_.str("");
   return *this;
 }

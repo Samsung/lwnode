@@ -16,69 +16,41 @@
 
 #pragma once
 
-#include <string.h>
-#include <cstdio>
-
 #include "color.h"
-#include "flags.h"
 #include "logger-impl.h"
 #include "logger-util.h"
 
-#define __FILENAME__                                                           \
-  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define TRACE_FMT "%s (%s:%d)"
-#define TRACE_ARGS __PRETTY_FUNCTION__, __FILENAME__, __LINE__
-#define TRACE_ARGS2                                                            \
-  getPrettyFunctionName(__PRETTY_FUNCTION__).c_str(), __FILENAME__, __LINE__
-
 // loggers (release)
-#define LWNODE_LOG(tag) Logger(LogTYPED(LogTYPED::Type::tag).header())
-#define LWNODE_LOGF(tag, fmt, ...)                                             \
-  Logger(LogTYPED(LogTYPED::Type::tag).header()).print(fmt, ##__VA_ARGS__)
+#define LWNODE_LOG(tag) Logger(LogTYPED(LogTYPED::Type::tag))
+#define LWNODE_LOGF(tag, fmt, ...) LWNODE_LOG(tag).print(fmt, ##__VA_ARGS__)
 
+#define LWNODE_LOGR(fmt, ...) LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__)
 #define LWNODE_LOGI(fmt, ...) LWNODE_LOGF(INFO, fmt, ##__VA_ARGS__)
 #define LWNODE_LOGW(fmt, ...) LWNODE_LOGF(WARN, fmt, ##__VA_ARGS__)
 #define LWNODE_LOGE(fmt, ...) LWNODE_LOGF(ERROR, fmt, ##__VA_ARGS__)
 
-#define LWNODE_LOG_RAW(fmt, ...) LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__)
-
 // loggers (internal)
-#if !defined(NDEBUG)
-#define LWNODE_LOG_INTERNAL(fmt, ...) LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__)
-#define LWNODE_LOG_INTERNAL_TAG(tag, fmt, ...)                                 \
-  LWNODE_LOGF(tag, fmt, ##__VA_ARGS__)
-#else
-#define LWNODE_LOG_INTERNAL(fmt, ...)                                          \
-  if (EscargotShim::Flags::isInternalLogEnabled()) {                           \
-    LWNODE_LOGF(RAW, fmt, ##__VA_ARGS__);                                      \
-  }
-#define LWNODE_LOG_INTERNAL_TAG(tag, fmt, ...)                                 \
-  if (EscargotShim::Flags::isInternalLogEnabled()) {                           \
-    LWNODE_LOGF(tag, fmt, ##__VA_ARGS__);                                      \
-  }
-#endif
+// enabled if running with debug build or force-logging option
+#define LWNODE_LOG_INTERNAL(tag, fmt, ...)                                     \
+  Logger(LogINTERNAL(LogTYPED::Type::tag)).print(fmt, ##__VA_ARGS__)
 
-#define LWNODE_LOG_INFO(fmt, ...)                                              \
-  LWNODE_LOG_INTERNAL_TAG(INFO, fmt, ##__VA_ARGS__)
-
-#define LWNODE_LOG_WARN(fmt, ...)                                              \
-  LWNODE_LOG_INTERNAL_TAG(WARN, fmt, ##__VA_ARGS__)
-
+#define LWNODE_LOG_RAW(fmt, ...) LWNODE_LOG_INTERNAL(RAW, fmt, ##__VA_ARGS__)
+#define LWNODE_LOG_INFO(fmt, ...) LWNODE_LOG_INTERNAL(INFO, fmt, ##__VA_ARGS__)
+#define LWNODE_LOG_WARN(fmt, ...) LWNODE_LOG_INTERNAL(WARN, fmt, ##__VA_ARGS__)
 #define LWNODE_LOG_ERROR(fmt, ...)                                             \
-  LWNODE_LOG_INTERNAL_TAG(ERROR, fmt, ##__VA_ARGS__)
+  LWNODE_LOG_INTERNAL(ERROR, fmt, ##__VA_ARGS__)
 
 #define LWNODE_UNIMPLEMENT                                                     \
-  LWNODE_LOG_INTERNAL(CLR_RED "UNIMPLEMENTED " TRACE_FMT CLR_RESET,            \
-                      TRACE_ARGS2);
+  LWNODE_LOG_INTERNAL(RAW, CLR_RED "UNIMPLEMENTED " CLR_RESET)                 \
+      << CLR_RESET << __CODE_LOCATION__
 
 #define LWNODE_UNIMPLEMENT_IGNORED                                             \
-  LWNODE_LOG_INTERNAL(CLR_DIM "UNIMPLEMENTED (IGNORED) " TRACE_FMT CLR_RESET,  \
-                      TRACE_ARGS2);
+  LWNODE_LOG_INTERNAL(RAW, CLR_DIM "UNIMPLEMENTED (IGNORED) ")                 \
+      << CLR_RESET << __CODE_LOCATION__
 
 #define LWNODE_UNIMPLEMENT_WORKAROUND                                          \
-  LWNODE_LOG_INTERNAL(CLR_DIM                                                  \
-                      "UNIMPLEMENTED (USE WORKAROUND) " TRACE_FMT CLR_RESET,   \
-                      TRACE_ARGS2);
+  LWNODE_LOG_INTERNAL(RAW, CLR_DIM "UNIMPLEMENTED (USE WORKAROUND) ")          \
+      << CLR_RESET << __CODE_LOCATION__
 
 // loggers (debug)
 #if !defined(NDEBUG)

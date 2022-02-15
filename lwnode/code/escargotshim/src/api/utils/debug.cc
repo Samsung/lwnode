@@ -74,7 +74,7 @@ void DebugUtils::printStackTrace() {
     return;
   }
 
-  LWNODE_LOG_RAW("\n[Backtrace]");
+  LWNODE_LOGR("\n[Backtrace]");
   for (int i = 1; i < frameSize - 2; ++i) {
     char cmd[kStackTraceBufferSize];
     snprintf(cmd,
@@ -89,16 +89,16 @@ void DebugUtils::printStackTrace() {
       while (fgets(line, sizeof(line), stream)) {
         line[strnlen(line, kStackTraceBufferSize) - 1] = 0;
         if (isFirstLine) {
-          LWNODE_LOG_RAW("#%-2d: %s", i - 1, line);
+          LWNODE_LOGR("#%-2d: %s", i - 1, line);
           isFirstLine = false;
         } else {
-          LWNODE_LOG_RAW("%s", line);
+          LWNODE_LOGR("%s", line);
         }
       }
-      LWNODE_LOG_RAW("");
+      LWNODE_LOGR("");
       pclose(stream);
     } else if (symbols[i]) {
-      LWNODE_LOG_RAW("#%-2d: %s", i - 1, symbols[i]);
+      LWNODE_LOGR("#%-2d: %s", i - 1, symbols[i]);
     }
   }
 #endif
@@ -108,16 +108,16 @@ static void printObjectProperties(ExecutionStateRef* state,
                                   ObjectRef* object,
                                   int depth = 0) {
   auto propertyNames = object->ownPropertyKeys(state);
-  LWNODE_LOG_RAW("%*s[prop(%zu)]\n", depth, "", propertyNames->size());
+  LWNODE_LOGR("%*s[prop(%zu)]\n", depth, "", propertyNames->size());
   for (size_t i = 0; i < propertyNames->size(); i++) {
     auto propertyValue = object->getOwnProperty(state, propertyNames->at(i));
     auto propertyNameString = propertyNames->at(i)->toString(state);
     auto propertyValueString = propertyValue->toString(state);
-    LWNODE_LOG_RAW("  %*s%s: %s\n",
-                   depth,
-                   "",
-                   propertyNameString->toStdUTF8String().data(),
-                   propertyValueString->toStdUTF8String().data());
+    LWNODE_LOGR("  %*s%s: %s\n",
+                depth,
+                "",
+                propertyNameString->toStdUTF8String().data(),
+                propertyValueString->toStdUTF8String().data());
   }
 }
 
@@ -153,8 +153,7 @@ void DebugUtils::printToString(ValueRef* value) {
       context,
       [](ExecutionStateRef* state, ValueRef* value) -> ValueRef* {
         auto valueString = value->toString(state);
-        LWNODE_LOG_RAW("toString: %s\n",
-                       valueString->toStdUTF8String().c_str());
+        LWNODE_LOGR("toString: %s\n", valueString->toStdUTF8String().c_str());
         return value;
       },
       value);
