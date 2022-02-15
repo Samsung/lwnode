@@ -16,6 +16,8 @@
 
 #include "logger-impl.h"
 #include <iomanip>  // for setfill and setw
+#include <map>
+#include <thread>
 #include "color.h"
 #include "logger.h"
 
@@ -25,9 +27,25 @@
 #define DISPLAY_TYPE_LENGTH_LIMIT 5
 #define DISPLAY_TRACE_ID_LENGTH_LIMIT 10
 
+std::map<std::thread::id, int> s_thread_ids;
+
+void printThreadIdentifier(std::stringstream& stream) {
+  static int s_id = 0;
+
+  auto id = std::this_thread::get_id();
+  if (s_thread_ids.find(id) == s_thread_ids.end()) {
+    s_thread_ids[id] = ++s_id;
+  }
+
+  stream << "[" << s_thread_ids[id] << "] ";
+}
+
 std::string LogFormatter::header() {
   std::stringstream stream;
+
+  printThreadIdentifier(stream);
   printHeader(stream);
+
   return stream.str();
 }
 
