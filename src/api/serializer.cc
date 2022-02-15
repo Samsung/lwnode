@@ -215,7 +215,7 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
     LWNODE_UNIMPLEMENT;
     return false;
   }
-  return true;
+  return ThrowIfOutOfMemory();
 }
 
 bool ValueSerializer::WriteUint32(uint32_t value) {
@@ -441,11 +441,27 @@ bool ValueSerializer::ExpandBuffer(size_t required_capacity) {
 bool ValueSerializer::ThrowIfOutOfMemory() {
   if (out_of_memory_) {
     LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "out of memory");
-
-    // TODO: throw internal error
+    ThrowDataCloneError();
     return false;
   }
   return true;
+}
+
+void ValueSerializer::ThrowDataCloneError() {
+  auto errorMessage =
+      StringRef::createFromASCII("Data cannot be cloned, out of memory.");
+  if (delegate_) {
+    delegate_->ThrowDataCloneError(
+        Utils::NewLocal<String>(lwIsolate_->toV8(), errorMessage));
+  } else {
+    auto lwContext = lwIsolate_->GetCurrentContext()->get();
+    lwIsolate_->ScheduleThrow(ExceptionHelper::createErrorObject(
+        lwContext, ErrorObjectRef::Code::RangeError, errorMessage));
+  }
+
+  if (lwIsolate_->sholdReportPendingMessage(false)) {
+    lwIsolate_->ReportPendingMessages();
+  }
 }
 
 std::pair<uint8_t*, size_t> ValueSerializer::Release() {

@@ -83,6 +83,7 @@ class ValueSerializer {
   bool WriteTypedArrayObject(Escargot::ArrayBufferViewRef* bufferView);
   bool ExpandBuffer(size_t required_capacity);
   bool ThrowIfOutOfMemory();
+  void ThrowDataCloneError();
 
   IsolateWrap* lwIsolate_ = nullptr;
   v8::ValueSerializer::Delegate* delegate_ = nullptr;
