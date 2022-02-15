@@ -258,14 +258,14 @@ SERIALIZE_TEST(OutOfMemory) {
 
 static int outOfMemoryThrownExceptionsCount = 0;
 static void OutOfMemoryThrownExceptionsHandler(Local<Message> message,
-                                      Local<Value> exception) {
+                                               Local<Value> exception) {
   outOfMemoryThrownExceptionsCount++;
 }
 
 SERIALIZE_TEST(OutOfMemoryThrownExceptions) {
   v8::HandleScope scope(isolate());
-  isolate()->AddMessageListenerWithErrorLevel(OutOfMemoryThrownExceptionsHandler,
-                                              v8::Isolate::kMessageAll);
+  isolate()->AddMessageListenerWithErrorLevel(
+      OutOfMemoryThrownExceptionsHandler, v8::Isolate::kMessageAll);
   invalidSerializeTest(v8_int(12), false);
   invalidSerializeTest(v8_str("test"), false);
   invalidSerializeTest(v8_bool(true), false);

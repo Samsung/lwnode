@@ -59,9 +59,10 @@ int InternalFieldData::internalFieldCount() {
 void InternalFieldData::setInternalFieldCount(int size) {
   LWNODE_CALL_TRACE_ID(OBJDATA, "%d", size);
 
-  // TODO: throw internal error
   if (size <= 0) {
-    LWNODE_DLOG_ERROR("InternalField: Invalid field count: %d\n", size);
+    auto lwIsolate = IsolateWrap::GetCurrent();
+    lwIsolate->onFatalError("InternalFieldData::setInternalFieldCount",
+                            "Internal field out of bounds");
     return;
   }
 
@@ -72,10 +73,11 @@ void InternalFieldData::setInternalFieldCount(int size) {
 }
 
 void InternalFieldData::setInternalField(int idx, void* lwValue) {
-  // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(internalFields_);
   if (!isValidIndex(idx)) {
-    LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
+    auto lwIsolate = IsolateWrap::GetCurrent();
+    lwIsolate->onFatalError("InternalFieldData::setInternalField",
+                            "Internal field out of bounds");
     return;
   }
 
@@ -87,10 +89,11 @@ void InternalFieldData::setInternalField(int idx, void* lwValue) {
 }
 
 void* InternalFieldData::internalField(int idx) {
-  // TODO: throw internal error
   LWNODE_CHECK_NOT_NULL(internalFields_);
   if (!isValidIndex(idx)) {
-    LWNODE_DLOG_ERROR("InternalField: Internal field out of bounds");
+    auto lwIsolate = IsolateWrap::GetCurrent();
+    lwIsolate->onFatalError("InternalFieldData::internalField",
+                            "Internal field out of bounds");
     return nullptr;
   }
 
