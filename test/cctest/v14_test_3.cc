@@ -1321,3 +1321,32 @@ TEST(NativeFunctionDeclarationCustom) {
   CHECK(result->Equals(context, v8::Integer::New(CcTest::isolate(), 42))
             .FromJust());
 }
+
+static void WeakApiCallbackCustom(
+    const v8::WeakCallbackInfo<Persistent<v8::Object>>& data) {
+  data.GetParameter()->Reset();
+  delete data.GetParameter();
+}
+
+TEST(WeakCallbackApiCustom) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  i::GlobalHandles* globals =
+      reinterpret_cast<i::Isolate*>(isolate)->global_handles();
+
+  size_t initial_handles = globals->handles_count();
+  {
+    v8::HandleScope scope(isolate);
+    v8::Local<v8::Object> obj = v8::Object::New(isolate);
+    CHECK(
+        obj->Set(context.local(), v8_str("key"), v8::Integer::New(isolate, 231))
+            .FromJust());
+    v8::Persistent<v8::Object>* handle =
+        new v8::Persistent<v8::Object>(isolate, obj);
+    handle->SetWeak<v8::Persistent<v8::Object>>(
+        handle, WeakApiCallbackCustom, v8::WeakCallbackType::kParameter);
+  }
+  CcTest::PreciseCollectAllGarbage(isolate);
+  // Verify disposed.
+  CHECK_EQ(initial_handles, globals->handles_count());
+}

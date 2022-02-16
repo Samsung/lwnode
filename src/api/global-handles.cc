@@ -21,11 +21,15 @@
 #include "base.h"
 #include "global-handles.h"
 
+#include "api/utils/gc.h"
+
 namespace v8 {
 namespace internal {
 void GlobalHandles::Destroy(EscargotShim::ValueWrap* lwValue) {
   auto isolate = EscargotShim::IsolateWrap::GetCurrent();
-  isolate->global_handles()->destroy(lwValue);
+  if (isolate) {
+    isolate->global_handles()->destroy(lwValue);
+  }
 }
 
 void GlobalHandles::MakeWeak(EscargotShim::ValueWrap* lwValue,
@@ -46,90 +50,18 @@ void* GlobalHandles::ClearWeakness(EscargotShim::ValueWrap* lwValue) {
 
 namespace EscargotShim {
 
-GlobalHandles::Node::Node(void* parameter,
-                          v8::WeakCallbackInfo<void>::Callback callback)
-    : parameter_(parameter), callback_(callback) {}
-
-GlobalHandles::Node::~Node() {}
-
-GlobalHandles::NodeBlock::NodeBlock(IsolateWrap* isolate,
-                                    ValueWrap* value,
-                                    uint32_t count)
-    : isolate_(isolate), value_(value), usedNodes_(count) {
-  holder_.reset(value_);
-}
-
-GlobalHandles::NodeBlock::~NodeBlock() {
-  delete firstNode_;
-  holder_.release();
-}
-
-GlobalHandles::Node* GlobalHandles::NodeBlock::pushNode(Node* node) {
-  if (firstNode_ == nullptr) {
-    firstNode_ = node;
-  } else {
-    // TODO
-    LWNODE_DLOG_WARN("The weak callback is registered several times.");
-    if (node) {
-      delete node;
-      return nullptr;
-    }
-  }
-
-  return node;
-}
-
-void GlobalHandles::NodeBlock::registerWeakCallback() {
-  MemoryUtil::gcRegisterFinalizer(
-      value_,
-      [](void* self, void* data) {
-        LWNODE_CALL_TRACE_GC_START();
-        LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "Call weak callback: %p", self);
-
-        auto globalHandles = static_cast<GlobalHandles*>(data);
-        auto weakHandler = globalHandles->weakHandler_;
-        auto block = weakHandler->popBlock(VAL(self));
-        if (!block) {
-          LWNODE_CALL_TRACE_ID(
-              GLOBALHANDLES, "Cannot invoke callback: %p", self);
-          return;
-        }
-
-        auto curNode = block->firstNode_;
-        if (curNode) {
-          if (curNode->callback()) {
-            void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {nullptr,
-                                                                       nullptr};
-            v8::WeakCallbackInfo<void> info(block->isolate()->toV8(),
-                                            curNode->parameter(),
-                                            embedderFields,
-                                            nullptr);
-            LWNODE_CHECK_NOT_NULL(block->isolate());
-            curNode->callback()(info);
-          }
-          // TODO: The weak callback is registered several times.(create
-          // nextNode)
-        }
-        LWNODE_CALL_TRACE_GC_END();
-      },
-      isolate_->GetCurrent()->global_handles());
-}
-
-void GlobalHandles::NodeBlock::releaseValue() {
-  registerWeakCallback();
-  holder_.release();
-}
-
 GlobalHandles::GlobalHandles(IsolateWrap* isolate)
-    : v8::internal::GlobalHandles(isolate), isolate_(isolate) {
-  weakHandler_ = new GlobalWeakHandler();
-}
+    : v8::internal::GlobalHandles(isolate), isolate_(isolate) {}
 
 void GlobalHandles::dispose() {
   LWNODE_CALL_TRACE_ID(GLOBALHANDLES);
   persistentValues_.clear();
-  weakHandler_->dispose();
-  delete weakHandler_;
+
+  for (auto gcObjectInfo : gcObjectInfos_) {
+    delete gcObjectInfo;
+  }
+
+  isolate_ = nullptr;
 }
 
 void GlobalHandles::create(ValueWrap* lwValue) {
@@ -161,48 +93,167 @@ bool GlobalHandles::destroy(ValueWrap* lwValue) {
 size_t GlobalHandles::PostGarbageCollectionProcessing(
     /*const v8::GCCallbackFlags gc_callback_flags*/) {
 #if defined(LWNODE_ENABLE_EXPERIMENTAL)
-  return weakHandler_->clearWeakValue();
-#else
-  return 0;
+  clearWeakValues();
 #endif
+
+  return 0;
+}
+
+void GlobalHandles::releaseWeakValues() {
+  std::set<GcObjectInfo*, ObjectInfoComparator> objectsInfoPersistent;
+  std::vector<GcObjectInfo*> objectsInfoWeak;
+
+  for (auto gcObjectInfo : gcObjectInfos_) {
+    if (gcObjectInfo->isPersistent()) {
+      objectsInfoPersistent.insert(gcObjectInfo);
+    } else {
+      // TODO: check if the weak pointer is valid
+      if (gcObjectInfo->hasCallback()) {
+        void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {nullptr,
+                                                                   nullptr};
+        v8::WeakCallbackInfo<void> info(isolate_->toV8(),
+                                        gcObjectInfo->parameter(),
+                                        embedderFields,
+                                        nullptr);
+        gcObjectInfo->runCallback(info);
+      }
+
+      // reset callback
+      MemoryUtil::gcRegisterFinalizer(
+          gcObjectInfo->lwValue(), [](void* self, void* data) {}, nullptr);
+
+      objectsInfoWeak.push_back(gcObjectInfo);
+
+      GC_invoke_finalizers();
+    }
+  }
+
+  gcObjectInfos_.clear();
+  gcObjectInfos_.insert(objectsInfoPersistent.begin(),
+                        objectsInfoPersistent.end());
+  for (auto objectInfo : objectsInfoWeak) {
+    delete objectInfo;
+  }
 }
 
 bool GlobalHandles::makeWeak(ValueWrap* lwValue,
-                             void* parameter,
+                             void* parameter,  // c++ native object
                              v8::WeakCallbackInfo<void>::Callback callback) {
-  auto iter = persistentValues_.find(lwValue);
-  if (iter == persistentValues_.end()) {
-    return false;
-  }
+  addWeakValue(lwValue, parameter, callback);
 
-  if (weakHandler_->isWeak(lwValue)) {
-    return false;
-  }
+  MemoryUtil::gcRegisterFinalizer(
+      lwValue,
+      [](void* self, void* data) {
+        LWNODE_CALL_TRACE_GC_START();
+        auto globalHandles = static_cast<GlobalHandles*>(data);
 
-  auto block = std::make_unique<GlobalHandles::NodeBlock>(
-      isolate_, lwValue, iter->second);
-  block->pushNode(new Node(parameter, callback));
-  weakHandler_->pushBlock(lwValue, std::move(block));
+        LWNODE_CALL_TRACE_ID(GLOBALHANDLES,
+                             "Call weak callback: %p %p",
+                             self,
+                             globalHandles->isolate_);
+        if (!globalHandles->isolate_) {
+          return;
+        }
 
-  LWNODE_CALL_TRACE_ID(
-      GLOBALHANDLES, "MakeWeak: %p(%zu)", lwValue, iter->second);
-  persistentValues_.erase(iter);
+        auto gcObjectInfo = globalHandles->findGcObjectInfo((ValueWrap*)self);
+        if (gcObjectInfo) {
+          if (gcObjectInfo->hasCallback()) {
+            void* embedderFields[v8::kEmbedderFieldsInWeakCallback] = {nullptr,
+                                                                       nullptr};
+            v8::WeakCallbackInfo<void> info(globalHandles->isolate_->toV8(),
+                                            gcObjectInfo->parameter(),
+                                            embedderFields,
+                                            nullptr);
+            LWNODE_CHECK_NOT_NULL(globalHandles->isolate_);
+            gcObjectInfo->runCallback(info);
+          }
+
+          globalHandles->removeGcObjectInfo(gcObjectInfo->lwValue());
+        }
+
+        LWNODE_CALL_TRACE_GC_END();
+      },
+      isolate_->GetCurrent()->global_handles());
+
   return true;
 }
 
 bool GlobalHandles::clearWeakness(ValueWrap* lwValue) {
-  auto block = weakHandler_->popBlock(lwValue);
-  if (!block) {
-    return false;
-  }
-  LWNODE_CHECK(persistentValues_.find(lwValue) == persistentValues_.end());
-  persistentValues_.emplace(lwValue, block->usedNodes());
-  LWNODE_CALL_TRACE_ID(GLOBALHANDLES, "clearWeakness: %p", lwValue);
+  setPersistent(lwValue);
   return true;
 }
 
-size_t GlobalHandles::handles_count() {
-  return persistentValues_.size();
+void GlobalHandles::addWeakValue(
+    ValueWrap* lwValue,
+    void* parameter,
+    v8::WeakCallbackInfo<void>::Callback callback) {
+  GcObjectInfo objInfo(lwValue, parameter, callback);
+  auto itr = gcObjectInfos_.find(&objInfo);
+  if (itr != gcObjectInfos_.end()) {
+    (*itr)->unsetPersistent();
+    return;
+  }
+
+  GcObjectInfo* newObjInfo = new GcObjectInfo(lwValue, parameter, callback);
+  gcObjectInfos_.insert(newObjInfo);
+}
+
+void GlobalHandles::setPersistent(ValueWrap* lwValue) {
+  GcObjectInfo objInfo(lwValue);
+  auto itr = gcObjectInfos_.find(&objInfo);
+  if (itr != gcObjectInfos_.end()) {
+    (*itr)->setPersistent();
+    return;
+  }
+
+  GcObjectInfo* newObjInfo = new GcObjectInfo(lwValue);
+  gcObjectInfos_.insert(newObjInfo);
+}
+
+void GlobalHandles::clearWeakValues() {
+  std::set<GcObjectInfo*, ObjectInfoComparator> objectsInfoPersistent;
+  for (auto objectInfo : gcObjectInfos_) {
+    if (objectInfo->isPersistent()) {
+      objectsInfoPersistent.insert(objectInfo);
+    } else {
+      // TODO: check validness of a weak pointer, and call finalizer
+    }
+  }
+
+  gcObjectInfos_.clear();
+  gcObjectInfos_.insert(objectsInfoPersistent.begin(),
+                        objectsInfoPersistent.end());
+}
+
+GcObjectInfo* GlobalHandles::findGcObjectInfo(ValueWrap* lwValue) {
+  GcObjectInfo objInfo(lwValue);
+  auto itr = gcObjectInfos_.find(&objInfo);
+  if (itr != gcObjectInfos_.end()) {
+    return *itr;
+  }
+
+  return nullptr;
+}
+
+void GlobalHandles::removeGcObjectInfo(ValueWrap* lwValue) {
+  GcObjectInfo objInfo(lwValue);
+  auto itr = gcObjectInfos_.find(&objInfo);
+  if (itr != gcObjectInfos_.end()) {
+    auto objectInfo = *itr;
+    gcObjectInfos_.erase(itr);
+    delete objectInfo;
+  }
+}
+
+size_t GlobalHandles::handles_count() const {
+  size_t count = 0;
+  for (auto gcObjectInfo : gcObjectInfos_) {
+    if (gcObjectInfo->isPersistent()) {
+      count++;
+    }
+  }
+
+  return count;
 }
 
 }  // namespace EscargotShim

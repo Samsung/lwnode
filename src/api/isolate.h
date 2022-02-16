@@ -232,7 +232,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   SymbolRef* createApiPrivateSymbol(StringRef* name);
   SymbolRef* getApiPrivateSymbol(StringRef* name);
 
-  void CollectGarbage();
+  void CollectGarbage(
+      GarbageCollectionReason reason = GarbageCollectionReason::kRuntime);
 
   void SetPendingExceptionAndMessage(
       ValueRef* exception,
