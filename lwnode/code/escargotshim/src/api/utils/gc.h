@@ -165,6 +165,36 @@ enum WarnEventType {
   OUT_OF_MEMORY,
 };
 
+enum class GarbageCollectionReason {
+  // NOTE: From the following enum values from v8,
+  // we only use a few.
+  // kUnknown = 0,
+  // kAllocationFailure = 1,
+  // kAllocationLimit = 2,
+  // kContextDisposal = 3,
+  // kCountersExtension = 4,
+  // kDebugger = 5,
+  // kDeserializer = 6,
+  // kExternalMemoryPressure = 7,
+  // kFinalizeMarkingViaStackGuard = 8,
+  // kFinalizeMarkingViaTask = 9,
+  // kFullHashtable = 10,
+  // kHeapProfiler = 11,
+  // kTask = 12,
+  // kLastResort = 13,
+  // kLowMemoryNotification = 14,
+  // kMakeHeapIterable = 15,
+  // kMemoryPressure = 16,
+  // kMemoryReducer = 17,
+  kRuntime = 18,
+  // kSamplingProfiler = 19,
+  // kSnapshotCreator = 20,
+  kTesting = 21,
+  // kExternalFinalize = 22,
+  // kGlobalAllocationLimit = 23,
+  // kMeasureMemory = 24
+};
+
 class ESCARGOT_EXPORT MemoryUtil {
  public:
   typedef void (*OnGCWarnEventListener)(WarnEventType type);

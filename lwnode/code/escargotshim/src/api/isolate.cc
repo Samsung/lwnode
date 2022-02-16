@@ -270,10 +270,6 @@ IsolateWrap::IsolateWrap() {
 
 IsolateWrap::~IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "free: %p", this);
-  global_handles_->dispose();
-  LWNODE_CALL_TRACE_GC_START();
-  // NOTE: Called when this IsolateWrap is deallocated by gc
-  LWNODE_CALL_TRACE_GC_END();
 }
 
 IsolateWrap* IsolateWrap::New() {
@@ -286,6 +282,9 @@ void IsolateWrap::Dispose() {
   LWNODE_CALL_TRACE_GC_START();
   // NOTE: check unlock_gc_release(); is needed (and where)
   // unlock_gc_release();
+
+  global_handles()->dispose();
+
   LWNODE_CALL_TRACE_GC_END();
 }
 
@@ -604,8 +603,12 @@ void IsolateWrap::ClearPendingExceptionAndMessage() {
   clear_pending_message_obj();
 }
 
-void IsolateWrap::CollectGarbage() {
-  global_handles_->PostGarbageCollectionProcessing();
+void IsolateWrap::CollectGarbage(GarbageCollectionReason reason) {
+  if (reason == GarbageCollectionReason::kTesting) {
+    global_handles_->releaseWeakValues();
+  } else {
+    global_handles_->PostGarbageCollectionProcessing();
+  }
 }
 
 void IsolateWrap::SetPendingExceptionAndMessage(

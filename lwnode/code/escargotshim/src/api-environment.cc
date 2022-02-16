@@ -2009,7 +2009,7 @@ void Isolate::RequestInterrupt(InterruptCallback callback, void* data) {
 }
 
 void Isolate::RequestGarbageCollectionForTesting(GarbageCollectionType type) {
-  IsolateWrap::GetCurrent()->CollectGarbage();
+  IsolateWrap::GetCurrent()->CollectGarbage(GarbageCollectionReason::kTesting);
 }
 
 Isolate* Isolate::GetCurrent() {

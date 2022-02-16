@@ -517,8 +517,17 @@ ValueRef* ExternalizeGcExtension::gcCallback(ExecutionStateRef* state,
     return ValueRef::createUndefined();
   }
 
+  auto isolate = IsolateWrap::GetCurrent();
+  if (isolate) {
+    // cleanup gc objects and then delete native c++ objects
+    // that were linked to a gc object, but became dangling by
+    // the above gc
+    isolate->CollectGarbage();  // should release weak values
+  }
+
   Escargot::Memory::gc();
   malloc_trim(0);
+
   return ValueRef::createUndefined();
 }
 
