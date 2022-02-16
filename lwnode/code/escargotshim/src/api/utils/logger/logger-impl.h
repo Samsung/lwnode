@@ -91,7 +91,18 @@ class Logger {
     while (*format) {
       if (*format == '%' && *(++format) != '%') {
         stream_ << value;
+
+        // handle sub-specifiers
+        if ((*format == 'z')) {
+          format++;
+        } else if ((*format == 'l') || (*format == 'h')) {
+          format++;
+          if (*format == *(format + 1)) {
+            format++;
+          }
+        }
         format++;
+
         print(format, args...);
         return *this;
       }
