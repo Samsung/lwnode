@@ -248,6 +248,7 @@ bool ValueSerializer::WriteBoolean(bool value) {
 // base on v8
 void ValueSerializer::WriteTag(SerializationTag tag) {
   uint8_t raw_tag = static_cast<uint8_t>(tag);
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER_TAG, "Write Tag %c", (char)tag);
   WriteRawBytes(&raw_tag, sizeof(raw_tag));
 }
 
@@ -493,7 +494,7 @@ ValueDeserializer::ValueDeserializer(IsolateWrap* lwIsolate,
                                      const uint8_t* data,
                                      const size_t size)
     : lwIsolate_(lwIsolate), delegate_(delegate), buffer_(data, size) {
-  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Create deserializer");
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Create deserializer (%zu)", size);
 }
 
 OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
@@ -503,7 +504,7 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     return OptionalRef<ValueRef>();
   }
 
-  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Parse %c", (char)tag);
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER_TAG, "Read Tag %c", (char)tag);
 
   if (tag == SerializationTag::kNull) {
     return OptionalRef<ValueRef>(ValueRef::createNull());
@@ -605,7 +606,15 @@ bool ValueDeserializer::CheckTag(SerializationTag check) {
 }
 
 bool ValueDeserializer::ReadUint32(uint32_t*& value) {
-  return ReadVarint<uint32_t>(*value);
+  if (!CheckTag(SerializationTag::kUint32)) {
+    return false;
+  }
+
+  OptionalRef<ValueRef> valueRef = ReadValue();
+  if (valueRef) {
+    *value = valueRef->asUInt32();
+  }
+  return valueRef;
 }
 
 template <typename T>
