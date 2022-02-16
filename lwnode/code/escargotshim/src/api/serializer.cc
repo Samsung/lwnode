@@ -802,10 +802,9 @@ bool ValueDeserializer::ReadArrayBufferView(
     ArrayBufferViewRef*& arrayBufferView, ArrayBufferObjectRef* abo) {
   uint8_t tag = 0;
   uint32_t byteOffset = 0;
-  uint32_t byteLength = 0;
   uint32_t arrayLength = 0;
 
-  if (!ReadVarint<uint8_t>(tag) || !ReadVarint<uint32_t>(byteLength) ||
+  if (!ReadVarint<uint8_t>(tag) || !ReadVarint<uint32_t>(byteOffset) ||
       !ReadVarint<uint32_t>(arrayLength)) {
     return false;
   }
