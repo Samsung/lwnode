@@ -87,11 +87,10 @@ static bool createGlobals(ContextRef* context) {
                          size_t argc,
                          ValueRef** argv,
                          bool isConstructCall) -> ValueRef* {
-                        state->throwException(EvalErrorObjectRef::create(
-                            state,
-                            StringRef::createFromASCII(
-                                "Code generation from strings disallowed for "
-                                "this context")));
+                        state->throwException(
+                            ExceptionHelper::createErrorObject(
+                                state->context(),
+                                ErrorMessageType::kDisallowCodeGeneration));
                         return ValueRef::createUndefined();
                       },
                       0,

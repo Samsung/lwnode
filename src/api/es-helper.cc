@@ -15,6 +15,7 @@
  */
 
 #include "es-helper.h"
+#include "api/error-message.h"
 #include "context.h"
 #include "extra-data.h"
 #include "isolate.h"
@@ -976,6 +977,14 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
 
   LWNODE_CHECK(r.isSuccessful());
   return r.result->asErrorObject();
+}
+
+ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
+                                                   ErrorMessageType type) {
+  return ExceptionHelper::createErrorObject(
+      context,
+      ErrorMessage::getErrorCode(type),
+      ErrorMessage::createErrorStringRef(type));
 }
 
 void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
