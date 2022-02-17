@@ -29,6 +29,7 @@
 #include "v8-util.h"
 
 #include "api/context.h"
+#include "api/error-message.h"
 #include "api/es-helper.h"
 #include "api/es-v8-helper.h"
 #include "api/extra-data.h"

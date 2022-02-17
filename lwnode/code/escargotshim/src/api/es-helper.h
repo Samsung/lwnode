@@ -29,6 +29,7 @@ class ContextWrap;
 class ObjectData;
 class FunctionData;
 class ValueWrap;
+enum class ErrorMessageType;
 
 typedef Evaluator::EvaluatorResult EvalResult;
 typedef FunctionObjectRef::NativeFunctionPointer NativeFunctionPointer;
@@ -301,6 +302,8 @@ class ExceptionHelper {
   static ErrorObjectRef* createErrorObject(ContextRef* context,
                                            ErrorObjectRef::Code code,
                                            StringRef* errorMessage);
+  static ErrorObjectRef* createErrorObject(ContextRef* context,
+                                           ErrorMessageType type);
   static void setStackPropertyIfNotExist(ExecutionStateRef* state,
                                          Escargot::ValueRef* error);
 };

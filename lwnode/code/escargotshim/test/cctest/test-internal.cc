@@ -27,6 +27,7 @@
 #include <codecvt>
 #include <fstream>
 #include <string>
+#include "api/error-message.h"
 #include "api/es-helper.h"
 #include "api/utils/gc-container.h"
 #include "lwnode-loader.h"
@@ -1109,4 +1110,54 @@ TEST(ReloadableString16) {
   }
 }
 
+static void InternalErrorMessageTemplateCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {}
+
+TEST(InternalErrorMessage) {
+  LocalContext context;
+  auto isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  auto global = context->Global();
+  auto object = v8::FunctionTemplate::New(isolate);
+  auto ftpl = v8::FunctionTemplate::New(isolate,
+                                        InternalErrorMessageTemplateCallback,
+                                        v8::Local<v8::Value>(),
+                                        v8::Signature::New(isolate, object));
+  global
+      ->Set(context.local(),
+            v8_str("sig_obj"),
+            object->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  global
+      ->Set(context.local(),
+            v8_str("x"),
+            ftpl->GetFunction(context.local()).ToLocalChecked())
+      .FromJust();
+  CompileRun("var s = new sig_obj();");
+
+  {
+    v8::TryCatch try_catch(isolate);
+    CompileRun("x()");  // Throw internal error!
+    CHECK(try_catch.HasCaught());
+
+    // Check error code and message
+    auto errorMessageType = ErrorMessageType::kIllegalInvocation;
+    auto errorCode = ErrorMessage::getErrorCode(errorMessageType);
+    std::string errorCodeString;
+    if (errorCode == ErrorObjectRef::Code::TypeError) {
+      errorCodeString = "TypeError: ";
+    } else {
+      errorCodeString = "Fail error code mismatch: ";
+    }
+    std::string errorMessage =
+        errorCodeString + ErrorMessage::getErrorString(errorMessageType);
+
+    CHECK(v8_str(errorMessage.c_str())
+              ->Equals(isolate->GetCurrentContext(),
+                       try_catch.Exception()
+                           ->ToString(isolate->GetCurrentContext())
+                           .ToLocalChecked())
+              .FromJust());
+  }
+}
 #endif

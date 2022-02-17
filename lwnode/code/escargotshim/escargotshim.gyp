@@ -67,6 +67,7 @@
         'src/api/object.cc',
         'src/api/stack-trace.cc',
         'src/api/serializer.cc',
+        'src/api/error-message.cc',
         'src/lwnode/lwnode.cc',
         'src/lwnode/lwnode-loader.cc',
         'src/lwnode/lwnode-gc-strategy.cc',

@@ -168,10 +168,8 @@ MaybeLocal<Value> ValueDeserializer::ReadValue(Local<Context> context) {
     LWNODE_CALL_TRACE_ID(SERIALIZER, "Cannot read value");
     return Utils::NewLocal<Uint32>(
         lwIsolate->toV8(),
-        ExceptionHelper::createErrorObject(
-            esContext,
-            ErrorObjectRef::Code::None,
-            StringRef::createFromASCII("Cannot read value")));
+        ExceptionHelper::createErrorObject(esContext,
+                                           ErrorMessageType::kNotReadValue));
   }
   return Utils::NewLocal<Uint32>(lwIsolate->toV8(), output.get());
 }

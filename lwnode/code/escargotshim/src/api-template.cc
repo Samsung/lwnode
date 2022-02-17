@@ -179,8 +179,8 @@ static ValueRef* runNativeFunctionCallback(ExecutionStateRef* state,
                                            ValueRef** argv) {
   auto lwIsolate = IsolateWrap::GetCurrent();
   if (!functionData->checkSignature(state, thisValue->asObject())) {
-    lwIsolate->ScheduleThrow(TypeErrorObjectRef::create(
-        state, StringRef::createFromASCII("Illegal invocation")));
+    lwIsolate->ScheduleThrow(ExceptionHelper::createErrorObject(
+        state->context(), ErrorMessageType::kIllegalInvocation));
     lwIsolate->ThrowErrorIfHasException(state);
     LWNODE_DLOG_ERROR("Signature mismatch!");
     return nullptr;

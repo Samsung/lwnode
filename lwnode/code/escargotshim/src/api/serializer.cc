@@ -452,12 +452,14 @@ void ValueSerializer::ThrowDataCloneError() {
   auto errorMessage =
       StringRef::createFromASCII("Data cannot be cloned, out of memory.");
   if (delegate_) {
-    delegate_->ThrowDataCloneError(
-        Utils::NewLocal<String>(lwIsolate_->toV8(), errorMessage));
+    delegate_->ThrowDataCloneError(Utils::NewLocal<String>(
+        lwIsolate_->toV8(),
+        ErrorMessage::createErrorStringRef(
+            ErrorMessageType::kDataCloneErrorOutOfMemory)));
   } else {
     auto lwContext = lwIsolate_->GetCurrentContext()->get();
     lwIsolate_->ScheduleThrow(ExceptionHelper::createErrorObject(
-        lwContext, ErrorObjectRef::Code::RangeError, errorMessage));
+        lwContext, ErrorMessageType::kDataCloneErrorOutOfMemory));
   }
 
   if (lwIsolate_->sholdReportPendingMessage(false)) {
