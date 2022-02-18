@@ -602,304 +602,230 @@ void ObjectTemplate::SetAccessor(v8::Local<Name> name,
                                    attribute);
 }
 
-struct HandlerConfiguration : public gc {
-  HandlerConfiguration(
-      v8::Isolate* _isolate,
-      const v8::NamedPropertyHandlerConfiguration& namedPropertyHandlers)
-      : isolate(_isolate), namedPropertyHandlers(namedPropertyHandlers) {}
-
-  HandlerConfiguration(
-      v8::Isolate* _isolate,
-      const v8::IndexedPropertyHandlerConfiguration& _indexedPropertyHandlers)
-      : isolate(_isolate), indexedPropertyHandlers(_indexedPropertyHandlers) {}
-  v8::Isolate* isolate{nullptr};
-  union {
-    v8::NamedPropertyHandlerConfiguration namedPropertyHandlers;
-    v8::IndexedPropertyHandlerConfiguration indexedPropertyHandlers;
-  };
+class NamePropertyPolicy {
+ public:
+  static Local<Name> getPropertyName(ExecutionStateRef* state,
+                                     ValueRef* value) {
+    return Utils::ToLocal<Name>(value);
+  }
 };
 
-static_assert(sizeof(v8::NamedPropertyHandlerConfiguration) ==
-                  sizeof(v8::IndexedPropertyHandlerConfiguration),
-              "PropertyHandlerConfiguration size is different");
+class IndexPropertyPolicy {
+ public:
+  static uint32_t getPropertyName(ExecutionStateRef* state, ValueRef* value) {
+    auto index = value->tryToUseAsIndexProperty(state);
+    LWNODE_DCHECK(index != ValueRef::InvalidIndexPropertyValue);
+    return index;
+  }
+};
 
 template <typename T>
-struct ObjectTemplateLocalDataHelper {
-  ObjectTemplateLocalDataHelper(ExecutionStateRef* state,
-                                ObjectRef* esSelf,
-                                ValueRef* esReceiver,
-                                ValueRef* esPropertyName,
-                                void* data) {
-    if (esPropertyName) {
-      v8PropertyName = Utils::ToLocal<Name>(esPropertyName);
-      indexProperty = esPropertyName->tryToUseAsIndexProperty(state);
-    }
+struct ObjectTemplateLocalData : public gc {
+ public:
+  ObjectTemplateLocalData(v8::Isolate* isolate,
+                          const T& propertyHandlerConfiguration)
+      : isolate(isolate), config(propertyHandlerConfiguration) {}
 
-    handlerConfiguration = reinterpret_cast<HandlerConfiguration*>(data);
-    info = std::unique_ptr<PropertyCallbackInfoWrap<T>>(
-        new PropertyCallbackInfoWrap<T>(
-            handlerConfiguration->isolate,
-            esSelf,
-            esReceiver,
-            VAL(*handlerConfiguration->namedPropertyHandlers.data)));
-  }
-
-  bool isIndexedProperty() {
-    return indexProperty != ValueRef::InvalidIndexPropertyValue;
-  }
-
-  Local<Name> v8PropertyName;
-  uint32_t indexProperty{ValueRef::InvalidIndexPropertyValue};
-  HandlerConfiguration* handlerConfiguration = nullptr;
-  std::unique_ptr<PropertyCallbackInfoWrap<T>> info;
+  v8::Isolate* isolate{nullptr};
+  T config;
 };
 
-class ObjectTemplatePropertyHandlerCallbackHelper {
+template <typename T, typename GetPropertyNamePolicy>
+class ObjectTemplateSetHandlerCallbackHelper {
  public:
-  PropertyHandlerGetterCallback getGetterCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data,
-              ValueRef* propertyName) -> OptionalRef<ValueRef> {
-      ObjectTemplateLocalDataHelper<v8::Value> helper(
-          state, esSelf, esReceiver, propertyName, data);
-
-      if (!helper.handlerConfiguration->namedPropertyHandlers.getter) {
-        return Escargot::OptionalRef<Escargot::ValueRef>();
-      }
-
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.getter(
-            helper.indexProperty, *helper.info);
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.getter(
-            helper.v8PropertyName, *helper.info);
-      }
-
-      if (helper.info->hasReturnValue()) {
-        return CVAL(*helper.info->GetReturnValue().Get())->value();
-      }
-
-      return Escargot::OptionalRef<Escargot::ValueRef>();
-    };
+  static void applyHelper(
+      const T& v8Config, ObjectTemplatePropertyHandlerConfiguration& esConfig) {
+    esConfig.getter = v8Config.getter ? getterCallback : nullptr;
+    esConfig.setter = v8Config.setter ? setterCallback : nullptr;
+    esConfig.query = v8Config.query ? queryCallback : nullptr;
+    esConfig.deleter = v8Config.deleter ? deleterCallback : nullptr;
+    esConfig.enumerator = v8Config.enumerator ? enumeratorCallback : nullptr;
+    esConfig.definer = v8Config.definer ? definerCallback : nullptr;
+    esConfig.descriptor = v8Config.descriptor ? descriptorCallback : nullptr;
   }
 
-  PropertyHandlerSetterCallback getSetterCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data,
-              ValueRef* propertyName,
-              ValueRef* esValue) -> OptionalRef<ValueRef> {
-      ObjectTemplateLocalDataHelper<v8::Value> helper(
-          state, esSelf, esReceiver, propertyName, data);
-
-      if (!helper.handlerConfiguration->namedPropertyHandlers.setter) {
-        return Escargot::OptionalRef<Escargot::ValueRef>();
-      }
-
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.setter(
-            helper.indexProperty,
-            v8::Utils::ToLocal<Value>(esValue),
-            *helper.info);
-
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.setter(
-            helper.v8PropertyName,
-            v8::Utils::ToLocal<Value>(esValue),
-            *helper.info);
-      }
-
-      if (helper.info->hasReturnValue()) {
-        if (helper.info->GetReturnValue().Get()->IsFalse()) {
-          return Escargot::OptionalRef<Escargot::ValueRef>(
-              ValueRef::create(false));
-        }
-        return Escargot::OptionalRef<Escargot::ValueRef>(
-            ValueRef::create(true));
-      }
-
-      return Escargot::OptionalRef<Escargot::ValueRef>();
-    };
+  static ObjectTemplateLocalData<T>* getHelperData(void* data) {
+    LWNODE_DCHECK_NOT_NULL(data);
+    return reinterpret_cast<ObjectTemplateLocalData<T>*>(data);
   }
 
-  PropertyHandlerQueryCallback getQueryCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data,
-              ValueRef* propertyName) -> ObjectTemplatePropertyAttribute {
-      ObjectTemplateLocalDataHelper<v8::Integer> helper(
-          state, esSelf, esReceiver, propertyName, data);
+  static OptionalRef<ValueRef> getterCallback(ExecutionStateRef* state,
+                                              ObjectRef* esSelf,
+                                              ValueRef* esReceiver,
+                                              void* data,
+                                              ValueRef* propertyName) {
+    auto helperData = getHelperData(data);
 
-      if (!helper.handlerConfiguration->namedPropertyHandlers.query) {
-        return ObjectTemplatePropertyAttribute::PropertyAttributeNotExist;
+    PropertyCallbackInfoWrap<v8::Value> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
+
+    LWNODE_DCHECK_NOT_NULL(helperData->config.getter);
+    helperData->config.getter(
+        GetPropertyNamePolicy::getPropertyName(state, propertyName), info);
+
+    if (info.hasReturnValue()) {
+      return CVAL(*info.GetReturnValue().Get())->value();
+    }
+
+    return OptionalRef<ValueRef>();
+  }
+
+  static OptionalRef<ValueRef> setterCallback(ExecutionStateRef* state,
+                                              ObjectRef* esSelf,
+                                              ValueRef* esReceiver,
+                                              void* data,
+                                              ValueRef* propertyName,
+                                              ValueRef* esValue) {
+    auto helperData = getHelperData(data);
+
+    PropertyCallbackInfoWrap<v8::Value> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
+
+    LWNODE_DCHECK_NOT_NULL(helperData->config.setter);
+    helperData->config.setter(
+        GetPropertyNamePolicy::getPropertyName(state, propertyName),
+        v8::Utils::ToLocal<Value>(esValue),
+        info);
+
+    if (info.hasReturnValue()) {
+      if (info.GetReturnValue().Get()->IsFalse()) {
+        return OptionalRef<ValueRef>(ValueRef::create(false));
       }
+      return OptionalRef<ValueRef>(ValueRef::create(true));
+    }
 
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.query(
-            helper.indexProperty, *helper.info);
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.query(
-            helper.v8PropertyName, *helper.info);
-      }
+    return OptionalRef<ValueRef>();
+  }
 
-      if (helper.info->hasReturnValue()) {
-        bool hasNone =
-            (helper.handlerConfiguration->namedPropertyHandlers.flags ==
-             PropertyHandlerFlags::kNone);
-        bool hasNoSideEffect =
-            (static_cast<int>(
-                 helper.handlerConfiguration->namedPropertyHandlers.flags) &
-             static_cast<int>(PropertyHandlerFlags::kHasNoSideEffect));
+  static ObjectTemplatePropertyAttribute queryCallback(ExecutionStateRef* state,
+                                                       ObjectRef* esSelf,
+                                                       ValueRef* esReceiver,
+                                                       void* data,
+                                                       ValueRef* propertyName) {
+    auto helperData = getHelperData(data);
 
-        if (hasNone) {
-          return ObjectTemplatePropertyAttribute::PropertyAttributeExist;
-        } else if (hasNoSideEffect) {
-          return ObjectTemplatePropertyAttribute::PropertyAttributeEnumerable;
-        } else {
-          LWNODE_UNIMPLEMENT;
-        }
+    PropertyCallbackInfoWrap<v8::Integer> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
+
+    LWNODE_DCHECK_NOT_NULL(helperData->config.query);
+    helperData->config.query(
+        GetPropertyNamePolicy::getPropertyName(state, propertyName), info);
+
+    if (info.hasReturnValue()) {
+      bool hasNone = (helperData->config.flags == PropertyHandlerFlags::kNone);
+      bool hasNoSideEffect =
+          (static_cast<int>(helperData->config.flags) &
+           static_cast<int>(PropertyHandlerFlags::kHasNoSideEffect));
+
+      if (hasNone) {
         return ObjectTemplatePropertyAttribute::PropertyAttributeExist;
+      } else if (hasNoSideEffect) {
+        return ObjectTemplatePropertyAttribute::PropertyAttributeEnumerable;
+      } else {
+        LWNODE_UNIMPLEMENT;
       }
+      return ObjectTemplatePropertyAttribute::PropertyAttributeExist;
+    }
 
-      return ObjectTemplatePropertyAttribute::PropertyAttributeNotExist;
-    };
+    return ObjectTemplatePropertyAttribute::PropertyAttributeNotExist;
   }
 
-  PropertyHandlerDeleteCallback getDeleteCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data,
-              ValueRef* propertyName) -> OptionalRef<ValueRef> {
-      ObjectTemplateLocalDataHelper<v8::Boolean> helper(
-          state, esSelf, esReceiver, propertyName, data);
+  static OptionalRef<ValueRef> deleterCallback(ExecutionStateRef* state,
+                                               ObjectRef* esSelf,
+                                               ValueRef* esReceiver,
+                                               void* data,
+                                               ValueRef* propertyName) {
+    auto helperData = getHelperData(data);
 
-      if (!helper.handlerConfiguration->namedPropertyHandlers.deleter) {
-        return Escargot::OptionalRef<Escargot::ValueRef>();
-      }
+    PropertyCallbackInfoWrap<v8::Boolean> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
 
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.deleter(
-            helper.indexProperty, *helper.info);
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.deleter(
-            helper.v8PropertyName, *helper.info);
-      }
+    LWNODE_DCHECK_NOT_NULL(helperData->config.deleter);
+    helperData->config.deleter(
+        GetPropertyNamePolicy::getPropertyName(state, propertyName), info);
 
-      if (helper.info->hasReturnValue()) {
-        return CVAL(*helper.info->GetReturnValue().Get())->value();
-      }
+    if (info.hasReturnValue()) {
+      return CVAL(*info.GetReturnValue().Get())->value();
+    }
 
-      return Escargot::OptionalRef<Escargot::ValueRef>();
-    };
+    return OptionalRef<ValueRef>();
   }
 
-  PropertyHandlerEnumerationCallback getEnumerationCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data) -> ValueVectorRef* {
-      ObjectTemplateLocalDataHelper<v8::Array> helper(
-          state, esSelf, esReceiver, nullptr, data);
+  static ValueVectorRef* enumeratorCallback(ExecutionStateRef* state,
+                                            ObjectRef* esSelf,
+                                            ValueRef* esReceiver,
+                                            void* data) {
+    auto helperData = getHelperData(data);
 
-      if (!helper.handlerConfiguration->namedPropertyHandlers.enumerator) {
-        return ValueVectorRef::create(0);
+    PropertyCallbackInfoWrap<v8::Array> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
+
+    LWNODE_DCHECK_NOT_NULL(helperData->config.enumerator);
+    helperData->config.enumerator(info);
+
+    if (info.hasReturnValue()) {
+      auto esArray =
+          CVAL(*info.GetReturnValue().Get())->value()->asArrayObject();
+      auto length = esArray->length(state);
+      auto vector = ValueVectorRef::create(length);
+
+      for (size_t i = 0; i < length; i++) {
+        vector->set(i,
+                    esArray->get(state, ValueRef::create(i))->toString(state));
       }
+      return vector;
+    }
 
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.enumerator(
-            *helper.info);
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.enumerator(
-            *helper.info);
-      }
-
-      if (helper.info->hasReturnValue()) {
-        auto esArray = CVAL(*helper.info->GetReturnValue().Get())
-                           ->value()
-                           ->asArrayObject();
-        auto length = esArray->length(state);
-        auto vector = ValueVectorRef::create(length);
-
-        for (size_t i = 0; i < length; i++) {
-          vector->set(
-              i, esArray->get(state, ValueRef::create(i))->toString(state));
-        }
-        return vector;
-      }
-
-      return ValueVectorRef::create(0);
-    };
+    return ValueVectorRef::create(0);
   }
 
-  PropertyHandlerDefineOwnPropertyCallback getDefineOwnPropertyCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data,
-              ValueRef* propertyName,
-              const ObjectPropertyDescriptorRef& esDescriptor)
-               -> OptionalRef<ValueRef> {
-      ObjectTemplateLocalDataHelper<v8::Value> helper(
-          state, esSelf, esReceiver, propertyName, data);
+  static OptionalRef<ValueRef> definerCallback(
+      ExecutionStateRef* state,
+      ObjectRef* esSelf,
+      ValueRef* esReceiver,
+      void* data,
+      ValueRef* propertyName,
+      const ObjectPropertyDescriptorRef& esDescriptor) {
+    auto helperData = getHelperData(data);
 
-      if (!helper.handlerConfiguration->namedPropertyHandlers.definer) {
-        return Escargot::OptionalRef<Escargot::ValueRef>();
-      }
+    PropertyCallbackInfoWrap<v8::Value> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
 
-      PropertyDescriptor descriptor;
-      descriptor.get_private()->setDescriptor(
-          const_cast<ObjectPropertyDescriptorRef*>(&esDescriptor));
+    PropertyDescriptor descriptor;
+    descriptor.get_private()->setDescriptor(
+        const_cast<ObjectPropertyDescriptorRef*>(&esDescriptor));
 
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.definer(
-            helper.indexProperty, descriptor, *helper.info);
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.definer(
-            helper.v8PropertyName, descriptor, *helper.info);
-      }
+    LWNODE_DCHECK_NOT_NULL(helperData->config.definer);
+    helperData->config.definer(
+        GetPropertyNamePolicy::getPropertyName(state, propertyName),
+        descriptor,
+        info);
 
-      if (helper.info->hasReturnValue()) {
-        return Escargot::OptionalRef<Escargot::ValueRef>(
-            CVAL(*helper.info->GetReturnValue().Get())->value());
-      }
-      return Escargot::OptionalRef<Escargot::ValueRef>();
-    };
+    if (info.hasReturnValue()) {
+      return OptionalRef<ValueRef>(CVAL(*info.GetReturnValue().Get())->value());
+    }
+    return OptionalRef<ValueRef>();
   }
 
-  PropertyHandlerGetPropertyDescriptorCallback
-  getGetPropertyDescriptorCallback() {
-    return [](ExecutionStateRef* state,
-              ObjectRef* esSelf,
-              ValueRef* esReceiver,
-              void* data,
-              ValueRef* propertyName) -> OptionalRef<ValueRef> {
-      ObjectTemplateLocalDataHelper<v8::Value> helper(
-          state, esSelf, esReceiver, propertyName, data);
+  static OptionalRef<ValueRef> descriptorCallback(ExecutionStateRef* state,
+                                                  ObjectRef* esSelf,
+                                                  ValueRef* esReceiver,
+                                                  void* data,
+                                                  ValueRef* propertyName) {
+    auto helperData = getHelperData(data);
 
-      if (!helper.handlerConfiguration->namedPropertyHandlers.descriptor) {
-        return Escargot::OptionalRef<Escargot::ValueRef>();
-      }
+    PropertyCallbackInfoWrap<v8::Value> info(
+        helperData->isolate, esSelf, esReceiver, VAL(*helperData->config.data));
 
-      if (helper.isIndexedProperty()) {
-        helper.handlerConfiguration->indexedPropertyHandlers.descriptor(
-            helper.indexProperty, *helper.info);
-      } else {
-        helper.handlerConfiguration->namedPropertyHandlers.descriptor(
-            helper.v8PropertyName, *helper.info);
-      }
+    LWNODE_DCHECK_NOT_NULL(helperData->config.descriptor);
+    helperData->config.descriptor(
+        GetPropertyNamePolicy::getPropertyName(state, propertyName), info);
 
-      if (helper.info->hasReturnValue()) {
-        return Escargot::OptionalRef<Escargot::ValueRef>(
-            CVAL(*helper.info->GetReturnValue().Get())->value());
-      }
+    if (info.hasReturnValue()) {
+      return OptionalRef<ValueRef>(CVAL(*info.GetReturnValue().Get())->value());
+    }
 
-      return Escargot::OptionalRef<Escargot::ValueRef>();
-    };
+    return OptionalRef<ValueRef>();
   }
 };
 
@@ -907,24 +833,16 @@ void ObjectTemplate::SetHandler(
     const NamedPropertyHandlerConfiguration& config) {
   EsScopeObjectTemplate scope(this);
 
-  ObjectTemplatePropertyHandlerConfiguration esHandlerData;
+  ObjectTemplatePropertyHandlerConfiguration esConfig;
+  esConfig.data =
+      new ObjectTemplateLocalData<NamedPropertyHandlerConfiguration>(
+          IsolateWrap::GetCurrent()->toV8(), config);
 
-  ObjectTemplatePropertyHandlerCallbackHelper helper;
-  esHandlerData.getter = config.getter ? helper.getGetterCallback() : nullptr;
-  esHandlerData.setter = config.setter ? helper.getSetterCallback() : nullptr;
-  esHandlerData.query = config.query ? helper.getQueryCallback() : nullptr;
-  esHandlerData.deleter = config.deleter ? helper.getDeleteCallback() : nullptr;
-  esHandlerData.enumerator =
-      config.enumerator ? helper.getEnumerationCallback() : nullptr;
-  esHandlerData.definer =
-      config.definer ? helper.getDefineOwnPropertyCallback() : nullptr;
-  esHandlerData.descriptor =
-      config.descriptor ? helper.getGetPropertyDescriptorCallback() : nullptr;
+  ObjectTemplateSetHandlerCallbackHelper<
+      NamedPropertyHandlerConfiguration,
+      NamePropertyPolicy>::applyHelper(config, esConfig);
 
-  esHandlerData.data =
-      new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
-
-  scope.self()->setNamedPropertyHandler(esHandlerData);
+  scope.self()->setNamedPropertyHandler(esConfig);
 }
 
 void ObjectTemplate::MarkAsUndetectable() {
@@ -949,21 +867,13 @@ void ObjectTemplate::SetHandler(
   EsScopeObjectTemplate scope(this);
 
   ObjectTemplatePropertyHandlerConfiguration esConfig;
-
-  ObjectTemplatePropertyHandlerCallbackHelper helper;
-  esConfig.getter = config.getter ? helper.getGetterCallback() : nullptr;
-  esConfig.setter = config.setter ? helper.getSetterCallback() : nullptr;
-  esConfig.query = config.query ? helper.getQueryCallback() : nullptr;
-  esConfig.deleter = config.deleter ? helper.getDeleteCallback() : nullptr;
-  esConfig.enumerator =
-      config.enumerator ? helper.getEnumerationCallback() : nullptr;
-  esConfig.definer =
-      config.definer ? helper.getDefineOwnPropertyCallback() : nullptr;
-  esConfig.descriptor =
-      config.descriptor ? helper.getGetPropertyDescriptorCallback() : nullptr;
-
   esConfig.data =
-      new HandlerConfiguration(IsolateWrap::GetCurrent()->toV8(), config);
+      new ObjectTemplateLocalData<IndexedPropertyHandlerConfiguration>(
+          IsolateWrap::GetCurrent()->toV8(), config);
+
+  ObjectTemplateSetHandlerCallbackHelper<
+      IndexedPropertyHandlerConfiguration,
+      IndexPropertyPolicy>::applyHelper(config, esConfig);
 
   scope.self()->setIndexedPropertyHandler(esConfig);
 }
