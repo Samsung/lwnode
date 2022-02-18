@@ -312,3 +312,245 @@ TEST(TryCatchOnFunction) {
   v8::Local<v8::Value> result = CompileRun(source);
   CHECK(result->BooleanValue(isolate));
 }
+
+namespace {
+
+bool calledHandlerCallback_ = false;
+void initCalledHandlerCallback() {
+  calledHandlerCallback_ = false;
+}
+void calledHandlerCallback() {
+  calledHandlerCallback_ = true;
+}
+bool checkCalledHandlerCallback() {
+  bool result = calledHandlerCallback_;
+  calledHandlerCallback_ = false;
+  return result;
+}
+
+TEST(ObjectTemplateSetHandlerSetter) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  templ->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+      nullptr,
+      [](uint32_t index,
+         Local<Value> value,
+         const v8::PropertyCallbackInfo<v8::Value>& info) {
+        calledHandlerCallback();
+
+        CHECK_EQ(index, 1);
+        CHECK(
+            info.Data()
+                ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("data"))
+                .FromJust());
+        CHECK(value->Equals(info.GetIsolate()->GetCurrentContext(), v8_num(22))
+                  .FromJust());
+      },
+      nullptr,
+      nullptr,
+      nullptr,
+      v8_str("data")));
+
+  templ->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(
+      nullptr,
+      [](Local<Name> property,
+         Local<Value> value,
+         const v8::PropertyCallbackInfo<v8::Value>& info) {
+        calledHandlerCallback();
+
+        CHECK(property
+                  ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("y"))
+                  .FromJust());
+        CHECK(
+            info.Data()
+                ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("data"))
+                .FromJust());
+        CHECK(value->Equals(info.GetIsolate()->GetCurrentContext(), v8_num(32))
+                  .FromJust());
+      },
+      nullptr,
+      nullptr,
+      nullptr,
+      v8_str("data")));
+
+  auto object = templ->GetFunction(env.local())
+                    .ToLocalChecked()
+                    ->NewInstance(env.local())
+                    .ToLocalChecked();
+
+  env->Global()->Set(env.local(), v8_str("obj"), object).FromJust();
+
+  initCalledHandlerCallback();
+  CompileRun("obj[1] = 22");
+  CHECK(checkCalledHandlerCallback());
+  CompileRun("obj.y = 32");
+  CHECK(checkCalledHandlerCallback());
+}
+
+TEST(ObjectTemplateSetHandlerDeleter) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  templ->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+      nullptr,
+      nullptr,
+      nullptr,
+      [](uint32_t index, const v8::PropertyCallbackInfo<v8::Boolean>& info) {
+        calledHandlerCallback();
+
+        CHECK_EQ(index, 0);
+        info.GetReturnValue().Set(true);
+      },
+      nullptr,
+      nullptr));
+
+  templ->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(
+      nullptr,
+      nullptr,
+      nullptr,
+      [](Local<Name> property,
+         const v8::PropertyCallbackInfo<v8::Boolean>& info) {
+        calledHandlerCallback();
+
+        CHECK(property
+                  ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("x"))
+                  .FromJust());
+        info.GetReturnValue().Set(true);
+      },
+      nullptr,
+      nullptr));
+
+  auto object = templ->GetFunction(env.local())
+                    .ToLocalChecked()
+                    ->NewInstance(env.local())
+                    .ToLocalChecked();
+
+  env->Global()->Set(env.local(), v8_str("obj"), object).FromJust();
+
+  initCalledHandlerCallback();
+  CHECK(CompileRun("delete obj[0]")->BooleanValue(isolate));
+  CHECK(checkCalledHandlerCallback());
+  CHECK(CompileRun("delete obj.x")->BooleanValue(isolate));
+  CHECK(checkCalledHandlerCallback());
+}
+
+TEST(ObjectTemplateSetHandlerDefiner) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  templ->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      [](uint32_t index,
+         const v8::PropertyDescriptor& desc,
+         const v8::PropertyCallbackInfo<v8::Value>& info) {
+        calledHandlerCallback();
+
+        CHECK_EQ(index, 2);
+        CHECK(desc.value()
+                  ->Equals(info.GetIsolate()->GetCurrentContext(), v8_num(10))
+                  .FromJust());
+      }));
+
+  templ->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      [](Local<Name> property,
+         const v8::PropertyDescriptor& desc,
+         const v8::PropertyCallbackInfo<v8::Value>& info) {
+        calledHandlerCallback();
+
+        CHECK(property
+                  ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("z"))
+                  .FromJust());
+        CHECK(desc.value()
+                  ->Equals(info.GetIsolate()->GetCurrentContext(), v8_num(20))
+                  .FromJust());
+      }));
+
+  auto object = templ->GetFunction(env.local())
+                    .ToLocalChecked()
+                    ->NewInstance(env.local())
+                    .ToLocalChecked();
+
+  env->Global()->Set(env.local(), v8_str("obj"), object).FromJust();
+
+  initCalledHandlerCallback();
+  CompileRun("Object.defineProperty(obj, 2, {value: 10});");
+  CHECK(checkCalledHandlerCallback());
+  CompileRun("Object.defineProperty(obj, 'z', {value: 20});");
+  CHECK(checkCalledHandlerCallback());
+}
+
+TEST(ObjectTemplateSetHandlerDescriptor) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  v8::Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New(isolate);
+  templ->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      [](uint32_t index, const v8::PropertyCallbackInfo<v8::Value>& info) {
+        calledHandlerCallback();
+        CHECK_EQ(index, 2);
+        Local<Value> descriptor = CompileRun("var desc = {value: 30}; desc;");
+        info.GetReturnValue().Set(descriptor);
+      }));
+
+  templ->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      nullptr,
+      [](Local<Name> property,
+         const v8::PropertyCallbackInfo<v8::Value>& info) {
+        calledHandlerCallback();
+        CHECK(property
+                  ->Equals(info.GetIsolate()->GetCurrentContext(), v8_str("z"))
+                  .FromJust());
+        Local<Value> descriptor = CompileRun("var desc = {value: 60}; desc;");
+        info.GetReturnValue().Set(descriptor);
+      }));
+
+  auto object = templ->GetFunction(env.local())
+                    .ToLocalChecked()
+                    ->NewInstance(env.local())
+                    .ToLocalChecked();
+
+  env->Global()->Set(env.local(), v8_str("obj"), object).FromJust();
+
+  initCalledHandlerCallback();
+  v8::Local<Value> valueForName =
+      CompileRun("var descForName = Object.getOwnPropertyDescriptor(obj, 2); "
+                 "descForName.value;");
+  CHECK_EQ(30, valueForName->Int32Value(env.local()).FromJust());
+  CHECK(checkCalledHandlerCallback());
+
+  v8::Local<Value> valueForIdx =
+      CompileRun("var descForIdx = Object.getOwnPropertyDescriptor(obj, 'z'); "
+                 "descForIdx.value;");
+  CHECK_EQ(60, valueForIdx->Int32Value(env.local()).FromJust());
+  CHECK(checkCalledHandlerCallback());
+}
+
+}  // namespace
