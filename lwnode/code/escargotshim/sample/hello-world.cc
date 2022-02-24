@@ -185,8 +185,8 @@ int helloEscargotSample(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
   // helloV8(argc, argv);
   // helloEscargot(argc, argv);
-  // helloEscargotSample(argc, argv);
-  helloEscargotThread(argc, argv);
+  helloEscargotSample(argc, argv);
+  // helloEscargotThread(argc, argv);
 
   return 0;
 }
