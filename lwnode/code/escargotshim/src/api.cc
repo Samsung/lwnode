@@ -21,6 +21,7 @@
 #include "api.h"
 
 #include <malloc.h>  // for malloc_trim
+#include <cstdlib>
 #include <sstream>
 
 #include "base.h"
@@ -189,8 +190,33 @@ static Flag::Type findFlag(const std::string& name) {
   return Flag::Type::Empty;
 }
 
+static const char* ENV_VAR_TRACE_CALL = "LWNODE_TRACE_CALL";
+static const char* ENV_VAR_INTERNAL_LOG = "LWNODE_INTERNAL_LOG";
+
+static void SetFlagsFromEnv() {
+  {
+    const char* tmp = std::getenv(ENV_VAR_TRACE_CALL);
+    if (tmp) {
+      Flags::add(Flag::Type::TraceCall);
+      auto tokens = strSplit(std::string(tmp), ',');
+      for (const auto& token : tokens) {
+        Flags::setTraceCallId(token);
+      }
+    }
+  }
+
+  {
+    const char* tmp = std::getenv(ENV_VAR_INTERNAL_LOG);
+    if (!std::string(tmp ? tmp : "").compare("1")) {
+      Flags::add(Flag::Type::InternalLog);
+    }
+  }
+}
+
 void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
   flag_t userOptions = Flag::Type::Empty;
+
+  SetFlagsFromEnv();
 
   for (int i = 1; i < *argc; i++) {
     std::string userOption = argv[i];
@@ -221,7 +247,7 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     }
   }
 
-  Flags::set(userOptions);
+  Flags::add(userOptions);
 
   if (remove_flags) {
     Flags::shrinkArgumentList(argc, argv);
