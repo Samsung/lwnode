@@ -849,12 +849,12 @@ static bool evalScript(ContextRef* context,
         stderr,
         "Uncaught %s:\n",
         evalResult.resultOrErrorToString(context)->toStdUTF8String().data());
-    for (size_t i = 0; i < evalResult.stackTraceData.size(); i++) {
+    for (size_t i = 0; i < evalResult.stackTrace.size(); i++) {
       fprintf(stderr,
               "%s (%d:%d)\n",
-              evalResult.stackTraceData[i].src->toStdUTF8String().data(),
-              (int)evalResult.stackTraceData[i].loc.line,
-              (int)evalResult.stackTraceData[i].loc.column);
+              evalResult.stackTrace[i].srcName->toStdUTF8String().data(),
+              (int)evalResult.stackTrace[i].loc.line,
+              (int)evalResult.stackTrace[i].loc.column);
     }
     return false;
   }
