@@ -150,7 +150,7 @@ FileData Loader::createFileDataForReloadableString(
     // Treat non-latin1 as UTF-8 and encode it as UTF-16 Little Endian.
     if (encodingHint == Encoding::kUnknown) {
       LWNODE_LOG_INFO("%s contains characters outside of the Latin1 range.",
-                      filename.c_str());
+                      filename);
     }
 
     char* newStringBuffer = nullptr;
@@ -161,6 +161,7 @@ FileData Loader::createFileDataForReloadableString(
                                             (const char*)bufferHolder.get(),
                                             bufferSize);
     if (isConverted == false) {
+      LWNODE_LOG_ERROR("convertUTF8ToUTF16le failed (%s)", filename);
       return FileData();
     }
 
@@ -169,7 +170,7 @@ FileData Loader::createFileDataForReloadableString(
   } else {
     if (encoding == Encoding::kLatin1) {
       if (encodingHint == Encoding::kUnknown) {
-        LWNODE_LOG_INFO("%s contains Latin1 characters.", filename.c_str());
+        LWNODE_LOG_INFO("%s contains Latin1 characters.", filename);
       }
 
       bufferSize = latin1String.length();

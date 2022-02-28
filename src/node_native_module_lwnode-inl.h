@@ -62,8 +62,19 @@ struct UnzFileCachedInfo {
   uLong uncompressedSize{0};
 };
 
-static ArchiveFileScope s_archiveFileScope;
-static std::map<std::string, UnzFileCachedInfo> s_unzFileInfoDictionary;
+enum class ReaderError {
+  NO_ERROR = 0,
+  UNZ_OPEN_CURRENTFILE,
+  UNZ_GOTO_FIRSTFILE,
+  UNZ_GET_CURRENTFILEINFO,
+  READ_CURRENTFILE_FROMARCHIVE,
+  READ_FILE_FROMARCHIVE
+};
+
+static thread_local ArchiveFileScope s_archiveFileScope;
+static thread_local std::map<std::string, UnzFileCachedInfo>
+    s_unzFileInfoDictionary;
+static thread_local ReaderError s_lastError = ReaderError::NO_ERROR;
 
 std::string getSelfProcPath() {
   char path[PATH_MAX + 1];
@@ -75,11 +86,17 @@ std::string getSelfProcPath() {
   return std::string(path);
 }
 
+void setError(ReaderError error) {
+  s_lastError = error;
+  ERROR_AND_ABORT(s_lastError);
+}
+
 bool readCurrentFileFromArchive(const unzFile file,
                                 uLong uncompressedSize,
                                 char** buffer,
                                 size_t* fileSize) {
   if (unzOpenCurrentFile(file) < 0) {
+    setError(ReaderError::UNZ_OPEN_CURRENTFILE);
     return false;
   }
 
@@ -127,6 +144,7 @@ bool readFileFromArchive(const std::string& archiveFilename,
 
   // 2. read the data by searching the file position from the first one.
   if (unzGoToFirstFile(file) < 0) {
+    setError(ReaderError::UNZ_OPEN_CURRENTFILE);
     return false;
   }
 
@@ -143,6 +161,7 @@ bool readFileFromArchive(const std::string& archiveFilename,
                               0,
                               nullptr,
                               0) < 0) {
+      setError(ReaderError::UNZ_GET_CURRENTFILEINFO);
       return false;
     }
 
@@ -152,6 +171,7 @@ bool readFileFromArchive(const std::string& archiveFilename,
       // 2.1 read the data from the current file poistion
       if (readCurrentFileFromArchive(
               file, fileInfo.uncompressed_size, buffer, fileSize) == false) {
+        setError(ReaderError::READ_CURRENTFILE_FROMARCHIVE);
         return false;
       }
 
@@ -187,6 +207,7 @@ FileData readFileFromArchive(std::string filename,
 
   if (readFileFromArchive(
           s_externalBuiltinsPath, filename, &buffer, &bufferSize) == false) {
+    setError(ReaderError::READ_FILE_FROMARCHIVE);
     return FileData();
   }
 
@@ -241,6 +262,8 @@ class SourceReaderOnArchive : public SourceReaderInterface {
 
     if (readFileFromArchive(
             s_externalBuiltinsPath, filename, &buffer, &bufferSize) == false) {
+      LWNODE_LOG_ERROR("readFileFromArchive (%s) failed:", filename);
+      setError(ReaderError::READ_FILE_FROMARCHIVE);
       return FileData();
     }
 
