@@ -1,7 +1,6 @@
 test/parallel/test-assert-async.js
 test/parallel/test-assert-builtins-not-read-from-filesystem.js
 test/parallel/test-assert-deep.js
-test/parallel/test-assert-first-line.js
 test/parallel/test-assert-if-error.js
 test/parallel/test-assert.js
 test/parallel/test-async-hooks-destroy-on-gc.js
@@ -35,7 +34,6 @@ test/parallel/test-domain-error-types.js
 test/parallel/test-domain-set-uncaught-exception-capture-after-load.js
 test/parallel/test-error-prepare-stack-trace.js
 test/parallel/test-error-reporting.js # (errorMessage) 마지막 test가 error message 불일치
-test/parallel/test-errors-systemerror.js
 test/parallel/test-event-capture-rejections.js
 test/parallel/test-events-uncaught-exception-stack.js
 test/parallel/test-freeze-intrinsics.js
