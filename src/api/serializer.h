@@ -77,6 +77,7 @@ class ValueSerializer {
   bool WriteBoolean(bool value);
   void WriteString(StringRef* string);
   bool WriteObject(ObjectRef* object);
+  bool WriteJsArray(ArrayObjectRef* array);
   bool WriteHostObject(ObjectRef* object);
   bool WriteArrayBuffer(size_t length, uint8_t* bytes);
   bool WriteArrayBufferView(ArrayBufferViewRef* arrayBufferView);
@@ -114,6 +115,7 @@ class ValueDeserializer {
   bool ReadTwoByteString(StringRef*& string);
   bool ReadObject(ObjectRef* object);
   bool ReadHostObject(ObjectRef*& object);
+  bool ReadJsArray(ArrayObjectRef*& array);
   bool ReadJsArrayBuffer(ValueRef*& value);
   bool ReadArrayBuffer(ArrayBufferObjectRef*& arayBufferObject);
   bool ReadArrayBufferView(ArrayBufferViewRef*& arrayBufferView,

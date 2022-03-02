@@ -272,3 +272,11 @@ SERIALIZE_TEST(OutOfMemoryThrownExceptions) {
   invalidSerializeTest(v8_num(12.12), false);
   CHECK(outOfMemoryThrownExceptionsCount == 4);
 }
+
+SERIALIZE_TEST(ArrayObject) {
+  v8::HandleScope scope(isolate());
+
+  CHECK(validSerializeTest(CompileRun("var array = [0, 11, 22, 33]; array;")));
+  CHECK(
+      validSerializeTest(CompileRun("var array = [1, true, 'test']; array;")));
+}
