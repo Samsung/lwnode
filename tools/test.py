@@ -1833,4 +1833,5 @@ def Main():
 
 
 if __name__ == '__main__':
+  os.environ['LWNODE_RUNNING_ON_TESTS'] = '1'
   sys.exit(Main())
