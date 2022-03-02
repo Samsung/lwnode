@@ -201,7 +201,7 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
   } else if (value->isTypedArrayObject()) {
     return WriteTypedArrayObject(value->asArrayBufferView());
   } else if (value->isArrayObject()) {
-    LWNODE_UNIMPLEMENT;
+    return WriteJsArray(value->asArrayObject());
   } else if (value->isSymbol()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isFunctionObject()) {
@@ -374,6 +374,27 @@ bool ValueSerializer::WriteObject(ObjectRef* object) {
   return ThrowIfOutOfMemory();
 }
 
+bool ValueSerializer::WriteJsArray(ArrayObjectRef* array) {
+  auto esContext = lwIsolate_->GetCurrentContext()->get();
+
+  uint32_t length = ArrayObjectRefHelper::length(esContext, array);
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "WriteJsArray start: %u", length);
+
+  WriteTag(SerializationTag::kBeginDenseJSArray);
+  WriteVarint<uint32_t>(length);
+
+  for (uint32_t i = 0; i < length; i++) {
+    auto esValue = ArrayObjectRefHelper::get(esContext, array, i);
+    if (!WriteValue(esValue)) {
+      return false;
+    }
+  }
+
+  WriteTag(SerializationTag::kEndDenseJSArray);
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "WriteJsArray end");
+  return true;
+}
+
 bool ValueSerializer::WriteArrayBuffer(size_t length, uint8_t* bytes) {
   WriteTag(SerializationTag::kArrayBuffer);
   WriteVarint<uint32_t>(length);
@@ -449,17 +470,15 @@ bool ValueSerializer::ThrowIfOutOfMemory() {
 }
 
 void ValueSerializer::ThrowDataCloneError() {
-  auto errorMessage =
-      StringRef::createFromASCII("Data cannot be cloned, out of memory.");
   if (delegate_) {
     delegate_->ThrowDataCloneError(Utils::NewLocal<String>(
         lwIsolate_->toV8(),
         ErrorMessage::createErrorStringRef(
             ErrorMessageType::kDataCloneErrorOutOfMemory)));
   } else {
-    auto lwContext = lwIsolate_->GetCurrentContext()->get();
+    auto esContext = lwIsolate_->GetCurrentContext()->get();
     lwIsolate_->ScheduleThrow(ExceptionHelper::createErrorObject(
-        lwContext, ErrorMessageType::kDataCloneErrorOutOfMemory));
+        esContext, ErrorMessageType::kDataCloneErrorOutOfMemory));
   }
 
   if (lwIsolate_->sholdReportPendingMessage(false)) {
@@ -506,8 +525,6 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     return OptionalRef<ValueRef>();
   }
 
-  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER_TAG, "Read Tag %c", (char)tag);
-
   if (tag == SerializationTag::kNull) {
     return OptionalRef<ValueRef>(ValueRef::createNull());
   } else if (tag == SerializationTag::kUndefined) {
@@ -524,14 +541,14 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
     }
     return OptionalRef<ValueRef>(ValueRef::create(number));
   } else if (tag == SerializationTag::kOneByteString) {
-    StringRef* string;
+    StringRef* string = nullptr;
     if (!ReadOneByteString(string)) {
       LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read one byte string value");
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(string);
   } else if (tag == SerializationTag::kTwoByteString) {
-    StringRef* string;
+    StringRef* string = nullptr;
     if (!ReadTwoByteString(string)) {
       LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read two byte string value");
       return OptionalRef<ValueRef>();
@@ -566,6 +583,13 @@ OptionalRef<ValueRef> ValueDeserializer::ReadValue() {
       return OptionalRef<ValueRef>();
     }
     return OptionalRef<ValueRef>(esObject);
+  } else if (tag == SerializationTag::kBeginDenseJSArray) {
+    ArrayObjectRef* array = nullptr;
+    if (!ReadJsArray(array)) {
+      LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "Cannot read array value");
+      return OptionalRef<ValueRef>();
+    }
+    return OptionalRef<ValueRef>(array);
   } else if (tag == SerializationTag::kArrayBuffer) {
     ValueRef* arrayBuffer = nullptr;
     if (!ReadJsArrayBuffer(arrayBuffer)) {
@@ -590,6 +614,8 @@ bool ValueDeserializer::ReadTag(SerializationTag& tag) {
     tag = static_cast<SerializationTag>(buffer_.currentPositionData());
     buffer_.position++;
   } while (tag == SerializationTag::kPadding);
+
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER_TAG, "Read Tag %c", (char)tag);
   return true;
 }
 
@@ -749,6 +775,34 @@ bool ValueDeserializer::ReadHostObject(ObjectRef*& esObject) {
 
   esObject = VAL(*object)->value()->asObject();
   return true;
+}
+
+bool ValueDeserializer::ReadJsArray(ArrayObjectRef*& array) {
+  uint32_t length = 0;
+  if (!ReadVarint<uint32_t>(length)) {
+    return false;
+  }
+
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "ReadJsArray start: %u", length);
+  auto vector = ValueVectorRef::create();
+
+  for (uint32_t i = 0; i < length; i++) {
+    OptionalRef<ValueRef> valueRef = ReadValue();
+    if (!valueRef.hasValue()) {
+      return false;
+    }
+    vector->pushBack(valueRef.get());
+  }
+
+  auto esContext = lwIsolate_->GetCurrentContext()->get();
+  array = ArrayObjectRefHelper::create(esContext, vector);
+
+  SerializationTag tag;
+  ReadTag(tag);
+
+  LWNODE_CALL_TRACE_ID_LOG(SERIALIZER, "ReadJsArray end");
+
+  return (tag == SerializationTag::kEndDenseJSArray);
 }
 
 bool ValueDeserializer::ReadJsArrayBuffer(ValueRef*& value) {
