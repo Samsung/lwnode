@@ -553,4 +553,21 @@ TEST(ObjectTemplateSetHandlerDescriptor) {
   CHECK(checkCalledHandlerCallback());
 }
 
+static void functionSetNameCallback(
+    const v8::FunctionCallbackInfo<Value>& info) {}
+
+TEST(FunctionSetName) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  Local<Function> func =
+      Function::New(env.local(), functionSetNameCallback).ToLocalChecked();
+
+  auto funcName = v8_str("testSetName");
+
+  func->SetName(funcName);
+  CHECK(func->GetName()->Equals(env.local(), funcName).FromJust());
+}
+
 }  // namespace

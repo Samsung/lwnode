@@ -1923,11 +1923,34 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
 }
 
 void Function::SetName(v8::Local<v8::String> name) {
-  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+  auto r = Evaluator::execute(
+      IsolateWrap::GetCurrent()->GetCurrentContext()->get(),
+      [](ExecutionStateRef* esState,
+         FunctionObjectRef* esFunction,
+         StringRef* esName) -> ValueRef* {
+        esFunction->setName(
+            AtomicStringRef::create(esState->context(), esName));
+        return ValueRef::createNull();
+      },
+      CVAL(this)->value()->asFunctionObject(),
+      CVAL(*name)->value()->asString());
+  LWNODE_CHECK(r.isSuccessful());
 }
 
 Local<Value> Function::GetName() const {
-  LWNODE_RETURN_LOCAL(Value);
+  auto lwIsolate = IsolateWrap::GetCurrent();
+
+  auto r = Evaluator::execute(
+      lwIsolate->GetCurrentContext()->get(),
+      [](ExecutionStateRef* esState,
+         FunctionObjectRef* esFunction) -> ValueRef* {
+        return esFunction->getOwnProperty(esState,
+                                          StringRef::createFromASCII("name"));
+      },
+      CVAL(this)->value()->asFunctionObject());
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<String>(lwIsolate->toV8(), r.result);
 }
 
 Local<Value> Function::GetInferredName() const {
