@@ -1370,7 +1370,8 @@ bool v8::ArrayBuffer::IsExternal() const {
 }
 
 bool v8::ArrayBuffer::IsDetachable() const {
-  LWNODE_RETURN_FALSE;
+  auto esSelf = CVAL(this)->value()->asArrayBufferObject();
+  return !esSelf->isDetachedBuffer();
 }
 
 v8::ArrayBuffer::Contents::Contents(void* data,

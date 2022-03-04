@@ -193,7 +193,9 @@ bool ValueSerializer::WriteValue(ValueRef* value) {
   } else if (value->isBigInt()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isArrayBufferObject()) {
-    LWNODE_UNIMPLEMENT;
+    auto arrayBuffer = value->asArrayBufferObject();
+    return WriteArrayBuffer(arrayBuffer->byteLength(),
+                            arrayBuffer->rawBuffer());
   } else if (value->isDataViewObject()) {
     LWNODE_UNIMPLEMENT;
   } else if (value->isString()) {
