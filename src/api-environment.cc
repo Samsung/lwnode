@@ -2636,9 +2636,15 @@ Local<Message> Exception::CreateMessage(Isolate* isolate,
   LWNODE_CHECK(r.isSuccessful());
 
   if (esException->isObject()) {
-    auto data = ObjectRefHelper::getExtraData(esException->asObject())
-                    ->asExceptionObjectData();
-    ExtraDataHelper::setExtraData(r.result->asObject(), data);
+    auto esExtraData = ObjectRefHelper::getExtraData(esException->asObject());
+    if (esExtraData) {
+      auto esExceptionData = esExtraData->asExceptionObjectData();
+      ExtraDataHelper::setExtraData(r.result->asObject(), esExceptionData);
+    } else {
+      // FIXME: Check if missing extradata is ok. We print a warning
+      // here until this issue is investigated
+      LWNODE_LOG_WARN("esException does not have an extraData\n");
+    }
   }
 
   return Utils::NewLocal<Message>(isolate, r.result);
