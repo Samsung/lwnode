@@ -167,6 +167,7 @@ static Flag validFlags[] = {
          Flag::Type::AllowCodeGenerationFromString),
     Flag("--abort-on-uncaught-exception", Flag::Type::AbortOnUncaughtException),
     Flag("--expose-externalize-string", Flag::Type::ExposeExternalizeString),
+    Flag("--unhandled-rejections=", Flag::Type::UnhandledRejections),
     Flag("--trace-debug", Flag::Type::LWNodeOther, true),
     Flag("--debug", Flag::Type::LWNodeOther, true),
     Flag("--stack-size=", Flag::Type::LWNodeOther, true),
@@ -233,12 +234,17 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
       userOptions |= nameType;
     }
 
-    if (nameType == Flag::Type::TraceCall) {
-      std::string traceCallOption = userOption.substr(
+    if (nameType == Flag::Type::TraceCall ||
+        nameType == Flag::Type::UnhandledRejections) {
+      std::string optionValues = userOption.substr(
           userOption.find_first_of('=') + 1);  // +1 for skipping '='
-      auto tokens = strSplit(traceCallOption, ',');
+      auto tokens = strSplit(optionValues, ',');
       for (auto token : tokens) {
-        Flags::setTraceCallId(token);
+        if (nameType == Flag::Type::TraceCall) {
+          Flags::setTraceCallId(token);
+        } else if (nameType == Flag::Type::UnhandledRejections) {
+          Flags::setUnhandledRejections(token);
+        }
       }
     }
 
