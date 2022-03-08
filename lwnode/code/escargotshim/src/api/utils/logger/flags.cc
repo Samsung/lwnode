@@ -31,6 +31,7 @@ bool Flag::isPrefixOf(const std::string& name) {
 flag_t Flags::s_flags = Flag::Type::Empty;
 std::set<std::string> Flags::s_trace_ids;
 std::set<std::string> Flags::s_negative_trace_ids;
+std::set<std::string> Flags::s_unhandled_rejections;
 
 bool Flags::isTraceCallEnabled(std::string id) {
   if (!(s_flags & Flag::Type::TraceCall)) {

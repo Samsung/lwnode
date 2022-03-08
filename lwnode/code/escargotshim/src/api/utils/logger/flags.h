@@ -40,6 +40,7 @@ class Flag {
     AllowCodeGenerationFromString = 1 << 5,
     AbortOnUncaughtException = 1 << 6,
     ExposeExternalizeString = 1 << 7,
+    UnhandledRejections = 1 << 8,
     // lwnode
     TraceCall = 1 << 9,
     TraceGC = 1 << 10,
@@ -82,6 +83,13 @@ class LWNODE_EXPORT Flags {
   }
   static bool isExposeGCEnabled() { return s_flags & Flag::Type::ExposeGC; }
 
+  static bool isUnhandledRejectionsEnabled() {
+    return s_flags & Flag::Type::UnhandledRejections;
+  }
+  static void setUnhandledRejections(const std::string& value) {
+    s_unhandled_rejections.insert(value);
+  }
+
   static void setTraceCallId(const std::string& id);
 
   static void shrinkArgumentList(int* argc, char** argv);
@@ -89,6 +97,7 @@ class LWNODE_EXPORT Flags {
  private:
   static std::set<std::string> s_trace_ids;
   static std::set<std::string> s_negative_trace_ids;
+  static std::set<std::string> s_unhandled_rejections;
   static flag_t s_flags;
 };
 
