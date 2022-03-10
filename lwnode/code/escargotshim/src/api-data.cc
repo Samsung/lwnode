@@ -274,7 +274,10 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 }
 
 MaybeLocal<String> Value::ToDetailString(Local<Context> context) const {
-  LWNODE_RETURN_LOCAL(String);
+  EsScope scope(context, this);
+
+  auto esString = scope.self()->toStringWithoutException(scope.context());
+  return Utils::NewLocal<String>(scope.v8Isolate(), esString);
 }
 
 MaybeLocal<Object> Value::ToObject(Local<Context> context) const {
