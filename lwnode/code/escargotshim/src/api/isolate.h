@@ -54,13 +54,15 @@ class Isolate : public gc {
   bool PropagatePendingExceptionToExternalTryCatch();
   void ReportPendingMessages(bool isVerbose = false);
 
-  void SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
-    promise_reject_callback_ = callback;
-  }
-
   void RunPromiseHook(PromiseHookType type,
                       Escargot::PromiseObjectRef* promise,
                       Escargot::ValueRef* parent);
+
+  virtual void SetPromiseRejectCallback(v8::PromiseRejectCallback callback);
+  virtual void ReportPromiseReject(
+      Escargot::PromiseObjectRef* promise,
+      Escargot::ValueRef* value,
+      Escargot::VMInstanceRef::PromiseRejectEvent event);
 
   void SetFatalErrorHandler(v8::FatalErrorCallback callback) {
     fatal_error_callback_ = callback;

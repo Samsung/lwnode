@@ -1228,7 +1228,8 @@ MaybeLocal<Promise> Promise::Then(Local<Context> context,
 }
 
 bool Promise::HasHandler() {
-  LWNODE_RETURN_FALSE;
+  auto self = CVAL(this)->value()->asPromiseObject();
+  return self->hasRejectHandlers() || self->hasResolveHandlers();
 }
 
 Local<Value> Promise::Result() {
