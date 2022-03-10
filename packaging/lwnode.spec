@@ -62,7 +62,7 @@ Requires:    %{name} = %{version}
 Development files for Lightweight node.js.
 
 # Initialize the variables
-%{!?node_engine: %define node_engine escargot}
+%{!?target: %define target lwnode} #taget = [lwnode/v8/modules]
 %{!?lib_type: %define lib_type shared}
 %{!?feature_mode: %define feature_mode production}
 
@@ -105,8 +105,7 @@ gcc --version
 %define asan_config --enable-asan
 %endif
 
-%if "%{node_engine}" == "escargot"
-%define target lwnode
+%if "%{target}" == "lwnode"
 %define target_lib liblwnode
 %define target_src out/tizen/Release
 
@@ -115,8 +114,9 @@ gcc --version
 %else
   %define engine_config --without-bundled-v8 --engine escargot --static-escargot
 %endif
+%endif
 
-%else
+%if "%{target}" == "v8"
 %define target node
 %define target_src out/v8/Release
 %endif
@@ -142,6 +142,11 @@ gcc --version
 echo "Build Target:" %{target}
 echo $CFLAGS
 
+%if "%{target}" == "modules"
+
+./lwnode/build-modules.sh %{?modules_list} --os=tizen
+
+%else # target is node or v8
 # building liblwnode.so
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
@@ -150,7 +155,7 @@ echo $CFLAGS
             --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?engine_config} %{?extra_config} %{?lib_type_config} %{?asan_config}
 
-%if "%{node_engine}" == "escargot" && "%{lib_type}" == "shared"
+%if "%{target}" == "lwnode" && "%{lib_type}" == "shared"
   ninja -C %{target_src} %{target_lib}
 %endif
 
@@ -162,6 +167,7 @@ echo $CFLAGS
             --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?engine_config} %{?extra_config} %{?asan_config}
 ninja -C %{target_src} %{target}
+%endif
 
 
 ##############################################
@@ -174,14 +180,13 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
 rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
-%if "%{node_engine}" == "escargot"
+%if "%{target}" == "lwnode"
   %if %{?static_escargot:0}%{!?static_escargot:1}
     cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
   %endif
   %if "%{lib_type}" == "shared"
     cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
   %endif
-%endif
 
 # for devel files
 %if %{?debug_symbols:0}%{!?debug_symbols:1}
@@ -190,6 +195,8 @@ rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
 
 cp %{target_src}/%{target} %{buildroot}%{_bindir}
 cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
+
+%endif # "%{target}" == "lwnode"
 
 %clean
 rm -fr ./*.list
@@ -209,7 +216,7 @@ rm -fr ./*.manifest
 %files
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
-%if "%{node_engine}" == "escargot"
+%if "%{target}" == "lwnode"
   %if %{?static_escargot:0}%{!?static_escargot:1}
     %{_libdir}/libescargot.so
   %endif
@@ -221,5 +228,7 @@ rm -fr ./*.manifest
 
 %files devel
 %manifest packaging/%{name}.manifest
-%{_bindir}/%{target}
-%{_bindir}/%{target}.dat
+%if "%{target}" == "lwnode"
+  %{_bindir}/%{target}
+  %{_bindir}/%{target}.dat
+%endif
