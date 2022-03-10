@@ -216,6 +216,37 @@ void Isolate::RunPromiseHook(PromiseHookType type,
                 v8::Utils::ToLocal<Value>(parent));
 }
 
+void Isolate::SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
+  promise_reject_callback_ = callback;
+
+  auto fn = [](ExecutionStateRef* state,
+               Escargot::PromiseObjectRef* promise,
+               Escargot::ValueRef* value,
+               Escargot::VMInstanceRef::PromiseRejectEvent event) {
+    IsolateWrap::GetCurrent()->ReportPromiseReject(promise, value, event);
+  };
+
+  IsolateWrap::fromV8(this)->vmInstance()->registerPromiseRejectCallback(fn);
+}
+
+void Isolate::ReportPromiseReject(
+    Escargot::PromiseObjectRef* promise,
+    Escargot::ValueRef* value,
+    Escargot::VMInstanceRef::PromiseRejectEvent event) {
+  PromiseRejectMessage v8Message(v8::Utils::ToLocal<Promise>(promise),
+                                 static_cast<v8::PromiseRejectEvent>(event),
+                                 v8::Utils::ToLocal<Value>(value));
+#ifdef LWNODE_ENABLE_EXPERIMENTAL_PROMISE
+  if (promise_reject_callback_ && !promise->hasRejectHandlers() &&
+      event == Escargot::VMInstanceRef::PromiseRejectEvent::
+                   PromiseRejectWithNoHandler) {
+    promise_reject_callback_(v8Message);
+  }
+#else
+  LWNODE_UNIMPLEMENT;
+#endif
+}
+
 bool Isolate::hasCallDepth() {
   return callDepth() > 0;
 }
