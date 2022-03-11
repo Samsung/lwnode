@@ -1,0 +1,14 @@
+{
+  "name": "helloworld",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "dependencies": {
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "mkdir -p out/$npm_package_name && cmake . -Bout/$npm_package_name -H. -G Ninja && ninja -v -C out/$npm_package_name && mkdir -p lib/build && cp -f out/$npm_package_name/*.node lib/build",
+    "clean": "rm -rf lib/build && rm -rf out"
+  }
+}

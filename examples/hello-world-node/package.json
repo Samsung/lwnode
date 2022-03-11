@@ -1,0 +1,17 @@
+{
+    "name": "hello-world-node",
+    "version": "1.0.0",
+    "description": "node-escargot-addon: Build a N-API native addon with CMake.",
+    "main": "hello.js",
+    "private": true,
+    "gbs": {
+        "config": "./packaging/gbs.tv.conf",
+        "profile": "profile.MAIN2019_MuseM",
+        "option": "--incremental --include-all"
+    },
+    "scripts": {
+        "build": "mkdir -p out && cd out && cmake .. -G Ninja && ninja",
+        "build-gbs": "gbs -c $npm_package_gbs_config build -A armv7l -P $npm_package_gbs_profile $npm_package_gbs_option",
+        "test": "node --napi-modules hello.js"
+    }
+}

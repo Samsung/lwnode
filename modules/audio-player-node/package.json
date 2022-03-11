@@ -1,0 +1,20 @@
+{
+  "name": "audio-player-node",
+  "version": "1.0.0",
+  "description": "node-escargot-addon: Build a N-API native addon with CMake.",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+  },
+  "gbs": {
+    "config": "./packaging/gbs.conf",
+    "profile": "profile.55std",
+    "option": "--incremental --include-all"
+  },
+  "scripts": {
+      "build": "gbs -c $npm_package_gbs_config build -A armv7l --buildroot ~/GBS-ROOT/$npm_package_name -P $npm_package_gbs_profile $npm_package_gbs_option",
+      "test": "node test/test.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
