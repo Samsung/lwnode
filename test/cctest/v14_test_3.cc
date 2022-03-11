@@ -1101,31 +1101,29 @@ THREADED_TEST(SetGetFlagsCustom) {
     argv[i] = (char*)userOptions[i].c_str();
   }
 
-  EscargotShim::flag_t optionsBackup = EscargotShim::Flags::get();
+  auto optionsBackup = EscargotShim::Global::flags()->get();
 
   v8::V8::SetFlagsFromCommandLine(&arrayLength, argv.get(), true);
-  EscargotShim::flag_t options = EscargotShim::Flags::get();
 
-  CHECK((options & EscargotShim::Flag::Type::ExposeGC) ==
-        EscargotShim::Flag::Type::ExposeGC);
-  CHECK((options & EscargotShim::Flag::Type::UseStrict) ==
-        EscargotShim::Flag::Type::UseStrict);
-  CHECK((options & EscargotShim::Flag::Type::DisableIdleGC) ==
-        EscargotShim::Flag::Type::DisableIdleGC);
-  CHECK((options & EscargotShim::Flag::Type::TopLevelWait) ==
-        EscargotShim::Flag::Type::TopLevelWait);
-  CHECK((options & EscargotShim::Flag::Type::AllowCodeGenerationFromString) ==
-        EscargotShim::Flag::Type::AllowCodeGenerationFromString);
-  CHECK((options & EscargotShim::Flag::Type::TraceGC) ==
-        EscargotShim::Flag::Type::TraceGC);
-  CHECK((options & EscargotShim::Flag::Type::TraceCall) ==
-        EscargotShim::Flag::Type::TraceCall);
-  CHECK((options & EscargotShim::Flag::Type::InternalLog) ==
-        EscargotShim::Flag::Type::InternalLog);
-  CHECK((options & EscargotShim::Flag::Type::LWNodeOther) ==
-        EscargotShim::Flag::Type::Empty);
+  CHECK(
+      EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::ExposeGC));
+  CHECK(
+      EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::UseStrict));
+  CHECK(EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::DisableIdleGC));
+  CHECK(EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::TopLevelWait));
+  CHECK(EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::AllowCodeGenerationFromString));
+  CHECK(EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::TraceGC));
+  CHECK(
+      EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::TraceCall));
+  CHECK(EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::InternalLog));
+  CHECK(!EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::LWNodeOther));
 
-  EscargotShim::Flags::set(optionsBackup);
+  EscargotShim::Global::flags()->set(optionsBackup);
 }
 
 static void simpleCallbackCustom(
@@ -1243,7 +1241,7 @@ TEST(EsScopeCustom) {
 }
 
 TEST(ExtensionCustom) {
-  EscargotShim::flag_t optionsBackup = EscargotShim::Flags::get();
+  auto optionsBackup = EscargotShim::Global::flags()->get();
 
   {
     LocalContext env;
@@ -1262,7 +1260,7 @@ TEST(ExtensionCustom) {
   }
 
   {
-    EscargotShim::Flags::set(Flag::Type::ExposeExternalizeString);
+    EscargotShim::Global::flags()->add(Flag::Type::ExposeExternalizeString);
 
     LocalContext env;
     v8::Isolate* v8Isolate = env->GetIsolate();
@@ -1285,7 +1283,7 @@ TEST(ExtensionCustom) {
     CHECK_EQ(r->Value(), 1);
   }
 
-  EscargotShim::Flags::set(optionsBackup);
+  EscargotShim::Global::flags()->set(optionsBackup);
 }
 
 class NativeFunctionExtensionCustom : public Extension {

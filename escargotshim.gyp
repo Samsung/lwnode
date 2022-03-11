@@ -63,6 +63,7 @@
         'src/api/isolate.cc',
         'src/api/context.cc',
         'src/api/global-handles.cc',
+        'src/api/global.cc',
         'src/api/function.cc',
         'src/api/object.cc',
         'src/api/stack-trace.cc',

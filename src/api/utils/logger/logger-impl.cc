@@ -140,7 +140,10 @@ Logger& Logger::print(const char* string_without_format_specifiers) {
   while (*string_without_format_specifiers) {
     if (*string_without_format_specifiers == '%' &&
         *(++string_without_format_specifiers) != '%') {
-      assert(((void)"runtime error: invalid format-string", false));
+      // FIXME: We prevent from a crash when invalid format string is
+      // inserted during testing. This happens when cctest is deliverately
+      // failed.
+      // assert(((void)"runtime error: invalid format-string", false));
     }
     stream_ << *string_without_format_specifiers++;
   }
