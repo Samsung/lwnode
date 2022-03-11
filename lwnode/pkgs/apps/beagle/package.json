@@ -1,0 +1,57 @@
+{
+  "name": "beagle",
+  "version": "0.0.0",
+  "description": "beagle",
+  "license": "Apache License",
+  "repository": "",
+  "author": {
+    "name": "Samsung Electronics"
+  },
+  "keywords": [
+    ""
+  ],
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index",
+  "types": "dist/index",
+  "scripts": {
+    "build": "tsc --pretty",
+    "watch": "npm run build -- --watch",
+    "watch:test": "jest --watch",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "format": "prettier --write \"{src,__tests__}/**/*.ts\"",
+    "lint": "tslint --force --format verbose \"src/**/*.ts\"",
+    "clean": "rm -rf dist && rm -rf coverage",
+    "check": "npm run clean && npm run format && npm run lint && echo Using TypeScript && tsc --version"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.3",
+    "@types/node": "^10.17.60",
+    "coveralls": "^3.1.1",
+    "jest": "^23.6.0",
+    "prettier": "^1.14.3",
+    "ts-jest": "^23.10.3",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.9.10"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "moduleDirectories": [
+      "src",
+      "node_modules"
+    ],
+    "coverageReporters": [
+      "json",
+      "lcovonly",
+      "text",
+      "clover"
+    ]
+  }
+}
