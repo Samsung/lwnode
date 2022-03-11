@@ -26,6 +26,7 @@
 
 #if defined(CCTEST_ENGINE_ESCARGOT)
 #include "api/global-handles.h"
+#include "api/global.h"
 #include "api/isolate.h"
 namespace e = EscargotShim;
 #endif
