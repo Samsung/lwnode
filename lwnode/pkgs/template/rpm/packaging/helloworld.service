@@ -1,0 +1,11 @@
+[Unit]
+Description=lwnode service
+
+[Service]
+User=root
+Group=users
+ExecStart=/usr/bin/lwnode /usr/apps/helloworld/script
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

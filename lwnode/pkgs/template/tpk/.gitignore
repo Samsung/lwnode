@@ -1,0 +1,4 @@
+out
+lib/build
+node_modules
+.git

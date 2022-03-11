@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="5.0" package="helloworld" version="1.0.0">
+    <profile name="tv-samsung" />
+    <service-application appid="helloworld" exec="node" type="capp" multiple="false" taskmanage="false" nodisplay="true" on-boot="false">
+        <icon>service.png</icon>
+        <label>Lightweight Node.js Service</label>
+	</service-application>
+    <privileges>
+        <!-- <privilege>http://tizen.org/privilege/application.info</privilege> -->
+    </privileges>
+</manifest>
