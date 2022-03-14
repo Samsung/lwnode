@@ -15,9 +15,12 @@
  */
 
 #include "logger-impl.h"
+
 #include <iomanip>  // for setfill and setw
 #include <map>
 #include <thread>
+
+#include "api/global.h"
 #include "color.h"
 #include "flags.h"
 #include "logger.h"
@@ -72,7 +75,8 @@ void LogTYPED::printHeader(std::stringstream& stream) {
 
 LogINTERNAL::LogINTERNAL(Type type) : LogTYPED(type) {
 #if defined(NDEBUG)
-  isEnabled_ = EscargotShim::Flags::isInternalLogEnabled();
+  isEnabled_ = EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::InternalLog);
 #endif
 }
 
@@ -80,7 +84,8 @@ LogTRACE::LogTRACE(std::string id,
                    const char* functionName,
                    const char* filename,
                    const int line) {
-  if (EscargotShim::Flags::isTraceCallEnabled(id) == false) {
+  if (!EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::TraceCall,
+                                           id)) {
     isEnabled_ = false;
     return;
   }
@@ -140,10 +145,7 @@ Logger& Logger::print(const char* string_without_format_specifiers) {
   while (*string_without_format_specifiers) {
     if (*string_without_format_specifiers == '%' &&
         *(++string_without_format_specifiers) != '%') {
-      // FIXME: We prevent from a crash when invalid format string is
-      // inserted during testing. This happens when cctest is deliverately
-      // failed.
-      // assert(((void)"runtime error: invalid format-string", false));
+      assert(((void)"runtime error: invalid format-string", false));
     }
     stream_ << *string_without_format_specifiers++;
   }

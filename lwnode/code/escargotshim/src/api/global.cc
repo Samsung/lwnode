@@ -17,9 +17,9 @@
 #include "global.h"
 
 namespace EscargotShim {
-std::unique_ptr<FlagsStored> Global::s_flags = std::make_unique<FlagsStored>();
+std::unique_ptr<Flags> Global::s_flags = std::make_unique<Flags>();
 
-FlagsStored* Global::flags() {
+Flags* Global::flags() {
   return s_flags.get();
 }
 }  // namespace EscargotShim

@@ -17,13 +17,15 @@
 #include "gc.h"
 
 #include <EscargotPublic.h>
+#include "api/global.h"
 #include "misc.h"
 
 using namespace Escargot;
 
 #define LOG_HANDLER(msg, ...)                                                  \
   do {                                                                         \
-    if (EscargotShim::Flags::isTraceGCEnabled()) {                             \
+    if (EscargotShim::Global::flags()->isOn(                                   \
+            EscargotShim::Flag::Type::TraceGC)) {                              \
       LWNODE_LOGR(CLR_DIM msg CLR_RESET, ##__VA_ARGS__);                       \
     }                                                                          \
   } while (0)

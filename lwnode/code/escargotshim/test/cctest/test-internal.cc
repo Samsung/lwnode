@@ -101,7 +101,7 @@ static GCTracer g_tracer;
 #define GC_TRACE_ADD_POINTER(value) g_tracer.add(value, #value)
 #define GC_TRACE_GET_ALIVE_COUNT() g_tracer.getAllocatedCount()
 #define GC_TRACE_PRINT_STATE()                                                 \
-  if (EscargotShim::Flags::isTraceGCEnabled()) {                               \
+  if (EscargotShim::Global::flags()->isOn(Flag::Type::TraceGC)) {              \
     g_tracer.printState();                                                     \
   }
 

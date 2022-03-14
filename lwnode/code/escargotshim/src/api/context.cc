@@ -24,6 +24,7 @@
 #include "stack-trace.h"
 
 #include "api.h"
+#include "api/global.h"
 
 using namespace Escargot;
 
@@ -73,7 +74,8 @@ static bool createGlobals(ContextRef* context) {
             ValueRef::create(
                 20));  // TODO: get number from '--stack-trace-limit' options
 
-        if (Flags::isCodeGenerationFromStringAllowed() == false) {
+        if (!EscargotShim::Global::flags()->isOn(
+                EscargotShim::Flag::Type::AllowCodeGenerationFromString)) {
           // @note --disallow-code-generation-from-strings as default
           state->context()->globalObject()->defineDataProperty(
               state,

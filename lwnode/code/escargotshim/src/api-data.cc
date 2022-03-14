@@ -15,6 +15,8 @@
  */
 
 #include "api.h"
+
+#include "api/global.h"
 #include "api/utils.h"
 #include "base.h"
 
@@ -1900,7 +1902,8 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
                         lwIsolate->GetCurrentContext()->get(), r)
                         .c_str());
 
-    if (Flags::isAbortOnUncaughtException()) {
+    if (EscargotShim::Global::flags()->isOn(
+            Flag::Type::AbortOnUncaughtException)) {
       if (!lwIsolate->abortOnUncaughtExceptionCallback() ||
           lwIsolate->abortOnUncaughtExceptionCallback()(lwIsolate->toV8())) {
         LWNODE_DLOG_INFO("Abort because of uncaught exception callback!");

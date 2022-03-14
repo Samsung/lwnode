@@ -15,8 +15,11 @@
  */
 
 #include "engine.h"
+
 #include <iomanip>
 #include <sstream>
+
+#include "api/global.h"
 #include "handle.h"
 #include "utils/misc.h"
 #include "utils/string-util.h"
@@ -235,7 +238,7 @@ static void printAddress(
 }
 
 void GCHeap::printStatus(bool forcePrint) {
-  if (Flags::isTraceCallEnabled("GCHEAP") == false) {
+  if (!Global::flags()->isOn(Flag::Type::TraceCall, "GCHEAP")) {
     return;
   }
 
@@ -355,8 +358,7 @@ void Engine::initialize() {
   Memory::setGCFrequency(GC_FREE_SPACE_DIVISOR);
   gcHeap_.reset(GCHeap::create());
 
-  auto flags = Flags::get();
-  if (Flags::isTraceGCEnabled()) {
+  if (Global::flags()->isOn(Flag::Type::TraceGC)) {
     LWNODE_DLOG_WARN("temporary blocked for postGarbageCollectionProcessing");
     registerGCEventListeners();
   }

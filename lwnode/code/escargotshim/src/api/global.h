@@ -21,23 +21,16 @@
 #include "utils/logger/flags.h"
 
 namespace EscargotShim {
-class FlagsStored {
- public:
-  bool isOn(Flag::Type type) { return false; }
-  bool isOn(Flag::Type type, std::string value) { return false; }
-  void add(Flag::Type type) {}
-  FlagsStored* get() { return nullptr; }
-  void set(FlagsStored* flags) {}
-};
+class Flags;
 
 class Global {
  public:
   Global() {}
 
-  static FlagsStored* flags();
+  static Flags* flags();
 
  private:
-  static std::unique_ptr<FlagsStored> s_flags;
+  static std::unique_ptr<Flags> s_flags;
 };
 
 }  // namespace EscargotShim
