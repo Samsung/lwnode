@@ -49,6 +49,7 @@ skip_dirs = [
     'lwnode/code/escargotshim/src/libplatform',
     'lwnode/code/tizen',
     'lwnode/test',
+    'lwnode/pkgs',
     'CMakeFiles',
     '.git',
     'out'
@@ -96,6 +97,8 @@ def check_tidy(src_dir, update, base, stats):
     print('%sprocessing directory: %s%s' % (TERM_PURPLE, src_dir, TERM_EMPTY))
 
     for dirpath, _, filenames in os.walk(src_dir):
+        print('- relpath: %s' % (relpath(dirpath, src_dir)))
+
         if relpath(dirpath, src_dir) in skip_dirs:
             continue
 
