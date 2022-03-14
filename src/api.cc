@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <sstream>
 
+#include "api/global.h"
 #include "base.h"
 
 using namespace Escargot;
@@ -157,106 +158,22 @@ void V8::SetFlagsFromString(const char* str, size_t length) {
   LWNODE_RETURN_VOID;
 }
 
-static Flag validFlags[] = {
-    // v8 flags
-    Flag("--expose-gc", Flag::Type::ExposeGC),
-    Flag("--use-strict", Flag::Type::UseStrict),
-    Flag("--off-idlegc", Flag::Type::DisableIdleGC),
-    Flag("--harmony-top-level-await", Flag::Type::TopLevelWait),
-    Flag("--allow-code-generation-from-strings",
-         Flag::Type::AllowCodeGenerationFromString),
-    Flag("--abort-on-uncaught-exception", Flag::Type::AbortOnUncaughtException),
-    Flag("--expose-externalize-string", Flag::Type::ExposeExternalizeString),
-    Flag("--unhandled-rejections=", Flag::Type::UnhandledRejections),
-    Flag("--trace-debug", Flag::Type::LWNodeOther, true),
-    Flag("--debug", Flag::Type::LWNodeOther, true),
-    Flag("--stack-size=", Flag::Type::LWNodeOther, true),
-    Flag("--nolazy", Flag::Type::LWNodeOther, true),
-    // lwnode flags
-    Flag("--trace-gc", Flag::Type::TraceGC),
-    Flag("--trace-call=", Flag::Type::TraceCall, true),
-    Flag("--internal-log", Flag::Type::InternalLog),
-};
-
-static Flag::Type findFlag(const std::string& name) {
-  std::string normalized = name;
-  std::replace(normalized.begin(), normalized.end(), '_', '-');
-
-  for (auto flag : validFlags) {
-    if ((flag.name() == normalized) || flag.isPrefixOf(normalized)) {
-      return flag.type();
-    }
-  }
-
-  return Flag::Type::Empty;
-}
-
-static const char* ENV_VAR_TRACE_CALL = "LWNODE_TRACE_CALL";
-static const char* ENV_VAR_INTERNAL_LOG = "LWNODE_INTERNAL_LOG";
-
-static void SetFlagsFromEnv() {
-  {
-    const char* tmp = std::getenv(ENV_VAR_TRACE_CALL);
-    if (tmp) {
-      Flags::add(Flag::Type::TraceCall);
-      auto tokens = strSplit(std::string(tmp), ',');
-      for (const auto& token : tokens) {
-        Flags::setTraceCallId(token);
-      }
-    }
-  }
-
-  {
-    const char* tmp = std::getenv(ENV_VAR_INTERNAL_LOG);
-    if (!std::string(tmp ? tmp : "").compare("1")) {
-      Flags::add(Flag::Type::InternalLog);
-    }
-  }
-}
-
 void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
   flag_t userOptions = Flag::Type::Empty;
-
-  SetFlagsFromEnv();
 
   for (int i = 1; i < *argc; i++) {
     std::string userOption = argv[i];
     bool isValidToRemove = false;
 
-    // @check https://github.sec.samsung.net/lws/node-escargot/issues/394
-    flag_t nameType = findFlag(userOption);
-    if (nameType == Flag::Type::Empty) {
-      LWNODE_DLOG_WARN("'%s' flag is ignored", userOption.c_str());
-      continue;
-    }
-
-    if (nameType != Flag::Type::LWNodeOther) {
-      userOptions |= nameType;
-    }
-
-    if (nameType == Flag::Type::TraceCall ||
-        nameType == Flag::Type::UnhandledRejections) {
-      std::string optionValues = userOption.substr(
-          userOption.find_first_of('=') + 1);  // +1 for skipping '='
-      auto tokens = strSplit(optionValues, ',');
-      for (auto token : tokens) {
-        if (nameType == Flag::Type::TraceCall) {
-          Flags::setTraceCallId(token);
-        } else if (nameType == Flag::Type::UnhandledRejections) {
-          Flags::setUnhandledRejections(token);
-        }
-      }
-    }
+    EscargotShim::Global::flags()->add(userOption);
 
     if (remove_flags) {
       argv[i] = nullptr;
     }
   }
 
-  Flags::add(userOptions);
-
   if (remove_flags) {
-    Flags::shrinkArgumentList(argc, argv);
+    EscargotShim::Global::flags()->shrinkArgumentList(argc, argv);
   }
 }
 
@@ -432,7 +349,8 @@ ExternalizeStringExtension::GetNativeFunctionTemplate(
 }
 
 bool ExternalizeStringExtension::isRegisteredExtension() {
-  return Flags::isExposeExternalizeString();
+  return EscargotShim::Global::flags()->isOn(
+      Flag::Type::ExposeExternalizeString);
 }
 
 void ExternalizeStringExtension::apply(ContextRef* context) {
@@ -564,7 +482,7 @@ ValueRef* ExternalizeGcExtension::gcCallback(ExecutionStateRef* state,
 }
 
 bool ExternalizeGcExtension::isRegisteredExtension() {
-  return Flags::isExposeGCEnabled();
+  return EscargotShim::Global::flags()->isOn(Flag::Type::ExposeGC);
 }
 
 void ExternalizeGcExtension::apply(ContextRef* context) {

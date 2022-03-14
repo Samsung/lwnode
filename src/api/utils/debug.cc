@@ -21,6 +21,7 @@
 
 #include "api/context.h"
 #include "api/es-helper.h"
+#include "api/global.h"
 #include "api/isolate.h"
 #include "debug.h"
 #include "misc.h"
@@ -51,7 +52,8 @@ static const char* getCurrentProcessName() {
 
 void DebugUtils::printStackTrace() {
 #if defined(NDEBUG)
-  if (EscargotShim::Flags::isInternalLogEnabled() == false) {
+  if (!EscargotShim::Global::flags()->isOn(
+          EscargotShim::Flag::Type::InternalLog)) {
     return;
   }
 #endif

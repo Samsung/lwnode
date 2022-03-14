@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "flags.h"
 #include "logger.h"
 
 #if !defined(NDEBUG)

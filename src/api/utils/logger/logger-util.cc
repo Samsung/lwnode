@@ -15,11 +15,13 @@
  */
 
 #include "logger-util.h"
+
 #include <assert.h>
 #include <regex>
 #include <set>
 #include <sstream>
-#include "flags.h"
+
+#include "api/global.h"
 
 std::string getPrettyFunctionName(const std::string fullname) {
   std::smatch match;
@@ -50,7 +52,9 @@ static bool isIndentIdEnabled(std::string id) {
   if (id == FORCE_ENABLE_INDENT_ID) {
     return true;
   }
-  return EscargotShim::Flags::isTraceCallEnabled(id);
+
+  return EscargotShim::Global::flags()->isOn(
+      EscargotShim::Flag::Type::TraceCall, id);
 }
 
 void IndentCounter::indent(std::string id) {

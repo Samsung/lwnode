@@ -17,8 +17,10 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
 #if !defined(LWNODE_EXPORT)
 #define LWNODE_EXPORT __attribute__((visibility("default")))
@@ -48,57 +50,86 @@ class Flag {
     LWNodeOther = 1 << 14,
   };
 
-  Flag(std::string name, Type type, bool useAsPrefix = false)
+  Flag(const std::string& name, Type type, bool useAsPrefix = false)
       : name_(name), type_(type), useAsPrefix_(useAsPrefix) {}
 
-  std::string name() { return name_; }
-  Type type() { return type_; }
-  bool isPrefixOf(const std::string& name);
+  virtual std::string name() { return name_; }
+  virtual Type type() const { return type_; }
+  virtual bool isPrefixOf(const std::string& name);
 
- private:
+  virtual void addValue(const std::string& value){};
+  virtual bool hasValue(const std::string& value) { return false; }
+
+  virtual void addNegativeValue(const std::string& value) {}
+  virtual bool hasNegativeValue(const std::string& value) { return false; }
+
+ protected:
   std::string name_;
   Type type_ = Type::Empty;
   bool useAsPrefix_ = false;
 };
 
-class LWNODE_EXPORT Flags {
+class FlagWithValues : public Flag {
  public:
-  static void set(flag_t flags) { s_flags = flags; }
-  static void add(flag_t flags) { s_flags |= flags; }
-  static flag_t get() { return s_flags; };
+  FlagWithValues(const std::string& name, Type type, bool useAsPrefix = false)
+      : Flag(name, type, useAsPrefix) {}
 
-  static bool isTraceCallEnabled(std::string id = "*");
-  static bool isTraceGCEnabled() { return s_flags & Flag::Type::TraceGC; }
-  static bool isInternalLogEnabled() {
-    return s_flags & Flag::Type::InternalLog;
-  }
-  static bool isCodeGenerationFromStringAllowed() {
-    return s_flags & Flag::Type::AllowCodeGenerationFromString;
-  }
-  static bool isAbortOnUncaughtException() {
-    return s_flags & Flag::Type::AbortOnUncaughtException;
-  }
-  static bool isExposeExternalizeString() {
-    return s_flags & Flag::Type::ExposeExternalizeString;
-  }
-  static bool isExposeGCEnabled() { return s_flags & Flag::Type::ExposeGC; }
-
-  static bool isUnhandledRejectionsEnabled() {
-    return s_flags & Flag::Type::UnhandledRejections;
-  }
-  static void setUnhandledRejections(const std::string& value) {
-    s_unhandled_rejections.insert(value);
+  virtual void addValue(const std::string& value) override {
+    values_.insert(value);
   }
 
-  static void setTraceCallId(const std::string& id);
-
-  static void shrinkArgumentList(int* argc, char** argv);
+  virtual bool hasValue(const std::string& value) override {
+    return values_.find(value) != values_.end();
+  }
 
  private:
-  static std::set<std::string> s_trace_ids;
-  static std::set<std::string> s_negative_trace_ids;
-  static std::set<std::string> s_unhandled_rejections;
-  static flag_t s_flags;
+  std::set<std::string> values_;
+};
+
+class FlagWithNegativeValues : public FlagWithValues {
+ public:
+  FlagWithNegativeValues(const std::string& name,
+                         Type type,
+                         bool useAsPrefix = false)
+      : FlagWithValues(name, type, useAsPrefix) {}
+
+  void addNegativeValue(const std::string& value) override {
+    negativeValues_.insert(value);
+  }
+
+  bool hasNegativeValue(const std::string& value) override {
+    return negativeValues_.find(value) != negativeValues_.end();
+  }
+
+ private:
+  std::set<std::string> negativeValues_;
+};
+
+class LWNODE_EXPORT Flags {
+ public:
+  static std::vector<Flag> s_validFlags;
+  struct FlagComparator {
+    bool operator()(const Flag* a, const Flag* b) const {
+      return a->type() < b->type();
+    }
+  };
+
+  void add(const std::string& flag);
+  void add(Flag::Type type);
+  void add(Flag* flag);
+
+  bool isOn(Flag::Type type, const std::string& value = "");
+  void shrinkArgumentList(int* argc, char** argv);
+
+  std::set<Flag*, FlagComparator> get() { return flags_; };
+  void set(std::set<Flag*, FlagComparator> flags) { flags_ = flags; }
+
+ private:
+  Flag* findFlagObject(const std::string& name);
+  Flag* findFlagObject(Flag::Type type);
+
+  Flag* getFlag(Flag::Type type);
+  std::set<Flag*, FlagComparator> flags_;
 };
 
 }  // namespace EscargotShim

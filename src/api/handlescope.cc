@@ -15,6 +15,8 @@
  */
 
 #include "handlescope.h"
+
+#include "api/global.h"
 #include "handle.h"
 #include "isolate.h"
 #include "utils/misc.h"
@@ -58,7 +60,7 @@ bool HandleScopeWrap::remove(HandleWrap* value) {
 
 void HandleScopeWrap::clear() {
   LWNODE_CALL_TRACE_ID(HDLSCOPE);
-  if (Flags::isTraceCallEnabled("HDLSCOPE")) {
+  if (Global::flags()->isOn(Flag::Type::TraceCall, "HDLSCOPE")) {
     std::stringstream ss;
     std::vector<std::string> vector;
 
