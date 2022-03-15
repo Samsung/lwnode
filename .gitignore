@@ -1,0 +1,15 @@
+.vscode
+.buildResult
+node_modules
+
+.cache
+*.wgt
+dist
+out
+docs
+release
+download
+.nyc_output
+
+CMakeCache.txt
+CMakeFiles/*

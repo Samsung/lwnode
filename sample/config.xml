@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" version="1.0.0" viewmodes="maximized">
+    <tizen:application id="OwOD84MFBg.sqlite3" package="OwOD84MFBg" required_version="3.0"/>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <content src="index.html"/>
+    <icon src="icon.png"/>
+    <name>sqlite3</name>
+    <tizen:profile name="tv"/>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+    <tizen:setting background-support="disable" context-menu="enable" encryption="disable" hwkey-event="enable" install-location="auto"/>
+</widget>

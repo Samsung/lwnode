@@ -1,0 +1,9 @@
+.vscode
+.buildResult
+node_modules
+
+.cache
+*.wgt
+dist
+out
+docs
