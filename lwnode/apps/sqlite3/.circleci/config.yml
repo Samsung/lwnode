@@ -1,0 +1,185 @@
+version: 2
+jobs:
+  build_wgt_and_docs:
+    machine:
+      image: art.sec.samsung.net/circleci-docker/docker-gbs-base:latest
+    environment:
+      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    steps:
+      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - checkout
+      - run: git submodule sync; git submodule update --init
+      - run:
+          name: Prepare the build
+          command: |
+            tools/install-build-tools.sh
+            npm install
+      - run:
+          name: Build node modules
+          command: |
+            npm run build:all_noenv
+      - run:
+          name: Package the wgt
+          command: ./tools/buildwgt.sh
+      - run:
+          name: Generate docs
+          command: |
+            npm run docs
+            zip ./out/docs.zip docs/* -r
+      - run:
+          name: Store artifacts
+          command: |
+            mkdir -p ~/artifacts
+            cp out/{*.wgt,*.zip} ~/artifacts
+            cp download/libsqlite.js ~/artifacts
+      - store_artifacts:
+          path: ~/artifacts
+          destination: artifacts
+      - run:
+          name: Send .wgt and docs to Artifacts
+          working_directory: ~/artifacts
+          command: |
+            curl -uryan.choi:AP3T9vXyBZWtXXA9zay93LNAM3G -T "{$(echo *.zip *.js *.wgt | tr ' ' ',')}" "https://art.sec.samsung.net/artifactory/lws_generic/sqlite3-service/"
+
+  build_tizen_4.0vd:
+    machine:
+      image: art.sec.samsung.net/circleci-docker/docker-gbs-base:latest
+    environment:
+      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    resource_class: xlarge
+    steps:
+      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - checkout
+      - run: git submodule sync; git submodule update --init
+      - run:
+          name: Prepare the build
+          command: |
+            tools/install-build-tools.sh
+      - run:
+          name: Build node modules
+          command: |
+            npm install
+            npm run build:all_noenv
+      - run:
+          name: Build RPMs
+          command: |
+            rm -rf ./node_modules
+            npm install --production
+            gbs -c .circleci/gbs.conf.vd40 build -A armv7l -P profile.VdKantM2 --incremental --include-all
+      - run:
+          name: Store artifacts
+          command: |
+            mkdir -p ~/artifacts/4.0vd
+            cp ~/GBS-ROOT/local/repos/VdKantM2/armv7l/RPMS/*.rpm ~/artifacts/4.0vd
+      - store_artifacts:
+          path: ~/artifacts
+          destination: artifacts
+      - run:
+          name: Send .rpms to Artifacts
+          working_directory: ~/artifacts/4.0vd
+          command: |
+            curl -uryan.choi:AP3T9vXyBZWtXXA9zay93LNAM3G -T "{$(echo *.rpm | tr ' ' ',')}" "https://art.sec.samsung.net/artifactory/lws_generic/sqlite3-service/4.0vd/"
+
+  build_tizen_6.5:
+    machine:
+      image: art.sec.samsung.net/circleci-docker/docker-gbs-base:latest
+    environment:
+      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    resource_class: xlarge
+    steps:
+      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - checkout
+      - run: git submodule sync; git submodule update --init
+      - run:
+          name: Prepare the build
+          command: |
+            tools/install-build-tools.sh
+      - run:
+          name: Build node modules
+          command: |
+            npm install
+            npm run build:all_noenv
+      - run:
+          name: Build RPMs
+          command: |
+            rm -rf ./node_modules
+            npm install --production
+            gbs -c .circleci/gbs.conf build -A armv7l -P profile.t65std --incremental --include-all
+      - run:
+          name: Store artifacts
+          command: |
+            mkdir -p ~/artifacts
+            cp ~/GBS-ROOT/t65std/local/repos/t65std/armv7l/RPMS/*.rpm ~/artifacts
+      - store_artifacts:
+          path: ~/artifacts
+          destination: artifacts
+      - run:
+          name: Send .rpms to Artifacts
+          working_directory: ~/artifacts
+          command: |
+            curl -uryan.choi:AP3T9vXyBZWtXXA9zay93LNAM3G -T "{$(echo *.rpm | tr ' ' ',')}" "https://art.sec.samsung.net/artifactory/lws_generic/sqlite3-service/"
+
+  test_x64:
+    machine:
+      image: art.sec.samsung.net/circleci-docker/docker-gbs-base:latest
+    environment:
+      no_proxy: 168.219.241.169,168.219.245.245,168.219.244.109
+    steps:
+      - run: curl -sL https://art.sec.samsung.net/artifactory/tools/CircleCI/scripts/set_proxy_setting.sh | sh -
+      - checkout
+      - run: git submodule sync; git submodule update --init
+      - run:
+          name: Install node
+          command: |
+            curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash
+            sudo apt install nodejs
+            node -v
+            npm -version
+      - run:
+          name: Install node modules
+          command: |
+            npm install
+            npm run build:all
+      - run:
+          name: Test
+          no_output_timeout: 20m
+          command: |
+            npm run coverage | tee test_and_coverage.txt
+      - run:
+          name: Store test results
+          command: |
+            mkdir -p ~/artifacts
+            cp test_and_coverage.txt ~/artifacts
+      - store_artifacts:
+          path: ~/artifacts
+          destination: artifacts
+      - run:
+          name: Send data to Testhub
+          command: |
+            cmd='wget --no-proxy http://10.113.10.143:8080/job/download/lastSuccessfulBuild/artifact/testhub.sh'
+            if ! $cmd; then
+              echo 'Failed to download testhub.sh'
+            else
+              chmod +x testhub.sh
+              ./testhub.sh .circleci/testhub.cfg
+            fi
+      - run:
+          name: Send test results to Artifacts
+          working_directory: ~/artifacts
+          command: |
+            curl -uryan.choi:AP3T9vXyBZWtXXA9zay93LNAM3G -T "{$(echo *.txt | tr ' ' ',')}" "https://art.sec.samsung.net/artifactory/lws_generic/sqlite3-service/"
+
+workflows:
+    version: 2
+    build_wgt:
+      jobs:
+        - build_wgt_and_docs
+    build_latest:
+      jobs:
+        - build_tizen_6.5
+    build_vd:
+      jobs:
+        - build_tizen_4.0vd
+    test_x64:
+      jobs:
+        - test_x64

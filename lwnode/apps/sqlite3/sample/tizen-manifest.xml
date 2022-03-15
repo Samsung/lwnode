@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="4.0" package="node-sqlite3-service" version="1.0.0">
+    <profile name="tv-samsung" />
+    <service-application appid="node-sqlite3-service" exec="node" type="capp" multiple="false" taskmanage="false" nodisplay="true" on-boot="true">
+        <icon>service.png</icon>
+        <label>Sqlite3 Service</label>
+	</service-application>
+    <privileges>
+    </privileges>
+</manifest>

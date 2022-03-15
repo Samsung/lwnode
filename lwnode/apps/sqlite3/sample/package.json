@@ -1,0 +1,15 @@
+{
+  "name": "unittest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node runner.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mocha": "^8.2.1",
+    "websocket": "1.0.31"
+  }
+}
