@@ -1,0 +1,12 @@
+[general]
+profile = profile.VdKantM2
+
+# KantM2
+[profile.VdKantM2]
+repos = repo.product_KantM2, repo.base_tizen4
+
+[repo.product_KantM2]
+url=http://168.219.244.109/products/b2b/official/2018/TRUNK2018/KantM2_LFD/latest/repos/product/armv7l/packages/
+
+[repo.base_tizen4]
+url=http://168.219.245.245/tizen-rsa/base/enterprise/4.0/rel/rel-tizen-4.0-enterprise-base-branch2018/standard/rel-tizen-4.0-branch2018-enterprise-stan_20180320.9/repos/base/armv7l/packages/

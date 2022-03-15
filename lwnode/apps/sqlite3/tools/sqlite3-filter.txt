@@ -1,0 +1,59 @@
+P /.git
+P /.github
+P /.circleci
+
+- /.circleci/testhub.cfg
+- /dist/bin/tizen/node
+- /download/libsqlite.js.map
+- /download/libsqlite.cjs.js
++ /dist/bin/linux/node
++ /tools/buildwgt.sh
++ /tools/install-build-tools.sh
++ /tools/certificates/***
+- /tools/**
+
+- /node_modules/sqlite3/lib/binding/napi-v3-linux-x64/node_sqlite3.node
+
+# These rules are only needed when building rpms from node_modules dev
+# <dev>
+- /node_modules/.bin/***
+- /node_modules/eslint/***
+- /node_modules/@babel/***
+- /node_modules/@eslint/***
+- /node_modules/eslint*/***
+- /node_modules/jsdoc/***
+- /node_modules/mocha/***
+- /node_modules/nodemon/***
+- /node_modules/prettier/***
+- /node_modules/@types/***
+- /node_modules/typescript/***
+# </dev>
+
+- /node_modules/**/test
+- /node_modules/**/example
+- /node_modules/**/examples
+- /node_modules/**/benchmark
++ /node_modules/**/
++ /node_modules/**/*.js
++ /node_modules/**/*.node
++ /node_modules/**/*.json
++ /node_modules/**/LICENSE
++ /node_modules/**/license
+- /node_modules/**/*
+
+- .git
+- .gitignore
+- .gitmodules
+- .gitattributes
+- .eslintrc.js
+- .prettierrc
+- .cache
+
+- *.pyc
+- *.a
+- *.so
+- *.o
+- out_linux
+- out_tizen
+- CMakeCache.txt
+- CMakeFiles

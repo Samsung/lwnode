@@ -1,0 +1,12 @@
+[Unit]
+Description=Node SQLite3 Service
+
+[Service]
+User=owner
+Group=users
+ExecStart=/usr/bin/lwnode /usr/apps/node-sqlite3-ep/script
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

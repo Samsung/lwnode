@@ -1,0 +1,28 @@
+* {
+  font-family: monospace;
+}
+
+body {
+  margin: 20 auto;
+  background-color:white;
+}
+
+.contents {
+  font-size: 1.2em;
+  color:black;
+  position: static;
+}
+
+.content_text {
+  white-space: pre-wrap;
+  line-height: 1.4em;
+  position: relative;
+  width: 100%;
+  height: 15%;
+}
+
+@media (min-width:1024px) {
+  .contents {
+    font-size: 1.2em;
+  }
+}
