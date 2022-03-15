@@ -50,6 +50,7 @@ skip_dirs = [
     'lwnode/code/tizen',
     'lwnode/test',
     'lwnode/pkgs',
+    'lwnode/apps',
     'CMakeFiles',
     '.git',
     'out'
