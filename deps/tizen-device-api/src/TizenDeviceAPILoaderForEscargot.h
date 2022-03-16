@@ -68,6 +68,8 @@ class ESPostListener;
   F(extension)                         \
   F(postMessage)                       \
   F(sendSyncMessage)                   \
+  F(sendSyncMessageWithBinaryReply)    \
+  F(sendSyncMessageWithStringReply)    \
   F(sendSyncData)                      \
   F(sendRuntimeMessage)                \
   F(sendRuntimeSyncMessage)            \
@@ -82,9 +84,11 @@ class ESPostListener;
 #define SUPPORTED_TIZEN_PROPERTY(F) \
   F(application)                    \
   F(filesystem)                     \
+  F(mediacontroller)                \
   F(messageport)                    \
   F(systeminfo)                     \
   F(sensorservice)                  \
+  F(tvaudiocontrol)                 \
   F(preference)                     \
   F(power)                          \
   F(time)
@@ -138,6 +142,8 @@ class ExtensionManagerInstance : public gc {
   }
 #endif
 
+  static wrt::xwalk::Extension* getExtension(const char* apiName);
+
  private:
   struct ChunkData {
     ChunkData() {}
@@ -163,6 +169,7 @@ class ExtensionManagerInstance : public gc {
   ChunkDataMap m_chunkDataMap;
   size_t m_chunkID;
   TizenStrings* m_strings;
+
 #if defined(STARFISH_TIZEN_WEARABLE_WIDGET)
   WebWidgetAPIInstance* m_webWidgetAPIInstance;
 #endif
@@ -177,7 +184,6 @@ class ExtensionManagerInstance : public gc {
   // static members
   typedef std::map<Escargot::ContextRef*, ExtensionManagerInstance*>
       ExtensionManagerInstanceMap;
-  static wrt::xwalk::Extension* getExtension(const char* apiName);
   static ExtensionManagerInstanceMap s_extensionManagerInstances;
   static std::mutex s_mutex;
 };
@@ -189,7 +195,7 @@ inline ExtensionManagerInstance* ExtensionManagerInstanceGet(
 
 ExtensionManagerInstance* initialize(Escargot::ContextRef* context);
 void close(Escargot::ContextRef* context);
-}
+}  // namespace DeviceAPI
 
 class NativeDataAccessorPropertyDataForEntryPoint
     : public Escargot::ObjectRef::NativeDataAccessorPropertyData {

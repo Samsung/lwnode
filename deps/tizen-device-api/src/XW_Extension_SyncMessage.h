@@ -5,6 +5,8 @@
 #ifndef XWALK_EXTENSIONS_PUBLIC_XW_EXTENSION_SYNCMESSAGE_H_
 #define XWALK_EXTENSIONS_PUBLIC_XW_EXTENSION_SYNCMESSAGE_H_
 
+#include <vector>
+
 // NOTE: This file and interfaces marked as internal are not considered stable
 // and can be modified in incompatible ways between Crosswalk versions.
 
@@ -36,6 +38,7 @@ struct XW_Internal_SyncMessagingInterface_1 {
     void (*Register)(XW_Extension extension,
                      XW_HandleSyncMessageCallback handle_sync_message);
     void (*SetSyncReply)(XW_Instance instance, const char* reply);
+    void (*SetSyncBinaryReply)(XW_Instance instance, const std::vector<uint8_t>& reply);
 };
 
 typedef struct XW_Internal_SyncMessagingInterface_1

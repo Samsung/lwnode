@@ -172,6 +172,50 @@ struct XW_MessagingInterface_1 {
 
 typedef struct XW_MessagingInterface_1 XW_MessagingInterface;
 
+#define XW_MESSAGING_INTERFACE_2 "XW_MessagingInterface_2"
+
+typedef void (*XW_HandleBinaryMessageCallback)(XW_Instance instance,
+                                               const char* message,
+                                               const size_t size);
+
+struct XW_MessagingInterface_2 {
+  // Register a callback to be called when the JavaScript code associated
+  // with the extension posts a message. Note that the callback will be called
+  // with the XW_Instance that posted the message as well as the message
+  // contents.
+  void (*Register)(XW_Extension extension,
+                   XW_HandleMessageCallback handle_message);
+
+  // Post a message to the web content associated with the instance. To
+  // receive this message the extension's JavaScript code should set a
+  // listener using extension.setMessageListener() function.
+  //
+  // This function is thread-safe and can be called until the instance is
+  // destroyed.
+  void (*PostMessage)(XW_Instance instance, const char* message);
+
+  // Register a callback to be called when the JavaScript code associated
+  // with the extension posts a binary message (ArrayBuffer object).
+  // Note that the callback will be called with the XW_Instance that posted
+  // the message as well as the message contents.
+  void (*RegisterBinaryMessageCallback)(
+      XW_Extension extension,
+      XW_HandleBinaryMessageCallback handle_message);
+
+  // Post a binary message to the web content associated with the instance. To
+  // receive this message the extension's JavaScript code should set a
+  // listener using extension.setMessageListener() function.
+  // The JavaScript message listener function would receive the binary message
+  // in an ArrayBuffer object.
+  //
+  // This function is thread-safe and can be called until the instance is
+  // destroyed.
+  void (*PostBinaryMessage)(XW_Instance instance,
+                            const char* message, size_t size);
+};
+
+typedef struct XW_MessagingInterface_2 XW_MessagingInterface2;
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#if defined(TIZEN_DEVICE_API)
-#include "escargotbase.h"
 #include "TizenDeviceAPILoaderForEscargot.h"
 
 #include "EscargotPublic.h"
@@ -50,16 +48,18 @@ void TizenStrings::initializeLazyStrings()
 
 void printArguments(ContextRef* context, size_t argc, ValueRef** argv)
 {
-    DEVICEAPI_LOG_INFO("printing %zu arguments", argc);
     Evaluator::execute(
         context,
         [](ExecutionStateRef* state, size_t argc,
            ValueRef** argv) -> ValueRef* {
+#ifdef DEBUG
+            DEVICEAPI_LOG_INFO("printing %zu arguments", argc);
             for (size_t i = 0; i < argc; i++) {
                 DEVICEAPI_LOG_INFO(
                     "argument %zu : %s", i,
                     argv[i]->toString(state)->toStdUTF8String().c_str());
             }
+#endif
             return ValueRef::createUndefined();
         },
         argc, argv);
@@ -67,6 +67,9 @@ void printArguments(ContextRef* context, size_t argc, ValueRef** argv)
 
 void* ExtensionManagerInstance::operator new(size_t size)
 {
+
+
+
     static bool typeInited = false;
     static GC_descr descr;
     if (!typeInited) {
@@ -97,32 +100,37 @@ void* ExtensionManagerInstance::operator new(size_t size)
 wrt::xwalk::Extension* ExtensionManagerInstance::getExtension(
     const char* apiName)
 {
-    DEVICEAPI_LOG_INFO("Enter");
-    wrt::xwalk::ExtensionMap& extensions =
-        wrt::xwalk::ExtensionManager::GetInstance()->extensions();
+    DEVICEAPI_LOG_INFO("Creating a new extension: %s\n", apiName);
+    auto extensionManager = wrt::xwalk::ExtensionManager::GetInstance();
+    wrt::xwalk::ExtensionMap& extensions = extensionManager->extensions();
 
     auto it = extensions.find(apiName);
     if (it == extensions.end()) {
         DEVICEAPI_LOG_INFO("Enter");
         char library_path[512];
-        if (!strcmp(apiName, "tizen"))
+        if (!strcmp(apiName, "tizen")) {
             snprintf(library_path, 512,
                      "/usr/lib/tizen-extensions-crosswalk/libtizen.so");
-        else if (!strcmp(apiName, "sensorservice"))
+        } else if (!strcmp(apiName, "sensorservice")) {
             snprintf(library_path, 512,
                      "/usr/lib/tizen-extensions-crosswalk/libtizen_sensor.so");
-        else if (!strcmp(apiName, "sa")) {
+        } else if (!strcmp(apiName, "sa")) {
             snprintf(library_path, 512,
                      "/usr/lib/tizen-extensions-crosswalk/libwebapis_sa.so");
-        } else
+        } else if (!strcmp(apiName, "tvaudiocontrol")) {
+            snprintf(library_path, 512,
+                     "/usr/lib/tizen-extensions-crosswalk/libtizen_tvaudio.so");
+        } else {
             snprintf(library_path, 512,
                      "/usr/lib/tizen-extensions-crosswalk/libtizen_%s.so",
                      apiName);
+        }
+
         wrt::xwalk::Extension* extension =
-            new wrt::xwalk::Extension(library_path, nullptr);
+            new wrt::xwalk::Extension(library_path, extensionManager);
+
         if (extension->Initialize()) {
-            wrt::xwalk::ExtensionManager::GetInstance()->RegisterExtension(
-                extension);
+            extensionManager->RegisterExtension(extension);
             extensions[apiName] = extension;
             return extension;
         } else {
@@ -134,6 +142,70 @@ wrt::xwalk::Extension* ExtensionManagerInstance::getExtension(
     }
 }
 
+static const char deviceAPISourcePieceStart[] = R"(
+    (function(extension) {
+        extension.internal = {};
+        extension.internal._ = {};
+        let internalAPI = [
+            "sendSyncMessage",
+            "sendSyncMessageWithBinaryReply",
+            "sendSyncMessageWithStringReply",
+        ];
+
+        for (let name of internalAPI) {
+            extension.internal._[name] = extension[name];
+            extension.internal[name] = function () {
+                return extension.internal._[name].apply(extension, arguments);
+            };
+            delete extension[name];
+        }
+
+        var exports = {};
+        var window = {
+            Object,
+        };
+    (function() {'use strict';
+    )";
+
+// sizeof(deviceAPISourcePieceStart) should point string length of deviceAPISourcePieceStart
+static_assert(sizeof(deviceAPISourcePieceStart) > sizeof(size_t), "");
+
+static const char deviceAPISourcePieceEnd[] = R"(
+    })();
+    return exports;})
+    )";
+
+// sizeof(deviceAPISourcePieceEnd) should point string length of deviceAPISourcePieceStart
+static_assert(sizeof(deviceAPISourcePieceEnd) > sizeof(size_t), "");
+
+static void* loadDeviceAPISource(void* data)
+{
+    wrt::xwalk::Extension* extension = ExtensionManagerInstance::getExtension((const char*)data);
+
+    auto startLen = sizeof(deviceAPISourcePieceStart) - 1;
+    auto endLen = sizeof(deviceAPISourcePieceEnd) - 1;
+
+    char* dest = (char*)malloc(startLen + endLen + extension->javascript_api().size() + 1);
+    char* ptr = dest;
+    strncpy(ptr, deviceAPISourcePieceStart, startLen);
+    ptr += startLen;
+
+    strncpy(ptr, extension->javascript_api().data(), extension->javascript_api().size());
+    ptr += extension->javascript_api().size();
+
+    strncpy(ptr, deviceAPISourcePieceEnd, endLen);
+    ptr += endLen;
+
+    *ptr = 0;
+
+    return dest;
+}
+
+static void unloadDeviceAPISource(void* memoryPtr, void* callbackData)
+{
+    free(memoryPtr);
+}
+
 // Caution: this function is called only inside existing js execution context,
 // so we don't handle JS exception around ESFunctionObject::call()
 ObjectRef* ExtensionManagerInstance::initializeExtensionInstance(
@@ -141,7 +213,7 @@ ObjectRef* ExtensionManagerInstance::initializeExtensionInstance(
 {
     DEVICEAPI_LOG_INFO("Enter");
 
-    return Evaluator::execute(
+    auto execResult = Evaluator::execute(
                m_context,
                [](ExecutionStateRef* state, ExtensionManagerInstance* self,
                   const char* apiName) -> ValueRef* {
@@ -150,35 +222,31 @@ ObjectRef* ExtensionManagerInstance::initializeExtensionInstance(
                        DEVICEAPI_LOG_INFO("Cannot load extension %s", apiName);
                        return ObjectRef::create(state);
                    }
-                   std::string str;
-                   str.append("(function(extension){");
-                   str.append("extension.internal = {};");
-                   str.append(
-                       "extension.internal.sendSyncMessage_ = "
-                       "extension.sendSyncMessage;");
-                   str.append(
-                       "extension.internal.sendSyncMessage = function(){ "
-                       "return "
-                       "extension.internal.sendSyncMessage_.apply(extension, "
-                       "arguments); };");
-                   str.append("delete extension.sendSyncMessage;");
-                   str.append("var exports = {};");
-                   str.append("console.log('Start loading ");
-                   str.append(apiName);
-                   str.append("');");
-                   str.append("(function() {'use strict';");
-                   str.append(extension->javascript_api().c_str());
-                   str.append("})();");
-                   str.append("console.log('Loading ");
-                   str.append(apiName);
-                   str.append(" done ');");
-                   str.append("return exports;})");
+
+                   const std::string& source = extension->javascript_api();
+                   for (auto c: source) {
+                       if (static_cast<unsigned char>(c) > 127) {
+                           // TODO support unicode version of source
+                           DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
+                       }
+                   }
+
+                   char* newApiName = (char*)GC_MALLOC_ATOMIC(strlen(apiName) + 1);
+                   memcpy(newApiName, apiName, strlen(apiName));
+                   newApiName[strlen(apiName)] = 0;
+
+                   auto startLen = sizeof(deviceAPISourcePieceStart) - 1;
+                   auto endLen = sizeof(deviceAPISourcePieceEnd) - 1;
+
+                   size_t sourceLength = startLen + endLen + extension->javascript_api().size();
+                   StringRef* apiSource = Escargot::StringRef::createReloadableString(
+                       state->context()->vmInstance(), true,
+                       sourceLength, newApiName, loadDeviceAPISource, unloadDeviceAPISource);
 
                    std::string jsFileName = apiName;
                    jsFileName += ".js";
                    jsFileName = "tizen_api_internal_" + jsFileName;
-                   StringRef* apiSource =
-                       StringRef::createFromUTF8(str.c_str(), str.length());
+
                    FunctionObjectRef* initializer =
                        self->m_context->scriptParser()
                            ->initializeScript(
@@ -188,20 +256,23 @@ ObjectRef* ExtensionManagerInstance::initializeExtensionInstance(
                            .script.value()
                            ->execute(state)
                            ->asFunctionObject();
-                   ObjectRef* extensionObject =
-                       self->createExtensionObject(state);
-                   wrt::xwalk::ExtensionInstance* extensionInstance =
-                       extension->CreateInstance();
-                   self->m_extensionInstances[extensionObject] =
-                       extensionInstance;
-                   ValueRef* arguments[] = { ValueRef::create(
-                       extensionObject) };
+
+                   ObjectRef* extensionObject = self->createExtensionObject(state);
+                   wrt::xwalk::ExtensionInstance* extensionInstance = extension->CreateInstance();
+                   self->m_extensionInstances[extensionObject] = extensionInstance;
+
+                   ValueRef* arguments[] = { ValueRef::create(extensionObject) };
                    return initializer
                        ->call(state, ValueRef::createNull(), 1, arguments)
                        ->toObject(state);
                },
-               this, apiName)
-        .result->asObject();
+               this, apiName);
+
+    if (!execResult.isSuccessful()) {
+        DEVICEAPI_LOG_ERROR("Error: %s\n",
+        execResult.resultOrErrorToString(m_context)->toStdUTF8String().c_str());
+    }
+    return execResult.result->asObject();
 }
 
 ObjectRef* ExtensionManagerInstance::createExtensionObject(
@@ -219,7 +290,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                ValueRef** argv, bool isNewExpression) -> ValueRef* {
                 DEVICEAPI_LOG_ERROR("extension.postMessage UNIMPLEMENTED");
                 printArguments(state->context(), argc, argv);
-                NESCARGOT_ASSERT_SHOULD_NOT_BE_HERE();
+                DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
                 return ValueRef::createUndefined();
             },
             0, true, true));
@@ -244,6 +315,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                         ->getExtensionInstanceFromCallingContext(
                             state->context(), thisValue);
                 if (!extensionInstance || argc != 1) {
+                    DEVICEAPI_LOG_ERROR("extensionInstance == nullptr");
                     return ValueRef::create(false);
                 }
 
@@ -260,13 +332,47 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                     return ValueRef::createNull();
                 }
                 return ValueRef::create(
-                    StringRef::createFromASCII(reply.c_str(), reply.size()));
+                    StringRef::createFromUTF8(reply.c_str(), reply.size()));
             },
             0, true, true));
 
     extensionObject->defineDataProperty(
         state, ValueRef::create(m_strings->sendSyncMessage->string()),
         ValueRef::create(sendSyncMessageFn), true, true, true);
+
+    FunctionObjectRef* sendSyncMessageWithBinaryReplyFn = FunctionObjectRef::create(
+        state,
+        FunctionObjectRef::NativeFunctionInfo(
+            m_strings->sendSyncMessageWithBinaryReply,
+            [](ExecutionStateRef* state, ValueRef* thisValue, size_t argc,
+               ValueRef** argv, bool isNewExpression) -> ValueRef* {
+                DEVICEAPI_LOG_ERROR("Not implemented: extension.sendSyncMessageWithBinaryReply");
+                printArguments(state->context(), argc, argv);
+
+                return ValueRef::createNull();
+            },
+            0, true, true));
+
+    extensionObject->defineDataProperty(
+        state, ValueRef::create(m_strings->sendSyncMessageWithBinaryReply->string()),
+        ValueRef::create(sendSyncMessageWithBinaryReplyFn), true, true, true);
+
+    FunctionObjectRef* sendSyncMessageWithStringReplyFn = FunctionObjectRef::create(
+        state,
+        FunctionObjectRef::NativeFunctionInfo(
+            m_strings->sendSyncMessageWithStringReply,
+            [](ExecutionStateRef* state, ValueRef* thisValue, size_t argc,
+               ValueRef** argv, bool isNewExpression) -> ValueRef* {
+                DEVICEAPI_LOG_ERROR("Not implemented: extension.sendSyncMessageWithStringReply");
+                printArguments(state->context(), argc, argv);
+
+                return ValueRef::createNull();
+            },
+            0, true, true));
+
+    extensionObject->defineDataProperty(
+        state, ValueRef::create(m_strings->sendSyncMessageWithStringReply->string()),
+        ValueRef::create(sendSyncMessageWithStringReplyFn), true, true, true);
 
     FunctionObjectRef* sendSyncDataFn = FunctionObjectRef::create(
         state,
@@ -337,7 +443,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                     state,
                     ValueRef::create(
                         extensionManagerInstance->strings()->reply->string()),
-                    ValueRef::create(StringRef::createFromASCII(reply.c_str(),
+                    ValueRef::create(StringRef::createFromUTF8(reply.c_str(),
                                                                 reply.size())),
                     true, true, true);
 
@@ -368,7 +474,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                 DEVICEAPI_LOG_ERROR(
                     "extension.sendRuntimeMessage UNIMPLEMENTED");
                 printArguments(state->context(), argc, argv);
-                NESCARGOT_ASSERT_SHOULD_NOT_BE_HERE();
+                DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
                 return ValueRef::createUndefined();
             },
             0, true, true));
@@ -386,7 +492,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                 DEVICEAPI_LOG_ERROR(
                     "extension.sendRuntimeAsyncMessage UNIMPLEMENTED");
                 printArguments(state->context(), argc, argv);
-                NESCARGOT_ASSERT_SHOULD_NOT_BE_HERE();
+                DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
                 return ValueRef::createUndefined();
             },
             0, true, true));
@@ -404,7 +510,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
                 DEVICEAPI_LOG_ERROR(
                     "extension.sendRuntimeSyncMessage UNIMPLEMENTED");
                 printArguments(state->context(), argc, argv);
-                NESCARGOT_ASSERT_SHOULD_NOT_BE_HERE();
+                DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
                 return ValueRef::createUndefined();
             },
             0, true, true));
@@ -435,6 +541,7 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
 
                 ValueRef* listenerValue = argv[0];
                 if (listenerValue->isUndefined()) {
+                    DEVICEAPI_LOG_ERROR("listenerValue == undefined");
                     extensionInstance->set_post_message_listener(nullptr);
                     return ValueRef::create(true);
                 }
@@ -604,7 +711,6 @@ ExtensionManagerInstance::ExtensionManagerInstance(ContextRef* context)
                         if (extensionManagerInstance->m_tizenValue) {
                             return extensionManagerInstance->m_tizenValue;
                         }
-
                         TizenStrings* strings =
                             extensionManagerInstance->strings();
                         strings->initializeLazyStrings();
@@ -618,7 +724,7 @@ ExtensionManagerInstance::ExtensionManagerInstance(ContextRef* context)
 
 #define DEFINE_SUPPORTED_TIZEN_API(name)                                       \
     tizenObject->defineAccessorProperty(                                       \
-        state, ValueRef::create(StringRef::createFromASCII("" #name)),         \
+        state, ValueRef::create(StringRef::createFromUTF8("" #name)),         \
         ObjectRef::AccessorPropertyDescriptor(                                 \
             ValueRef::create(FunctionObjectRef::create(                        \
                 state,                                                         \
@@ -642,21 +748,22 @@ ExtensionManagerInstance::ExtensionManagerInstance(ContextRef* context)
                             m_##name) = ValueRef::create(apiObject);           \
                         thisValue->toObject(state)->defineDataProperty(        \
                             state, ValueRef::create(                           \
-                                       StringRef::createFromASCII("" #name)),  \
+                                       StringRef::createFromUTF8("" #name)),  \
                             ValueRef::create(apiObject), false, true, false);  \
                         return ValueRef::create(apiObject);                    \
                     },                                                         \
                     0, true, true))),                                          \
             nullptr, ObjectRef::PresentAttribute::EnumerablePresent));
 
-                        SUPPORTED_TIZEN_PROPERTY(DEFINE_SUPPORTED_TIZEN_API)
+    SUPPORTED_TIZEN_PROPERTY(DEFINE_SUPPORTED_TIZEN_API)
+
 #undef DEFINE_SUPPORTED_TIZEN_API
 
 #define DEFINE_SUPPORTED_TIZEN_ENTRYPOINTS(name)                               \
     ObjectRef::NativeDataAccessorPropertyData* nativeData##name =              \
         new NativeDataAccessorPropertyDataForEntryPoint(                       \
             true, true, true,                                                  \
-            [](ExecutionStateRef* state, ObjectRef* self,                      \
+            [](ExecutionStateRef* state, ObjectRef* self, ValueRef* receiver,  \
                ObjectRef::NativeDataAccessorPropertyData* data) -> ValueRef* { \
                 ExtensionManagerInstance* extensionManagerInstance =           \
                     get(state->context());                                     \
@@ -665,13 +772,18 @@ ExtensionManagerInstance::ExtensionManagerInstance(ContextRef* context)
                         m_##name);                                             \
                 }                                                              \
                 DEVICEAPI_LOG_INFO("Loading plugin for %s", "" #name);         \
+                extensionManagerInstance->VALUE_NAME_STRCAT(m_##name) =        \
+                    Escargot::ValueRef::createUndefined();                     \
+                extensionManagerInstance->m_tizenValue->toObject(state)->get(  \
+                    state, ValueRef::create(                                   \
+                               StringRef::createFromASCII("application")));    \
                 NativeDataAccessorPropertyDataForEntryPoint* myData =          \
                     (NativeDataAccessorPropertyDataForEntryPoint*)data;        \
                 extensionManagerInstance->VALUE_NAME_STRCAT(m_##name) =        \
                     myData->m_data;                                            \
                 return myData->m_data;                                         \
             },                                                                 \
-            [](ExecutionStateRef* state, ObjectRef* self,                      \
+            [](ExecutionStateRef* state, ObjectRef* self, ValueRef* receiver,  \
                ObjectRef::NativeDataAccessorPropertyData* data,                \
                ValueRef* setterInputData) -> bool {                            \
                 NativeDataAccessorPropertyDataForEntryPoint* myData =          \
@@ -680,11 +792,12 @@ ExtensionManagerInstance::ExtensionManagerInstance(ContextRef* context)
                 return true;                                                   \
             });                                                                \
     tizenObject->defineNativeDataAccessorProperty(                             \
-        state, ValueRef::create(StringRef::createFromASCII(#name)),            \
+        state, ValueRef::create(StringRef::createFromUTF8(#name)),            \
         nativeData##name);
 
-                        SUPPORTED_TIZEN_ENTRYPOINTS(
-                            DEFINE_SUPPORTED_TIZEN_ENTRYPOINTS)
+
+    SUPPORTED_TIZEN_ENTRYPOINTS(DEFINE_SUPPORTED_TIZEN_ENTRYPOINTS)
+
 #undef DEFINE_SUPPORTED_TIZEN_ENTRYPOINTS
 
 #if defined(STARFISH_TIZEN_WEARABLE_WIDGET)
@@ -752,7 +865,6 @@ ExtensionManagerInstance::ExtensionManagerInstance(ContextRef* context)
                     ObjectRef::PresentAttribute::EnumerablePresent));
 
             return ValueRef::createUndefined();
-
         },
         this);
 

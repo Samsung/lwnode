@@ -72,6 +72,10 @@ namespace xwalk {
                                                     const char* api_name);
         static int PermissionsRegisterPermissions(XW_Extension xw_extension,
                                                   const char* perm_table);
+        static void MessagingRegisterBinaryMessageCallback(
+            XW_Extension xw_extension, XW_HandleBinaryMessageCallback handle_message);
+        static void MessagingPostBinaryMessage(
+            XW_Instance xw_instance, const char* message, size_t size);
         static void DataRegisterSync(XW_Extension xw_extension,
                                      XW_HandleDataCallback handle_sync_data);
         static void DataRegisterAsync(XW_Extension xw_extension,

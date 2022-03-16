@@ -108,16 +108,11 @@ ExtensionInstance* Extension::CreateInstance() {
 
 void Extension::GetRuntimeVariable(const char* key, char* value,
                                    size_t value_len) {
-#if 0
-        if( rv_provider_ ){
-            std::string ret = rv_provider_->GetRuntimeVariable(key);
-            strncpy(value, ret.c_str(), value_len);
-        }
-#else
-  DEVICEAPI_LOG_INFO("GETRUNTIMEVAR: not implemented");
-  NESCARGOT_ASSERT_SHOULD_NOT_BE_HERE();
-#endif
+  if (rv_provider_) {
+    rv_provider_->GetRuntimeVariable(key, value, value_len);
+  }
 }
+
 int Extension::CheckAPIAccessControl(const char* /*api_name*/) {
   // TODO
   return XW_OK;
@@ -228,6 +223,9 @@ void ESPostListener::finalize() {
   context_ = nullptr;
 }
 
+ESPostMessageListener::IdlerRegister_t
+    ESPostMessageListener::AddIdlerToMainThread = nullptr;
+
 void ESPostMessageListener::PostMessageToJS(const std::string& msg) {
   DEVICEAPI_LOG_INFO(
       "ESPostMessageListener::PostMessageToJS (msg %s listener %p context "
@@ -251,35 +249,41 @@ void ESPostMessageListener::PostMessageToJS(const std::string& msg) {
   params->listener = listener_;
   params->msg = msg;
   DEVICEAPI_LOG_INFO("Post message");
-  node::tizen::AddIdle(
-      [](void* data) {
-        DEVICEAPI_LOG_INFO("Add idle\n");
-        Params* params = (Params*)data;
-        Escargot::ContextRef* context = params->context;
 
-        auto result = Escargot::Evaluator::execute(
-            context,
-            [](Escargot::ExecutionStateRef* state,
-               Params* params) -> Escargot::ValueRef* {
-              Escargot::ObjectRef* listener = params->listener;
-              std::string msg = params->msg;
-              Escargot::ValueRef* arguments[] = {Escargot::ValueRef::create(
-                  Escargot::StringRef::createFromASCII(msg.c_str(),
-                                                       msg.size()))};
-              return listener->call(state, Escargot::ValueRef::createNull(), 1,
-                                    arguments);
-            },
-            params);
-        if (result.error.hasValue()) {
-          DEVICEAPI_LOG_ERROR(
-              "Uncaught %s\n",
-              result.resultOrErrorToString(context)->toStdUTF8String().c_str());
-        }
+  if (AddIdlerToMainThread) {
+    AddIdlerToMainThread(
+        [](void* data) {
+          DEVICEAPI_LOG_INFO("Add idle\n");
+          Params* params = (Params*)data;
+          Escargot::ContextRef* context = params->context;
 
-        delete params;
-        return 0;
-      },
-      params);
+          auto result = Escargot::Evaluator::execute(
+              context,
+              [](Escargot::ExecutionStateRef* state,
+                 Params* params) -> Escargot::ValueRef* {
+                Escargot::ObjectRef* listener = params->listener;
+                std::string msg = params->msg;
+                Escargot::ValueRef* arguments[] = {Escargot::ValueRef::create(
+                    Escargot::StringRef::createFromASCII(msg.c_str(),
+                                                         msg.size()))};
+                return listener->call(state, Escargot::ValueRef::createNull(),
+                                      1, arguments);
+              },
+              params);
+          if (result.error.hasValue()) {
+            DEVICEAPI_LOG_ERROR("Uncaught %s\n",
+                                result.resultOrErrorToString(context)
+                                    ->toStdUTF8String()
+                                    .c_str());
+          }
+
+          delete params;
+          return 0;
+        },
+        params);
+  } else {
+    DEVICEAPI_LOG_WARN("idler is ignored.\n");
+  }
 }
 
 void ESPostDataListener::PostDataToJS(const std::string& msg, uint8_t* buffer,

@@ -22,6 +22,11 @@ namespace xwalk {
 
     class Extension {
     public:
+        class RuntimeVariableProvider {
+        public:
+            virtual void GetRuntimeVariable(const char* key, char* value, size_t value_len) = 0;
+        };
+
         Extension(const std::string& path, RuntimeVariableProvider* provider);
         Extension(const std::string& path, const std::string& name,
                   const std::vector<std::string>& entry_points,
@@ -99,6 +104,7 @@ namespace xwalk {
         XW_HandleDataCallback handle_data_callback_{ nullptr };
         XW_HandleDataCallback handle_sync_data_callback_{ nullptr };
         RuntimeVariableProvider* rv_provider_{ nullptr };
+        XW_HandleBinaryMessageCallback handle_binary_msg_callback_{ nullptr };
     };
 
     class PostMessageListener {
@@ -205,12 +211,23 @@ public:
     }
     void PostMessageToJS(const std::string& msg);
 
+    // @escargot
+    typedef int (*Idler_t)(void* data);
+    typedef void (*IdlerRegister_t)(Idler_t idler, void* data);
+    static void SetMainThreadIdlerRegister(IdlerRegister_t idlerRegister)
+    {
+        AddIdlerToMainThread = idlerRegister;
+    }
+
 private:
     ESPostMessageListener(Escargot::ContextRef* context,
                           Escargot::ObjectRef* listener)
         : ESPostListener(context, listener)
     {
     }
+
+    // @escargot
+    static IdlerRegister_t AddIdlerToMainThread;
 };
 
 class ESPostDataListener : public wrt::xwalk::PostDataListener,
