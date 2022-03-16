@@ -150,6 +150,10 @@ ContextWrap* ContextWrap::fromEscargot(Escargot::ContextRef* esContext) {
   return lwCreationContext;
 }
 
+ContextWrap* ContextWrap::fromV8(v8::Context* context) {
+  return CVAL(context)->context();
+}
+
 void ContextWrap::Enter() {
   isolate_->Enter();
   isolate_->pushContext(this);

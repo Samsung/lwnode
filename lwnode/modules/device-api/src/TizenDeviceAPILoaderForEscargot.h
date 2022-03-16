@@ -5,53 +5,21 @@
 #ifndef __TizenDeviceAPILoaderForEscargot__
 #define __TizenDeviceAPILoaderForEscargot__
 
-#ifdef TIZEN_DEVICE_API
 
 #include <mutex>
+#include <map>
 
-#include "escargotbase.h"
+#include <GCUtil.h>
+
+#include "TizenDeviceAPIBase.h"
 #include "EscargotPublic.h"
-
-#undef LOGGER_TAG
-#define LOGGER_TAG "EscargotNodeDeviceAPI"
-
-#ifndef __MODULE__
-#define __MODULE__ \
-  (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#endif
-
-// #define _LOGGER_LOG(prio, fmt, args...)                                   \
-//   dlog_print(prio, LOGGER_TAG, "%s: %s(%d) > " fmt, __MODULE__, __func__, \
-//              __LINE__, ##args);
-
-// #define _LOGGER_SLOG(prio, fmt, args...)                                  \
-//   dlog_print(prio, LOGGER_TAG, "%s: %s(%d) > " fmt, __MODULE__, __func__, \
-//              __LINE__, ##args);
-
-#define _LOGGER_LOG(prio, fmt, args...)                                   \
-  printf("%s: %s(%d) > " fmt "\n", __MODULE__, __func__, \
-             __LINE__, ##args);
-
-#define _LOGGER_SLOG(prio, fmt, args...)                                  \
-  printf("%s: %s(%d) > " fmt "\n", __MODULE__, __func__, \
-             __LINE__, ##args);
-
-#define DEVICEAPI_LOG_INFO(fmt, args...) _LOGGER_LOG(DLOG_INFO, fmt, ##args)
-#define DEVICEAPI_LOG_ERROR(fmt, args...) \
-  _LOGGER_LOG(DLOG_ERROR, "Error: " fmt, ##args)
-#define DEVICEAPI_LOG_WARN(fmt, args...) _LOGGER_LOG(DLOG_WARN, fmt, ##args)
-
-#define DEVICEAPI_SLOG_INFO(fmt, args...) _LOGGER_SLOG(DLOG_INFO, fmt, ##args)
-#define DEVICEAPI_SLOG_ERROR(fmt, args...) _LOGGER_SLOG(DLOG_ERROR, fmt, ##args)
-#define DEVICEAPI_SLOG_WARN(fmt, args...) _LOGGER_SLOG(DLOG_WARN, fmt, ##args)
-#define VALUE_NAME_STRCAT(name) name##Value
 
 namespace wrt {
 namespace xwalk {
 class Extension;
 class ExtensionInstance;
-}
-}
+}  // namespace xwalk
+}  // namespace wrt
 
 namespace DeviceAPI {
 
@@ -213,7 +181,5 @@ class NativeDataAccessorPropertyDataForEntryPoint
 
   Escargot::ValueRef* m_data;
 };
-
-#endif  // TIZEN_DEVICE_API
 
 #endif  // __TizenDeviceAPILoaderForEscargot__

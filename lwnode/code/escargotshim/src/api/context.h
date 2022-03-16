@@ -32,6 +32,7 @@ class ContextWrap : public ValueWrap {
       IsolateWrap* isolate,
       v8::ExtensionConfiguration* extensionConfiguration = nullptr);
   static ContextWrap* fromEscargot(Escargot::ContextRef* context);
+  static ContextWrap* fromV8(v8::Context* context);
 
   void Enter();
   void Exit();

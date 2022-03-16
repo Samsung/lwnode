@@ -1,16 +1,15 @@
 // Copyright 2014 Samsung Electronics Co, Ltd. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-#if defined(TIZEN_DEVICE_API)
+
 #include "Extension.h"
 
 #include <dlfcn.h>
 
-#include "escargotbase.h"
+#include "TizenDeviceAPIBase.h"
 #include "ExtensionAdapter.h"
 #include "EscargotPublic.h"
 #include "TizenDeviceAPILoaderForEscargot.h"
-#include "tizen_node.h"
 
 namespace wrt {
 namespace xwalk {
@@ -59,7 +58,7 @@ bool Extension::Initialize() {
   DEVICEAPI_LOG_INFO("========== << Initialize >> ENTER ==========");
   DEVICEAPI_SLOG_INFO("Extension Module library : [%s]", library_path_.c_str());
 
-  NESCARGOT_ASSERT(handle_ == NULL);
+  DEVICEAPI_ASSERT(handle_ == NULL);
   handle_ = dlopen(library_path_.c_str(), RTLD_LAZY);
   if (!handle_) {
     const char* error = (const char*)dlerror();
@@ -304,7 +303,7 @@ void ESPostDataListener::PostDataToJS(const std::string& msg, uint8_t* buffer,
             return listener_->call(state, Escargot::ValueRef::createNull(), 1, arguments);
 #else
             DEVICEAPI_LOG_ERROR("NOT IMPLEMENTED");
-            NESCARGOT_ASSERT_SHOULD_NOT_BE_HERE();
+            DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
             return Escargot::ValueRef::createUndefined();
 #endif
       });
@@ -316,4 +315,3 @@ void ESPostDataListener::PostDataToJS(const std::string& msg, uint8_t* buffer,
 }
 
 }  // namespace DeviceAPI
-#endif

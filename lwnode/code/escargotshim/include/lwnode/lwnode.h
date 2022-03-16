@@ -53,4 +53,12 @@ class MessageLoop {
   std::unique_ptr<Internal> internal_;
 };
 
+class Utils {
+ public:
+  static Escargot::ContextRef* ToEsContext(v8::Context* context);
+
+  static v8::Local<v8::Value> NewLocal(v8::Isolate* isolate,
+                                       Escargot::ValueRef* ptr);
+};
+
 }  // namespace LWNode

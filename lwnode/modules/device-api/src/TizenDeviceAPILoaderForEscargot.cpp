@@ -4,8 +4,6 @@
 
 #include "TizenDeviceAPILoaderForEscargot.h"
 
-#include "EscargotPublic.h"
-
 #include <dlfcn.h>
 #include "ExtensionAdapter.h"
 #include "ExtensionManager.h"
@@ -921,5 +919,3 @@ void close(ContextRef* context)
     delete ExtensionManagerInstance::get(context);
 }
 }
-
-#endif
