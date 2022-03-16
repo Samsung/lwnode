@@ -1913,7 +1913,7 @@ bool Isolate::InContext() {
 }
 
 void Isolate::ClearKeptObjects() {
-  LWNODE_RETURN_VOID;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
 }
 
 v8::Local<v8::Context> Isolate::GetCurrentContext() {
@@ -2078,12 +2078,12 @@ Maybe<bool> FinalizationGroup::Cleanup(
 
 void Isolate::SetHostImportModuleDynamicallyCallback(
     HostImportModuleDynamicallyCallback callback) {
-  LWNODE_RETURN_VOID;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
 }
 
 void Isolate::SetHostInitializeImportMetaObjectCallback(
     HostInitializeImportMetaObjectCallback callback) {
-  LWNODE_RETURN_VOID;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
 }
 
 void Isolate::SetPrepareStackTraceCallback(PrepareStackTraceCallback callback) {
