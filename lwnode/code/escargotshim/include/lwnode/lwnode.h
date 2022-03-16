@@ -20,6 +20,11 @@
 #include <functional>
 #include <memory>
 
+namespace Escargot {
+class ContextRef;
+class ValueRef;
+}  // namespace Escargot
+
 namespace LWNode {
 
 void InitializeProcessMethods(v8::Local<v8::Object> target,

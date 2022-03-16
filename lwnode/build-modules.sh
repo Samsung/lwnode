@@ -42,7 +42,7 @@ usage() {
    options:
     --os)       target os (linux/tizen)
     "
-  echo "example) build-modules.sh hello-world,tizen-device-api --os=tizen
+  echo "example) build-modules.sh hello-world,device-api --os=tizen
        "
 }
 
