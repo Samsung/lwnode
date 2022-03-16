@@ -103,7 +103,6 @@ void ExtensionManager::RegisterExtensionsByMetadata(
     RegisterExtensionsInDirectory(provider);
   }
 }
-#endif
 
     void ExtensionManager::RegisterExtensionsInDirectory(
         RuntimeVariableProvider* provider)
@@ -127,6 +126,7 @@ void ExtensionManager::RegisterExtensionsByMetadata(
             }
         }
     }
+#endif
 
     bool ExtensionManager::RegisterExtension(Extension* extension)
     {
@@ -166,6 +166,17 @@ void ExtensionManager::RegisterExtensionsByMetadata(
 
         DEVICEAPI_LOG_INFO("========== << RegisterExtension >> END ==========");
         return true;
+    }
+
+    void ExtensionManager::AddRuntimeVariable(const std::string& key, const std::string& value) {
+      runtime_variableMap_.insert(std::make_pair(key, value));
+    }
+
+    void ExtensionManager::GetRuntimeVariable(const char* key, char* value, size_t value_len) {
+      auto it = runtime_variableMap_.find(key);
+      if (it != runtime_variableMap_.end()) {
+        strncpy(value, it->second.c_str(), value_len);
+      }
     }
 
 } // namespace xwalk

@@ -14,20 +14,19 @@
 #include "Extension.h"
 
 namespace wrt {
-class RuntimeVariableProvider;
 namespace xwalk {
 
     typedef std::map<std::string, Extension*> ExtensionMap;
+    typedef std::map<std::string, std::string> RuntimeVariableMap;
 
-    class ExtensionManager {
+    class ExtensionManager : public Extension::RuntimeVariableProvider {
     public:
         static ExtensionManager* GetInstance();
-
-        void RegisterExtensionsInDirectory(RuntimeVariableProvider* provider);
 #if 0
-  void RegisterExtensionsByMetadata(RuntimeVariableProvider* provider);
-  void RegisterExtensionsByMetadata(RuntimeVariableProvider* provider,
-                                    const std::string& metafile_path);
+        void RegisterExtensionsInDirectory(RuntimeVariableProvider* provider);
+        void RegisterExtensionsByMetadata(RuntimeVariableProvider* provider);
+        void RegisterExtensionsByMetadata(RuntimeVariableProvider* provider,
+                                          const std::string& metafile_path);
 #endif
 
         ExtensionMap& extensions()
@@ -37,12 +36,15 @@ namespace xwalk {
 
         bool RegisterExtension(Extension* extension);
 
+        void AddRuntimeVariable(const std::string& key, const std::string& value);
+        void GetRuntimeVariable(const char* key, char* value, size_t value_len) override;
+
     private:
         ExtensionManager();
         virtual ~ExtensionManager();
 
         ExtensionMap extensions_;
-
+        RuntimeVariableMap runtime_variableMap_;
         std::set<std::string> extension_symbols_;
     };
 

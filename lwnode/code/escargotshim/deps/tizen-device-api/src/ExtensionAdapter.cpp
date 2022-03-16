@@ -98,6 +98,16 @@ namespace xwalk {
             return &messagingInterface1;
         }
 
+        if (!strcmp(name, XW_MESSAGING_INTERFACE_2)) {
+            static const XW_MessagingInterface_2 messagingInterface2 = {
+            MessagingRegister,
+            MessagingPostMessage,
+            MessagingRegisterBinaryMessageCallback,
+            MessagingPostBinaryMessage
+        };
+        return &messagingInterface2;
+        }
+
         if (!strcmp(name, XW_INTERNAL_SYNC_MESSAGING_INTERFACE_1)) {
             static const XW_Internal_SyncMessagingInterface_1
                 syncMessagingInterface1 = { SyncMessagingRegister,
@@ -296,6 +306,26 @@ namespace xwalk {
             return extension->RegisterPermissions(perm_table);
         else
             return XW_ERROR;
+    }
+
+    void ExtensionAdapter::MessagingRegisterBinaryMessageCallback(
+        XW_Extension xw_extension, XW_HandleBinaryMessageCallback handle_message) {
+        Extension* extension = GetExtension(xw_extension);
+        CHECK(extension, xw_extension);
+        RETURN_IF_INITIALIZED(extension);
+        extension->handle_binary_msg_callback_ = handle_message;
+    }
+
+    void ExtensionAdapter::MessagingPostBinaryMessage(
+        XW_Instance xw_instance, const char* message, size_t size) {
+        ExtensionInstance* instance = GetExtensionInstance(xw_instance);
+        CHECK(instance, xw_instance);
+
+        if (!instance->post_message_listener_) {
+            DEVICEAPI_LOG_ERROR("Don't have message listener!");
+            return;
+        }
+        instance->post_message_listener_->PostMessageToJS(message);
     }
 
     void ExtensionAdapter::DataRegisterSync(
