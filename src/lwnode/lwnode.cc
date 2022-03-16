@@ -232,13 +232,12 @@ void MessageLoop::onPrepare(v8::Isolate* isolate) {
   internal_->handleGC(isolate);
 }
 
-
 Escargot::ContextRef* Utils::ToEsContext(v8::Context* context) {
   return ContextWrap::fromV8(context)->get();
 }
 
 v8::Local<v8::Value> Utils::NewLocal(v8::Isolate* isolate,
-                                         Escargot::ValueRef* ptr) {
+                                     Escargot::ValueRef* ptr) {
   return v8::Utils::NewLocal<v8::Value>(isolate, ptr);
 }
 
