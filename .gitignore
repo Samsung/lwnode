@@ -143,6 +143,9 @@ __pycache__
 .DS_Store
 *~
 
+# === Rules for tools ===
+*.code-workspace
+
 # === lwnode ===
 .circleci/gbs.conf
 kuep_net_signer.sh
