@@ -1,23 +1,48 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "lib": ["esnext"],
     "target": "es2015",
-    "baseUrl": "src",
+    "module": "commonjs",
+    "lib": ["esnext"],
     "outDir": "dist",
+    "declaration": true,
     "removeComments": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
     "preserveConstEnums": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "allowJs": true,
+
+    /* Strict Type-Checking Options */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noImplicitAny": false,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+
+    /* Additional Checks */
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noImplicitReturns": true,
+    // "noFallthroughCasesInSwitch": true
+
+    /* Module Resolution Options */
+    "moduleResolution": "node",
+    "baseUrl": "src",
+    // "paths": {
+    //   "@src/*": [
+		// 		"service/*"
+		// 	],
+    //   "@service/*": [
+		// 		"service/*"
+		// 	],
+    // },
+    "esModuleInterop": true,
+
+    /* Source Map Options */
+    // "sourceRoot": "",
+    // "mapRoot": "",
+    // "inlineSourceMap": true,
+    // "inlineSources": true,
+
+    /* Experimental Options */
+    // "experimentalDecorators": true,
+    // "emitDecoratorMetadata": true,
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]
