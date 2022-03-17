@@ -1,0 +1,7 @@
+'app':
+  - lwnode/apps/**/*
+  - lwnode/pkgs/apps/**/*
+
+'module':
+  - lwnode/modules/**/*
+  - lwnode/pkgs/modules/**/*
