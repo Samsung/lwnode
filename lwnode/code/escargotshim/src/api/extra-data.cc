@@ -242,10 +242,14 @@ ExceptionObjectData::ExceptionObjectData(
 GCVector<StackTraceData*>* ExceptionObjectData::stackTrace(
     ObjectRef* exceptionObject) {
   auto extraData = ExtraDataHelper::getExtraData(exceptionObject);
-  LWNODE_CHECK(extraData);
-  auto exceptionObjectData = extraData->asExceptionObjectData();
-
-  return exceptionObjectData->stackTrace();
+  if (extraData) {
+    return extraData->asExceptionObjectData()->stackTrace();
+  } else {
+    // FIXME: Check if missing extradata is ok. We print a warning
+    // here until this issue is investigated
+    LWNODE_LOG_WARN("esException does not have an extraData\n");
+    return new GCVector<StackTraceData*>();
+  }
 }
 
 }  // namespace EscargotShim
