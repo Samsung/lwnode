@@ -13,11 +13,20 @@
  * limitations under the License.
  */
 
-const api = require('express').Router();
+const express = require('express');
 const apiCtrl = require('./api.ctrl');
+const authCtrl = require('./auth.ctrl');
+
+const api = express.Router();
+const auth = express.Router();
+
+api.use('/auth', auth);
 
 api.get('/download/:file', apiCtrl.downloadFile);
 api.delete('/delete/:file', apiCtrl.deleteFile);
 api.get('/exist/:file', apiCtrl.existFile);
+
+auth.post('/register/local', authCtrl.localRegister);
+auth.post('/login/local', authCtrl.localLogin);
 
 module.exports = api;
