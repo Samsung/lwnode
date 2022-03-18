@@ -590,7 +590,8 @@ void* V8::ClearWeak(i::Address* location) {
 #if defined(LWNODE_ENABLE_EXPERIMENTAL)
   return GlobalHandles::ClearWeakness(VAL(location));
 #else
-  LWNODE_RETURN_NULLPTR;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
+  return nullptr;
 #endif
 }
 
