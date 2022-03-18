@@ -2094,11 +2094,11 @@ Isolate::DisallowJavascriptExecutionScope::DisallowJavascriptExecutionScope(
     Isolate* isolate,
     Isolate::DisallowJavascriptExecutionScope::OnFailure on_failure)
     : on_failure_(on_failure) {
-  LWNODE_RETURN_VOID;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
 }
 
 Isolate::DisallowJavascriptExecutionScope::~DisallowJavascriptExecutionScope() {
-  LWNODE_RETURN_VOID;
+  LWNODE_ONCE(LWNODE_UNIMPLEMENT);
 }
 
 Isolate::AllowJavascriptExecutionScope::AllowJavascriptExecutionScope(
