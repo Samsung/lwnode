@@ -181,6 +181,7 @@ test/parallel/test-vm-timeout.js
 test/parallel/test-weakref.js
 test/parallel/test-whatwg-url-custom-properties.js
 test/parallel/test-worker-abort-on-uncaught-exception.js
+test/parallel/test-worker-abort-on-uncaught-exception-terminate.js
 test/parallel/test-worker-cleanexit-with-moduleload.js
 test/parallel/test-worker-crypto-sign-transfer-result.js
 test/parallel/test-worker-data-url.js
