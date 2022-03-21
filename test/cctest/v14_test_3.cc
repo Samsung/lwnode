@@ -1348,3 +1348,27 @@ TEST(WeakCallbackApiCustom) {
   // Verify disposed.
   CHECK_EQ(initial_handles, globals->handles_count());
 }
+
+TEST(StackTraceCustom) {
+  LocalContext context;
+  Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  v8::TryCatch try_catch(isolate);
+  std::string source = "var a;"
+                       "function f() {"
+                       "  throw new Error();"
+                       "};"
+                       "try { f(); }"
+                       "catch (e) { a = e.stack;}";
+  v8::Local<Value> r = CompileRun(source.c_str());
+  CHECK(!try_catch.HasCaught());
+
+  std::string exception = *v8::String::Utf8Value(isolate, r);
+  CHECK(exception.find("Error:") != std::string::npos);
+  CHECK(exception.find("Error:") == 0);
+  CHECK(exception.find("at") != std::string::npos);
+  CHECK(exception.find("at") > exception.find("Error:"));
+  CHECK(exception.find("f()") != std::string::npos);
+  CHECK(exception.find("f()") > exception.find("at"));
+}

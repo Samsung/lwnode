@@ -247,6 +247,32 @@ void Isolate::ReportPromiseReject(
 #endif
 }
 
+ValueRef* Isolate::RunPrepareStackTraceCallback(ExecutionStateRef* state,
+                                                ContextWrap* lwContext,
+                                                ValueRef* error,
+                                                ArrayObjectRef* sites) {
+  if (prepare_stack_trace_callback_) {
+    LWNODE_CALL_TRACE_ID_LOG(STACKTRACE,
+                             "RunPrepareStackTraceCallback: %p",
+                             PrepareStackTraceCallback());
+
+    auto v8Isolate = lwContext->GetIsolate()->toV8();
+    v8::MaybeLocal<v8::Value> maybyResult = prepare_stack_trace_callback_(
+        v8::Utils::NewLocal<Context>(v8Isolate, lwContext),
+        v8::Utils::NewLocal<Value>(v8Isolate, error),
+        v8::Utils::NewLocal<Array>(v8Isolate, sites));
+
+    if (!maybyResult.IsEmpty()) {
+      Local<Value> v8Result;
+      if (maybyResult.ToLocal(&v8Result)) {
+        return CVAL(*v8Result)->value();
+      }
+    }
+  }
+
+  return nullptr;
+}
+
 bool Isolate::hasCallDepth() {
   return callDepth() > 0;
 }

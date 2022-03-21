@@ -51,8 +51,8 @@ class Isolate : public gc {
   virtual void SetPendingExceptionAndMessage(
       Escargot::ValueRef* exception,
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) = 0;
-  bool PropagatePendingExceptionToExternalTryCatch();
-  void ReportPendingMessages(bool isVerbose = false);
+  virtual bool PropagatePendingExceptionToExternalTryCatch();
+  virtual void ReportPendingMessages(bool isVerbose = false);
 
   void RunPromiseHook(PromiseHookType type,
                       Escargot::PromiseObjectRef* promise,
@@ -68,17 +68,24 @@ class Isolate : public gc {
     fatal_error_callback_ = callback;
   }
 
-  void SetPrepareStackTraceCallback(v8::PrepareStackTraceCallback callback) {
+  virtual void SetPrepareStackTraceCallback(
+      v8::PrepareStackTraceCallback callback) {
     prepare_stack_trace_callback_ = callback;
   }
 
-  bool HasPrepareStackTraceCallback() const {
+  virtual bool HasPrepareStackTraceCallback() const {
     return prepare_stack_trace_callback_ != nullptr;
   }
 
   v8::PrepareStackTraceCallback PrepareStackTraceCallback() const {
     return prepare_stack_trace_callback_;
   }
+
+  virtual ValueRef* RunPrepareStackTraceCallback(
+      ExecutionStateRef* state,
+      EscargotShim::ContextWrap* lwContext,
+      ValueRef* error,
+      ArrayObjectRef* sites);
 
   void SetAbortOnUncaughtExceptionCallback(
       v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
