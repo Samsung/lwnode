@@ -21,6 +21,7 @@
 #include "context.h"
 #include "extra-data.h"
 #include "isolate.h"
+#include "stack-trace.h"
 #include "utils/misc.h"
 #include "utils/string-util.h"
 
@@ -990,35 +991,13 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
       ErrorMessage::createErrorStringRef(type));
 }
 
-class StackTraceAccessorProperty
-    : public ObjectRef::NativeDataAccessorPropertyData {
- public:
-  StackTraceAccessorProperty(bool isWritable,
-                             bool isEnumerable,
-                             bool isConfigurable,
-                             ObjectRef::NativeDataAccessorPropertyGetter getter,
-                             ObjectRef::NativeDataAccessorPropertySetter setter)
-      : NativeDataAccessorPropertyData(
-            isWritable, isEnumerable, isConfigurable, getter, setter) {}
+static std::vector<std::string> formatStackTraceString(
+    const GCManagedVector<Evaluator::StackTraceData>& traceData) {
+  std::vector<std::string> stackTrace;
 
-  void* operator new(size_t size) { return GC_MALLOC(size); }
-
- private:
-};
-
-static ValueRef* StackTraceGetterCallback(
-    ExecutionStateRef* state,
-    ObjectRef* self,
-    ValueRef* receiver,
-    ObjectRef::NativeDataAccessorPropertyData* data) {
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto lwContext = lwIsolate->GetCurrentContext();
-  auto stackTrace = state->computeStackTrace();
-
-  auto stackTraceVector = ValueVectorRef::create();
-  for (size_t i = 0; i < stackTrace.size(); i++) {
+  for (size_t i = 0; i < traceData.size(); i++) {
     std::ostringstream oss;
-    const auto& iter = stackTrace[i];
+    const auto& iter = traceData[i];
     const auto& resourceName = iter.srcName->toStdUTF8String();
     const auto& functionName = iter.functionName->toStdUTF8String();
     const int errorLine = iter.loc.line;
@@ -1027,31 +1006,10 @@ static ValueRef* StackTraceGetterCallback(
     oss << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
         << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
         << ":" << errorColumn << ")";
-
-    std::string stackTraceItem = oss.str();
-    stackTraceVector->pushBack(StringRef::createFromUTF8(
-        stackTraceItem.c_str(), stackTraceItem.size()));
+    stackTrace.push_back(oss.str());
   }
 
-  auto sites = ArrayObjectRef::create(state, stackTraceVector);
-
-  LWNODE_CALL_TRACE_ID_LOG(STACKTRACE,
-                           "RunPrepareStackTraceCallback: %p",
-                           lwIsolate->PrepareStackTraceCallback());
-  v8::MaybeLocal<v8::Value> maybyResult =
-      lwIsolate->PrepareStackTraceCallback()(
-          v8::Utils::NewLocal<Context>(lwIsolate->toV8(), lwContext),
-          v8::Utils::NewLocal<Value>(lwIsolate->toV8(), self),
-          v8::Utils::NewLocal<Array>(lwIsolate->toV8(), sites));
-
-  if (!maybyResult.IsEmpty()) {
-    Local<Value> v8Result;
-    if (maybyResult.ToLocal(&v8Result)) {
-      return CVAL(*v8Result)->value();
-    }
-  }
-
-  return StringRef::emptyString();
+  return stackTrace;
 }
 
 void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
@@ -1070,11 +1028,16 @@ void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
 
 #ifdef LWNODE_ENABLE_EXPERIMENTAL_STACKTRACE
   if (lwIsolate->HasPrepareStackTraceCallback()) {
+    auto stackTraceVector = ValueVectorRef::create();
     errorObject->defineNativeDataAccessorProperty(
         state,
         StringRef::createFromUTF8("stack"),
-        new StackTraceAccessorProperty(
-            false, false, false, StackTraceGetterCallback, nullptr));
+        new StackTrace::NativeAccessorProperty(false,
+                                               false,
+                                               false,
+                                               StackTrace::StackTraceGetter,
+                                               StackTrace::StackTraceSetter,
+                                               stackTraceVector));
   } else
 #endif
   {

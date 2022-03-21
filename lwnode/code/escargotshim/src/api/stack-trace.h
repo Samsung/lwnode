@@ -25,7 +25,48 @@ namespace EscargotShim {
 
 class StackTrace {
  public:
+  class NativeAccessorProperty
+      : public ObjectRef::NativeDataAccessorPropertyData {
+   public:
+    NativeAccessorProperty(bool isWritable,
+                           bool isEnumerable,
+                           bool isConfigurable,
+                           ObjectRef::NativeDataAccessorPropertyGetter getter,
+                           ObjectRef::NativeDataAccessorPropertySetter setter,
+                           ValueVectorRef* stackTraceVector)
+        : NativeDataAccessorPropertyData(
+              isWritable, isEnumerable, isConfigurable, getter, setter),
+          stackTraceVector_(stackTraceVector) {}
+
+    ValueVectorRef* stackTraceVector() { return stackTraceVector_; }
+
+    void* operator new(size_t size) { return GC_MALLOC(size); }
+
+   private:
+    ValueVectorRef* stackTraceVector_ = nullptr;
+  };
+
   static ValueRef* createCaptureStackTrace(ExecutionStateRef* state);
+
+  static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
+                                             ValueRef* thisValue,
+                                             size_t argc,
+                                             ValueRef** argv,
+                                             bool isConstructCall);
+
+  static ValueRef* StackTraceGetter(
+      ExecutionStateRef* state,
+      ObjectRef* self,
+      ValueRef* receiver,
+      ObjectRef::NativeDataAccessorPropertyData* data);
+  static bool StackTraceSetter(ExecutionStateRef* state,
+                               ObjectRef* self,
+                               ValueRef* receiver,
+                               ObjectRef::NativeDataAccessorPropertyData* data,
+                               ValueRef* setterInputData);
+
+ private:
+  static size_t getStackTraceLimit(ExecutionStateRef* state);
 };
 
 class CallSite : public gc {
@@ -36,7 +77,7 @@ class CallSite : public gc {
                         const Evaluator::StackTraceData& data);
 
  private:
-  FunctionTemplateRef* template_;
+  FunctionTemplateRef* template_ = nullptr;
 };
 
 }  // namespace EscargotShim

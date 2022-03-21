@@ -25,29 +25,7 @@ using namespace v8;
 
 namespace EscargotShim {
 
-class NativeDataAccessorPropertyDataForStackTrace
-    : public ObjectRef::NativeDataAccessorPropertyData {
- public:
-  NativeDataAccessorPropertyDataForStackTrace(
-      bool isWritable,
-      bool isEnumerable,
-      bool isConfigurable,
-      ObjectRef::NativeDataAccessorPropertyGetter getter,
-      ObjectRef::NativeDataAccessorPropertySetter setter,
-      ValueVectorRef* stackTraceVector)
-      : NativeDataAccessorPropertyData(
-            isWritable, isEnumerable, isConfigurable, getter, setter),
-        stackTraceVector_(stackTraceVector) {}
-
-  ValueVectorRef* stackTraceVector() { return stackTraceVector_; }
-
-  void* operator new(size_t size) { return GC_MALLOC(size); }
-
- private:
-  ValueVectorRef* stackTraceVector_;
-};
-
-static size_t getStackTraceLimit(ExecutionStateRef* state) {
+size_t StackTrace::getStackTraceLimit(ExecutionStateRef* state) {
   auto errorObject = state->context()->globalObject()->get(
       state, StringRef::createFromASCII("Error"));
   LWNODE_CHECK(errorObject->isObject());
@@ -59,49 +37,43 @@ static size_t getStackTraceLimit(ExecutionStateRef* state) {
   return stackTraceLimitValue->asNumber();
 }
 
-static ValueRef* StackTraceGetter(
+ValueRef* StackTrace::StackTraceGetter(
     ExecutionStateRef* state,
     ObjectRef* self,
     ValueRef* receiver,
     ObjectRef::NativeDataAccessorPropertyData* data) {
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
-  auto accessorData =
-      reinterpret_cast<NativeDataAccessorPropertyDataForStackTrace*>(data);
+  auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
 
   if (lwIsolate->HasPrepareStackTraceCallback()) {
     auto sites =
         ArrayObjectRef::create(state, accessorData->stackTraceVector());
-    v8::MaybeLocal<v8::Value> callbackResult =
-        lwIsolate->PrepareStackTraceCallback()(
-            v8::Utils::NewLocal<Context>(lwIsolate->toV8(), lwContext),
-            v8::Utils::NewLocal<Value>(lwIsolate->toV8(), self),
-            v8::Utils::NewLocal<Array>(lwIsolate->toV8(), sites));
 
-    if (!callbackResult.IsEmpty()) {
-      Local<Value> callbackResultLocal;
-      if (callbackResult.ToLocal(&callbackResultLocal)) {
-        return CVAL(*callbackResultLocal)->value();
-      }
+    auto formattedStackTrace =
+        lwIsolate->RunPrepareStackTraceCallback(state, lwContext, self, sites);
+    if (formattedStackTrace) {
+      return formattedStackTrace;
     }
   }
 
   return ValueRef::createUndefined();
 }
 
-static bool StackTraceSetter(ExecutionStateRef* state,
-                             ObjectRef* self,
-                             ValueRef* receiver,
-                             ObjectRef::NativeDataAccessorPropertyData* data,
-                             ValueRef* setterInputData) {
+bool StackTrace::StackTraceSetter(
+    ExecutionStateRef* state,
+    ObjectRef* self,
+    ValueRef* receiver,
+    ObjectRef::NativeDataAccessorPropertyData* data,
+    ValueRef* setterInputData) {
   LWNODE_RETURN_FALSE;
 }
 
-static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
-                                           ValueRef* thisValue,
-                                           size_t argc,
-                                           ValueRef** argv,
-                                           bool isConstructCall) {
+ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
+                                                ValueRef* thisValue,
+                                                size_t argc,
+                                                ValueRef** argv,
+                                                bool isConstructCall) {
   if (argc < 1 || !argv[0]->isObject()) {
     return ValueRef::createUndefined();
   }
@@ -140,12 +112,12 @@ static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
   exceptionObject->defineNativeDataAccessorProperty(
       state,
       StringRef::createFromUTF8("stack"),
-      new NativeDataAccessorPropertyDataForStackTrace(false,
-                                                      false,
-                                                      false,
-                                                      StackTraceGetter,
-                                                      StackTraceSetter,
-                                                      stackTraceVector));
+      new NativeAccessorProperty(false,
+                                 false,
+                                 false,
+                                 StackTraceGetter,
+                                 StackTraceSetter,
+                                 stackTraceVector));
 
   return ValueRef::createUndefined();
 }
