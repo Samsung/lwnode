@@ -25,6 +25,7 @@ BuildRequires: make
 BuildRequires: python
 BuildRequires: ninja
 BuildRequires: zip
+BuildRequires: rsync
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(capi-appfw-app-common)
@@ -35,6 +36,7 @@ BuildRequires: pkgconfig(icu-uc)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: nghttp2-devel
 BuildRequires: pkgconfig(libcares)
+BuildRequires: pkgconfig(sqlite3)
 
 %if (0%{?tizen_version_major} >= 6)
 BuildRequires: pkgconfig(openssl1.1)
@@ -62,15 +64,33 @@ Requires:    %{name} = %{version}
 Development files for Lightweight node.js.
 
 # Initialize the variables
-%{!?target: %define target lwnode} #taget = [lwnode/v8/modules]
+%{!?target: %define target lwnode} #taget = [lwnode/v8/modules/apps]
 %{!?lib_type: %define lib_type shared}
 %{!?feature_mode: %define feature_mode production}
+%{!?app_name: %define app_name unkown}
 
 %description
 Node.js on Escargot is a memory efficient node.js implementation,
 which runs on top of Escargot, a memory optimized JavaScript Engine developed
 by Samsung Research, instead of the default V8 JS engine.
 
+
+# Add subpackage for apps
+%if "%{target}" == "apps"
+%package %{app_name}
+Summary: lwnode apps
+%description %{app_name}
+lwnode %{app_name} app
+
+# variables related to app
+%define project_path %{_builddir}/%{name}-%{version}
+%define local_app_path %{project_path}/lwnode/apps/%{app_name}
+%define app_out_path %{project_path}/out/apps/%{app_name}
+%define app_files_path /tmp/%{app_name}/files
+%define target_app_path /usr/apps/lwnode/apps/%{app_name}
+%define app_variables BUILD_OUT_PATH=%{app_out_path} APP_PATH=%{local_app_path} FILES_PATH=%{buildroot}%{app_files_path}
+%define app_post_variables APP_PATH=%{target_app_path} FILES_PATH=%{app_files_path}
+%endif
 
 %prep
 %setup -q
@@ -143,10 +163,10 @@ echo "Build Target:" %{target}
 echo $CFLAGS
 
 %if "%{target}" == "modules"
-
 ./lwnode/build-modules.sh %{?modules_list} --os=tizen
+%endif
 
-%else # target is node or v8
+%if "%{target}" == "lwnode" || "%{target}" == "v8"
 # building liblwnode.so
 ./configure --tizen --without-npm \
             --without-inspector --without-node-code-cache --without-node-snapshot \
@@ -167,6 +187,10 @@ echo $CFLAGS
             --dest-os linux --dest-cpu '%{tizen_arch}' \
             --ninja %{?engine_config} %{?extra_config} %{?asan_config}
 ninja -C %{target_src} %{target}
+%endif
+
+%if "%{target}" == "apps"
+%{app_variables} %{local_app_path}/build/build.sh
 %endif
 
 
@@ -198,6 +222,17 @@ cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
 %endif # "%{target}" == "lwnode"
 
+%if "%{target}" == "apps"
+rm -rf %{buildroot}%{app_files_path}
+mkdir -p %{buildroot}%{app_files_path}
+
+%{app_variables} %{local_app_path}/build/install.sh
+mkdir -p %{buildroot}%{target_app_path}/build
+cp %{local_app_path}/build/post.sh %{buildroot}%{target_app_path}/build
+cp %{local_app_path}/build/%{app_name}.manifest %{buildroot}%{target_app_path}
+
+%endif
+
 %clean
 rm -fr ./*.list
 rm -fr ./*.manifest
@@ -207,7 +242,6 @@ rm -fr ./*.manifest
 
 %postun
 /sbin/ldconfig
-
 
 ##############################################
 ## Packaging rpms
@@ -231,4 +265,13 @@ rm -fr ./*.manifest
 %if "%{target}" == "lwnode"
   %{_bindir}/%{target}
   %{_bindir}/%{target}.dat
+%endif
+
+%if "%{target}" == "apps"
+%post %{app_name}
+%{app_post_variables} %{target_app_path}/build/post.sh
+
+%files %{app_name}
+%{target_app_path}
+%{app_files_path}
 %endif

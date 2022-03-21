@@ -17,20 +17,8 @@
 cmake_minimum_required (VERSION 2.8)
 project(node_sqlite3)
 
-# set (HOST "linux" CACHE STRING "HOST")
-set (MODE "release" CACHE STRING "MODE")
-# set (ARCH "x86_64" CACHE STRING "ARCH")
-# set (COMPILER "gcc" CACHE STRING "COMPILER")
-set (LTO "0" CACHE STRING "LTO")
-set (ASAN "0" CACHE STRING "ASAN")
-# set (OUTPUT_DIR ${CMAKE_SOURCE_DIR} CACHE STRING "OUTPUT DIR")
-set (TIZEN_MAJOR_VERSION "1" CACHE STRING "TIZEN_MAJOR_VERSION")
-
-
-
-# set(PROJECT_ROOT ${CMAKE_SOURCE_DIR})
 set(SQLITE3_ROOT node_modules/sqlite3)
-set(BUILD_MODE "release" CACHE STRING "MODE")
+set(BUILD_MODE "release" CACHE STRING "BUILD_MODE")
 
 # Source Files
 file(GLOB_RECURSE SQLITE3_SRC_FILES ${SQLITE3_ROOT}/src/*.cc)
