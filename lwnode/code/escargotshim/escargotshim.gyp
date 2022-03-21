@@ -123,6 +123,7 @@
             'LWNODE_ENABLE_EXPERIMENTAL=1',
             'LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION=1',
             'LWNODE_ENABLE_EXPERIMENTAL_PROMISE=1',
+            'LWNODE_ENABLE_EXPERIMENTAL_STACKTRACE=1',
           ],
         }],
         ['include_node_bindings == "true"', {

@@ -15,7 +15,9 @@
  */
 
 #include "es-helper.h"
+
 #include "api/error-message.h"
+#include "base.h"
 #include "context.h"
 #include "extra-data.h"
 #include "isolate.h"
@@ -25,6 +27,7 @@
 #include <sstream>
 
 using namespace Escargot;
+using namespace v8;
 
 namespace EscargotShim {
 
@@ -987,33 +990,110 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
       ErrorMessage::createErrorStringRef(type));
 }
 
+class StackTraceAccessorProperty
+    : public ObjectRef::NativeDataAccessorPropertyData {
+ public:
+  StackTraceAccessorProperty(bool isWritable,
+                             bool isEnumerable,
+                             bool isConfigurable,
+                             ObjectRef::NativeDataAccessorPropertyGetter getter,
+                             ObjectRef::NativeDataAccessorPropertySetter setter)
+      : NativeDataAccessorPropertyData(
+            isWritable, isEnumerable, isConfigurable, getter, setter) {}
+
+  void* operator new(size_t size) { return GC_MALLOC(size); }
+
+ private:
+};
+
+static ValueRef* StackTraceGetterCallback(
+    ExecutionStateRef* state,
+    ObjectRef* self,
+    ValueRef* receiver,
+    ObjectRef::NativeDataAccessorPropertyData* data) {
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  auto lwContext = lwIsolate->GetCurrentContext();
+  auto stackTrace = state->computeStackTrace();
+
+  auto stackTraceVector = ValueVectorRef::create();
+  for (size_t i = 0; i < stackTrace.size(); i++) {
+    std::ostringstream oss;
+    const auto& iter = stackTrace[i];
+    const auto& resourceName = iter.srcName->toStdUTF8String();
+    const auto& functionName = iter.functionName->toStdUTF8String();
+    const int errorLine = iter.loc.line;
+    const int errorColumn = iter.loc.column;
+
+    oss << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
+        << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
+        << ":" << errorColumn << ")";
+
+    std::string stackTraceItem = oss.str();
+    stackTraceVector->pushBack(StringRef::createFromUTF8(
+        stackTraceItem.c_str(), stackTraceItem.size()));
+  }
+
+  auto sites = ArrayObjectRef::create(state, stackTraceVector);
+
+  LWNODE_CALL_TRACE_ID_LOG(STACKTRACE,
+                           "RunPrepareStackTraceCallback: %p",
+                           lwIsolate->PrepareStackTraceCallback());
+  v8::MaybeLocal<v8::Value> maybyResult =
+      lwIsolate->PrepareStackTraceCallback()(
+          v8::Utils::NewLocal<Context>(lwIsolate->toV8(), lwContext),
+          v8::Utils::NewLocal<Value>(lwIsolate->toV8(), self),
+          v8::Utils::NewLocal<Array>(lwIsolate->toV8(), sites));
+
+  if (!maybyResult.IsEmpty()) {
+    Local<Value> v8Result;
+    if (maybyResult.ToLocal(&v8Result)) {
+      return CVAL(*v8Result)->value();
+    }
+  }
+
+  return StringRef::emptyString();
+}
+
 void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
                                                  Escargot::ValueRef* error) {
   if (!error->isObject()) {
     return;
   }
 
+  auto lwIsolate = IsolateWrap::GetCurrent();
   auto errorObject = error->asObject();
   auto stackString = StringRef::createFromASCII("stack");
   if (errorObject->has(state, stackString)) {
+    auto message = stackString->toStdUTF8String();
     return;
   }
 
-  auto stack = EvalResultHelper::getCallStackStringAsNodeStyle(
-      state->computeStackTrace(), 1);
-  auto message = errorObject->toString(state)->toStdUTF8String();
+#ifdef LWNODE_ENABLE_EXPERIMENTAL_STACKTRACE
+  if (lwIsolate->HasPrepareStackTraceCallback()) {
+    errorObject->defineNativeDataAccessorProperty(
+        state,
+        StringRef::createFromUTF8("stack"),
+        new StackTraceAccessorProperty(
+            false, false, false, StackTraceGetterCallback, nullptr));
+  } else
+#endif
+  {
+    auto stack = EvalResultHelper::getCallStackStringAsNodeStyle(
+        state->computeStackTrace(), 1);
+    auto message = errorObject->toString(state)->toStdUTF8String();
 
-  if (message.length() > 0) {
-    stack = message + "\n" + stack;
+    if (message.length() > 0) {
+      stack = message + "\n" + stack;
+    }
+
+    errorObject->defineDataProperty(
+        state,
+        stackString,
+        StringRef::createFromASCII(stack.data(), stack.length()),
+        true,
+        false,
+        true);
   }
-
-  errorObject->defineDataProperty(
-      state,
-      stackString,
-      StringRef::createFromASCII(stack.data(), stack.length()),
-      true,
-      false,
-      true);
 }
 
 // --- StringRefHelper ---
