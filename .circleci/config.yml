@@ -31,6 +31,44 @@ save_submodule_cache: &save_submodule_cache
       - lwnode/code/escargotshim/deps/escargot
     key: v2-submodules-{{ checksum "~/submodule-status" }}
 
+# node
+install_node: &install_node
+  run:
+    name: Install node
+    command: |
+      curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+      sudo apt install nodejs
+      node -v
+      npm -version
+
+# lwnode
+build_lwnode: &build_lwnode
+  run:
+    name: Build lwnode
+    command: |
+      ./configure --without-npm --without-bundled-v8 \
+      --without-inspector --without-node-code-cache --without-node-snapshot \
+      --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
+      --engine escargot --escargot-threading --ninja
+      ninja -v -C out/linux/Release lwnode
+
+check_lwnode_status: &check_lwnode_status
+  run:
+    name: Check lwnode status
+    command: git status | tee ~/lwnode-status
+
+restore_lwnode_cache: &restore_lwnode_cache
+  restore_cache:
+    name: Restoring cached lwnode
+    key: v2-lwnode-{{ checksum "~/lwnode-status" }}
+
+save_lwnode_cache: &save_lwnode_cache
+  save_cache:
+    name: Caching lwnode
+    paths:
+      - out/linux/Release
+    key: v2-lwnode-{{ checksum "~/lwnode-status" }}
+
 jobs:
   build_release:
     <<: *config
@@ -47,14 +85,11 @@ jobs:
       - run:
           name: Environment Information
           command: gcc --version; cmake --version; python --version
-      - run:
-          name: Build
-          command: |
-            ./configure --without-npm --without-bundled-v8 \
-            --without-inspector --without-node-code-cache --without-node-snapshot \
-            --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
-            --engine escargot --escargot-threading --ninja
-            ninja -v -C out/linux/Release lwnode
+      - *check_lwnode_status
+      - *restore_lwnode_cache
+      - *build_lwnode
+      - *save_lwnode_cache
+
       - run:
           name: Run basic test
           command: |
@@ -169,13 +204,7 @@ jobs:
     steps:
       - *set_proxy
       - checkout
-      - run:
-          name: Prepare the build
-          command: |
-            curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-            sudo apt install nodejs
-            node -v
-            npm -version
+      - *install_node
       - run:
           name: Build RPMs
           command: |
@@ -197,6 +226,40 @@ jobs:
           path: ~/artifacts
           destination: artifacts
 
+  test_sqlite3_app:
+    <<: *config
+    steps:
+      - *set_proxy
+      - checkout
+      - run:
+          name: Check tidy
+          command: ./lwnode/tools/check_tidy.py
+      - *check_submodule_status
+      - *restore_submodule_cache
+      - run: git submodule update --init --recursive
+      - *save_submodule_cache
+      - run:
+          name: Environment Information
+          command: gcc --version; cmake --version; python --version
+      - *install_node
+      - *check_lwnode_status
+      - *restore_lwnode_cache
+      - *build_lwnode
+      - *save_lwnode_cache
+      - run:
+          name: Set environment
+          command: |
+            echo 'export PATH=$(pwd)/out/linux/Release/:$PATH' >> $BASH_ENV
+      - run:
+          name: Run sqlite3 test
+          command: |
+            cd lwnode/apps/sqlite3
+            rm -rf ./node_modules
+            npm install
+            npm run build:all
+            lwnode ./sample/index_node.js
+            cd -
+
 workflows:
     version: 2
     verify_node:
@@ -217,3 +280,7 @@ workflows:
     verify_build_apps:
       jobs:
         - build_sqlite3_on_tizen6.5
+    verify_test_sqlite3:
+      jobs:
+        - test_sqlite3_app
+

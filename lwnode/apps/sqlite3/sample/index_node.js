@@ -21,17 +21,23 @@ const path = require('path');
 const variables = require('./script/test/support/variables');
 
 const sqlite3ServiceRoot = process.cwd();
-const lwnode = path.join(sqlite3ServiceRoot, 'deps/lwnode/lwnode');
 
 global.sqlite3 = require(path.join(sqlite3ServiceRoot, 'out/frontend/sqlite3.js'));
 console.log(variables.DB_URL);
 global.sqlite3.configure(variables.DB_URL);
 global.WebSocket = require('ws');
 
-const server = spawn(lwnode, [path.resolve(sqlite3ServiceRoot+'/out/backend')],{
-  stdio:'inherit',
-  env: process.env,
-});
+const server = spawn(
+  'lwnode',
+  [
+    '--allow-code-generation-from-strings',
+    path.resolve(sqlite3ServiceRoot + '/out/backend'),
+  ],
+  {
+    stdio: 'inherit',
+    env: process.env,
+  },
+);
 
 setTimeout(function () {
   console.log('test start');
