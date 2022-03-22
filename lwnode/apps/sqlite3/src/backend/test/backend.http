@@ -1,0 +1,27 @@
+@hostname = localhost
+@port = 8140
+@host = {{hostname}}:{{port}}
+@contentType = application/json
+
+### register
+POST http://{{host}}/api/auth/register/local HTTP/1.1
+content-type: {{contentType}}
+
+{
+  "email": "lwnode@samsung.com",
+  "password": "123456",
+  "displayName": "LWNode"
+}
+
+### login
+POST http://{{host}}/api/auth/login/local HTTP/1.1
+content-type: {{contentType}}
+
+{
+  "email": "lwnode@samsung.com",
+  "password": "123456"
+}
+
+
+### api.ctrl
+GET http://{{host}}/api/exist/test.js

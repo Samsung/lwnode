@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-const { paths } = require('../lib/variables');
 const Joi = require('joi');
-
 const debug = require('debug')('api');
+
+import Users from '../db/Users';
+import DAO from '../db/dao';
 
 exports.localRegister = async (req, res) => {
   debug(`${req.method} ${req.url} ${req.ip}`);
   debug(`${JSON.stringify(req.body)}`);
 
-  const { body } = req;
+  const { body: data } = req;
 
   const schema = Joi.object({
     email: Joi.string().email().required(),
@@ -31,15 +32,25 @@ exports.localRegister = async (req, res) => {
     displayName: Joi.string().regex(/^[a-zA-Z0-9ㄱ-힣]{3,12}$/),
   });
 
-  const result = schema.validate(body);
+  const result = schema.validate(data);
   if (result.error) {
-    res.status(400).end(result.error.details[0].message);
-    return;
+    return res.status(400).end(result.error.details[0].message);
   }
 
-  // todo: save user
+  try {
+    let users = new Users(DAO.knex());
 
-  res.status(200).end('OK');
+    if (await users.getByEmail(data.email)) {
+      return res.status(400).end(`${data.email} already exists`);
+    }
+
+    await users.create(data);
+
+    return res.status(200).end('OK');
+  } catch (error) {
+    debug(error);
+    return res.status(500).end('something wrong');
+  }
 };
 
 exports.localLogin = async (req, res) => {
@@ -53,8 +64,7 @@ exports.localLogin = async (req, res) => {
   const result = schema.validate(body);
 
   if (result.error) {
-    res.status(400).end(result.error.details[0].message);
-    return;
+    return res.status(400).end(result.error.details[0].message);
   }
 
   const { email, password } = body;
@@ -64,15 +74,13 @@ exports.localLogin = async (req, res) => {
     const user = null;
 
     if (!user) {
-      res.status(403).end('user does not exist');
-      return;
+      return res.status(403).end('user does not exist');
     }
 
     // todo: validate password
     const validated = false;
     if (!validated) {
-      res.status(403).end('wrong password');
-      return;
+      return res.status(403).end('wrong password');
     }
 
     // todo: generate token
@@ -81,6 +89,6 @@ exports.localLogin = async (req, res) => {
     // todo: write response body
     // todo: set cookie
   } catch (e) {
-    res.status(500).end('something wrong password');
+    res.status(500).end('something wrong');
   }
 };
