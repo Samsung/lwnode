@@ -605,29 +605,6 @@ std::string EvalResultHelper::getCallStackString(
   return oss.str();
 }
 
-std::string EvalResultHelper::getCallStackStringAsNodeStyle(
-    const GCManagedVector<Evaluator::StackTraceData>& traceData,
-    size_t maxStackSize) {
-  std::ostringstream oss;
-  const std::string separator = "    ";
-  size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
-
-  for (size_t i = 0; i < maxPrintStackSize; ++i) {
-    const auto& iter = traceData[i];
-    const auto& resourceName = iter.srcName->toStdUTF8String();
-    const auto& functionName = iter.functionName->toStdUTF8String();
-    const int errorLine = iter.loc.line;
-    const int errorColumn = iter.loc.column;
-
-    oss << separator << "at "
-        << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
-        << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
-        << ":" << errorColumn << ")" << std::endl;
-  }
-
-  return oss.str();
-}
-
 std::string EvalResultHelper::getErrorString(
     ContextRef* context, const Evaluator::EvaluatorResult& result) {
   const auto& traceData = result.stackTrace;
@@ -991,27 +968,6 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
       ErrorMessage::createErrorStringRef(type));
 }
 
-static std::vector<std::string> formatStackTraceString(
-    const GCManagedVector<Evaluator::StackTraceData>& traceData) {
-  std::vector<std::string> stackTrace;
-
-  for (size_t i = 0; i < traceData.size(); i++) {
-    std::ostringstream oss;
-    const auto& iter = traceData[i];
-    const auto& resourceName = iter.srcName->toStdUTF8String();
-    const auto& functionName = iter.functionName->toStdUTF8String();
-    const int errorLine = iter.loc.line;
-    const int errorColumn = iter.loc.column;
-
-    oss << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
-        << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
-        << ":" << errorColumn << ")";
-    stackTrace.push_back(oss.str());
-  }
-
-  return stackTrace;
-}
-
 void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
                                                  Escargot::ValueRef* error) {
   if (!error->isObject()) {
@@ -1029,19 +985,11 @@ void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
 #ifdef LWNODE_ENABLE_EXPERIMENTAL_STACKTRACE
   if (lwIsolate->HasPrepareStackTraceCallback()) {
     auto stackTraceVector = ValueVectorRef::create();
-    errorObject->defineNativeDataAccessorProperty(
-        state,
-        StringRef::createFromUTF8("stack"),
-        new StackTrace::NativeAccessorProperty(false,
-                                               false,
-                                               false,
-                                               StackTrace::StackTraceGetter,
-                                               StackTrace::StackTraceSetter,
-                                               stackTraceVector));
+    StackTrace::addStackProperty(state, errorObject, stackTraceVector);
   } else
 #endif
   {
-    auto stack = EvalResultHelper::getCallStackStringAsNodeStyle(
+    auto stack = StackTrace::formatStackTraceStringNodeStyle(
         state->computeStackTrace(), 1);
     auto message = errorObject->toString(state)->toStdUTF8String();
 
