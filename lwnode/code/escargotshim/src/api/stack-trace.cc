@@ -109,7 +109,16 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
         callSite->instantiate(state->context(), stackTrace[i]));
   }
 
-  exceptionObject->defineNativeDataAccessorProperty(
+  addStackProperty(state, exceptionObject, stackTraceVector);
+
+  return ValueRef::createUndefined();
+}
+
+void StackTrace::addStackProperty(ExecutionStateRef* state,
+                                  ObjectRef* object,
+                                  ValueVectorRef* stackTraceVector) {
+  // NOTE: either Error or Exception contains stack.
+  object->defineNativeDataAccessorProperty(
       state,
       StringRef::createFromUTF8("stack"),
       new NativeAccessorProperty(false,
@@ -118,8 +127,6 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
                                  StackTraceGetter,
                                  StackTraceSetter,
                                  stackTraceVector));
-
-  return ValueRef::createUndefined();
 }
 
 ValueRef* StackTrace::createCaptureStackTrace(
@@ -132,6 +139,50 @@ ValueRef* StackTrace::createCaptureStackTrace(
       false);
 
   return FunctionObjectRef::create(state, info);
+}
+
+std::vector<std::string> StackTrace::formatStackTraceString(
+    const GCManagedVector<Evaluator::StackTraceData>& traceData) {
+  std::vector<std::string> stackTrace;
+
+  for (size_t i = 0; i < traceData.size(); i++) {
+    auto line = formatStackTraceLine(traceData[i]);
+    stackTrace.push_back(line);
+  }
+
+  return stackTrace;
+}
+
+std::string StackTrace::formatStackTraceStringNodeStyle(
+    const GCManagedVector<Evaluator::StackTraceData>& traceData,
+    size_t maxStackSize) {
+  std::ostringstream oss;
+  const std::string separator = "    ";
+  size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
+
+  for (size_t i = 0; i < maxPrintStackSize; ++i) {
+    oss << separator << "at " << formatStackTraceLine(traceData[i])
+        << std::endl;
+  }
+
+  return oss.str();
+}
+
+std::string StackTrace::formatStackTraceLine(
+    const Evaluator::StackTraceData& line) {
+  std::ostringstream oss;
+
+  const auto& iter = line;
+  const auto& resourceName = iter.srcName->toStdUTF8String();
+  const auto& functionName = iter.functionName->toStdUTF8String();
+  const int errorLine = iter.loc.line;
+  const int errorColumn = iter.loc.column;
+
+  oss << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
+      << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
+      << ":" << errorColumn << ")";
+
+  return oss.str();
 }
 
 static void setCallSitePrototype(

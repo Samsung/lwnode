@@ -65,8 +65,20 @@ class StackTrace {
                                ObjectRef::NativeDataAccessorPropertyData* data,
                                ValueRef* setterInputData);
 
+  static void addStackProperty(ExecutionStateRef* state,
+                               ObjectRef* object,
+                               ValueVectorRef* stackTraceVector);
+
+  static std::vector<std::string> formatStackTraceString(
+      const GCManagedVector<Evaluator::StackTraceData>& traceData);
+  static std::string formatStackTraceStringNodeStyle(
+      const GCManagedVector<Evaluator::StackTraceData>& traceData,
+      size_t maxStackSize);
+
  private:
   static size_t getStackTraceLimit(ExecutionStateRef* state);
+  static std::string formatStackTraceLine(
+      const Evaluator::StackTraceData& line);
 };
 
 class CallSite : public gc {
