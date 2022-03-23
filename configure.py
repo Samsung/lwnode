@@ -114,6 +114,11 @@ lwnode_optgroup.add_option('--escargot-threading',
     dest='escargot_threading',
     help='Enable Escargot threading')
 
+lwnode_optgroup.add_option('--escargot-debugger',
+    action='store_true',
+    dest='escargot_debugger',
+    help='Enable Escargot debugging')
+
 parser.add_option_group(lwnode_optgroup)
 
 def get_lwnode_gyp_options():
@@ -158,6 +163,10 @@ def get_lwnode_gyp_options():
   else:
     args += (['-Descargot_threading=0'])
 
+  if options.escargot_debugger:
+    args += (['-Descargot_debugger=true'])
+  else:
+    args += (['-Descargot_debugger=false'])
 
   args += ['-Dnode_core_target_name=lwnode']
   args += ['-Dnode_lib_target_name=liblwnode']

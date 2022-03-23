@@ -31,6 +31,7 @@ void InitializeProcessMethods(v8::Local<v8::Object> target,
                               v8::Local<v8::Context> context);
 
 void IdleGC(v8::Isolate* isolate = nullptr);
+void initDebugger();
 bool dumpSelfMemorySnapshot();
 
 class MessageLoop {

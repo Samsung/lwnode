@@ -131,6 +131,10 @@ ContextWrap::ContextWrap(IsolateWrap* isolate,
   RegisteredExtension::applyAll(context_);
 }
 
+void ContextWrap::initDebugger() {
+  context_->initDebuggerRemote("--port=6501");
+}
+
 ContextWrap* ContextWrap::New(
     IsolateWrap* isolate, v8::ExtensionConfiguration* extensionConfiguration) {
   LWNODE_CHECK_NOT_NULL(isolate);
