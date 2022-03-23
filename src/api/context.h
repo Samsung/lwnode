@@ -55,6 +55,8 @@ class ContextWrap : public ValueWrap {
 
   CallSite* callSite() { return callSite_; }
 
+  void initDebugger();
+
  private:
   EmbedderDataMap* embedder_data_{nullptr};
 

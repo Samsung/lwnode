@@ -6,6 +6,7 @@
     'node_bindings_dir': 'deps/node-bindings',
     'enable_escargotshim_asan%': 0,
     'enable_reload_script%': 'false',
+    'escargot_debugger%': 'false',
     'enable_experimental%': 'false',
     'include_node_bindings%': 'true',
   },
@@ -117,6 +118,9 @@
         }],
         ['enable_reload_script == "true"', {
           'defines': ['LWNODE_USE_RELOAD_SCRIPT'],
+        }],
+        ['escargot_debugger == "true"', {
+          'defines': ['LWNODE_ENABLE_DEBUGGER']
         }],
         ['enable_experimental == "true"', {
           'defines': [

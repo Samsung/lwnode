@@ -200,6 +200,13 @@ void IdleGC(v8::Isolate* isolate) {
   malloc_trim(0);
 }
 
+void initDebugger() {
+  auto lwIsolate = IsolateWrap::GetCurrent();
+  if (lwIsolate) {
+    lwIsolate->GetCurrentContext()->initDebugger();
+  }
+}
+
 class MessageLoop::Internal {
  public:
   Internal() { gcStrategy_ = std::make_unique<DelayedGC>(); }
