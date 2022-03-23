@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-const { paths } = require('./lib/variables');
+import { paths } from './lib/variables';
+import { deepFreeze } from './lib/utils';
 
 const filename = paths.store + '/db.lwnode';
 
@@ -26,6 +27,14 @@ const config = {
     },
     useNullAsDefault: true,
   },
+  privateKey: process.env?.LWNODE_DB_USERS_PRIVATE_KEY || 'lwnode',
 };
 
-export default config;
+// todo: check this file ownership.
+// we need to consider how to securly store private key
+
+if (typeof config.privateKey != 'string') {
+  throw new Error("private key doesn't exist");
+}
+
+export default deepFreeze(config);

@@ -15,6 +15,21 @@
  */
 
 import { Knex } from 'knex';
+import config from '../config';
+import crypto from 'crypto';
+
+export function encryptPassword(password: string) {
+  return crypto
+    .createHmac('sha256', config.privateKey)
+    .update(password)
+    .digest('hex');
+}
+
+export interface User {
+  email: string;
+  password: string;
+  displayName: string;
+}
 
 class Users {
   private knex: Knex;
@@ -49,7 +64,7 @@ class Users {
     });
   }
 
-  async create(user) {
+  async create(user: User) {
     await this.ensureTable();
     return this.knex('users').insert(user);
   }
@@ -62,14 +77,19 @@ class Users {
       .then((result) => result[0]);
   }
 
-  async update(user) {
+  async update(user: User) {
     await this.ensureTable();
     return this.knex('users').where('email', user.email).update(user);
   }
 
-  async delete(email) {
+  async delete(email: string) {
     await this.ensureTable();
     return this.knex('users').where('email', email).del();
+  }
+
+  validatePassword(user: User, password: string) {
+    // note: consider returning a User instance including this function
+    return user.password === encryptPassword(password);
   }
 }
 

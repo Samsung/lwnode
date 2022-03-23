@@ -17,7 +17,7 @@
 const Joi = require('joi');
 const debug = require('debug')('api');
 
-import Users from '../db/Users';
+import Users, { encryptPassword } from '../db/Users';
 import DAO from '../db/dao';
 
 exports.localRegister = async (req, res) => {
@@ -44,7 +44,10 @@ exports.localRegister = async (req, res) => {
       return res.status(400).end(`${data.email} already exists`);
     }
 
-    await users.create(data);
+    await users.create({
+      ...data,
+      password: encryptPassword(data.password),
+    });
 
     return res.status(200).end('OK');
   } catch (error) {
@@ -70,17 +73,18 @@ exports.localLogin = async (req, res) => {
   const { email, password } = body;
 
   try {
-    // todo: find user
-    const user = null;
+    let users = new Users(DAO.knex());
+    const user = await users.getByEmail(email);
 
     if (!user) {
       return res.status(403).end('user does not exist');
     }
 
-    // todo: validate password
-    const validated = false;
-    if (!validated) {
+    const isValidated = users.validatePassword(user, password);
+    if (!isValidated) {
       return res.status(403).end('wrong password');
+    } else {
+      return res.status(200).end('OK');
     }
 
     // todo: generate token
