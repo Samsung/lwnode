@@ -108,6 +108,9 @@ class LWNodeMainRunner {
     Context::Scope context_scope(env_->context());
 
     if (exit_code == 0) {
+#if LWNODE_ENABLE_DEBUGGER
+      LWNode::initDebugger();
+#endif
       LoadEnvironment(env_.get());
 
       env_->set_trace_sync_io(env_->options()->trace_sync_io);
