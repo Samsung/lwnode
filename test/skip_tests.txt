@@ -32,7 +32,6 @@ test/parallel/test-disable-proto-throw.js
 test/parallel/test-domain-async-id-map-leak.js
 test/parallel/test-domain-error-types.js
 test/parallel/test-domain-set-uncaught-exception-capture-after-load.js
-test/parallel/test-error-prepare-stack-trace.js
 test/parallel/test-error-reporting.js # (errorMessage) 마지막 test가 error message 불일치
 test/parallel/test-event-capture-rejections.js
 test/parallel/test-events-uncaught-exception-stack.js
@@ -48,7 +47,6 @@ test/parallel/test-gc-net-timeout.js
 test/parallel/test-gc-tls-external-memory.js
 test/parallel/test-http-same-map.js
 test/parallel/test-http-server-keepalive-req-gc.js
-test/parallel/test-http-timeout-client-warning.js
 test/parallel/test-http2-response-splitting.js
 test/parallel/test-http2-zero-length-header.js
 test/parallel/test-internal-util-weakreference.js
@@ -128,7 +126,6 @@ test/parallel/test-trace-events-promises.js
 test/parallel/test-trace-events-v8.js
 test/parallel/test-trace-events-vm.js
 test/parallel/test-trace-events-worker-metadata.js
-test/parallel/test-tracing-no-crash.js
 test/parallel/test-unhandled-exception-rethrow-error.js
 test/parallel/test-util-callbackify.js
 test/parallel/test-util-format.js
