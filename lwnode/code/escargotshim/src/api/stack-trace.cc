@@ -141,6 +141,28 @@ ValueRef* StackTrace::createCaptureStackTrace(
   return FunctionObjectRef::create(state, info);
 }
 
+ValueRef* StackTrace::createPrepareStackTrace(
+    Escargot::ExecutionStateRef* state) {
+  FunctionObjectRef::NativeFunctionInfo info(
+      AtomicStringRef::create(state->context(), "prepareStackTrace"),
+      prepareStackTraceCallback,
+      2,
+      true,
+      false);
+
+  return FunctionObjectRef::create(state, info);
+}
+
+ValueRef* StackTrace::prepareStackTraceCallback(ExecutionStateRef* state,
+                                                ValueRef* thisValue,
+                                                size_t argc,
+                                                ValueRef** argv,
+                                                bool isConstructCall) {
+  // TODO: JS registers prepareStackTrace() to reformat StackTrace.
+  LWNODE_UNIMPLEMENT;
+  return StringRef::emptyString();
+}
+
 std::vector<std::string> StackTrace::formatStackTraceString(
     const GCManagedVector<Evaluator::StackTraceData>& traceData) {
   std::vector<std::string> stackTrace;

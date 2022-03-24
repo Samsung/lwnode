@@ -104,7 +104,8 @@ bool v8::TryCatch::HasCaught() const {
 }
 
 bool v8::TryCatch::CanContinue() const {
-  LWNODE_RETURN_FALSE;
+  LWNODE_UNIMPLEMENT;
+  return false;
 }
 
 bool v8::TryCatch::HasTerminated() const {
