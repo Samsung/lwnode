@@ -677,9 +677,10 @@ void IsolateWrap::SetPendingExceptionAndMessage(
     auto extraData = ExtraDataHelper::getExtraData(exception->asObject());
 
     if (extraData) {
-      // FIXME: Check if missing extradata is ok. We print a warning
-      // here until this issue is investigated
-      LWNODE_LOG_WARN("esException already contains an extraData\n");
+      LWNODE_CHECK(extraData->isExceptionObjectData());
+      // NOTE: Exception has created in the `else` below.
+      LWNODE_LOG_WARN("esException already contains an extraData: %p\n",
+                      extraData);
     } else {
       ExtraDataHelper::setExtraData(exception->asObject(),
                                     new ExceptionObjectData(stackTraceData));

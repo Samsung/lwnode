@@ -982,13 +982,29 @@ void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
     return;
   }
 
-#ifdef LWNODE_ENABLE_EXPERIMENTAL_STACKTRACE
   if (lwIsolate->HasPrepareStackTraceCallback()) {
+    auto lwContext = lwIsolate->GetCurrentContext();
+    auto stackTrace = state->computeStackTrace();
     auto stackTraceVector = ValueVectorRef::create();
-    StackTrace::addStackProperty(state, errorObject, stackTraceVector);
-  } else
-#endif
-  {
+    auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
+
+    for (size_t i = 0; i < stackTrace.size(); i++) {
+      stackTraceVector->pushBack(
+          callSite->instantiate(state->context(), stackTrace[i]));
+    }
+
+    auto message = errorObject->toString(state)->toStdUTF8String();
+    auto sites = ArrayObjectRef::create(state, stackTraceVector);
+    auto formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
+        state, lwContext, errorObject, sites);
+
+    if (formattedStackTrace) {
+      errorObject->defineDataProperty(
+          state, stackString, formattedStackTrace, true, false, true);
+    } else {
+      LWNODE_CHECK(false);
+    }
+  } else {
     auto stack = StackTrace::formatStackTraceStringNodeStyle(
         state->computeStackTrace(), 1);
     auto message = errorObject->toString(state)->toStdUTF8String();

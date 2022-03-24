@@ -1878,7 +1878,7 @@ MaybeLocal<v8::Value> Function::Call(Local<Context> context,
   lwIsolate->decreaseCallDepth();
 
   if (!r.isSuccessful()) {
-    LWNODE_DLOG_ERROR("Evaluate");
+    LWNODE_DLOG_ERROR("Function::Call()");
     LWNODE_DLOG_RAW("Internal:\n  this: %p (es: %p)\n  recv: %p (es: %p)",
                     this,
                     CVAL(this)->value(),

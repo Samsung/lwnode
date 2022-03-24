@@ -54,6 +54,13 @@ class StackTrace {
                                              ValueRef** argv,
                                              bool isConstructCall);
 
+  static ValueRef* createPrepareStackTrace(Escargot::ExecutionStateRef* state);
+  static ValueRef* prepareStackTraceCallback(ExecutionStateRef* state,
+                                             ValueRef* thisValue,
+                                             size_t argc,
+                                             ValueRef** argv,
+                                             bool isConstructCall);
+
   static ValueRef* StackTraceGetter(
       ExecutionStateRef* state,
       ObjectRef* self,
@@ -74,11 +81,11 @@ class StackTrace {
   static std::string formatStackTraceStringNodeStyle(
       const GCManagedVector<Evaluator::StackTraceData>& traceData,
       size_t maxStackSize);
+  static std::string formatStackTraceLine(
+      const Evaluator::StackTraceData& line);
 
  private:
   static size_t getStackTraceLimit(ExecutionStateRef* state);
-  static std::string formatStackTraceLine(
-      const Evaluator::StackTraceData& line);
 };
 
 class CallSite : public gc {
