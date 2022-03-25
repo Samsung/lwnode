@@ -163,31 +163,27 @@ ValueRef* StackTrace::prepareStackTraceCallback(ExecutionStateRef* state,
   return StringRef::emptyString();
 }
 
-std::vector<std::string> StackTrace::formatStackTraceString(
-    const GCManagedVector<Evaluator::StackTraceData>& traceData) {
-  std::vector<std::string> stackTrace;
-
-  for (size_t i = 0; i < traceData.size(); i++) {
-    auto line = formatStackTraceLine(traceData[i]);
-    stackTrace.push_back(line);
+StringRef* StackTrace::formatStackTraceStringNodeStyle(ExecutionStateRef* state,
+                                                       ObjectRef* errorObject,
+                                                       size_t maxStackSize) {
+  std::ostringstream oss;
+  auto message = errorObject->toString(state)->toStdUTF8String();
+  if (message.length() > 0) {
+    oss << message << "\n";
   }
 
-  return stackTrace;
-}
-
-std::string StackTrace::formatStackTraceStringNodeStyle(
-    const GCManagedVector<Evaluator::StackTraceData>& traceData,
-    size_t maxStackSize) {
-  std::ostringstream oss;
-  const std::string separator = "    ";
+  auto traceData = state->computeStackTrace();
   size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
 
+  const std::string separator = "    ";
   for (size_t i = 0; i < maxPrintStackSize; ++i) {
     oss << separator << "at " << formatStackTraceLine(traceData[i])
         << std::endl;
   }
 
-  return oss.str();
+  auto stringNodeStyle = oss.str();
+  return StringRef::createFromUTF8(stringNodeStyle.c_str(),
+                                   stringNodeStyle.length());
 }
 
 std::string StackTrace::formatStackTraceLine(
@@ -205,6 +201,19 @@ std::string StackTrace::formatStackTraceLine(
       << ":" << errorColumn << ")";
 
   return oss.str();
+}
+
+ArrayObjectRef* StackTrace::genCallSites(ExecutionStateRef* state) {
+  auto stackTrace = state->computeStackTrace();
+  auto stackTraceVector = ValueVectorRef::create();
+  auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
+
+  for (size_t i = 0; i < stackTrace.size(); i++) {
+    stackTraceVector->pushBack(
+        callSite->instantiate(state->context(), stackTrace[i]));
+  }
+
+  return ArrayObjectRef::create(state, stackTraceVector);
 }
 
 static void setCallSitePrototype(
