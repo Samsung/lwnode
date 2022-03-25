@@ -1372,3 +1372,48 @@ TEST(StackTraceCustom) {
   CHECK(exception.find("f()") != std::string::npos);
   CHECK(exception.find("f()") > exception.find("at"));
 }
+
+static int prepareStackTraceCallbackCount = 0;
+static MaybeLocal<Value> prepareStackTraceCallback(Local<Context> context,
+                                                   Local<Value> error,
+                                                   Local<Array> sites) {
+  prepareStackTraceCallbackCount++;
+  return v8_str("");
+}
+
+TEST(StackTracePrepareStackTraceCallbackCustom) {
+  LocalContext context;
+  Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  isolate->SetPrepareStackTraceCallback(prepareStackTraceCallback);
+
+  {
+    v8::TryCatch try_catch(isolate);
+    std::string source = "function f() {"
+                         "  throw new Error();"
+                         "};";
+    v8::Local<Value> r = CompileRun(source.c_str());
+    CHECK(!try_catch.HasCaught());
+    std::string exception = *v8::String::Utf8Value(isolate, r);
+    CHECK(exception == "undefined");
+    CHECK(prepareStackTraceCallbackCount == 0);
+  }
+
+  {
+    v8::TryCatch try_catch(isolate);
+    std::string source = "var a;"
+                         "function f() {"
+                         "  throw new Error();"
+                         "};"
+                         "try { f(); }"
+                         "catch (e) { a = e.stack;}";
+    v8::Local<Value> r = CompileRun(source.c_str());
+    CHECK(!try_catch.HasCaught());
+    std::string exception = *v8::String::Utf8Value(isolate, r);
+    CHECK(exception != "undefined");
+    CHECK(prepareStackTraceCallbackCount > 0);
+  }
+
+  prepareStackTraceCallbackCount = 0;
+}

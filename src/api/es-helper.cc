@@ -950,7 +950,7 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
          ErrorObjectRef::Code code,
          StringRef* errorMessage) -> ValueRef* {
         auto errorObject = ErrorObjectRef::create(state, code, errorMessage);
-        ExceptionHelper::setStackPropertyIfNotExist(state, errorObject);
+        ExceptionHelper::addStackPropertyCallback(state, errorObject);
         return errorObject;
       },
       code,
@@ -968,59 +968,34 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
       ErrorMessage::createErrorStringRef(type));
 }
 
-void ExceptionHelper::setStackPropertyIfNotExist(ExecutionStateRef* state,
-                                                 Escargot::ValueRef* error) {
+void ExceptionHelper::addStackPropertyCallback(ExecutionStateRef* state,
+                                               Escargot::ValueRef* error) {
   if (!error->isObject()) {
     return;
   }
 
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto errorObject = error->asObject();
-  auto stackString = StringRef::createFromASCII("stack");
-  if (errorObject->has(state, stackString)) {
-    auto message = stackString->toStdUTF8String();
-    return;
-  }
 
+  ValueRef* formattedStackTrace = StringRef::emptyString();
   if (lwIsolate->HasPrepareStackTraceCallback()) {
     auto lwContext = lwIsolate->GetCurrentContext();
-    auto stackTrace = state->computeStackTrace();
-    auto stackTraceVector = ValueVectorRef::create();
-    auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
 
-    for (size_t i = 0; i < stackTrace.size(); i++) {
-      stackTraceVector->pushBack(
-          callSite->instantiate(state->context(), stackTrace[i]));
-    }
-
-    auto message = errorObject->toString(state)->toStdUTF8String();
-    auto sites = ArrayObjectRef::create(state, stackTraceVector);
-    auto formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
+    auto sites = StackTrace::genCallSites(state);
+    formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
         state, lwContext, errorObject, sites);
-
-    if (formattedStackTrace) {
-      errorObject->defineDataProperty(
-          state, stackString, formattedStackTrace, true, false, true);
-    } else {
-      LWNODE_CHECK(false);
-    }
   } else {
-    auto stack = StackTrace::formatStackTraceStringNodeStyle(
-        state->computeStackTrace(), 1);
-    auto message = errorObject->toString(state)->toStdUTF8String();
-
-    if (message.length() > 0) {
-      stack = message + "\n" + stack;
-    }
-
-    errorObject->defineDataProperty(
-        state,
-        stackString,
-        StringRef::createFromASCII(stack.data(), stack.length()),
-        true,
-        false,
-        true);
+    formattedStackTrace =
+        StackTrace::formatStackTraceStringNodeStyle(state, errorObject);
   }
+
+  bool ok = errorObject->defineDataProperty(state,
+                                            StringRef::createFromASCII("stack"),
+                                            formattedStackTrace,
+                                            true,
+                                            false,
+                                            true);
+  LWNODE_CHECK(ok);
 }
 
 // --- StringRefHelper ---

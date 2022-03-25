@@ -304,8 +304,8 @@ class ExceptionHelper {
                                            StringRef* errorMessage);
   static ErrorObjectRef* createErrorObject(ContextRef* context,
                                            ErrorMessageType type);
-  static void setStackPropertyIfNotExist(ExecutionStateRef* state,
-                                         Escargot::ValueRef* error);
+  static void addStackPropertyCallback(ExecutionStateRef* state,
+                                       Escargot::ValueRef* error);
 };
 
 class StringRefHelper {

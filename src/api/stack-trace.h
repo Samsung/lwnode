@@ -76,15 +76,15 @@ class StackTrace {
                                ObjectRef* object,
                                ValueVectorRef* stackTraceVector);
 
-  static std::vector<std::string> formatStackTraceString(
-      const GCManagedVector<Evaluator::StackTraceData>& traceData);
-  static std::string formatStackTraceStringNodeStyle(
-      const GCManagedVector<Evaluator::StackTraceData>& traceData,
-      size_t maxStackSize);
-  static std::string formatStackTraceLine(
-      const Evaluator::StackTraceData& line);
+  static ArrayObjectRef* genCallSites(ExecutionStateRef* state);
+
+  static StringRef* formatStackTraceStringNodeStyle(ExecutionStateRef* state,
+                                                    ObjectRef* errorObject,
+                                                    size_t maxStackSize = 1);
 
  private:
+  static std::string formatStackTraceLine(
+      const Evaluator::StackTraceData& line);
   static size_t getStackTraceLimit(ExecutionStateRef* state);
 };
 

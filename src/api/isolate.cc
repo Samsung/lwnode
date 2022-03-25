@@ -413,7 +413,7 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
 
   vmInstance_->registerErrorCreationCallback(
       [](ExecutionStateRef* state, ErrorObjectRef* error) {
-        ExceptionHelper::setStackPropertyIfNotExist(state, error);
+        ExceptionHelper::addStackPropertyCallback(state, error);
       });
 
   InitializeGlobalSlots();
