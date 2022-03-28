@@ -109,6 +109,8 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
         callSite->instantiate(state->context(), stackTrace[i]));
   }
 
+  // FIXME: it seems there are some cases where we need to freeze the
+  // stack string here. Investigate further
   addStackProperty(state, exceptionObject, stackTraceVector);
 
   return ValueRef::createUndefined();
