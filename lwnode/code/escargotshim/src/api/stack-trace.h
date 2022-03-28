@@ -79,6 +79,8 @@ class StackTrace {
 
   ArrayObjectRef* genCallSites();
 
+  // FIXME: Having maxStackSize=1 does not print full stack. Find the right
+  // value
   StringRef* formatStackTraceStringNodeStyle(ObjectRef* errorObject,
                                              size_t maxStackSize = 1);
 

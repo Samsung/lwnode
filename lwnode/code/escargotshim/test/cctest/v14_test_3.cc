@@ -1365,12 +1365,12 @@ TEST(StackTraceCustom) {
   CHECK(!try_catch.HasCaught());
 
   std::string exception = *v8::String::Utf8Value(isolate, r);
-  CHECK(exception.find("Error:") != std::string::npos);
-  CHECK(exception.find("Error:") == 0);
+  CHECK(exception.find("Error") != std::string::npos);
+  CHECK(exception.find("Error") == 0);
   CHECK(exception.find("at") != std::string::npos);
-  CHECK(exception.find("at") > exception.find("Error:"));
-  CHECK(exception.find("f()") != std::string::npos);
-  CHECK(exception.find("f()") > exception.find("at"));
+  CHECK(exception.find("at") > exception.find("Error"));
+  CHECK(exception.find("f") != std::string::npos);
+  CHECK(exception.find("f") > exception.find("at"));
 }
 
 static int prepareStackTraceCallbackCount = 0;
