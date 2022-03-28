@@ -978,15 +978,16 @@ void ExceptionHelper::addStackPropertyCallback(ExecutionStateRef* state,
   auto errorObject = error->asObject();
 
   ValueRef* formattedStackTrace = StringRef::emptyString();
+  StackTrace stackTrace(state);
   if (lwIsolate->HasPrepareStackTraceCallback()) {
     auto lwContext = lwIsolate->GetCurrentContext();
 
-    auto sites = StackTrace::genCallSites(state);
+    auto sites = stackTrace.genCallSites();
     formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
         state, lwContext, errorObject, sites);
   } else {
     formattedStackTrace =
-        StackTrace::formatStackTraceStringNodeStyle(state, errorObject);
+        stackTrace.formatStackTraceStringNodeStyle(errorObject);
   }
 
   bool ok = errorObject->defineDataProperty(state,

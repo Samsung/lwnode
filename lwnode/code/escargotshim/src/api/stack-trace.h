@@ -46,8 +46,9 @@ class StackTrace {
     ValueVectorRef* stackTraceVector_ = nullptr;
   };
 
-  static ValueRef* createCaptureStackTrace(ExecutionStateRef* state);
+  StackTrace(ExecutionStateRef* state) : state_(state) {}
 
+  static ValueRef* createCaptureStackTrace(ExecutionStateRef* state);
   static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
                                              ValueRef* thisValue,
                                              size_t argc,
@@ -76,16 +77,23 @@ class StackTrace {
                                ObjectRef* object,
                                ValueVectorRef* stackTraceVector);
 
-  static ArrayObjectRef* genCallSites(ExecutionStateRef* state);
+  ArrayObjectRef* genCallSites();
 
-  static StringRef* formatStackTraceStringNodeStyle(ExecutionStateRef* state,
-                                                    ObjectRef* errorObject,
-                                                    size_t maxStackSize = 1);
+  StringRef* formatStackTraceStringNodeStyle(ObjectRef* errorObject,
+                                             size_t maxStackSize = 1);
 
  private:
-  static std::string formatStackTraceLine(
-      const Evaluator::StackTraceData& line);
+  ExecutionStateRef* state_ = nullptr;
+
   static size_t getStackTraceLimit(ExecutionStateRef* state);
+
+  std::string formatStackTraceLine(const Evaluator::StackTraceData& line);
+
+  // NOTE: StackTrace can only be initialized as a local variable
+  void* operator new(size_t size);
+  void* operator new[](size_t size);
+  void operator delete(void*, size_t);
+  void operator delete[](void*, size_t);
 };
 
 class CallSite : public gc {
@@ -96,7 +104,13 @@ class CallSite : public gc {
                         const Evaluator::StackTraceData& data);
 
  private:
+  ContextRef* context_ = nullptr;
   FunctionTemplateRef* template_ = nullptr;
+
+  void injectSitePrototype();
+  void setCallSitePrototype(
+      const std::string& name,
+      Escargot::FunctionObjectRef::NativeFunctionPointer fn);
 };
 
 }  // namespace EscargotShim
