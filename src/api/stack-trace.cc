@@ -163,16 +163,15 @@ ValueRef* StackTrace::prepareStackTraceCallback(ExecutionStateRef* state,
   return StringRef::emptyString();
 }
 
-StringRef* StackTrace::formatStackTraceStringNodeStyle(ExecutionStateRef* state,
-                                                       ObjectRef* errorObject,
+StringRef* StackTrace::formatStackTraceStringNodeStyle(ObjectRef* errorObject,
                                                        size_t maxStackSize) {
   std::ostringstream oss;
-  auto message = errorObject->toString(state)->toStdUTF8String();
+  auto message = errorObject->toString(state_)->toStdUTF8String();
   if (message.length() > 0) {
     oss << message << "\n";
   }
 
-  auto traceData = state->computeStackTrace();
+  auto traceData = state_->computeStackTrace();
   size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
 
   const std::string separator = "    ";
@@ -203,54 +202,44 @@ std::string StackTrace::formatStackTraceLine(
   return oss.str();
 }
 
-ArrayObjectRef* StackTrace::genCallSites(ExecutionStateRef* state) {
-  auto stackTrace = state->computeStackTrace();
+ArrayObjectRef* StackTrace::genCallSites() {
+  auto stackTrace = state_->computeStackTrace();
   auto stackTraceVector = ValueVectorRef::create();
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
 
   for (size_t i = 0; i < stackTrace.size(); i++) {
     stackTraceVector->pushBack(
-        callSite->instantiate(state->context(), stackTrace[i]));
+        callSite->instantiate(state_->context(), stackTrace[i]));
   }
 
-  return ArrayObjectRef::create(state, stackTraceVector);
+  return ArrayObjectRef::create(state_, stackTraceVector);
 }
 
-static void setCallSitePrototype(
-    ContextRef* context,
-    ObjectTemplateRef* otpl,
-    const char* name,
-    Escargot::FunctionObjectRef::NativeFunctionPointer fn) {
-  auto length = strlen(name);
-
-  EvalResult r = Evaluator::execute(
-      context,
+CallSite::CallSite(ContextRef* context) : context_(context) {
+  template_ = FunctionTemplateRef::create(
+      AtomicStringRef::create(context, "CallSite"),
+      0,
+      true,
+      true,
       [](ExecutionStateRef* state,
-         const char* name,
-         size_t length,
-         Escargot::FunctionObjectRef::NativeFunctionPointer fn) -> ValueRef* {
-        return FunctionObjectRef::create(
-            state,
-            FunctionObjectRef::NativeFunctionInfo(
-                AtomicStringRef::create(state->context(), name, length),
-                fn,
-                0,
-                true,
-                false));
-      },
-      name,
-      length,
-      fn);
-  LWNODE_CHECK(r.isSuccessful());
-
-  otpl->set(
-      StringRef::createFromUTF8(name, length), r.result, false, false, true);
+         ValueRef* thisValue,
+         size_t argc,
+         ValueRef** argv,
+         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
+        return ValueRef::createUndefined();
+      });
+  injectSitePrototype();
 }
 
-static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
+ValueRef* CallSite::instantiate(ContextRef* context,
+                                const Evaluator::StackTraceData& data) {
+  auto callSite = template_->instanceTemplate()->instantiate(context);
+  ExtraDataHelper::setExtraData(callSite, new StackTraceData(data));
+  return callSite;
+};
+
+void CallSite::injectSitePrototype() {
   setCallSitePrototype(
-      context,
-      otpl,
       "getFunctionName",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -263,8 +252,6 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 
   setCallSitePrototype(
-      context,
-      otpl,
       "getFileName",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -277,8 +264,6 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 
   setCallSitePrototype(
-      context,
-      otpl,
       "getLineNumber",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -291,8 +276,6 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 
   setCallSitePrototype(
-      context,
-      otpl,
       "getColumnNumber",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -305,8 +288,6 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 
   setCallSitePrototype(
-      context,
-      otpl,
       "isEval",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -319,8 +300,6 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 
   setCallSitePrototype(
-      context,
-      otpl,
       "toString",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -338,8 +317,6 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 
   setCallSitePrototype(
-      context,
-      otpl,
       "getFunction",
       [](ExecutionStateRef* state,
          ValueRef* thisValue,
@@ -356,27 +333,34 @@ static void injectSitePrototype(ContextRef* context, ObjectTemplateRef* otpl) {
       });
 }
 
-CallSite::CallSite(ContextRef* context) {
-  template_ = FunctionTemplateRef::create(
-      AtomicStringRef::create(context, "CallSite"),
-      0,
-      true,
-      true,
+void CallSite::setCallSitePrototype(
+    const std::string& name,
+    Escargot::FunctionObjectRef::NativeFunctionPointer fn) {
+  EvalResult r = Evaluator::execute(
+      context_,
       [](ExecutionStateRef* state,
-         ValueRef* thisValue,
-         size_t argc,
-         ValueRef** argv,
-         OptionalRef<ObjectRef> newTarget) -> ValueRef* {
-        return ValueRef::createUndefined();
-      });
-  injectSitePrototype(context, template_->prototypeTemplate());
-}
+         const std::string* name,
+         Escargot::FunctionObjectRef::NativeFunctionPointer fn) -> ValueRef* {
+        return FunctionObjectRef::create(
+            state,
+            FunctionObjectRef::NativeFunctionInfo(
+                AtomicStringRef::create(
+                    state->context(), name->c_str(), name->length()),
+                fn,
+                0,
+                true,
+                false));
+      },
+      &name,
+      fn);
+  LWNODE_CHECK(r.isSuccessful());
 
-ValueRef* CallSite::instantiate(ContextRef* context,
-                                const Evaluator::StackTraceData& data) {
-  auto callSite = template_->instanceTemplate()->instantiate(context);
-  ExtraDataHelper::setExtraData(callSite, new StackTraceData(data));
-  return callSite;
-};
+  template_->prototypeTemplate()->set(
+      StringRef::createFromUTF8(name.c_str(), name.length()),
+      r.result,
+      false,
+      false,
+      true);
+}
 
 }  // namespace EscargotShim
