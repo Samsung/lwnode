@@ -96,3 +96,14 @@ exports.localLogin = async (req, res) => {
     res.status(500).end('something wrong');
   }
 };
+
+exports.logout = (req, res) => {
+  res
+    .cookie('access_token', null, {
+      maxAge: 0,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    })
+    .status(204)
+    .end('OK');
+};

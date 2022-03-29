@@ -28,5 +28,6 @@ api.get('/exist/:file', apiCtrl.existFile);
 
 auth.post('/register/local', authCtrl.localRegister);
 auth.post('/login/local', authCtrl.localLogin);
+auth.get('/logout', authCtrl.logout);
 
 module.exports = api;

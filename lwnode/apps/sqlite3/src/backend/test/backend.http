@@ -22,6 +22,9 @@ content-type: {{contentType}}
   "password": "123456"
 }
 
+### logout
+GET http://{{host}}/api/auth/logout HTTP/1.1
+content-type: {{contentType}}
 
 ### api.ctrl
 GET http://{{host}}/api/exist/test.js
