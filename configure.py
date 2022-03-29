@@ -164,9 +164,9 @@ def get_lwnode_gyp_options():
     args += (['-Descargot_threading=0'])
 
   if options.escargot_debugger:
-    args += (['-Descargot_debugger=true'])
+    args += (['-Descargot_debugger=1'])
   else:
-    args += (['-Descargot_debugger=false'])
+    args += (['-Descargot_debugger=0'])
 
   args += ['-Dnode_core_target_name=lwnode']
   args += ['-Dnode_lib_target_name=liblwnode']
