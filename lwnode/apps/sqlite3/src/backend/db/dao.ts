@@ -23,7 +23,7 @@ class DAO {
   public static knex() {
     if (!DAO.instance) {
       debug('create a DAO');
-      DAO.instance = require('knex')(config.knex);
+      DAO.instance = require('knex')(config.db?.knex);
     }
     return DAO.instance;
   }

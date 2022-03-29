@@ -18,11 +18,10 @@ import { Knex } from 'knex';
 import config from '../config';
 import crypto from 'crypto';
 
+const { privateKey: secret } = config.db;
+
 export function encryptPassword(password: string) {
-  return crypto
-    .createHmac('sha256', config.privateKey)
-    .update(password)
-    .digest('hex');
+  return crypto.createHmac('sha256', secret).update(password).digest('hex');
 }
 
 export interface User {

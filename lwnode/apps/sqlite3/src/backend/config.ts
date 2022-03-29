@@ -20,20 +20,22 @@ import { deepFreeze } from './lib/utils';
 const filename = paths.store + '/db.lwnode';
 
 const config = {
-  knex: {
-    client: 'sqlite3',
-    connection: {
-      filename,
+  db: {
+    knex: {
+      client: 'sqlite3',
+      connection: {
+        filename,
+      },
+      useNullAsDefault: true,
     },
-    useNullAsDefault: true,
+    privateKey: process.env?.LWNODE_DB_USERS_PRIVATE_KEY || 'lwnode',
   },
-  privateKey: process.env?.LWNODE_DB_USERS_PRIVATE_KEY || 'lwnode',
 };
 
 // todo: check this file ownership.
 // we need to consider how to securly store private key
 
-if (typeof config.privateKey != 'string') {
+if (typeof config.db.privateKey != 'string') {
   throw new Error("private key doesn't exist");
 }
 
