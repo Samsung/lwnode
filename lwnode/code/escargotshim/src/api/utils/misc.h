@@ -38,6 +38,24 @@
 #endif
 #endif
 
+#if !defined(FALLTHROUGH) && defined(__has_cpp_attribute)
+#if __has_cpp_attribute(fallthrough)
+#define FALLTHROUGH [[fallthrough]]
+#elif __has_cpp_attribute(gnu::fallthrough)
+#define FALLTHROUGH [[gnu::fallthrough]]
+#endif
+#endif
+
+#if !defined(FALLTHROUGH) && defined(__has_attribute)
+#if __has_attribute(__fallthrough__)
+#define FALLTHROUGH __attribute__((__fallthrough__))
+#endif
+#endif
+
+#if !defined(FALLTHROUGH)
+#define FALLTHROUGH /* fallthrough */
+#endif
+
 /* CHECK */
 // Use CHECK when abort should occurs if the condition fails
 #define CHECK_FMT CLR_REDBG "CHECK FAILED" CLR_RESET " "

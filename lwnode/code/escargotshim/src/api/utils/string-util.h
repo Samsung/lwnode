@@ -85,19 +85,24 @@ class UTF8Sequence {
     switch (length) {
       case 6:
         character += static_cast<uint8_t>(*sequence++);
-        character <<= 6;  // Fall through.
+        character <<= 6;
+        FALLTHROUGH;
       case 5:
         character += static_cast<uint8_t>(*sequence++);
-        character <<= 6;  // Fall through.
+        character <<= 6;
+        FALLTHROUGH;
       case 4:
         character += static_cast<uint8_t>(*sequence++);
-        character <<= 6;  // Fall through.
+        character <<= 6;
+        FALLTHROUGH;
       case 3:
         character += static_cast<uint8_t>(*sequence++);
-        character <<= 6;  // Fall through.
+        character <<= 6;
+        FALLTHROUGH;
       case 2:
         character += static_cast<uint8_t>(*sequence++);
-        character <<= 6;  // Fall through.
+        character <<= 6;
+        FALLTHROUGH;
       case 1:
         character += static_cast<uint8_t>(*sequence++);
     }
