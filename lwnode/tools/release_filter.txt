@@ -6,13 +6,17 @@ P /.circleci
 - /lwnode/code/escargotshim/sample
 - /lwnode/code/escargotshim/test
 
+- /lwnode/code/escargotshim/deps/escargot/build/windows
 - /lwnode/code/escargotshim/deps/escargot/third_party/windows
+- /lwnode/code/escargotshim/deps/escargot/third_party/GCutil/windows
 - /lwnode/code/escargotshim/deps/escargot/third_party/googletest
 - /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/docs
 - /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/fuzz-in
 - /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/man
 - /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/scripts
 - /lwnode/code/escargotshim/deps/escargot/third_party/wasm/wabt/wasm2c
+- /lwnode/code/escargotshim/deps/escargot/test
+- /lwnode/code/escargotshim/deps/escargot/tools
 
 - /out
 - /benchmark
