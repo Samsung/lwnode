@@ -69,9 +69,7 @@ class ValueWrap;
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \
   if (!eval_result.isSuccessful()) {                                           \
     __DLOG_EVAL_EXCEPTION(eval_result);                                        \
-    lwIsolate->SetPendingExceptionAndMessage(eval_result.error.get(),          \
-                                             eval_result.stackTrace);          \
-    lwIsolate->ReportPendingMessages();                                        \
+    lwIsolate->handleException(eval_result);                                   \
     return bailout_value;                                                      \
   }
 
