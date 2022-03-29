@@ -30,10 +30,18 @@ const config = {
     },
     privateKey: process.env?.LWNODE_DB_USERS_PRIVATE_KEY || 'lwnode',
   },
+  auth: {
+    privateKey: process.env?.LWNODE_JWT_PRIVATE_KEY || 'qwer!234',
+    signOptions: {
+      issuer: 'lwnode',
+      expiresIn: '30m',
+    },
+  },
 };
 
 // todo: check this file ownership.
 // we need to consider how to securly store private key
+// process.env.NODE_ENV === "production"
 
 if (typeof config.db.privateKey != 'string') {
   throw new Error("private key doesn't exist");

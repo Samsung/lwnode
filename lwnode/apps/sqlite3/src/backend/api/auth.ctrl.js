@@ -79,17 +79,20 @@ exports.localLogin = async (req, res) => {
       return res.status(403).end('user does not exist');
     }
 
-    const isValidated = user.validatePassword(password);
-    if (!isValidated) {
+    if (user.validatePassword(password) == false) {
       return res.status(403).end('wrong password');
-    } else {
-      return res.status(200).end('OK');
     }
 
     const accessToken = await user.generateToken();
 
-    // todo: write response body
-    // todo: set cookie
+    return res
+      .cookie('access_token', accessToken, {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
+        secure: process.env.NODE_ENV === 'production',
+      })
+      .status(200)
+      .end('OK');
   } catch (e) {
     res.status(500).end('something wrong');
   }

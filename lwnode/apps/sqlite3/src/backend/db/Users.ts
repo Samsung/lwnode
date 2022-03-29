@@ -17,6 +17,7 @@
 import { Knex } from 'knex';
 import config from '../config';
 import crypto from 'crypto';
+import { generateToken } from '../lib/token';
 
 const { privateKey: secret } = config.db;
 
@@ -25,6 +26,7 @@ function encryptPassword(password: string) {
 }
 
 export type UserData = {
+  id: number;
   email: string;
   password: string;
   displayName: string;
@@ -33,16 +35,31 @@ export type UserData = {
 export class User {
   readonly email: string;
   readonly displayName: string;
+  private readonly id: number;
   private readonly password: string;
 
   constructor(data: UserData) {
     this.email = data.email;
-    this.password = data.password;
     this.displayName = data.displayName;
+    this.id = data.id;
+    this.password = data.password;
   }
 
-  validatePassword(password: string) {
+  validatePassword(password: string): boolean {
     return this.password === encryptPassword(password);
+  }
+
+  generateToken() {
+    const { id, displayName } = this;
+    return generateToken(
+      {
+        user: {
+          id,
+          displayName,
+        },
+      },
+      'user',
+    );
   }
 }
 
