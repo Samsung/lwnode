@@ -17,15 +17,15 @@
 const Joi = require('joi');
 const debug = require('debug')('api');
 
-import Users, { encryptPassword } from '../db/Users';
+import Users, { UserData } from '../db/Users';
 import DAO from '../db/dao';
 
 exports.localRegister = async (req, res) => {
   debug(`${req.method} ${req.url} ${req.ip}`);
-  debug(`${JSON.stringify(req.body)}`);
 
   const { body: data } = req;
 
+  // todo: use joi typescript validator with UserData
   const schema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(4).max(30).required(),
@@ -44,10 +44,7 @@ exports.localRegister = async (req, res) => {
       return res.status(400).end(`${data.email} already exists`);
     }
 
-    await users.create({
-      ...data,
-      password: encryptPassword(data.password),
-    });
+    await users.create(data);
 
     return res.status(200).end('OK');
   } catch (error) {
@@ -57,6 +54,8 @@ exports.localRegister = async (req, res) => {
 };
 
 exports.localLogin = async (req, res) => {
+  debug(`${req.method} ${req.url} ${req.ip}`);
+
   const { body } = req;
 
   const schema = Joi.object({
@@ -80,14 +79,13 @@ exports.localLogin = async (req, res) => {
       return res.status(403).end('user does not exist');
     }
 
-    const isValidated = users.validatePassword(user, password);
+    const isValidated = user.validatePassword(password);
     if (!isValidated) {
       return res.status(403).end('wrong password');
     } else {
       return res.status(200).end('OK');
     }
 
-    // todo: generate token
     const accessToken = await user.generateToken();
 
     // todo: write response body

@@ -20,14 +20,30 @@ import crypto from 'crypto';
 
 const { privateKey: secret } = config.db;
 
-export function encryptPassword(password: string) {
+function encryptPassword(password: string) {
   return crypto.createHmac('sha256', secret).update(password).digest('hex');
 }
 
-export interface User {
+export type UserData = {
   email: string;
   password: string;
   displayName: string;
+};
+
+export class User {
+  readonly email: string;
+  readonly displayName: string;
+  private readonly password: string;
+
+  constructor(data: UserData) {
+    this.email = data.email;
+    this.password = data.password;
+    this.displayName = data.displayName;
+  }
+
+  validatePassword(password: string) {
+    return this.password === encryptPassword(password);
+  }
 }
 
 class Users {
@@ -63,32 +79,34 @@ class Users {
     });
   }
 
-  async create(user: User) {
+  async create(data: UserData) {
     await this.ensureTable();
-    return this.knex('users').insert(user);
+    return this.knex('users').insert({
+      ...data,
+      password: encryptPassword(data.password),
+    });
   }
 
   // read
-  async getByEmail(email: string) {
+  async getByEmail(email: string): Promise<User> | undefined {
     await this.ensureTable();
     return this.knex('users')
       .where('email', email)
-      .then((result) => result[0]);
+      .then((result: Array<UserData>) => {
+        if (result.length) {
+          return new User(result[0]);
+        }
+      });
   }
 
-  async update(user: User) {
+  async update(data: UserData) {
     await this.ensureTable();
-    return this.knex('users').where('email', user.email).update(user);
+    return this.knex('users').where('email', data.email).update(data);
   }
 
   async delete(email: string) {
     await this.ensureTable();
     return this.knex('users').where('email', email).del();
-  }
-
-  validatePassword(user: User, password: string) {
-    // note: consider returning a User instance including this function
-    return user.password === encryptPassword(password);
   }
 }
 
