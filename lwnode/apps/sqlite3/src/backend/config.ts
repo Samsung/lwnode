@@ -36,6 +36,11 @@ const config = {
       issuer: 'lwnode',
       expiresIn: '30m',
     },
+    cookieOptions: {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 30, // 30 minutes
+      secure: process.env.NODE_ENV === 'production',
+    },
   },
 };
 

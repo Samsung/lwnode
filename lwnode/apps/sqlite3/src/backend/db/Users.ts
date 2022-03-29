@@ -49,7 +49,7 @@ export class User {
     return this.password === encryptPassword(password);
   }
 
-  generateToken() {
+  generateToken(): Promise<string> {
     const { id, displayName } = this;
     return generateToken(
       {
@@ -70,13 +70,11 @@ class Users {
     this.knex = knex;
   }
 
-  private async ensureTable() {
-    let that = this;
-
-    return this.knex.schema.hasTable('users').then(function (exists) {
+  private ensureTable() {
+    return this.knex.schema.hasTable('users').then((exists) => {
       if (!exists) {
         // one user to many social ids
-        return that.knex.schema
+        return this.knex.schema
           .createTable('users', (table) => {
             table.increments('id').primary();
             table.string('email').unique();

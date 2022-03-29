@@ -19,6 +19,9 @@ const debug = require('debug')('api');
 
 import Users, { UserData } from '../db/Users';
 import DAO from '../db/dao';
+import config from '../config';
+
+const { cookieOptions } = config.auth;
 
 exports.localRegister = async (req, res) => {
   debug(`${req.method} ${req.url} ${req.ip}`);
@@ -86,11 +89,7 @@ exports.localLogin = async (req, res) => {
     const accessToken = await user.generateToken();
 
     return res
-      .cookie('access_token', accessToken, {
-        httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
-        secure: process.env.NODE_ENV === 'production',
-      })
+      .cookie('access_token', accessToken, cookieOptions)
       .status(200)
       .end('OK');
   } catch (e) {
