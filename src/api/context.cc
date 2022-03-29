@@ -118,6 +118,9 @@ ContextWrap::ContextWrap(IsolateWrap* isolate,
 
   callSite_ = new CallSite(context_);
 
+  // NOTE: Not tested with multi initialization
+  initDebugger();
+
   auto globalObjectData = new GlobalObjectData();
   globalObjectData->setInternalFieldCount(
       GlobalObjectData::kInternalFieldCount);
@@ -132,7 +135,10 @@ ContextWrap::ContextWrap(IsolateWrap* isolate,
 }
 
 void ContextWrap::initDebugger() {
-  context_->initDebuggerRemote("--port=6501");
+  if (Global::flags()->isOn(Flag::Type::DebugServer)) {
+    // FIXME: Have a port allocator
+    context_->initDebuggerRemote("--port=6501");
+  }
 }
 
 ContextWrap* ContextWrap::New(

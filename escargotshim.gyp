@@ -119,7 +119,7 @@
         ['enable_reload_script == "true"', {
           'defines': ['LWNODE_USE_RELOAD_SCRIPT'],
         }],
-        ['escargot_debugger == "true"', {
+        ['escargot_debugger == 1', {
           'defines': ['LWNODE_ENABLE_DEBUGGER']
         }],
         ['enable_experimental == "true"', {
