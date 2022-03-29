@@ -58,17 +58,14 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* value) {
 
   bool rethrow = has_pending_exception();
 
-  // Note: No stack data exist
-  GCManagedVector<Escargot::Evaluator::StackTraceData> stackTraceData;
-  SetPendingExceptionAndMessage(value, stackTraceData);
+  set_scheduled_exception(value);
+  set_pending_exception(value);
 
   if (PropagatePendingExceptionToExternalTryCatch()) {
     clear_pending_exception();
-    if (rethrow) {
-      set_scheduled_exception(value);
+    if (!rethrow) {
+      clear_scheduled_exception();
     }
-  } else {
-    set_scheduled_exception(value);
   }
 }
 
@@ -158,7 +155,7 @@ bool Isolate::PropagatePendingExceptionToExternalTryCatch() {
     if (handler->exception_) {
       LWNODE_CALL_TRACE_ID(TRYCATCH,
                            "The previous exception has not yet been handled.");
-      return true;
+      return false;
     }
 
     handler->can_continue_ = true;
@@ -219,6 +216,24 @@ void Isolate::RestorePendingMessageFromTryCatch(v8::TryCatch* handler) {
   LWNODE_DCHECK(!has_pending_exception());
 
   set_pending_exception(VAL(*handler->Exception())->value());
+}
+
+void Isolate::handleException(EscargotShim::EvalResult& evalResult) {
+  LWNODE_DCHECK(!evalResult.isSuccessful());
+
+  auto exception = evalResult.error.get();
+
+  if (hasCallDepth()) {
+    if (exception->isObject()) {
+      ExtraDataHelper::setExtraData(
+          exception->asObject(),
+          new ExceptionObjectData(evalResult.stackTrace));
+    }
+    ScheduleThrow(evalResult.error.get());
+  } else {
+    SetPendingExceptionAndMessage(exception, evalResult.stackTrace);
+    ReportPendingMessages();
+  }
 }
 
 void Isolate::RunPromiseHook(PromiseHookType type,

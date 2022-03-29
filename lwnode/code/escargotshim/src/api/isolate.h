@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "api/es-helper.h"
 #include "arraybuffer-allocator.h"
 #include "engine.h"
 #include "execution/v8threads.h"
@@ -54,6 +55,8 @@ class Isolate : public gc {
       GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) = 0;
   virtual bool PropagatePendingExceptionToExternalTryCatch();
   virtual void ReportPendingMessages(bool isVerbose = false);
+
+  void handleException(EscargotShim::EvalResult& evalResult);
 
   void RunPromiseHook(PromiseHookType type,
                       Escargot::PromiseObjectRef* promise,

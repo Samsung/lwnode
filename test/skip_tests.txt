@@ -67,7 +67,6 @@ test/parallel/test-policy-scopes-dependencies.js
 test/parallel/test-policy-scopes-integrity.js
 test/parallel/test-policy-scopes.js
 test/parallel/test-preload.js
-test/parallel/test-process-dlopen-undefined-exports.js
 test/parallel/test-process-emit-warning-from-native.js
 test/parallel/test-process-env-allowed-flags-are-documented.js
 test/parallel/test-process-env-symbols.js
@@ -187,7 +186,6 @@ test/parallel/test-worker-esmodule.js
 test/parallel/test-worker-execargv.js
 test/parallel/test-worker-exit-code.js
 test/parallel/test-worker-http2-generic-streams-terminate.js
-test/parallel/test-worker-init-failure.js
 test/parallel/test-worker-invalid-workerdata.js
 test/parallel/test-worker-memory.js
 test/parallel/test-worker-message-channel-sharedarraybuffer.js
