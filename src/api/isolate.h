@@ -35,6 +35,7 @@ class Isolate : public gc {
   bool IsExecutionTerminating();
   void CancelScheduledExceptionFromTryCatch(v8::TryCatch* that);
   void ThrowException(Escargot::ValueRef* value);
+  void RestorePendingMessageFromTryCatch(v8::TryCatch* handler);
 
   TryCatch* try_catch_handler();
 

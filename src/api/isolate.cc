@@ -56,12 +56,19 @@ void Isolate::ScheduleThrow(Escargot::ValueRef* value) {
   // using v8:tryCatch, etc. In this case, we should not do any exception
   // handling.
 
-  set_scheduled_exception(value);
+  bool rethrow = has_pending_exception();
+
   // Note: No stack data exist
   GCManagedVector<Escargot::Evaluator::StackTraceData> stackTraceData;
   SetPendingExceptionAndMessage(value, stackTraceData);
+
   if (PropagatePendingExceptionToExternalTryCatch()) {
     clear_pending_exception();
+    if (rethrow) {
+      set_scheduled_exception(value);
+    }
+  } else {
+    set_scheduled_exception(value);
   }
 }
 
@@ -202,6 +209,16 @@ void Isolate::ReportPendingMessages(bool isVerbose) {
       message_callback_(message, exception);
     }
   }
+}
+
+void Isolate::RestorePendingMessageFromTryCatch(v8::TryCatch* handler) {
+  LWNODE_DCHECK(handler == try_catch_handler());
+  LWNODE_DCHECK(handler->HasCaught());
+  LWNODE_DCHECK(handler->rethrow_);
+  LWNODE_DCHECK(handler->capture_message_);
+  LWNODE_DCHECK(!has_pending_exception());
+
+  set_pending_exception(VAL(*handler->Exception())->value());
 }
 
 void Isolate::RunPromiseHook(PromiseHookType type,
