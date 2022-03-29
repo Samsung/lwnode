@@ -35,19 +35,20 @@ class Flag {
  public:
   enum Type : flag_t {
     Empty = 0,
-    ExposeGC = 1 << 1,
-    UseStrict = 1 << 2,
-    DisableIdleGC = 1 << 3,
-    TopLevelWait = 1 << 4,
-    AllowCodeGenerationFromString = 1 << 5,
-    AbortOnUncaughtException = 1 << 6,
-    ExposeExternalizeString = 1 << 7,
-    UnhandledRejections = 1 << 8,
+    ExposeGC,
+    UseStrict,
+    DisableIdleGC,
+    TopLevelWait,
+    AllowCodeGenerationFromString,
+    AbortOnUncaughtException,
+    ExposeExternalizeString,
+    UnhandledRejections,
     // lwnode
-    TraceCall = 1 << 9,
-    TraceGC = 1 << 10,
-    InternalLog = 1 << 11,
-    LWNodeOther = 1 << 14,
+    TraceCall,
+    TraceGC,
+    InternalLog,
+    LWNodeOther,
+    DebugServer,
   };
 
   Flag(const std::string& name, Type type, bool useAsPrefix = false)

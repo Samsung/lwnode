@@ -41,6 +41,7 @@ std::vector<Flag> Flags::s_validFlags = {
     Flag("--trace-gc", Flag::Type::TraceGC),
     FlagWithNegativeValues("--trace-call=", Flag::Type::TraceCall, true),
     Flag("--internal-log", Flag::Type::InternalLog),
+    Flag("--start-debug-server", Flag::Type::DebugServer),
 };
 
 bool Flag::isPrefixOf(const std::string& name) {
