@@ -62,6 +62,7 @@ v8::TryCatch::~TryCatch() {
       // message, script, and location need to be restored to Isolate TLS
       // for reuse.  capture_message_ needs to be disabled so that Throw()
       // does not create a new message.
+      isolate_->RestorePendingMessageFromTryCatch(this);
     }
     isolate_->UnregisterTryCatchHandler(this);
     reinterpret_cast<Isolate*>(isolate_)->ThrowException(v8Exception);
