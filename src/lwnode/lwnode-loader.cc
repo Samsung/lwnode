@@ -175,6 +175,7 @@ FileData Loader::createFileDataForReloadableString(
 
       bufferSize = latin1String.length();
       bufferHolder.reset(allocateStringBuffer(bufferSize + 1));
+      LWNODE_CHECK(bufferHolder.get() != nullptr);
       ((uint8_t*)bufferHolder.get())[bufferSize] = '\0';
 
       memcpy(bufferHolder.get(), latin1String.data(), bufferSize);
