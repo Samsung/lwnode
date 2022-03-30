@@ -1076,7 +1076,7 @@ int Start(int argc, char** argv) {
   }
 
   #if defined(LWNODE)
-  LWNode::LWNodeMainRunner nodeMainRunner; // @lwndoe
+  LWNode::LWNodeMainRunner nodeMainRunner; // @lwnode
   {
     Isolate::CreateParams params;
     const std::vector<size_t>* indexes = nullptr;
@@ -1104,7 +1104,7 @@ int Start(int argc, char** argv) {
                                    result.exec_args,
                                    indexes);
 
-    result.exit_code = nodeMainRunner.Run(main_instance); // @lwndoe
+    result.exit_code = nodeMainRunner.Run(main_instance); // @lwnode
   }
 #else
   {

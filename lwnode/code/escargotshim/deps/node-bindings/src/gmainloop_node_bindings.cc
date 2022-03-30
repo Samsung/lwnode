@@ -187,13 +187,24 @@ namespace LWNode {
 
 namespace LWNode {
 
+static thread_local bool g_enableGmainLoop = false;
+
 GmainLoopNodeBindings::GmainLoopNodeBindings(GmainLoopWork* gmainLoopWork)
     : gmainLoopWork_(gmainLoopWork) {
   m_isInitialize = true;
 }
 
+void GmainLoopNodeBindings::enable() {
+  g_enableGmainLoop = true;
+}
+
+bool GmainLoopNodeBindings::isEnabled() {
+  return g_enableGmainLoop;
+}
+
 void GmainLoopNodeBindings::StartEventLoop() {
   assert(m_isInitialize);
+  assert(g_enableGmainLoop);
 
   glib::GmainLoopInit(this);
 
