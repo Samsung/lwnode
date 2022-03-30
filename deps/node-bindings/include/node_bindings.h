@@ -34,6 +34,9 @@ class GmainLoopNodeBindings {
   GmainLoopNodeBindings(GmainLoopWork* bindingWork);
   virtual ~GmainLoopNodeBindings(){};
 
+  static void enable();
+  static bool isEnabled();
+
   void StartEventLoop();
   void RunOnce();
   bool HasMoreTasks();
