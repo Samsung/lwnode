@@ -177,6 +177,7 @@ test/parallel/test-whatwg-url-custom-properties.js
 test/parallel/test-worker-abort-on-uncaught-exception.js
 test/parallel/test-worker-abort-on-uncaught-exception-terminate.js
 test/parallel/test-worker-cleanexit-with-moduleload.js
+test/parallel/test-worker-console-listeners.js
 test/parallel/test-worker-crypto-sign-transfer-result.js
 test/parallel/test-worker-data-url.js
 test/parallel/test-worker-error-stack-getter-throws.js
@@ -186,6 +187,7 @@ test/parallel/test-worker-esmodule.js
 test/parallel/test-worker-execargv.js
 test/parallel/test-worker-exit-code.js
 test/parallel/test-worker-http2-generic-streams-terminate.js
+test/parallel/test-worker-init-failure.js
 test/parallel/test-worker-invalid-workerdata.js
 test/parallel/test-worker-memory.js
 test/parallel/test-worker-message-channel-sharedarraybuffer.js
