@@ -124,6 +124,7 @@ if (common.hasIntl) {
 // @lwnode
 if (process.config.variables.javascript_engine) {
   expectedModules.add('NativeModule internal/lwnode/setup');
+  expectedModules.add('NativeModule internal/lwnode/memory');
 }
 
 if (process.features.inspector) {
