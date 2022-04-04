@@ -16,9 +16,11 @@
 const express = require('express');
 const apiCtrl = require('./api.ctrl');
 const authCtrl = require('./auth.ctrl');
+const serviceCtrl = require('./service.ctrl');
 
 const api = express.Router();
 const auth = express.Router();
+const service = express.Router();
 
 api.use('/auth', auth);
 
@@ -29,5 +31,9 @@ api.get('/exist/:file', apiCtrl.existFile);
 auth.post('/register/local', authCtrl.localRegister);
 auth.post('/login/local', authCtrl.localLogin);
 auth.get('/logout', authCtrl.logout);
+
+api.use('/service', service);
+
+service.post('/register', serviceCtrl.registerService);
 
 module.exports = api;
