@@ -34,6 +34,8 @@ const debug = require('debug');
 
 const asyncify = require('express-asyncify');
 
+import { Services } from './lib/services';
+
 const app = asyncify(express());
 
 startServer(app);
@@ -67,6 +69,8 @@ function startServer(app) {
   app.use(express.urlencoded({ extended: false }));
   app.use(router);
 
+  startService(app);
+
   const server = http.createServer(app);
   const wss = new WebSocket.Server({ server });
 
@@ -88,6 +92,17 @@ function startServer(app) {
   });
 
   return server;
+}
+
+async function startService(app) {
+  const router = express.Router();
+  const serviceRouter = express.Router();
+  app.use(router);
+  router.use('/service', serviceRouter);
+
+  const services = Services.getInstance();
+  app.set('view engine', services.getViewEngine());
+  services.start(serviceRouter);
 }
 
 function setServerCloseHandler(server) {

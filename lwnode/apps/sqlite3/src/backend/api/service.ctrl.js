@@ -19,6 +19,7 @@ const debug = require('debug')('api');
 
 import { ServiceData, ServicesDB } from '../db/Services';
 import DAO from '../db/dao';
+import Services from '../lib/services';
 
 exports.registerService = async (req, res) => {
   debug(`${req.method} ${req.url} ${req.ip}`);
@@ -44,6 +45,8 @@ exports.registerService = async (req, res) => {
     }
 
     await services.create(data);
+
+    Services.getInstance().addService(data);
 
     return res.status(200).end('OK');
   } catch (error) {
