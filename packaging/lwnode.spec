@@ -67,7 +67,8 @@ Development files for Lightweight node.js.
 %{!?target: %define target lwnode} #taget = [lwnode/v8/modules/apps]
 %{!?lib_type: %define lib_type shared}
 %{!?feature_mode: %define feature_mode production}
-%{!?app_name: %define app_name unkown}
+%{!?build_app: %define build_app 1}
+%{!?app_name: %define app_name sqlite3}
 
 %description
 Node.js on Escargot is a memory efficient node.js implementation,
@@ -76,7 +77,7 @@ by Samsung Research, instead of the default V8 JS engine.
 
 
 # Add subpackage for apps
-%if "%{target}" == "apps"
+%if 0%{?build_app} == 1
 %package %{app_name}
 Summary: lwnode apps
 %description %{app_name}
@@ -189,7 +190,7 @@ echo $CFLAGS
 ninja -C %{target_src} %{target}
 %endif
 
-%if "%{target}" == "apps"
+%if 0%{?build_app} == 1
 %{app_variables} %{local_app_path}/build/build.sh
 %endif
 
@@ -222,7 +223,7 @@ cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
 %endif # "%{target}" == "lwnode"
 
-%if "%{target}" == "apps"
+%if 0%{?build_app} == 1
 rm -rf %{buildroot}%{app_files_path}
 mkdir -p %{buildroot}%{app_files_path}
 
@@ -257,6 +258,7 @@ rm -fr ./*.manifest
   %if "%{lib_type}" == "shared"
     %{_libdir}/liblwnode.so*
   %endif
+  %{_bindir}/%{target}.dat
 %endif
 %license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
 
@@ -264,10 +266,9 @@ rm -fr ./*.manifest
 %manifest packaging/%{name}.manifest
 %if "%{target}" == "lwnode"
   %{_bindir}/%{target}
-  %{_bindir}/%{target}.dat
 %endif
 
-%if "%{target}" == "apps"
+%if 0%{?build_app} == 1
 %post %{app_name}
 %{app_post_variables} %{target_app_path}/build/post.sh
 
