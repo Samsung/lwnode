@@ -166,16 +166,23 @@ static ValueRef* getGCMemoryStats(ExecutionStateRef* state,
   auto context = state->context();
   auto object = ObjectRefHelper::create(context);
 
+  // GC_heapsize - GC_unmapped_bytes
   ObjectRefHelper::setProperty(context,
                                object,
                                StringRef::createFromASCII("heapSize"),
-                               ValueRef::create(Memory::heapSize()))
+                               ValueRef::create(GC_get_heap_size()))
       .check();
 
   ObjectRefHelper::setProperty(context,
                                object,
-                               StringRef::createFromASCII("totalSize"),
-                               ValueRef::create(Memory::totalSize()))
+                               StringRef::createFromASCII("unmappedBytes"),
+                               ValueRef::create(GC_get_unmapped_bytes()))
+      .check();
+
+  ObjectRefHelper::setProperty(context,
+                               object,
+                               StringRef::createFromASCII("bytesSinceGC"),
+                               ValueRef::create(GC_get_bytes_since_gc()))
       .check();
 
   return ValueRef::create(object);
