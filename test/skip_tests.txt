@@ -3,6 +3,7 @@ test/parallel/test-assert-deep.js
 test/parallel/test-assert-fail-deprecation.js # stack에서 foo()를 지워야 됨
 test/parallel/test-assert-if-error.js
 test/parallel/test-assert.js
+test/parallel/test-async-hooks-async-await.js
 test/parallel/test-async-hooks-destroy-on-gc.js
 test/parallel/test-async-hooks-execution-async-resource-await.js
 test/parallel/test-async-local-storage-deep-stack.js
@@ -26,14 +27,11 @@ test/parallel/test-crypto-dh-leak.js
 test/parallel/test-crypto-dh.js
 test/parallel/test-crypto-fips.js
 test/parallel/test-crypto-key-objects-messageport.js # worker_threads
-test/parallel/test-crypto-sign-verify.js
 test/parallel/test-crypto-worker-thread.js
 test/parallel/test-dgram-socket-buffer-size.js
 test/parallel/test-disable-proto-throw.js
 test/parallel/test-domain-async-id-map-leak.js
-test/parallel/test-domain-error-types.js
 test/parallel/test-error-reporting.js # (errorMessage) 마지막 test가 error message 불일치
-test/parallel/test-event-capture-rejections.js
 test/parallel/test-freeze-intrinsics.js
 test/parallel/test-fs-filehandle.js # GC가 실행되며 node의 ~FileHandle()을 호출해야 함
 test/parallel/test-fs-promises-file-handle-close.js
@@ -48,6 +46,7 @@ test/parallel/test-http-same-map.js
 test/parallel/test-http-server-keepalive-req-gc.js
 test/parallel/test-http2-response-splitting.js
 test/parallel/test-http2-zero-length-header.js
+test/parallel/test-internal-module-wrap.js
 test/parallel/test-internal-util-decorate-error-stack.js
 test/parallel/test-internal-util-weakreference.js
 test/parallel/test-loaders-unknown-builtin-module.mjs
@@ -67,25 +66,13 @@ test/parallel/test-policy-scopes-dependencies.js
 test/parallel/test-policy-scopes-integrity.js
 test/parallel/test-policy-scopes.js
 test/parallel/test-preload.js
-test/parallel/test-process-emit-warning-from-native.js
 test/parallel/test-process-env-allowed-flags-are-documented.js
 test/parallel/test-process-env-symbols.js
 test/parallel/test-process-env.js
-test/parallel/test-process-exec-argv.js # worker_threads
 test/parallel/test-process-versions.js
-test/parallel/test-promise-handled-rejection-no-warning.js
 test/parallel/test-promise-reject-callback-exception.js
 test/parallel/test-promise-swallowed-event.js
-test/parallel/test-promise-unhandled-error.js
-test/parallel/test-promise-unhandled-silent.js
-test/parallel/test-promise-unhandled-throw-handler.js
-test/parallel/test-promise-unhandled-throw.js
-test/parallel/test-promise-unhandled-warn-no-hook.js
-test/parallel/test-promise-unhandled-warn.js
-test/parallel/test-promises-unhandled-proxy-rejections.js
-test/parallel/test-promises-unhandled-rejections.js
 test/parallel/test-promises-unhandled-symbol-rejections.js
-test/parallel/test-promises-warning-on-unhandled-rejection.js
 test/parallel/test-queue-microtask-uncaught-asynchooks.js
 test/parallel/test-queue-microtask.js
 test/parallel/test-repl-import-referrer.js
@@ -114,6 +101,8 @@ test/parallel/test-trace-events-async-hooks.js
 test/parallel/test-trace-events-binding.js
 test/parallel/test-trace-events-bootstrap.js
 test/parallel/test-trace-events-category-used.js
+test/parallel/test-trace-events-console.js
+test/parallel/test-trace-events-environment.js
 test/parallel/test-trace-events-file-pattern.js
 test/parallel/test-trace-events-fs-sync.js
 test/parallel/test-trace-events-metadata.js
@@ -127,6 +116,7 @@ test/parallel/test-trace-events-worker-metadata.js
 test/parallel/test-unhandled-exception-rethrow-error.js
 test/parallel/test-util-format.js
 test/parallel/test-util-inspect-long-running.js
+test/parallel/test-util-inspect-namespace.js
 test/parallel/test-util-inspect.js
 test/parallel/test-util-internal.js
 test/parallel/test-util-types.js
@@ -156,6 +146,7 @@ test/parallel/test-vm-module-errors.js
 test/parallel/test-vm-module-import-meta.js
 test/parallel/test-vm-module-link.js
 test/parallel/test-vm-module-reevaluate.js
+test/parallel/test-vm-module-synthetic.js
 test/parallel/test-vm-new-script-new-context.js
 test/parallel/test-vm-preserves-property.js
 test/parallel/test-vm-property-not-on-sandbox.js
@@ -170,14 +161,14 @@ test/parallel/test-vm-strict-mode.js
 test/parallel/test-vm-symbols.js
 test/parallel/test-vm-syntax-error-stderr.js
 test/parallel/test-vm-timeout-escape-promise-2.js
+test/parallel/test-vm-timeout-escape-promise-module-2.js
+test/parallel/test-vm-timeout-escape-promise-module.js
 test/parallel/test-vm-timeout-escape-promise.js
 test/parallel/test-vm-timeout.js
-test/parallel/test-weakref.js
 test/parallel/test-whatwg-url-custom-properties.js
 test/parallel/test-worker-abort-on-uncaught-exception.js
 test/parallel/test-worker-abort-on-uncaught-exception-terminate.js
 test/parallel/test-worker-cleanexit-with-moduleload.js
-test/parallel/test-worker-console-listeners.js
 test/parallel/test-worker-crypto-sign-transfer-result.js
 test/parallel/test-worker-data-url.js
 test/parallel/test-worker-error-stack-getter-throws.js
@@ -196,11 +187,8 @@ test/parallel/test-worker-message-port-message-before-close.js
 test/parallel/test-worker-message-port-move.js
 test/parallel/test-worker-message-port-multiple-sharedarraybuffers.js
 test/parallel/test-worker-message-port-terminate-transfer-list.js
-test/parallel/test-worker-message-port-transfer-closed.js
-test/parallel/test-worker-message-port-transfer-duplicate.js
 test/parallel/test-worker-message-port-transfer-filehandle.js
 test/parallel/test-worker-message-port-transfer-native.js
-test/parallel/test-worker-message-port-transfer-self.js
 test/parallel/test-worker-message-port-wasm-module.js
 test/parallel/test-worker-message-port-wasm-threads.js
 test/parallel/test-worker-message-transfer-port-mark-as-untransferable.js
