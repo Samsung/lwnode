@@ -1417,3 +1417,17 @@ TEST(StackTracePrepareStackTraceCallbackCustom) {
 
   prepareStackTraceCallbackCount = 0;
 }
+
+TEST(GlobalObjectInternalFieldsCustom) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  Local<v8::ObjectTemplate> global_template = v8::ObjectTemplate::New(isolate);
+  global_template->SetInternalFieldCount(1);
+  LocalContext env(nullptr, global_template);
+  v8::Local<v8::Object> global_proxy = env->Global();
+  v8::Local<v8::Object> global = global_proxy->GetPrototype().As<v8::Object>();
+  CHECK_EQ(1, global->InternalFieldCount());
+  CHECK(global->GetInternalField(0)->IsUndefined());
+  global->SetInternalField(0, v8_num(17));
+  CHECK_EQ(17, global->GetInternalField(0)->Int32Value(env.local()).FromJust());
+}

@@ -18,10 +18,13 @@
 
 #include <memory>
 
+#include "EscargotPublic.h"
+
 #include "utils/logger/flags.h"
 
 namespace EscargotShim {
 class Flags;
+class ContextWrap;
 
 class Global {
  public:
@@ -29,8 +32,13 @@ class Global {
 
   static Flags* flags();
 
+  static void initGlobalObject(ContextWrap* context);
+
  private:
   static std::unique_ptr<Flags> s_flags;
+
+  static void initErrorObject(Escargot::ContextRef* context);
+  static void initEvalObject(Escargot::ContextRef* context);
 };
 
 }  // namespace EscargotShim

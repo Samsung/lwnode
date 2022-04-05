@@ -53,83 +53,19 @@ static void evalJavaScript(ContextRef* context,
   LWNODE_CHECK_MSG(r.isSuccessful(), "Cannot execute %s", name);
 }
 
-static bool createGlobals(ContextRef* context) {
-#if defined(HOST_TIZEN)
-// @todo setup device APIs
-#endif
-  // Create captureStackTrace and stackTraceLimit
-  EvalResult r =
-      Evaluator::execute(context, [](ExecutionStateRef* state) -> ValueRef* {
-        auto errorObject = state->context()
-                               ->globalObject()
-                               ->get(state, StringRef::createFromASCII("Error"))
-                               ->asObject();
-
-        errorObject->set(state,
-                         StringRef::createFromASCII("captureStackTrace"),
-                         StackTrace::createCaptureStackTrace(state));
-        errorObject->set(
-            state,
-            StringRef::createFromASCII("stackTraceLimit"),
-            ValueRef::create(
-                20));  // TODO: get number from '--stack-trace-limit' options
-
-        if (!EscargotShim::Global::flags()->isOn(
-                EscargotShim::Flag::Type::AllowCodeGenerationFromString)) {
-          // @note --disallow-code-generation-from-strings as default
-          state->context()->globalObject()->defineDataProperty(
-              state,
-              StringRef::createFromASCII("eval"),
-              FunctionObjectRef::create(
-                  state,
-                  FunctionObjectRef::NativeFunctionInfo(
-                      AtomicStringRef::emptyAtomicString(),
-                      [](ExecutionStateRef* state,
-                         ValueRef* thisValue,
-                         size_t argc,
-                         ValueRef** argv,
-                         bool isConstructCall) -> ValueRef* {
-                        state->throwException(
-                            ExceptionHelper::createErrorObject(
-                                state->context(),
-                                ErrorMessageType::kDisallowCodeGeneration));
-                        return ValueRef::createUndefined();
-                      },
-                      0,
-                      true,
-                      false)),
-              false,
-              false,
-              false);
-        }
-
-        return ValueRef::createUndefined();
-      });
-  LWNODE_CHECK(r.isSuccessful());
-  return true;
-}
-
 // ContextWrap
 ContextWrap::ContextWrap(IsolateWrap* isolate,
                          v8::ExtensionConfiguration* extensionConfiguration) {
   isolate_ = isolate;
-
   context_ = ContextRef::create(isolate->vmInstance());
-
   callSite_ = new CallSite(context_);
+  val_ = context_;
+  type_ = Type::Context;
 
   // NOTE: Not tested with multi initialization
   initDebugger();
 
-  auto globalObjectData = new GlobalObjectData();
-  globalObjectData->setInternalFieldCount(
-      GlobalObjectData::kInternalFieldCount);
-  globalObjectData->setInternalField(GlobalObjectData::kContextWrapSlot, this);
-  ObjectRefHelper::setExtraData(context_->globalObject(), globalObjectData);
-  createGlobals(context_);
-
-  val_ = context_;
-  type_ = Type::Context;
+  EscargotShim::Global::initGlobalObject(this);
 
   RegisteredExtension::applyAll(context_);
 }
