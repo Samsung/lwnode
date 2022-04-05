@@ -23,6 +23,7 @@ namespace EscargotShim {
 
 class IsolateWrap;
 class HandleWrap;
+class HandleScopeWrapGuard;
 
 typedef void v8Scope_t;
 
@@ -33,6 +34,7 @@ class HandleScopeWrap : public gc {
     Normal,
     Escapable,
     Sealed,
+    Internal,
   };
 
   HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type);
@@ -42,15 +44,31 @@ class HandleScopeWrap : public gc {
   v8Scope_t* v8Scope() const { return v8scope_; }
 
  private:
+  HandleScopeWrap(HandleScopeWrap::Type type);
   void add(HandleWrap* value);
   bool remove(HandleWrap* value);
   void clear();
 
-  Type type_ = None;
-  v8Scope_t* v8scope_ = nullptr;
+  Type type_{None};
+  v8Scope_t* v8scope_{nullptr};
   GCVector<HandleWrap*> handles_;
 
   friend class IsolateWrap;
+  friend class HandleScopeWrapGuard;
+};
+
+class HandleScopeWrapGuard : public gc {
+ public:
+  HandleScopeWrapGuard(IsolateWrap* isolate);
+  ~HandleScopeWrapGuard();
+
+  void* operator new(size_t size) = delete;
+  void* operator new[](size_t size) = delete;
+  void operator delete(void*, size_t) = delete;
+  void operator delete[](void*, size_t) = delete;
+
+ private:
+  IsolateWrap* isolate_{nullptr};
 };
 
 }  // namespace EscargotShim
