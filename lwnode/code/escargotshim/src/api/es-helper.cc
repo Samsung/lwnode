@@ -478,7 +478,7 @@ void ObjectRefHelper::addNativeFunction(ContextRef* context,
                                         ObjectRef* object,
                                         StringRef* name,
                                         NativeFunctionPointer function) {
-  Evaluator::execute(
+  auto r = Evaluator::execute(
       context,
       [](ExecutionStateRef* state,
          ObjectRef* target,
@@ -503,6 +503,8 @@ void ObjectRefHelper::addNativeFunction(ContextRef* context,
       object,
       name,
       function);
+
+  LWNODE_CHECK(r.isSuccessful());
 }
 
 ArrayObjectRef* ArrayObjectRefHelper::create(ContextRef* context,
