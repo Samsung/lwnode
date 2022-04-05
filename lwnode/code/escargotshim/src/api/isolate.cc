@@ -268,15 +268,9 @@ void Isolate::ReportPromiseReject(
   PromiseRejectMessage v8Message(v8::Utils::ToLocal<Promise>(promise),
                                  static_cast<v8::PromiseRejectEvent>(event),
                                  v8::Utils::ToLocal<Value>(value));
-#ifdef LWNODE_ENABLE_EXPERIMENTAL_PROMISE
-  if (promise_reject_callback_ && !promise->hasRejectHandlers() &&
-      event == Escargot::VMInstanceRef::PromiseRejectEvent::
-                   PromiseRejectWithNoHandler) {
+  if (promise_reject_callback_ && !promise->hasRejectHandlers()) {
     promise_reject_callback_(v8Message);
   }
-#else
-  LWNODE_UNIMPLEMENT;
-#endif
 }
 
 ValueRef* Isolate::RunPrepareStackTraceCallback(ExecutionStateRef* state,
