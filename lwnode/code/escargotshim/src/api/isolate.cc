@@ -218,7 +218,7 @@ void Isolate::RestorePendingMessageFromTryCatch(v8::TryCatch* handler) {
   set_pending_exception(VAL(*handler->Exception())->value());
 }
 
-void Isolate::handleException(EscargotShim::EvalResult& evalResult) {
+void Isolate::handleException(EscargotShim::EvalResult&& evalResult) {
   LWNODE_DCHECK(!evalResult.isSuccessful());
 
   auto exception = evalResult.error.get();

@@ -32,6 +32,14 @@ using namespace v8;
 
 namespace EscargotShim {
 
+EvalResult::EvalResult() : Evaluator::EvaluatorResult() {}
+
+EvalResult::EvalResult(const EvalResult& src)
+    : Evaluator::EvaluatorResult(src) {}
+
+EvalResult::EvalResult(EvalResult&& src)
+    : Evaluator::EvaluatorResult(std::move(src)) {}
+
 // --- ObjectRefHelper ---
 
 ObjectRef* ObjectRefHelper::create(ContextRef* context) {

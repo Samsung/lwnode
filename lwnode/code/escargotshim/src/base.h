@@ -69,7 +69,7 @@ class ValueWrap;
 #define API_HANDLE_EXCEPTION(eval_result, lwIsolate, bailout_value)            \
   if (!eval_result.isSuccessful()) {                                           \
     __DLOG_EVAL_EXCEPTION(eval_result);                                        \
-    lwIsolate->handleException(eval_result);                                   \
+    lwIsolate->handleException(std::move(eval_result));                        \
     return bailout_value;                                                      \
   }
 
