@@ -199,33 +199,6 @@ jobs:
           path: ~/artifacts
           destination: artifacts
 
-  build_sqlite3_on_tizen6.5:
-    <<: *config
-    steps:
-      - *set_proxy
-      - checkout
-      - *install_node
-      - run:
-          name: Build RPMs
-          command: |
-            cd lwnode/apps/sqlite3
-            npm install
-            npm run build:all_noenv
-            rm -rf ./node_modules
-            npm install --production
-            cd -
-            gbs -c .circleci/gbs.conf build -A armv7l -P profile.t65std --include-all --incremental \
-                --define 'target apps' \
-                --define 'app_name sqlite3'
-      - run:
-          name: Store artifacts
-          command: |
-            mkdir -p ~/artifacts
-            cp ~/GBS-ROOT/t65std/local/repos/t65std/armv7l/RPMS/*sqlite3*.rpm ~/artifacts
-      - store_artifacts:
-          path: ~/artifacts
-          destination: artifacts
-
   test_sqlite3_app:
     <<: *config
     steps:
@@ -277,9 +250,6 @@ workflows:
     verify_build_4.0vd:
       jobs:
         - build_tizen_4.0vd
-    verify_build_apps:
-      jobs:
-        - build_sqlite3_on_tizen6.5
     verify_test_sqlite3:
       jobs:
         - test_sqlite3_app
