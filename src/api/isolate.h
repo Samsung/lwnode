@@ -56,7 +56,7 @@ class Isolate : public gc {
   virtual bool PropagatePendingExceptionToExternalTryCatch();
   virtual void ReportPendingMessages(bool isVerbose = false);
 
-  void handleException(EscargotShim::EvalResult& evalResult);
+  void handleException(EscargotShim::EvalResult&& evalResult);
 
   void RunPromiseHook(PromiseHookType type,
                       Escargot::PromiseObjectRef* promise,

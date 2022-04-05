@@ -158,18 +158,27 @@ static ValueRef* CreateReloadableSourceFromFile(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 }
 
-static ValueRef* RegisterMemoryTraceCallback(ExecutionStateRef* state,
-                                             ValueRef* thisValue,
-                                             size_t argc,
-                                             ValueRef** argv,
-                                             bool isConstructCall) {
-  if (argc > 0) {
-    if (argv[0]->isFunctionObject()) {
-      // todo: register the given callback
-      return ValueRef::create(true);
-    }
-  }
-  return ValueRef::create(true);
+static ValueRef* getGCMemoryStats(ExecutionStateRef* state,
+                                  ValueRef* thisValue,
+                                  size_t argc,
+                                  ValueRef** argv,
+                                  bool isConstructCall) {
+  auto context = state->context();
+  auto object = ObjectRefHelper::create(context);
+
+  ObjectRefHelper::setProperty(context,
+                               object,
+                               StringRef::createFromASCII("heapSize"),
+                               ValueRef::create(Memory::heapSize()))
+      .check();
+
+  ObjectRefHelper::setProperty(context,
+                               object,
+                               StringRef::createFromASCII("totalSize"),
+                               ValueRef::create(Memory::totalSize()))
+      .check();
+
+  return ValueRef::create(object);
 }
 
 static ValueRef* checkIfHandledAsOneByteString(ExecutionStateRef* state,
@@ -203,10 +212,7 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
             "CreateReloadableSourceFromFile",
             CreateReloadableSourceFromFile);
 #endif
-  SetMethod(esContext,
-            esTarget,
-            "registerMemoryTraceCallback",
-            RegisterMemoryTraceCallback);
+  SetMethod(esContext, esTarget, "getGCMemoryStats", getGCMemoryStats);
 }
 
 void IdleGC(v8::Isolate* isolate) {

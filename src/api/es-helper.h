@@ -31,7 +31,23 @@ class FunctionData;
 class ValueWrap;
 enum class ErrorMessageType;
 
-typedef Evaluator::EvaluatorResult EvalResult;
+struct EvalResult : public Evaluator::EvaluatorResult {
+  EvalResult();
+  EvalResult(const EvalResult& src);
+  EvalResult(EvalResult&& src);
+
+  // Evaluator::EvaluatorResult
+  EvalResult(const Evaluator::EvaluatorResult& src)
+      : Evaluator::EvaluatorResult(src) {}
+  EvalResult(Evaluator::EvaluatorResult&& src)
+      : Evaluator::EvaluatorResult(std::move(src)) {}
+
+  EvalResult& check() {
+    LWNODE_CHECK(isSuccessful());
+    return *this;
+  }
+};
+
 typedef FunctionObjectRef::NativeFunctionPointer NativeFunctionPointer;
 typedef FunctionObjectRef::NativeFunctionInfo NativeFunctionInfo;
 typedef ValueWrap InternalField;
