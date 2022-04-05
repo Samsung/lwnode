@@ -38,6 +38,9 @@ HandleScopeWrap::HandleScopeWrap(v8::EscapableHandleScope* scope,
                                  HandleScopeWrap::Type type)
     : type_(type), v8scope_(reinterpret_cast<void*>(scope)) {}
 
+HandleScopeWrap::HandleScopeWrap(HandleScopeWrap::Type type)
+    : type_(type), v8scope_(nullptr) {}
+
 void HandleScopeWrap::add(HandleWrap* value) {
   LWNODE_CALL_TRACE_ID(HDLSCOPE,
                        "%s --> %p (lw: %p)",
@@ -83,6 +86,17 @@ void HandleScopeWrap::clear() {
     }
   }
   handles_.clear();
+}
+
+HandleScopeWrapGuard::HandleScopeWrapGuard(IsolateWrap* isolate)
+    : isolate_(isolate) {
+  LWNODE_CHECK_NOT_NULL(isolate_);
+  isolate_->pushHandleScope(
+      new HandleScopeWrap(HandleScopeWrap::Type::Internal));
+}
+
+HandleScopeWrapGuard::~HandleScopeWrapGuard() {
+  isolate_->popHandleScope(nullptr);
 }
 
 }  // namespace EscargotShim
