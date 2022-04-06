@@ -214,6 +214,30 @@ EvalResult ObjectRefHelper::hasOwnProperty(ContextRef* context,
       key);
 }
 
+EvalResult ObjectRefHelper::getOwnIndexedProperty(ContextRef* context,
+                                                  ObjectRef* object,
+                                                  uint32_t index) {
+  LWNODE_DCHECK_NOT_NULL(object);
+
+  return Evaluator::execute(
+      context,
+      [](ExecutionStateRef* state,
+         ObjectRef* object,
+         ValueRef* index) -> ValueRef* {
+        ValueRef* ownIndexProperty = object->getOwnProperty(state, index);
+        ValueRef* propertyValue = object->getIndexedProperty(state, index);
+
+        if (ownIndexProperty->isUndefinedOrNull() ||
+            propertyValue->isUndefinedOrNull()) {
+          return ValueRef::createUndefined();
+        }
+
+        return propertyValue;
+      },
+      object,
+      ValueRef::create(index));
+}
+
 EvalResult ObjectRefHelper::deleteProperty(ContextRef* context,
                                            ObjectRef* object,
                                            ValueRef* key) {
