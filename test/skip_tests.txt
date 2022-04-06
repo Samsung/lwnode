@@ -1,7 +1,6 @@
+test/parallel/test-assert-async.js
 test/parallel/test-assert-builtins-not-read-from-filesystem.js
 test/parallel/test-assert-deep.js
-test/parallel/test-assert-fail-deprecation.js # stack에서 foo()를 지워야 됨
-test/parallel/test-assert-if-error.js
 test/parallel/test-assert.js
 test/parallel/test-async-hooks-async-await.js
 test/parallel/test-async-hooks-destroy-on-gc.js
