@@ -1570,12 +1570,35 @@ Maybe<bool> v8::Object::HasOwnProperty(Local<Context> context, uint32_t index) {
 
 Maybe<bool> v8::Object::HasRealNamedProperty(Local<Context> context,
                                              Local<Name> key) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::getOwnProperty(VAL(*context)->context()->get(),
+                                           VAL(this)->value()->asObject(),
+                                           VAL(*key)->value());
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  if (r.result->isUndefined()) {
+    return Just(false);
+  }
+
+  return Just(true);
 }
 
 Maybe<bool> v8::Object::HasRealIndexedProperty(Local<Context> context,
                                                uint32_t index) {
-  LWNODE_RETURN_MAYBE(bool);
+  API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
+
+  auto r = ObjectRefHelper::getOwnIndexedProperty(
+      VAL(*context)->context()->get(), VAL(this)->value()->asObject(), index);
+
+  API_HANDLE_EXCEPTION(r, lwIsolate, Nothing<bool>());
+
+  if (r.result->isUndefined()) {
+    return Just(false);
+  }
+
+  return Just(true);
 }
 
 Maybe<bool> v8::Object::HasRealNamedCallbackProperty(Local<Context> context,

@@ -1431,3 +1431,32 @@ TEST(GlobalObjectInternalFieldsCustom) {
   global->SetInternalField(0, v8_num(17));
   CHECK_EQ(17, global->GetInternalField(0)->Int32Value(env.local()).FromJust());
 }
+
+THREADED_TEST(GlobalObjectHasRealIndexedPropertyCustom) {
+  LocalContext env;
+  v8::HandleScope scope(CcTest::isolate());
+
+  v8::Local<v8::Object> global = env->Global();
+  CHECK(global->Set(env.local(), 0, v8_str("value")).FromJust());
+  CHECK(global->HasRealIndexedProperty(env.local(), 0).FromJust());
+
+  CHECK(global->Set(env.local(), 1, v8_str("value1")).FromJust());
+  CHECK(global->HasRealIndexedProperty(env.local(), 1).FromJust());
+
+  CHECK(!global->HasRealIndexedProperty(env.local(), 2).FromJust());
+}
+
+THREADED_TEST(GlobalObjectHasRealNamedPropertyCustom) {
+  LocalContext env;
+  v8::HandleScope scope(CcTest::isolate());
+
+  v8::Local<v8::Object> global = env->Global();
+  CHECK(global->Set(env.local(), v8_str("foo"), v8_str("fooValue")).FromJust());
+  CHECK(global->HasRealNamedProperty(env.local(), v8_str("foo")).FromJust());
+
+  CHECK(global->Set(env.local(), v8_str("bar"), v8_str("barValue")).FromJust());
+  CHECK(global->HasRealNamedProperty(env.local(), v8_str("bar")).FromJust());
+
+  CHECK(!global->HasRealNamedProperty(env.local(), v8_str("thisKeyNotExist"))
+             .FromJust());
+}

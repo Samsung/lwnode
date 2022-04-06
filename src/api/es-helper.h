@@ -87,6 +87,10 @@ class ObjectRefHelper {
                                    ObjectRef* object,
                                    ValueRef* key);
 
+  static EvalResult getOwnIndexedProperty(ContextRef* context,
+                                          ObjectRef* object,
+                                          uint32_t index);
+
   static EvalResult getPrivate(ContextRef* context,
                                SymbolRef* privateValueSymbol,
                                ObjectRef* object,
