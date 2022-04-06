@@ -45,19 +45,15 @@ ValueRef* StackTrace::StackTraceGetter(
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
   auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
-
-  if (lwIsolate->HasPrepareStackTraceCallback()) {
-    auto sites =
-        ArrayObjectRef::create(state, accessorData->stackTraceVector());
-
-    auto formattedStackTrace =
-        lwIsolate->RunPrepareStackTraceCallback(state, lwContext, self, sites);
+  auto sites = accessorData->stackTrace();
+  if (sites->isArrayObject() && lwIsolate->HasPrepareStackTraceCallback()) {
+    auto formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
+        state, lwContext, self, sites->asArrayObject());
     if (formattedStackTrace) {
       return formattedStackTrace;
     }
   }
-
-  return ValueRef::createUndefined();
+  return sites;
 }
 
 bool StackTrace::StackTraceSetter(
@@ -66,7 +62,15 @@ bool StackTrace::StackTraceSetter(
     ValueRef* receiver,
     ObjectRef::NativeDataAccessorPropertyData* data,
     ValueRef* setterInputData) {
-  LWNODE_RETURN_FALSE;
+  auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
+  accessorData->setStackTrace(setterInputData);
+  return true;
+}
+
+bool StackTrace::checkFilter(ValueRef* filter,
+                             const Evaluator::StackTraceData& traceData) {
+  return (filter && traceData.callee.hasValue() &&
+          filter == traceData.callee.get());
 }
 
 ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
@@ -79,17 +83,18 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
   }
 
   auto exceptionObject = argv[0]->asObject();
+  auto stackString = StringRef::createFromUTF8("stack");
+  if (exceptionObject->hasOwnProperty(state, stackString)) {
+    exceptionObject->deleteOwnProperty(state, stackString);
+  }
+
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
   auto stackTrace = state->computeStackTrace();
   auto stackTraceVector = ValueVectorRef::create();
 
-  std::string filterFunctionName;
+  ValueRef* filterFunction = nullptr;
   if (argc > 1 && argv[1]->isFunctionObject()) {
-    auto name = argv[1]->asFunctionObject()->get(
-        state, StringRef::createFromASCII("name"));
-    if (name->isString()) {
-      filterFunctionName = name->asString()->toStdUTF8String();
-    }
+    filterFunction = argv[1];
   }
 
   // TODO: handle `constructorOpt` option :
@@ -100,9 +105,11 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
   for (size_t i = stacktraceStartIdx;
        i < stackTraceLimit && i < stackTrace.size();
        i++) {
-    if (!filterFunctionName.empty() &&
-        filterFunctionName == stackTrace[i].functionName->toStdUTF8String()) {
-      break;
+    if (StackTrace::checkFilter(filterFunction, stackTrace[i])) {
+      stackTraceVector->erase(0, stackTraceVector->size());
+      filterFunction = nullptr;
+
+      continue;
     }
 
     stackTraceVector->pushBack(
@@ -111,24 +118,21 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
 
   // FIXME: it seems there are some cases where we need to freeze the
   // stack string here. Investigate further
-  addStackProperty(state, exceptionObject, stackTraceVector);
+  addStackProperty(
+      state, exceptionObject, ArrayObjectRef::create(state, stackTraceVector));
 
   return ValueRef::createUndefined();
 }
 
 void StackTrace::addStackProperty(ExecutionStateRef* state,
                                   ObjectRef* object,
-                                  ValueVectorRef* stackTraceVector) {
+                                  ValueRef* stackTrace) {
   // NOTE: either Error or Exception contains stack.
   object->defineNativeDataAccessorProperty(
       state,
       StringRef::createFromUTF8("stack"),
-      new NativeAccessorProperty(false,
-                                 false,
-                                 false,
-                                 StackTraceGetter,
-                                 StackTraceSetter,
-                                 stackTraceVector));
+      new NativeAccessorProperty(
+          true, false, true, StackTraceGetter, StackTraceSetter, stackTrace));
 }
 
 ValueRef* StackTrace::createCaptureStackTrace(

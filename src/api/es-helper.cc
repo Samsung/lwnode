@@ -1023,14 +1023,7 @@ void ExceptionHelper::addStackPropertyCallback(ExecutionStateRef* state,
     formattedStackTrace =
         stackTrace.formatStackTraceStringNodeStyle(errorObject);
   }
-
-  bool ok = errorObject->defineDataProperty(state,
-                                            StringRef::createFromASCII("stack"),
-                                            formattedStackTrace,
-                                            true,
-                                            false,
-                                            true);
-  LWNODE_CHECK(ok);
+  stackTrace.addStackProperty(state, errorObject, formattedStackTrace);
 }
 
 // --- StringRefHelper ---
