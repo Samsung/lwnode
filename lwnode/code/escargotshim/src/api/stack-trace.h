@@ -33,20 +33,24 @@ class StackTrace {
                            bool isConfigurable,
                            ObjectRef::NativeDataAccessorPropertyGetter getter,
                            ObjectRef::NativeDataAccessorPropertySetter setter,
-                           ValueVectorRef* stackTraceVector)
+                           ValueRef* stackTrace)
         : NativeDataAccessorPropertyData(
               isWritable, isEnumerable, isConfigurable, getter, setter),
-          stackTraceVector_(stackTraceVector) {}
+          stackTrace_(stackTrace) {}
 
-    ValueVectorRef* stackTraceVector() { return stackTraceVector_; }
+    ValueRef* stackTrace() { return stackTrace_; }
+    void setStackTrace(ValueRef* stackTrace) { stackTrace_ = stackTrace; }
 
     void* operator new(size_t size) { return GC_MALLOC(size); }
 
    private:
-    ValueVectorRef* stackTraceVector_ = nullptr;
+    ValueRef* stackTrace_ = nullptr;
   };
 
   StackTrace(ExecutionStateRef* state) : state_(state) {}
+
+  static bool checkFilter(ValueRef* filter,
+                          const Evaluator::StackTraceData& traceData);
 
   static ValueRef* createCaptureStackTrace(ExecutionStateRef* state);
   static ValueRef* captureStackTraceCallback(ExecutionStateRef* state,
@@ -75,7 +79,7 @@ class StackTrace {
 
   static void addStackProperty(ExecutionStateRef* state,
                                ObjectRef* object,
-                               ValueVectorRef* stackTraceVector);
+                               ValueRef* stackTraceVector);
 
   ArrayObjectRef* genCallSites();
 
