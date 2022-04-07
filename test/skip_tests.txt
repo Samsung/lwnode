@@ -18,7 +18,6 @@ test/parallel/test-cli-eval.js
 test/parallel/test-cli-node-options.js # worker_threads
 test/parallel/test-cli-syntax-piped-bad.js
 test/parallel/test-cluster-advanced-serialization.js
-test/parallel/test-common.js
 test/parallel/test-common-gc.js
 test/parallel/test-common-must-not-call.js
 test/parallel/test-console-table.js
@@ -71,7 +70,6 @@ test/parallel/test-process-env.js
 test/parallel/test-process-versions.js
 test/parallel/test-promise-reject-callback-exception.js
 test/parallel/test-promise-swallowed-event.js
-test/parallel/test-promises-unhandled-symbol-rejections.js
 test/parallel/test-queue-microtask-uncaught-asynchooks.js
 test/parallel/test-queue-microtask.js
 test/parallel/test-repl-import-referrer.js
@@ -166,7 +164,6 @@ test/parallel/test-vm-timeout-escape-promise.js
 test/parallel/test-vm-timeout.js
 test/parallel/test-whatwg-url-custom-properties.js
 test/parallel/test-worker-abort-on-uncaught-exception.js
-test/parallel/test-worker-abort-on-uncaught-exception-terminate.js
 test/parallel/test-worker-cleanexit-with-moduleload.js
 test/parallel/test-worker-crypto-sign-transfer-result.js
 test/parallel/test-worker-data-url.js
