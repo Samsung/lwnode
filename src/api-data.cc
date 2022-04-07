@@ -278,6 +278,11 @@ MaybeLocal<String> Value::ToString(Local<Context> context) const {
 MaybeLocal<String> Value::ToDetailString(Local<Context> context) const {
   EsScope scope(context, this);
 
+  if (scope.self()->isSymbol()) {
+    auto str = scope.self()->asSymbol()->symbolDescriptiveString();
+    return Utils::NewLocal<String>(scope.v8Isolate(), str);
+  }
+
   auto esString = scope.self()->toStringWithoutException(scope.context());
   return Utils::NewLocal<String>(scope.v8Isolate(), esString);
 }
