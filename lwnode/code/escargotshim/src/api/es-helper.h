@@ -213,6 +213,16 @@ class ExtraDataHelper {
     return nullptr;
   }
 
+  static ExceptionObjectData* getExceptionObjectExtraData(
+      ObjectRef* functionObject) {
+    auto extraData = (ExtraData*)functionObject->extraData();
+    if (extraData) {
+      return extraData->asExceptionObjectData();
+    }
+
+    return nullptr;
+  }
+
   // Only allow the following (Object, extraData) pairs when adding extraData
   static void setExtraData(ObjectTemplateRef* otpl, ObjectTemplateData* data);
   static void setExtraData(FunctionTemplateRef* ftpl,

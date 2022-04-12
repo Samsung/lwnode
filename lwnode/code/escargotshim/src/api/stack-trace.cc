@@ -46,13 +46,50 @@ ValueRef* StackTrace::StackTraceGetter(
   auto lwContext = lwIsolate->GetCurrentContext();
   auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
   auto sites = accessorData->stackTrace();
-  if (sites->isArrayObject() && lwIsolate->HasPrepareStackTraceCallback()) {
+
+  auto extraData = ExtraDataHelper::getExceptionObjectExtraData(self);
+  if (extraData) {
+    auto stackTrace = extraData->stackTrace();
+    auto stackTraceVector = ValueVectorRef::create();
+    int stacktraceStartIdx = 1;
+    auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
+
+    for (size_t i = stacktraceStartIdx; i < stackTrace->size(); i++) {
+      stackTraceVector->pushBack(
+          callSite->instantiate(state->context(), stackTrace->at(i)));
+    }
+
+    sites = ArrayObjectRef::create(state, stackTraceVector);
+  }
+
+  StackTrace stackTrace(state);
+  Escargot::ArrayObjectRef* callStackSites =
+      stackTrace.genCallSites(state->computeStackTrace());
+
+  if (sites->isString()) {
+    if (accessorData->isCalled()) {
+      return sites;
+    }
+  } else if (sites->isArrayObject()) {
+    callStackSites = sites->asArrayObject();
+  }
+
+  accessorData->setIsCalled(true);
+
+  if (lwIsolate->HasPrepareStackTraceCallback()) {
     auto formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
-        state, lwContext, self, sites->asArrayObject());
+        state, lwContext, self, callStackSites);
     if (formattedStackTrace) {
+      accessorData->setStackTrace(formattedStackTrace);
       return formattedStackTrace;
     }
+  } else {
+    if (sites->isArrayObject()) {
+      StackTrace stackTrace(state);
+      sites = stackTrace.formatStackTraceStringNodeStyle(self);
+    }
   }
+
   return sites;
 }
 
@@ -208,14 +245,15 @@ std::string StackTrace::formatStackTraceLine(
   return oss.str();
 }
 
-ArrayObjectRef* StackTrace::genCallSites() {
-  auto stackTrace = state_->computeStackTrace();
+ArrayObjectRef* StackTrace::genCallSites(
+    const GCManagedVector<Evaluator::StackTraceData>& stackTraceData,
+    int startIndexPos) {
   auto stackTraceVector = ValueVectorRef::create();
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
 
-  for (size_t i = 0; i < stackTrace.size(); i++) {
+  for (size_t i = 0; i < stackTraceData.size(); i++) {
     stackTraceVector->pushBack(
-        callSite->instantiate(state_->context(), stackTrace[i]));
+        callSite->instantiate(state_->context(), stackTraceData[i]));
   }
 
   return ArrayObjectRef::create(state_, stackTraceVector);
@@ -241,6 +279,13 @@ ValueRef* CallSite::instantiate(ContextRef* context,
                                 const Evaluator::StackTraceData& data) {
   auto callSite = template_->instanceTemplate()->instantiate(context);
   ExtraDataHelper::setExtraData(callSite, new StackTraceData(data));
+  return callSite;
+};
+
+ValueRef* CallSite::instantiate(ContextRef* context,
+                                EscargotShim::StackTraceData* data) {
+  auto callSite = template_->instanceTemplate()->instantiate(context);
+  ExtraDataHelper::setExtraData(callSite, data);
   return callSite;
 };
 

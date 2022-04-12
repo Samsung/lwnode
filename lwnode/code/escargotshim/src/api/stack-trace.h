@@ -23,6 +23,8 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
+class StackTraceData;
+
 class StackTrace {
  public:
   class NativeAccessorProperty
@@ -41,10 +43,13 @@ class StackTrace {
     ValueRef* stackTrace() { return stackTrace_; }
     void setStackTrace(ValueRef* stackTrace) { stackTrace_ = stackTrace; }
 
+    bool isCalled() { return isCalled_; }
+    void setIsCalled(bool isCalled) { isCalled_ = isCalled; }
     void* operator new(size_t size) { return GC_MALLOC(size); }
 
    private:
     ValueRef* stackTrace_ = nullptr;
+    bool isCalled_ = false;
   };
 
   StackTrace(ExecutionStateRef* state) : state_(state) {}
@@ -81,7 +86,9 @@ class StackTrace {
                                ObjectRef* object,
                                ValueRef* stackTraceVector);
 
-  ArrayObjectRef* genCallSites();
+  ArrayObjectRef* genCallSites(
+      const GCManagedVector<Evaluator::StackTraceData>& stackTraceData,
+      int startIndexPos = 0);
 
   // FIXME: Having maxStackSize=1 does not print full stack. Find the right
   // value
@@ -108,6 +115,9 @@ class CallSite : public gc {
 
   ValueRef* instantiate(ContextRef* context,
                         const Evaluator::StackTraceData& data);
+
+  ValueRef* instantiate(ContextRef* context,
+                        EscargotShim::StackTraceData* data);
 
  private:
   ContextRef* context_ = nullptr;
