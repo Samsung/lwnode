@@ -26,7 +26,6 @@ test/parallel/test-crypto-dh.js
 test/parallel/test-crypto-fips.js
 test/parallel/test-crypto-key-objects-messageport.js # worker_threads
 test/parallel/test-crypto-worker-thread.js
-test/parallel/test-dgram-socket-buffer-size.js
 test/parallel/test-disable-proto-throw.js
 test/parallel/test-domain-async-id-map-leak.js
 test/parallel/test-error-reporting.js # (errorMessage) 마지막 test가 error message 불일치
