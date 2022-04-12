@@ -1016,7 +1016,7 @@ void ExceptionHelper::addStackPropertyCallback(ExecutionStateRef* state,
   if (lwIsolate->HasPrepareStackTraceCallback()) {
     auto lwContext = lwIsolate->GetCurrentContext();
 
-    auto sites = stackTrace.genCallSites();
+    auto sites = stackTrace.genCallSites(state->computeStackTrace());
     formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
         state, lwContext, errorObject, sites);
   } else {
