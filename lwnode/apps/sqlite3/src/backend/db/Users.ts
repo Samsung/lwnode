@@ -51,15 +51,11 @@ export class User {
 
   generateToken(): Promise<string> {
     const { id, displayName } = this;
-    return generateToken(
-      {
-        user: {
-          id,
-          displayName,
-        },
-      },
-      'user',
-    );
+    const user: UserTokenData = {
+      id,
+      displayName,
+    };
+    return generateToken({ user }, 'user');
   }
 }
 

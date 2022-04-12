@@ -35,6 +35,7 @@ const debug = require('debug');
 const asyncify = require('express-asyncify');
 
 import { Services } from './lib/services';
+import { jwtParser } from './lib/middleware/jwt';
 
 const app = asyncify(express());
 
@@ -67,6 +68,7 @@ function startServer(app) {
   app.use(compression());
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
+  app.use(jwtParser());
   app.use(router);
 
   startService(app);

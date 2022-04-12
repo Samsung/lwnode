@@ -1,4 +1,4 @@
-import jwt, { Jwt, JwtPayload } from 'jsonwebtoken';
+import jwt, { JwtPayload, JsonWebTokenError } from 'jsonwebtoken';
 import config from '../config';
 
 const { privateKey: secret, signOptions } = config.auth;
@@ -23,7 +23,7 @@ export function generateToken(
   });
 }
 
-export function decodeToken(token: string): Promise<string | Jwt | JwtPayload> {
+export function decodeToken(token: string): Promise<JwtPayload> {
   return new Promise((resolve, reject) => {
     jwt.verify(token, secret, (error, decoded) => {
       if (error) reject(error);
