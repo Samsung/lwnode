@@ -35,5 +35,6 @@ auth.get('/logout', authCtrl.logout);
 api.use('/service', service);
 
 service.post('/register', serviceCtrl.registerService);
+service.delete('/delete/:name', serviceCtrl.deleteService);
 
 module.exports = api;

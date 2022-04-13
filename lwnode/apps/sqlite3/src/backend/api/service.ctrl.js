@@ -44,9 +44,29 @@ exports.registerService = async (req, res) => {
       return res.status(400).end(`${data.name} already exists`);
     }
 
+    Services.getInstance().addService(data);
+
     await services.create(data);
 
-    Services.getInstance().addService(data);
+    return res.status(200).end('OK');
+  } catch (error) {
+    return res.status(500).end('something wrong');
+  }
+};
+
+exports.deleteService = async (req, res) => {
+  const { name } = req.params;
+  console.log(req.params, name);
+  try {
+    let servicesDB = new ServicesDB(DAO.knex());
+
+    if (await servicesDB.getDataByName(name) === undefined) {
+      return res.status(400).end(`${name} is not installed`);
+    }
+
+    Services.getInstance().deleteService(name);
+
+    await servicesDB.delete(name);
 
     return res.status(200).end('OK');
   } catch (error) {

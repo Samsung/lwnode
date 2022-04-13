@@ -67,4 +67,9 @@ export class ServicesDB {
         }
       });
   }
+
+  async delete(name: string) {
+    await this.ensureTable();
+    return this.knex(tableName).where('name', name).del();
+  }
 }
