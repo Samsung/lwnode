@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include "debug.h"
 #include "logger/trace.h"
 

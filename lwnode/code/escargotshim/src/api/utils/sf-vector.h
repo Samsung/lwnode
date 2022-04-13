@@ -20,14 +20,13 @@
 #pragma once
 
 #include <math.h>  // log21
+#include <cassert>
 #include <deque>
 #include <list>
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include "misc.h"  // LWNODE_CHECK
 
 namespace Starfish {
 
@@ -109,7 +108,7 @@ class Vector {
   void emplace_back(T&& val) { pushBack(val); }
 
   void insert(size_t pos, const T& val) {
-    LWNODE_CHECK(pos <= m_size);
+    assert(pos <= m_size);
     insertImpl(pos, val);
   }
 
@@ -149,8 +148,8 @@ class Vector {
 
   void erase(size_t start, size_t end) {
     if (start == end) return;
-    LWNODE_CHECK(start >= 0);
-    LWNODE_CHECK(end <= m_size);
+    assert(start >= 0);
+    assert(end <= m_size);
 
     size_t howMuch = end - start;
     size_t newLen = m_size - howMuch;
@@ -228,22 +227,22 @@ class Vector {
   void pop_back() { erase(m_size - 1); }
 
   T& operator[](const size_t& idx) {
-    LWNODE_CHECK(idx < m_size);
+    assert(idx < m_size);
     return m_buffer[idx];
   }
 
   const T& operator[](const size_t& idx) const {
-    LWNODE_CHECK(idx < m_size);
+    assert(idx < m_size);
     return m_buffer[idx];
   }
 
   T& at(const size_t& idx) {
-    LWNODE_CHECK(idx < m_size);
+    assert(idx < m_size);
     return m_buffer[idx];
   }
 
   const T& at(const size_t& idx) const {
-    LWNODE_CHECK(idx < m_size);
+    assert(idx < m_size);
     return m_buffer[idx];
   }
 
@@ -351,9 +350,9 @@ class Vector {
     // @note this drops unused memory immediately
 
     size_t end = start + sizeToErase;
-    LWNODE_CHECK(start < end);
-    LWNODE_CHECK(start >= 0);
-    LWNODE_CHECK(end <= m_size);
+    assert(start < end);
+    assert(start >= 0);
+    assert(end <= m_size);
 
     size_t c = end - start;
     size_t newLen = m_size - c;
@@ -384,9 +383,9 @@ class Vector {
     // @note this drops unused memory when newLen < (m_capacity / 2)
 
     size_t end = start + sizeToErase;
-    LWNODE_CHECK(start < end);
-    LWNODE_CHECK(start >= 0);
-    LWNODE_CHECK(end <= m_size);
+    assert(start < end);
+    assert(start >= 0);
+    assert(end <= m_size);
 
     size_t c = end - start;
     size_t newLen = m_size - c;
@@ -437,7 +436,7 @@ class Vector {
   }
 
   void insertImpl(size_t pos, const T& v) {
-    LWNODE_CHECK(pos <= m_size);
+    assert(pos <= m_size);
 
     size_t newLen = m_size + 1;
 
