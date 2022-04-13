@@ -47,7 +47,7 @@
         'src/libplatform/tracing/trace-object.cc',
         'src/libplatform/tracing/trace-writer.cc',
         'src/api/utils/debug.cc',
-        'src/api/utils/gc.cc',
+        'src/api/utils/gc-util.cc',
         'src/api/utils/smaps.cc',
         'src/api/utils/string-util.cc',
         'src/api/utils/logger/flags.cc',

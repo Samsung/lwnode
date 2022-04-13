@@ -20,7 +20,7 @@
 #include <mutex>
 #include <thread>
 
-#include "api/utils/gc.h"
+#include "api/utils/gc-util.h"
 
 namespace EscargotShim {
 

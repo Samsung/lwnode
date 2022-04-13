@@ -18,7 +18,7 @@
 
 #include <EscargotPublic.h>
 #include <memory>
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 #include "v8.h"
 
 namespace EscargotShim {

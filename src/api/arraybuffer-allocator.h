@@ -17,7 +17,7 @@
 #pragma once
 
 #include <v8.h>
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 
 namespace EscargotShim {
 

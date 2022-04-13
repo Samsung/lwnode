@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "gc.h"
+#include "gc-util.h"
 
 #include <EscargotPublic.h>
 #include "api/global.h"

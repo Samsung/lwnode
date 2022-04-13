@@ -20,7 +20,7 @@
 #include "context.h"
 #include "es-helper.h"
 #include "extra-data.h"
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 #include "utils/misc.h"
 
 namespace v8 {
