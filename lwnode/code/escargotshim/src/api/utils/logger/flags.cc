@@ -22,27 +22,31 @@
 
 namespace EscargotShim {
 
-std::vector<Flag> Flags::s_validFlags = {
-    // v8 flags
-    Flag("--expose-gc", Flag::Type::ExposeGC),
-    Flag("--use-strict", Flag::Type::UseStrict),
-    Flag("--off-idlegc", Flag::Type::DisableIdleGC),
-    Flag("--harmony-top-level-await", Flag::Type::TopLevelWait),
-    Flag("--allow-code-generation-from-strings",
-         Flag::Type::AllowCodeGenerationFromString),
-    Flag("--abort-on-uncaught-exception", Flag::Type::AbortOnUncaughtException),
-    Flag("--expose-externalize-string", Flag::Type::ExposeExternalizeString),
-    FlagWithValues("--unhandled-rejections=", Flag::Type::UnhandledRejections),
-    Flag("--trace-debug", Flag::Type::LWNodeOther, true),
-    Flag("--debug", Flag::Type::LWNodeOther, true),
-    Flag("--stack-size=", Flag::Type::LWNodeOther, true),
-    Flag("--nolazy", Flag::Type::LWNodeOther, true),
-    // lwnode flags
-    Flag("--trace-gc", Flag::Type::TraceGC),
-    FlagWithNegativeValues("--trace-call=", Flag::Type::TraceCall, true),
-    Flag("--internal-log", Flag::Type::InternalLog),
-    Flag("--start-debug-server", Flag::Type::DebugServer),
-};
+void Flags::initFlags() {
+  // v8 flags
+  addFlag<Flag>("--expose-gc", Flag::Type::ExposeGC);
+  addFlag<Flag>("--use-strict", Flag::Type::UseStrict);
+  addFlag<Flag>("--off-idlegc", Flag::Type::DisableIdleGC);
+  addFlag<Flag>("--harmony-top-level-await", Flag::Type::TopLevelWait);
+  addFlag<Flag>("--allow-code-generation-from-strings",
+                Flag::Type::AllowCodeGenerationFromString);
+  addFlag<Flag>("--abort-on-uncaught-exception",
+                Flag::Type::AbortOnUncaughtException);
+  addFlag<Flag>("--expose-externalize-string",
+                Flag::Type::ExposeExternalizeString);
+  addFlag<FlagWithValues>("--unhandled-rejections=",
+                          Flag::Type::UnhandledRejections);
+  addFlag<Flag>("--trace-debug", Flag::Type::LWNodeOther, true);
+  addFlag<Flag>("--debug", Flag::Type::LWNodeOther, true);
+  addFlag<Flag>("--stack-size=", Flag::Type::LWNodeOther, true);
+  addFlag<Flag>("--nolazy", Flag::Type::LWNodeOther, true);
+
+  // lwnode flags
+  addFlag<Flag>("--trace-gc", Flag::Type::TraceGC);
+  addFlag<FlagWithNegativeValues>("--trace-call=", Flag::Type::TraceCall, true);
+  addFlag<Flag>("--internal-log", Flag::Type::InternalLog);
+  addFlag<Flag>("--start-debug-server", Flag::Type::DebugServer);
+}
 
 bool Flag::isPrefixOf(const std::string& name) {
   if (useAsPrefix_ && (name.find(name_) != std::string::npos)) {
@@ -56,8 +60,8 @@ Flag* Flags::findFlagObject(const std::string& name) {
   std::string normalized = name;
   std::replace(normalized.begin(), normalized.end(), '_', '-');
 
-  for (size_t i = 0; i < s_validFlags.size(); i++) {
-    Flag* flag = &s_validFlags[i];
+  for (size_t i = 0; i < validFlags_.size(); i++) {
+    Flag* flag = validFlags_[i].get();
     if ((flag->name() == normalized) || flag->isPrefixOf(normalized)) {
       return flag;
     }
@@ -67,8 +71,8 @@ Flag* Flags::findFlagObject(const std::string& name) {
 }
 
 Flag* Flags::findFlagObject(Flag::Type type) {
-  for (size_t i = 0; i < s_validFlags.size(); i++) {
-    Flag* flag = &s_validFlags[i];
+  for (size_t i = 0; i < validFlags_.size(); i++) {
+    Flag* flag = validFlags_[i].get();
     if (flag->type() == type) {
       return flag;
     }

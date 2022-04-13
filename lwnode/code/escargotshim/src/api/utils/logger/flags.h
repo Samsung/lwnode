@@ -53,6 +53,7 @@ class Flag {
 
   Flag(const std::string& name, Type type, bool useAsPrefix = false)
       : name_(name), type_(type), useAsPrefix_(useAsPrefix) {}
+  virtual ~Flag() {}
 
   virtual std::string name() { return name_; }
   virtual Type type() const { return type_; }
@@ -74,6 +75,7 @@ class FlagWithValues : public Flag {
  public:
   FlagWithValues(const std::string& name, Type type, bool useAsPrefix = false)
       : Flag(name, type, useAsPrefix) {}
+  virtual ~FlagWithValues() {}
 
   virtual void addValue(const std::string& value) override {
     values_.insert(value);
@@ -93,6 +95,7 @@ class FlagWithNegativeValues : public FlagWithValues {
                          Type type,
                          bool useAsPrefix = false)
       : FlagWithValues(name, type, useAsPrefix) {}
+  virtual ~FlagWithNegativeValues() {}
 
   void addNegativeValue(const std::string& value) override {
     negativeValues_.insert(value);
@@ -108,12 +111,14 @@ class FlagWithNegativeValues : public FlagWithValues {
 
 class LWNODE_EXPORT Flags {
  public:
-  static std::vector<Flag> s_validFlags;
   struct FlagComparator {
     bool operator()(const Flag* a, const Flag* b) const {
       return a->type() < b->type();
     }
   };
+
+  Flags() { initFlags(); }
+  virtual ~Flags() { validFlags_.clear(); }
 
   void add(const std::string& flag);
   void add(Flag::Type type);
@@ -122,14 +127,23 @@ class LWNODE_EXPORT Flags {
   bool isOn(Flag::Type type, const std::string& value = "");
   void shrinkArgumentList(int* argc, char** argv);
 
+  // NOTE: get() and set() are only used in cctest
   std::set<Flag*, FlagComparator> get() { return flags_; };
   void set(std::set<Flag*, FlagComparator> flags) { flags_ = flags; }
 
  private:
+  void initFlags();
   Flag* findFlagObject(const std::string& name);
   Flag* findFlagObject(Flag::Type type);
 
   Flag* getFlag(Flag::Type type);
+
+  template <class T>
+  void addFlag(const char* name, Flag::Type type, bool useAsPrefix = false) {
+    validFlags_.push_back(std::make_unique<T>(name, type, useAsPrefix));
+  }
+
+  std::vector<std::unique_ptr<Flag>> validFlags_;
   std::set<Flag*, FlagComparator> flags_;
 };
 
