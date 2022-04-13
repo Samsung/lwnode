@@ -21,7 +21,7 @@
 #include <EscargotPublic.h>
 
 #include "handle.h"
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 
 namespace v8 {
 namespace internal {

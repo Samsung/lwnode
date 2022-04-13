@@ -19,6 +19,6 @@
 #include "utils/cast.h"
 #include "utils/compiler.h"
 #include "utils/conversions-inl.h"
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 #include "utils/misc.h"
 #include "utils/string-util.h"

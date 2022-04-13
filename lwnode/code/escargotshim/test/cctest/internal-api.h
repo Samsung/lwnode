@@ -18,7 +18,7 @@
 
 // internals
 #include "api/handle.h"
-#include "api/utils/gc.h"
+#include "api/utils/gc-util.h"
 #include "api/utils/misc.h"
 
 namespace e = EscargotShim;

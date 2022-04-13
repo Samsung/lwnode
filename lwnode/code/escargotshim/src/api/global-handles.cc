@@ -21,7 +21,7 @@
 #include "base.h"
 #include "global-handles.h"
 
-#include "api/utils/gc.h"
+#include "api/utils/gc-util.h"
 
 namespace v8 {
 namespace internal {

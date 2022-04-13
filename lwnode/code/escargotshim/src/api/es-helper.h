@@ -18,7 +18,7 @@
 
 #include <EscargotPublic.h>
 #include "extra-data.h"
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 
 using namespace Escargot;
 

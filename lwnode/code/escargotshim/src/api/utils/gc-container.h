@@ -20,7 +20,7 @@
 #include <cassert>
 #include <cstdarg>
 
-#include "gc.h"
+#include "gc-util.h"
 #include "misc.h"
 
 template <typename T>

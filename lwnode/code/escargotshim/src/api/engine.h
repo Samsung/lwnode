@@ -22,7 +22,7 @@
 #include <thread>
 #include <vector>
 
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 
 using namespace Escargot;
 

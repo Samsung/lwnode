@@ -23,7 +23,7 @@
 #include "global-handles.h"
 #include "handlescope.h"
 #include "utils/compiler.h"
-#include "utils/gc.h"
+#include "utils/gc-util.h"
 
 namespace v8 {
 namespace internal {
