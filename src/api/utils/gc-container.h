@@ -20,8 +20,7 @@
 #include <cassert>
 #include <cstdarg>
 
-#include "gc-util.h"
-#include "misc.h"
+#include <GCUtil.h>  // class gc
 
 template <typename T>
 class GCContainer : public gc {
@@ -60,7 +59,6 @@ class GCContainer : public gc {
   const GCContainer<T>& operator=(const GCContainer<T>& other) = delete;
 
   ~GCContainer() {
-    LWNODE_CALL_TRACE_ID(GCDEBUG);
     if (buffer_) {
       for (size_t i = 0; i < size_; i++) {
         buffer_[i].~T();
@@ -72,27 +70,27 @@ class GCContainer : public gc {
   size_t size() const { return size_; }
 
   T& operator[](const size_t idx) {
-    LWNODE_CHECK(size_ > idx);
+    assert(size_ > idx);
     return buffer_[idx];
   }
 
   const T& operator[](const size_t idx) const {
-    LWNODE_CHECK(size_ > idx);
+    assert(size_ > idx);
     return buffer_[idx];
   }
 
   T get(const size_t idx) const {
-    LWNODE_CHECK(size_ > idx);
+    assert(size_ > idx);
     return buffer_[idx];
   }
 
   void set(const size_t idx, T val) {
-    LWNODE_CHECK(size_ > idx);
+    assert(size_ > idx);
     buffer_[idx] = val;
   }
 
   void remove(const size_t idx) {
-    LWNODE_CHECK(size_ > idx);
+    assert(size_ > idx);
     buffer_[idx] = nullptr;
   }
 
