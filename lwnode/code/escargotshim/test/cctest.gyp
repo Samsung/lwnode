@@ -20,6 +20,7 @@
         '-Wno-comment',
         '-Wno-sign-compare',
         '-Wno-cast-function-type',
+        '-Wno-maybe-uninitialized',
         '-std=c++14',
       ],
       'include_dirs': [

@@ -27,7 +27,7 @@ void DeleteArray(T* array) {
 static char* StrDup(const char* str) {
   int len = strlen(str);
   char* buf = new char[len + 1];
-  strncpy(buf, str, len);
+  memcpy(buf, str, len);
   buf[len] = '\0';
   return buf;
 }
