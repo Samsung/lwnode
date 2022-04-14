@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-if (!global.fetch) {
-  global.fetch = require('node-fetch');
-}
-
 var assert = require('assert');
 var helper = require('./support/helper');
 helper.loadSqlite3();

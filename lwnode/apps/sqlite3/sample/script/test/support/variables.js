@@ -26,4 +26,5 @@ module.exports = {
   DB_URL: `ws://${DB_HOSTNAME}:${DB_PORT}${DB_PATH}`,
   WS_SERVER_URL: `ws://${DB_HOSTNAME}:${DB_PORT}${DB_PATH}`,
   SERVER_URL: `http://${DB_HOSTNAME}:${DB_PORT}`,
+  BACKEND_PATH: `${__dirname}/../../../../out/backend`,
 };

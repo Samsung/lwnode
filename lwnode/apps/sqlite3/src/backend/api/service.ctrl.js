@@ -56,7 +56,7 @@ exports.registerService = async (req, res) => {
 
 exports.deleteService = async (req, res) => {
   const { name } = req.params;
-  console.log(req.params, name);
+
   try {
     let servicesDB = new ServicesDB(DAO.knex());
 
