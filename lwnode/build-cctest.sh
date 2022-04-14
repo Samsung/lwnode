@@ -13,14 +13,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ROOT_PATH=out/cctest
+ROOT=$PWD
+OUT_PATH=$ROOT/out/cctest
+ARCH="x64"
+ASAN=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  --arch=*)
+    ARCH="${1#*=}"
+    ;;
+  --asan=*)
+    ASAN="${1#*=}"
+    ;;
+  *)
+    echo "Unknown option $1"
+    exit -1
+    ;;
+  esac
+
+  shift
+done
 
 ./tools/gyp/gyp ./lwnode/code/escargotshim/test/cctest.gyp --depth=. -f ninja \
-  --generator-output=$ROOT_PATH -Dasan=1 -Dbuild_mode=debug \
-  -Descargot_lib_type=static_lib -Dtarget_arch=x64 -Dtarget_os=linux \
+  --generator-output=$OUT_PATH -Dasan=$ASAN -Dbuild_mode=debug \
+  -Descargot_lib_type=static_lib -Dtarget_arch=$ARCH -Dtarget_os=linux \
   -Denable_experimental=true -Descargot_threading=1 -Dinclude_node_bindings=false \
-  -Descargot_debugger=false
+  -Descargot_debugger=0
 
-ninja -v -C $ROOT_PATH/out/Debug cctest
+ninja -C $OUT_PATH/out/Debug cctest
 
-ln -sf $ROOT_PATH/out/Debug/cctest ./cctest
+if [ $ARCH == "x64" ]; then
+ln -sf $OUT_PATH/out/Debug/cctest ./cctest
+fi

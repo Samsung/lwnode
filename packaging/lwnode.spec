@@ -64,11 +64,12 @@ Requires:    %{name} = %{version}
 Development files for Lightweight node.js.
 
 # Initialize the variables
-%{!?target: %define target lwnode} #taget = [lwnode/v8/modules/apps]
+%{!?target: %define target lwnode} #taget = [lwnode/v8/modules/apps/test]
 %{!?lib_type: %define lib_type shared}
 %{!?feature_mode: %define feature_mode production}
 %{!?build_app: %define build_app 1}
 %{!?app_name: %define app_name sqlite3}
+%{!?build_test: %define build_test 0}
 
 %description
 Node.js on Escargot is a memory efficient node.js implementation,
@@ -91,6 +92,15 @@ lwnode %{app_name} app
 %define target_app_path /usr/apps/lwnode/apps/%{app_name}
 %define app_variables BUILD_OUT_PATH=%{app_out_path} APP_PATH=%{local_app_path} FILES_PATH=%{buildroot}%{app_files_path}
 %define app_post_variables APP_PATH=%{target_app_path} FILES_PATH=%{app_files_path}
+%endif
+
+# profile: test
+%if 0%{?build_test} == 1
+%package test
+Summary:     Test files for Lightweight node.js
+Group:       System/Servers
+%description test
+Test files for Lightweight node.js
 %endif
 
 %prep
@@ -194,6 +204,14 @@ ninja -C %{target_src} %{target}
 %{app_variables} %{local_app_path}/build/build.sh
 %endif
 
+# building the cctest executable
+%if 0%{?build_test} == 1
+%define test_exe cctest
+%define local_test_exe %{project_path}/out/cctest/out/Debug/%{test_exe}
+
+./lwnode/build-cctest.sh --arch=%{tizen_arch} --asan=0
+
+%endif
 
 ##############################################
 ## Install
@@ -223,6 +241,7 @@ cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
 %endif # "%{target}" == "lwnode"
 
+# for app files
 %if 0%{?build_app} == 1
 rm -rf %{buildroot}%{app_files_path}
 mkdir -p %{buildroot}%{app_files_path}
@@ -232,6 +251,12 @@ mkdir -p %{buildroot}%{target_app_path}/build
 cp %{local_app_path}/build/post.sh %{buildroot}%{target_app_path}/build
 cp %{local_app_path}/build/%{app_name}.manifest %{buildroot}%{target_app_path}
 
+%endif
+
+# for test files
+%if 0%{?build_test} == 1
+mkdir -p %{buildroot}%{_bindir}
+cp %{local_test_exe} %{buildroot}%{_bindir}
 %endif
 
 %clean
@@ -275,4 +300,9 @@ rm -fr ./*.manifest
 %files %{app_name}
 %{target_app_path}
 %{app_files_path}
+%endif
+
+%if 0%{?build_test} == 1
+%files test
+%{_bindir}/%{test_exe}
 %endif
