@@ -107,3 +107,41 @@ exports.logout = (req, res) => {
     .status(204)
     .end('OK');
 };
+
+exports.localDelete = async (req, res) => {
+  debug(`${req.method} ${req.url} ${req.ip}`);
+
+  const { body } = req;
+
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).max(30),
+  });
+
+  const result = schema.validate(body);
+
+  if (result.error) {
+    return res.status(400).end(result.error.details[0].message);
+  }
+
+  const { email, password } = body;
+
+  try {
+    let users = new Users(DAO.knex());
+    const user = await users.getByEmail(email);
+
+    if (!user) {
+      return res.status(403).end('user does not exist');
+    }
+
+    if (user.validatePassword(password) == false) {
+      return res.status(403).end('wrong password');
+    }
+
+    await users.delete(email);
+
+    return res.status(200).end('OK');
+  } catch (e) {
+    res.status(500).end('something wrong');
+  }
+};

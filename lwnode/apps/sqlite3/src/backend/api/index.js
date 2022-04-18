@@ -30,6 +30,7 @@ api.get('/exist/:file', apiCtrl.existFile);
 
 auth.post('/register/local', authCtrl.localRegister);
 auth.post('/login/local', authCtrl.localLogin);
+auth.delete('/local', authCtrl.localDelete);
 auth.get('/logout', authCtrl.logout);
 
 api.use('/service', service);

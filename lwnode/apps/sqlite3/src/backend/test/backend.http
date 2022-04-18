@@ -2,6 +2,9 @@
 @port = 8140
 @host = {{hostname}}:{{port}}
 @contentType = application/json
+@dbFilename = db.lwnode
+
+## auth
 
 ### register
 POST http://{{host}}/api/auth/register/local HTTP/1.1
@@ -11,6 +14,15 @@ content-type: {{contentType}}
   "email": "lwnode@samsung.com",
   "password": "123456",
   "displayName": "LWNode"
+}
+
+### delete user
+DELETE http://{{host}}/api/auth/local HTTP/1.1
+content-type: {{contentType}}
+
+{
+  "email": "lwnode@samsung.com",
+  "password": "123456"
 }
 
 ### login
@@ -26,5 +38,12 @@ content-type: {{contentType}}
 GET http://{{host}}/api/auth/logout HTTP/1.1
 content-type: {{contentType}}
 
-### api.ctrl
-GET http://{{host}}/api/exist/test.js
+## sqlite3
+
+### exist resource
+GET http://{{host}}/api/exist/{{dbFilename}} HTTP/1.1
+content-type: {{contentType}}
+
+### delete resource
+DELETE http://{{host}}/api/delete/{{dbFilename}} HTTP/1.1
+content-type: {{contentType}}
