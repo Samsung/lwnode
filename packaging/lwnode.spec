@@ -101,6 +101,8 @@ Summary:     Test files for Lightweight node.js
 Group:       System/Servers
 %description test
 Test files for Lightweight node.js
+
+%define target test
 %endif
 
 %prep
@@ -207,10 +209,15 @@ ninja -C %{target_src} %{target}
 # building the cctest executable
 %if 0%{?build_test} == 1
 %define test_exe cctest
-%define local_test_exe %{project_path}/out/cctest/out/Debug/%{test_exe}
+%define local_test_exe %{project_path}/out/tizen/cctest/out/Release/%{test_exe}
 
-./lwnode/build-cctest.sh --arch=%{tizen_arch} --asan=0
+./tools/gyp/gyp ./lwnode/code/escargotshim/test/cctest.gyp --depth=. -f ninja \
+  --generator-output=./out/tizen/cctest -Dbuild_mode=release \
+  -Descargot_lib_type=static_lib -Dtarget_arch=arm -Dtarget_os=tizen \
+  -Denable_experimental=true -Descargot_threading=1 -Dinclude_node_bindings=false \
+  -Descargot_debugger=0
 
+ninja -C ./out/tizen/cctest/out/Release cctest
 %endif
 
 ##############################################
