@@ -22,6 +22,9 @@ import DAO from '../db/dao';
 import config from '../config';
 
 const { cookieOptions } = config.auth;
+const defaultOption = {
+  allowUnknown: true,
+};
 
 exports.localRegister = async (req, res) => {
   debug(`${req.method} ${req.url} ${req.ip}`);
@@ -35,7 +38,7 @@ exports.localRegister = async (req, res) => {
     displayName: Joi.string().regex(/^[a-zA-Z0-9ㄱ-힣]{3,12}$/),
   });
 
-  const result = schema.validate(data);
+  const result = schema.validate(data, defaultOption);
   if (result.error) {
     return res.status(400).end(result.error.details[0].message);
   }
@@ -66,7 +69,7 @@ exports.localLogin = async (req, res) => {
     password: Joi.string().min(6).max(30),
   });
 
-  const result = schema.validate(body);
+  const result = schema.validate(body, defaultOption);
 
   if (result.error) {
     return res.status(400).end(result.error.details[0].message);
@@ -98,14 +101,7 @@ exports.localLogin = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  res
-    .cookie('access_token', null, {
-      maxAge: 0,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-    })
-    .status(204)
-    .end('OK');
+  res.clearCookie('access_token').status(200).end('OK');
 };
 
 exports.localDelete = async (req, res) => {
@@ -115,10 +111,10 @@ exports.localDelete = async (req, res) => {
 
   const schema = Joi.object({
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).max(30),
+    password: Joi.string().min(6).max(30).required(),
   });
 
-  const result = schema.validate(body);
+  const result = schema.validate(body, defaultOption);
 
   if (result.error) {
     return res.status(400).end(result.error.details[0].message);
