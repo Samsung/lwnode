@@ -398,35 +398,20 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
     arguments_list.push_back(VAL(*arguments[i])->value());
   }
 
-  EvalResult r = Evaluator::execute(
-      esContext,
-      [](ExecutionStateRef* state,
-         StringRef* sourceName,
-         StringRef* source,
-         size_t argc,
-         ValueRef** argv) -> ValueRef* {
-        return FunctionObjectRef::create(
-            state,
-            sourceName,
-            AtomicStringRef::create(state->context(), "anonymous"),
-            argc,
-            argv,
-            source);
-      },
-      esSourceName,
-      esSource,
-      arguments_list.size(),
-      arguments_list.data());
+  ScriptParserRef::InitializeFunctionScriptResult result =
+      esContext->scriptParser()->initializeFunctionScript(
+          esSourceName,
+          AtomicStringRef::create(esContext, "anonymous"),
+          arguments_list.size(),
+          arguments_list.data(),
+          esSource);
 
   // note: expand API_HANDLE_EXCEPTION and add the resource name
-  if (!r.isSuccessful()) {
-    LWNODE_DLOG_ERROR("Evaluate");
-    LWNODE_DLOG_RAW("Execute:\n  %s\nResource:\n  %s\n%s",
-                    __CODE_LOCATION__,
-                    esSourceName->toStdUTF8String().c_str(),
-                    EvalResultHelper::getErrorString(
-                        lwIsolate->GetCurrentContext()->get(), r)
-                        .c_str());
+  if (!result.isSuccessful()) {
+    Evaluator::EvaluatorResult r;
+    ContextRef* esPureContext = ContextRef::create(lwIsolate->vmInstance());
+    r.error = ExceptionHelper::createErrorObject(
+        esPureContext, result.parseErrorCode, result.parseErrorMessage);
 
     lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
     lwIsolate->ReportPendingMessages();
@@ -435,21 +420,14 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
 
   if (script_or_module_out != nullptr) {
     ScriptParserRef* parser = esContext->scriptParser();
-    // note: The script should be the script of the function generated above,
-    // but escargot do not support these api.
-    // We use the script of empty strings instead, as node is used only
-    // to register it in the weak callback.
-    ScriptParserRef::InitializeScriptResult result = parser->initializeScript(
-        lwIsolate->emptyString()->value()->asString(),
-        VAL(*source->resource_name)->value()->asString(),
-        false);
     LWNODE_CHECK(result.isSuccessful());
 
     *script_or_module_out =
         Utils::NewLocal<ScriptOrModule>(lwIsolate->toV8(), result.script.get());
   }
 
-  return Utils::NewLocal<Function>(lwIsolate->toV8(), r.result);
+  return Utils::NewLocal<Function>(lwIsolate->toV8(),
+                                   result.functionObject.get());
 }
 
 void ScriptCompiler::ScriptStreamingTask::Run() {
