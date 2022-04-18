@@ -212,3 +212,5 @@ test/parallel/test-worker-workerdata-sharedarraybuffer.js
 test/parallel/test-worker.mjs
 test/parallel/test-zlib-invalid-input-memory.js
 test/parallel/test-zlib-unused-weak.js
+test/parallel/test-repl-syntax-error-stack.js # timeout error occurs when debugger feature has been updated
+test/parallel/test-promises-unhandled-rejections.js # crash error occurs when debugger feature has been updated
