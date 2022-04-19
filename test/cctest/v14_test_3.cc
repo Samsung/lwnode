@@ -1460,3 +1460,33 @@ THREADED_TEST(GlobalObjectHasRealNamedPropertyCustom) {
   CHECK(!global->HasRealNamedProperty(env.local(), v8_str("thisKeyNotExist"))
              .FromJust());
 }
+
+THREADED_TEST(BindingDemoCustom1) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  Local<Value> value = CompileRun("function f() { return 10; } f();");
+  CHECK_EQ(10, value->Int32Value(context.local()).FromJust());
+}
+
+static void BindingDemoCallback(
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+  args.GetReturnValue().Set(v8_num(20));
+}
+
+THREADED_TEST(BindingDemoCustom2) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  Local<Object> obj = Object::New(context->GetIsolate());
+  Local<Function> function =
+      Function::New(context.local(), BindingDemoCallback).ToLocalChecked();
+
+  CHECK(obj->Set(context.local(), v8_str("f"), function).FromJust());
+  CHECK(context->Global()->Set(context.local(), v8_str("o"), obj).FromJust());
+
+  Local<Value> value = CompileRun("o.f();");
+  CHECK_EQ(20, value->Int32Value(context.local()).FromJust());
+}
