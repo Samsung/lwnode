@@ -35,24 +35,27 @@ class StackTrace {
                            bool isConfigurable,
                            ObjectRef::NativeDataAccessorPropertyGetter getter,
                            ObjectRef::NativeDataAccessorPropertySetter setter,
-                           ValueRef* stackTrace)
+                           ArrayObjectRef* stackTrace)
         : NativeDataAccessorPropertyData(
               isWritable, isEnumerable, isConfigurable, getter, setter),
           stackTrace_(stackTrace) {}
 
-    ValueRef* stackTrace() { return stackTrace_; }
-    void setStackTrace(ValueRef* stackTrace) { stackTrace_ = stackTrace; }
+    ArrayObjectRef* stackTrace() { return stackTrace_; }
+    void setStackTrace(ArrayObjectRef* stackTrace) { stackTrace_ = stackTrace; }
 
-    bool isCalled() { return isCalled_; }
-    void setIsCalled(bool isCalled) { isCalled_ = isCalled; }
+    ValueRef* stackValue() { return stackValue_; }
+    void setStackValue(ValueRef* stackValue) { stackValue_ = stackValue; }
+    bool hasStackValue() { return stackValue_ != nullptr; }
+
     void* operator new(size_t size) { return GC_MALLOC(size); }
 
    private:
-    ValueRef* stackTrace_ = nullptr;
-    bool isCalled_ = false;
+    ArrayObjectRef* stackTrace_ = nullptr;
+    ValueRef* stackValue_ = nullptr;
   };
 
-  StackTrace(ExecutionStateRef* state) : state_(state) {}
+  StackTrace(ExecutionStateRef* state, ObjectRef* error)
+      : state_(state), error_(error) {}
 
   static bool checkFilter(ValueRef* filter,
                           const Evaluator::StackTraceData& traceData);
@@ -82,25 +85,23 @@ class StackTrace {
                                ObjectRef::NativeDataAccessorPropertyData* data,
                                ValueRef* setterInputData);
 
-  static void addStackProperty(ExecutionStateRef* state,
-                               ObjectRef* object,
-                               ValueRef* stackTraceVector);
+  static std::string formatStackTraceLine(
+      const Evaluator::StackTraceData& line);
 
+  void addStackProperty(ArrayObjectRef* stackTraceVector);
+
+  // FIXME: Having maxStackSize=10 does not print full stack. Find the
+  // 'Error.stackTraceLimit'.
   ArrayObjectRef* genCallSites(
       const GCManagedVector<Evaluator::StackTraceData>& stackTraceData,
-      int startIndexPos = 0);
+      int maxStackSize = 10);
 
-  // FIXME: Having maxStackSize=1 does not print full stack. Find the right
-  // value
-  StringRef* formatStackTraceStringNodeStyle(ObjectRef* errorObject,
-                                             size_t maxStackSize = 1);
+  StringRef* formatStackTraceStringNodeStyle(ArrayObjectRef* stackTrace);
 
  private:
   ExecutionStateRef* state_ = nullptr;
-
+  ObjectRef* error_ = nullptr;
   static size_t getStackTraceLimit(ExecutionStateRef* state);
-
-  std::string formatStackTraceLine(const Evaluator::StackTraceData& line);
 
   // NOTE: StackTrace can only be initialized as a local variable
   void* operator new(size_t size);
