@@ -82,9 +82,6 @@ class Users {
             table.string('provider');
             table.string('accessToken');
             table.integer('user_id').unsigned().references('users.id');
-          })
-          .then(() => {
-            console.log('table is created');
           });
       }
     });
