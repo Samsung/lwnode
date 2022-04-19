@@ -570,4 +570,46 @@ TEST(FunctionSetName) {
   CHECK(func->GetName()->Equals(env.local(), funcName).FromJust());
 }
 
+static v8::MaybeLocal<Value> PrepareStackTrace42(v8::Local<Context> context,
+                                                 v8::Local<Value> error,
+                                                 v8::Local<Array> trace) {
+  return v8::Number::New(context->GetIsolate(), 42);
+}
+
+static const char* prepareStackTraceErrorMessage = "TypeError(test)";
+
+static v8::MaybeLocal<Value> PrepareStackTraceThrow(v8::Local<Context> context,
+                                                    v8::Local<Value> error,
+                                                    v8::Local<Array> trace) {
+  return v8_str(prepareStackTraceErrorMessage);
+}
+
+THREADED_TEST(IsolatePrepareStackTrace) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  isolate->SetPrepareStackTraceCallback(PrepareStackTrace42);
+
+  v8::Local<Value> v = CompileRun("new Error().stack");
+
+  CHECK(v->IsNumber());
+  CHECK_EQ(v.As<v8::Number>()->Int32Value(context.local()).FromJust(), 42);
+}
+
+THREADED_TEST(IsolatePrepareStackTraceThrow) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+
+  isolate->SetPrepareStackTraceCallback(PrepareStackTraceThrow);
+
+  v8::Local<Value> v =
+      CompileRun("try { throw new Error() } catch (e) { e.stack }");
+
+  CHECK(v.As<v8::String>()
+            ->Equals(context.local(), v8_str(prepareStackTraceErrorMessage))
+            .FromJust());
+}
+
 }  // namespace
