@@ -85,6 +85,14 @@ class Isolate : public gc {
     return prepare_stack_trace_callback_;
   }
 
+  bool prepareStackTraceRecursion() const {
+    return prepareStackTraceRecursion_;
+  }
+
+  void setPrepareStackTraceRecursion(bool recursion) {
+    prepareStackTraceRecursion_ = recursion;
+  }
+
   virtual ValueRef* RunPrepareStackTraceCallback(
       ExecutionStateRef* state,
       EscargotShim::ContextWrap* lwContext,
@@ -143,6 +151,7 @@ class Isolate : public gc {
   Escargot::ValueRef* pending_exception_{nullptr};
   Escargot::ValueRef* pending_message_obj_{nullptr};
   size_t callDepth_ = 0;
+  bool prepareStackTraceRecursion_{false};
 };
 }  // namespace internal
 }  // namespace v8

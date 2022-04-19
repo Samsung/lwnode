@@ -226,39 +226,25 @@ class ExternalObjectData : public ObjectData {
 class StackTraceData : public ExtraData {
  public:
   StackTraceData(const Escargot::Evaluator::StackTraceData& data)
-      : src_(data.srcName),
-        sourceCode_(data.sourceCode),
-        loc_(data.loc),
-        functionName_(data.functionName),
-        isConstructor_(data.isConstructor),
-        isAssociatedWithJavaScriptCode_(data.isAssociatedWithJavaScriptCode),
-        isEval_(data.isEval),
-        callee_(data.callee) {}
+      : data_(data) {}
 
   bool isStackTraceData() const override { return true; }
 
-  StringRef* src() const { return src_; }
-  StringRef* sourceCode() const { return sourceCode_; }
-  Escargot::Evaluator::LOC loc() const { return loc_; }
-  StringRef* functionName() const { return functionName_; }
-  bool isFunction() const { return isFunction_; }
-  bool isConstructor() const { return isConstructor_; }
+  Evaluator::StackTraceData stackTraceData() { return data_; }
+  StringRef* src() const { return data_.srcName; }
+  StringRef* sourceCode() const { return data_.sourceCode; }
+  Escargot::Evaluator::LOC loc() const { return data_.loc; }
+  StringRef* functionName() const { return data_.functionName; }
+  bool isFunction() const { return data_.isFunction; }
+  bool isConstructor() const { return data_.isConstructor; }
   bool isAssociatedWithJavaScriptCode() const {
-    return isAssociatedWithJavaScriptCode_;
+    return data_.isAssociatedWithJavaScriptCode;
   }
-  bool isEval() const { return isEval_; }
-  OptionalRef<FunctionObjectRef> callee() { return callee_; }
+  bool isEval() const { return data_.isEval; }
+  OptionalRef<FunctionObjectRef> callee() { return data_.callee; }
 
  private:
-  StringRef* src_{nullptr};
-  StringRef* sourceCode_{nullptr};
-  Escargot::Evaluator::LOC loc_{0, 0, 0};
-  StringRef* functionName_{nullptr};
-  bool isFunction_{false};
-  bool isConstructor_{false};
-  bool isAssociatedWithJavaScriptCode_{false};
-  bool isEval_{false};
-  OptionalRef<FunctionObjectRef> callee_;
+  Escargot::Evaluator::StackTraceData data_;
 };
 
 // NOTE: ExceptionObjectData does not use any InternalFields.

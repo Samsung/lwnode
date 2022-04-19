@@ -25,6 +25,19 @@ using namespace v8;
 
 namespace EscargotShim {
 
+class PrepareStackTraceScope {
+ public:
+  explicit PrepareStackTraceScope(IsolateWrap* isolate) : isolate_(isolate) {
+    LWNODE_DCHECK(!isolate_->prepareStackTraceRecursion());
+    isolate_->setPrepareStackTraceRecursion(true);
+  }
+
+  ~PrepareStackTraceScope() { isolate_->setPrepareStackTraceRecursion(false); }
+
+ private:
+  IsolateWrap* isolate_;
+};
+
 size_t StackTrace::getStackTraceLimit(ExecutionStateRef* state) {
   auto errorObject = state->context()->globalObject()->get(
       state, StringRef::createFromASCII("Error"));
@@ -42,55 +55,32 @@ ValueRef* StackTrace::StackTraceGetter(
     ObjectRef* self,
     ValueRef* receiver,
     ObjectRef::NativeDataAccessorPropertyData* data) {
+  auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
+  if (accessorData->hasStackValue()) {
+    return accessorData->stackValue();
+  }
+
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
-  auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
-  auto sites = accessorData->stackTrace();
 
-  auto extraData = ExtraDataHelper::getExceptionObjectExtraData(self);
-  if (extraData) {
-    auto stackTrace = extraData->stackTrace();
-    auto stackTraceVector = ValueVectorRef::create();
-    int stacktraceStartIdx = 1;
-    auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
-
-    for (size_t i = stacktraceStartIdx; i < stackTrace->size(); i++) {
-      stackTraceVector->pushBack(
-          callSite->instantiate(state->context(), stackTrace->at(i)));
-    }
-
-    sites = ArrayObjectRef::create(state, stackTraceVector);
-  }
-
-  StackTrace stackTrace(state);
-  Escargot::ArrayObjectRef* callStackSites =
-      stackTrace.genCallSites(state->computeStackTrace());
-
-  if (sites->isString()) {
-    if (accessorData->isCalled()) {
-      return sites;
-    }
-  } else if (sites->isArrayObject()) {
-    callStackSites = sites->asArrayObject();
-  }
-
-  accessorData->setIsCalled(true);
-
-  if (lwIsolate->HasPrepareStackTraceCallback()) {
+  if (!lwIsolate->prepareStackTraceRecursion() &&
+      lwIsolate->HasPrepareStackTraceCallback()) {
+    // Avoid calling this function multiple times with 'error.stack' in
+    // 'PrepareStackTraceCallback'.
+    PrepareStackTraceScope scope(lwIsolate);
     auto formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
-        state, lwContext, self, callStackSites);
-    if (formattedStackTrace) {
-      accessorData->setStackTrace(formattedStackTrace);
+        state, lwContext, self, accessorData->stackTrace());
+    if (!formattedStackTrace->isUndefined()) {
+      accessorData->setStackValue(formattedStackTrace);
       return formattedStackTrace;
     }
-  } else {
-    if (sites->isArrayObject()) {
-      StackTrace stackTrace(state);
-      sites = stackTrace.formatStackTraceStringNodeStyle(self);
-    }
   }
 
-  return sites;
+  StackTrace stackTrace(state, self);
+  auto stackTraceString =
+      stackTrace.formatStackTraceStringNodeStyle(accessorData->stackTrace());
+  accessorData->setStackValue(stackTraceString);
+  return stackTraceString;
 }
 
 bool StackTrace::StackTraceSetter(
@@ -100,7 +90,7 @@ bool StackTrace::StackTraceSetter(
     ObjectRef::NativeDataAccessorPropertyData* data,
     ValueRef* setterInputData) {
   auto accessorData = reinterpret_cast<NativeAccessorProperty*>(data);
-  accessorData->setStackTrace(setterInputData);
+  accessorData->setStackValue(setterInputData);
   return true;
 }
 
@@ -126,7 +116,7 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
   }
 
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
-  auto stackTrace = state->computeStackTrace();
+  auto stackTraceData = state->computeStackTrace();
   auto stackTraceVector = ValueVectorRef::create();
 
   ValueRef* filterFunction = nullptr;
@@ -140,9 +130,9 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
   size_t stackTraceLimit = getStackTraceLimit(state) + stacktraceStartIdx;
 
   for (size_t i = stacktraceStartIdx;
-       i < stackTraceLimit && i < stackTrace.size();
+       i < stackTraceLimit && i < stackTraceData.size();
        i++) {
-    if (StackTrace::checkFilter(filterFunction, stackTrace[i])) {
+    if (StackTrace::checkFilter(filterFunction, stackTraceData[i])) {
       stackTraceVector->erase(0, stackTraceVector->size());
       filterFunction = nullptr;
 
@@ -150,23 +140,21 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
     }
 
     stackTraceVector->pushBack(
-        callSite->instantiate(state->context(), stackTrace[i]));
+        callSite->instantiate(state->context(), stackTraceData[i]));
   }
 
   // FIXME: it seems there are some cases where we need to freeze the
   // stack string here. Investigate further
-  addStackProperty(
-      state, exceptionObject, ArrayObjectRef::create(state, stackTraceVector));
+  StackTrace stackTrace(state, exceptionObject);
+  stackTrace.addStackProperty(ArrayObjectRef::create(state, stackTraceVector));
 
   return ValueRef::createUndefined();
 }
 
-void StackTrace::addStackProperty(ExecutionStateRef* state,
-                                  ObjectRef* object,
-                                  ValueRef* stackTrace) {
+void StackTrace::addStackProperty(ArrayObjectRef* stackTrace) {
   // NOTE: either Error or Exception contains stack.
-  object->defineNativeDataAccessorProperty(
-      state,
+  error_->defineNativeDataAccessorProperty(
+      state_,
       StringRef::createFromUTF8("stack"),
       new NativeAccessorProperty(
           true, false, true, StackTraceGetter, StackTraceSetter, stackTrace));
@@ -206,21 +194,24 @@ ValueRef* StackTrace::prepareStackTraceCallback(ExecutionStateRef* state,
   return StringRef::emptyString();
 }
 
-StringRef* StackTrace::formatStackTraceStringNodeStyle(ObjectRef* errorObject,
-                                                       size_t maxStackSize) {
+StringRef* StackTrace::formatStackTraceStringNodeStyle(
+    ArrayObjectRef* stackTrace) {
   std::ostringstream oss;
-  auto message = errorObject->toString(state_)->toStdUTF8String();
+  auto message = error_->toString(state_)->toStdUTF8String();
   if (message.length() > 0) {
     oss << message << "\n";
   }
 
-  auto traceData = state_->computeStackTrace();
-  size_t maxPrintStackSize = std::min((int)maxStackSize, (int)traceData.size());
-
+  auto esContext = state_->context();
+  size_t maxPrintStackSize =
+      ArrayObjectRefHelper::length(esContext, stackTrace);
   const std::string separator = "    ";
+
   for (size_t i = 0; i < maxPrintStackSize; ++i) {
-    oss << separator << "at " << formatStackTraceLine(traceData[i])
-        << std::endl;
+    auto callSiteString = ArrayObjectRefHelper::get(esContext, stackTrace, i)
+                              ->toString(state_)
+                              ->toStdUTF8String();
+    oss << separator << "at " << callSiteString << std::endl;
   }
 
   auto stringNodeStyle = oss.str();
@@ -232,26 +223,33 @@ std::string StackTrace::formatStackTraceLine(
     const Evaluator::StackTraceData& line) {
   std::ostringstream oss;
 
-  const auto& iter = line;
-  const auto& resourceName = iter.srcName->toStdUTF8String();
-  const auto& functionName = iter.functionName->toStdUTF8String();
-  const int errorLine = iter.loc.line;
-  const int errorColumn = iter.loc.column;
+  auto stdFunctionName = line.functionName->toStdUTF8String();
+  // TODO: 'anonymous' is not unique. 'stdFunctionName' should be unique.
+  // 'anonymous' keyword is related to ScriptCompiler::CompileFunctionInContext.
+  if (stdFunctionName == "anonymous") {
+    stdFunctionName = "";
+  }
 
-  oss << (functionName == "" ? "Object.<anonymous>" : functionName) << " "
-      << "(" << (resourceName == "" ? "?" : resourceName) << ":" << errorLine
-      << ":" << errorColumn << ")";
+  if (stdFunctionName.empty()) {
+    oss << line.srcName->toStdUTF8String() << ":" << line.loc.line << ":"
+        << line.loc.column;
+  } else {
+    oss << stdFunctionName << " (" << line.srcName->toStdUTF8String() << ":"
+        << line.loc.line << ":" << line.loc.column << ")";
+  }
 
   return oss.str();
 }
 
 ArrayObjectRef* StackTrace::genCallSites(
     const GCManagedVector<Evaluator::StackTraceData>& stackTraceData,
-    int startIndexPos) {
+    int maxStackSize) {
   auto stackTraceVector = ValueVectorRef::create();
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
+  size_t maxPrintStackSize =
+      std::min((int)maxStackSize, (int)stackTraceData.size());
 
-  for (size_t i = 0; i < stackTraceData.size(); i++) {
+  for (size_t i = 0; i < maxPrintStackSize; i++) {
     stackTraceVector->pushBack(
         callSite->instantiate(state_->context(), stackTraceData[i]));
   }
@@ -359,11 +357,8 @@ void CallSite::injectSitePrototype() {
          bool isNewExpression) -> ValueRef* {
         auto data = ObjectRefHelper::getExtraData(thisValue->asObject())
                         ->asStackTraceData();
-        std::ostringstream stream;
-        stream << data->functionName()->toStdUTF8String() << " ("
-               << data->src()->toStdUTF8String() << ":" << data->loc().line
-               << ":" << data->loc().column << ")";
-        auto string = stream.str();
+        auto string = StackTrace::formatStackTraceLine(data->stackTraceData());
+
         return StringRef::createFromUTF8(string.data(), string.length());
       });
 

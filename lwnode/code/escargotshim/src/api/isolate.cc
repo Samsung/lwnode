@@ -296,7 +296,7 @@ ValueRef* Isolate::RunPrepareStackTraceCallback(ExecutionStateRef* state,
     }
   }
 
-  return nullptr;
+  return ValueRef::createUndefined();
 }
 
 bool Isolate::hasCallDepth() {

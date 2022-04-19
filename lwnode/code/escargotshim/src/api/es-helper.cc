@@ -1008,22 +1008,9 @@ void ExceptionHelper::addStackPropertyCallback(ExecutionStateRef* state,
     return;
   }
 
-  auto lwIsolate = IsolateWrap::GetCurrent();
-  auto errorObject = error->asObject();
-
-  ValueRef* formattedStackTrace = StringRef::emptyString();
-  StackTrace stackTrace(state);
-  if (lwIsolate->HasPrepareStackTraceCallback()) {
-    auto lwContext = lwIsolate->GetCurrentContext();
-
-    auto sites = stackTrace.genCallSites(state->computeStackTrace());
-    formattedStackTrace = lwIsolate->RunPrepareStackTraceCallback(
-        state, lwContext, errorObject, sites);
-  } else {
-    formattedStackTrace =
-        stackTrace.formatStackTraceStringNodeStyle(errorObject);
-  }
-  stackTrace.addStackProperty(state, errorObject, formattedStackTrace);
+  StackTrace stackTrace(state, error->asObject());
+  auto sites = stackTrace.genCallSites(state->computeStackTrace());
+  stackTrace.addStackProperty(sites);
 }
 
 // --- StringRefHelper ---
