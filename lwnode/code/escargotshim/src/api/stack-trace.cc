@@ -133,7 +133,9 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
        i < stackTraceLimit && i < stackTraceData.size();
        i++) {
     if (StackTrace::checkFilter(filterFunction, stackTraceData[i])) {
-      stackTraceVector->erase(0, stackTraceVector->size());
+      if (stackTraceVector->size() > 0) {
+        stackTraceVector->erase(0, stackTraceVector->size());
+      }
       filterFunction = nullptr;
 
       continue;
