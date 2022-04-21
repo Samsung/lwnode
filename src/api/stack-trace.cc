@@ -38,16 +38,21 @@ class PrepareStackTraceScope {
   IsolateWrap* isolate_;
 };
 
-size_t StackTrace::getStackTraceLimit(ExecutionStateRef* state) {
+bool StackTrace::getStackTraceLimit(ExecutionStateRef* state,
+                                    double& stackTraceLimit) {
   auto errorObject = state->context()->globalObject()->get(
       state, StringRef::createFromASCII("Error"));
   LWNODE_CHECK(errorObject->isObject());
 
   auto stackTraceLimitValue = errorObject->asObject()->get(
       state, StringRef::createFromASCII("stackTraceLimit"));
-  LWNODE_CHECK(stackTraceLimitValue->isNumber());
 
-  return stackTraceLimitValue->asNumber();
+  if (!stackTraceLimitValue->isNumber()) {
+    return false;
+  }
+
+  stackTraceLimit = stackTraceLimitValue->asNumber();
+  return true;
 }
 
 ValueRef* StackTrace::StackTraceGetter(
@@ -62,6 +67,12 @@ ValueRef* StackTrace::StackTraceGetter(
 
   auto lwIsolate = IsolateWrap::GetCurrent();
   auto lwContext = lwIsolate->GetCurrentContext();
+
+  if (!accessorData->stackTrace()) {
+    auto undefined = ValueRef::createUndefined();
+    accessorData->setStackValue(undefined);
+    return undefined;
+  }
 
   if (!lwIsolate->prepareStackTraceRecursion() &&
       lwIsolate->HasPrepareStackTraceCallback()) {
@@ -124,25 +135,27 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
     filterFunction = argv[1];
   }
 
-  // TODO: handle `constructorOpt` option :
-  // compare the address of constructorOpt function not name.
   int stacktraceStartIdx = 1;
-  size_t stackTraceLimit = getStackTraceLimit(state) + stacktraceStartIdx;
 
-  for (size_t i = stacktraceStartIdx;
-       i < stackTraceLimit && i < stackTraceData.size();
-       i++) {
-    if (StackTrace::checkFilter(filterFunction, stackTraceData[i])) {
-      if (stackTraceVector->size() > 0) {
-        stackTraceVector->erase(0, stackTraceVector->size());
+  double stackTraceLimit = 0;
+  if (!getStackTraceLimit(state, stackTraceLimit)) {
+    stackTraceVector = nullptr;
+  } else {
+    size_t maxPrintStackSize =
+        std::min(stackTraceLimit, (double)stackTraceData.size());
+    for (size_t i = 0; i < maxPrintStackSize; i++) {
+      if (StackTrace::checkFilter(filterFunction, stackTraceData[i])) {
+        if (stackTraceVector->size() > 0) {
+          stackTraceVector->erase(0, stackTraceVector->size());
+        }
+        filterFunction = nullptr;
+
+        continue;
       }
-      filterFunction = nullptr;
 
-      continue;
+      stackTraceVector->pushBack(
+          callSite->instantiate(state->context(), stackTraceData[i]));
     }
-
-    stackTraceVector->pushBack(
-        callSite->instantiate(state->context(), stackTraceData[i]));
   }
 
   // FIXME: it seems there are some cases where we need to freeze the
@@ -201,12 +214,17 @@ StringRef* StackTrace::formatStackTraceStringNodeStyle(
   std::ostringstream oss;
   auto message = error_->toString(state_)->toStdUTF8String();
   if (message.length() > 0) {
-    oss << message << "\n";
+    oss << message;
   }
 
   auto esContext = state_->context();
   size_t maxPrintStackSize =
       ArrayObjectRefHelper::length(esContext, stackTrace);
+
+  if (maxPrintStackSize > 0) {
+    oss << std::endl;
+  }
+
   const std::string separator = "    ";
 
   for (size_t i = 0; i < maxPrintStackSize; ++i) {
@@ -244,12 +262,17 @@ std::string StackTrace::formatStackTraceLine(
 }
 
 ArrayObjectRef* StackTrace::genCallSites(
-    const GCManagedVector<Evaluator::StackTraceData>& stackTraceData,
-    int maxStackSize) {
-  auto stackTraceVector = ValueVectorRef::create();
+    const GCManagedVector<Evaluator::StackTraceData>& stackTraceData) {
   auto callSite = IsolateWrap::GetCurrent()->GetCurrentContext()->callSite();
+
+  double stackTraceLimit = 0;
+  if (!getStackTraceLimit(state_, stackTraceLimit)) {
+    return nullptr;
+  }
+
+  auto stackTraceVector = ValueVectorRef::create();
   size_t maxPrintStackSize =
-      std::min((int)maxStackSize, (int)stackTraceData.size());
+      std::min(stackTraceLimit, (double)stackTraceData.size());
 
   for (size_t i = 0; i < maxPrintStackSize; i++) {
     stackTraceVector->pushBack(
