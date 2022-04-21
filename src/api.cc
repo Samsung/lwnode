@@ -195,7 +195,8 @@ class ExtensionSourceString : public v8::String::ExternalOneByteStringResource {
   const char* data_;
 };
 
-std::vector<std::unique_ptr<Extension>> RegisteredExtension::extensions;
+thread_local std::vector<std::unique_ptr<Extension>>
+    RegisteredExtension::extensions;
 
 void RegisterExtension(std::unique_ptr<Extension> extension) {
   RegisteredExtension::registerExtension(std::move(extension));

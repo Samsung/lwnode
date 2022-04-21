@@ -151,7 +151,7 @@ class RegisteredExtension {
   static bool isLwExtension(Extension* extension);
   static void applyV8Extension(ContextRef* context, Extension* extension);
 
-  static std::vector<std::unique_ptr<Extension>> extensions;
+  thread_local static std::vector<std::unique_ptr<Extension>> extensions;
 };
 
 class LwExtension : public v8::Extension {

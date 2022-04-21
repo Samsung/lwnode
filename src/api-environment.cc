@@ -40,8 +40,6 @@ void v8::V8::ShutdownPlatform() {
 bool v8::V8::Initialize(const int build_config) {
   Engine::Initialize();
 
-  RegisterExtension(std::make_unique<ExternalizeStringExtension>());
-  RegisterExtension(std::make_unique<ExternalizeGcExtension>());
   return true;
 }
 

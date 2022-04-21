@@ -349,6 +349,9 @@ IsolateWrap::IsolateWrap() {
         break;
     }
   });
+
+  RegisterExtension(std::make_unique<ExternalizeStringExtension>());
+  RegisterExtension(std::make_unique<ExternalizeGcExtension>());
 }
 
 IsolateWrap::~IsolateWrap() {
@@ -367,6 +370,7 @@ void IsolateWrap::Dispose() {
   // unlock_gc_release();
 
   global_handles()->dispose();
+  RegisteredExtension::unregisterAll();
 
   LWNODE_CALL_TRACE_GC_END();
 }
