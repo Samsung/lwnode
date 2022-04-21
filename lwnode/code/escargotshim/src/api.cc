@@ -229,6 +229,68 @@ bool RegisteredExtension::isLwExtension(Extension* extension) {
   return (name == "v8/externalize") || (name == "v8/gc");
 }
 
+class ExtensionFunctionChecker {
+ public:
+  ExtensionFunctionChecker(const std::string& src)
+      : hasError_(false), isNativeFunction_(false) {
+    tokens_ = tokenzier(src, " ");
+  }
+
+  std::vector<std::string> tokenzier(const std::string& src,
+                                     const std::string& delims) {
+    char buffer[src.size() + 1];
+    strncpy(buffer, src.c_str(), src.size());
+
+    char* ptr = strtok(buffer, " ");
+    std::vector<std::string> tokens;
+    while (ptr != nullptr) {
+      tokens.push_back(ptr);
+      ptr = strtok(nullptr, " ");
+    }
+
+    return tokens;
+  }
+
+  void parseFunction() {
+    size_t i = 0;
+    bool isNativeFunction = false;
+    while (i < tokens_.size()) {
+      if (tokens_[i] == "native") {
+        if (i + 1 < tokens_.size() && tokens_[i + 1] == "function") {
+          isNativeFunction_ = true;
+        } else {
+          hasError_ = true;
+          break;
+        }
+      } else if (tokens_[i] == "function") {
+        if (i + 1 < tokens_.size()) {
+          functionName_ = tokens_[i + 1];
+          if (functionName_.find("(") != std::string::npos) {
+            functionName_ = functionName_.substr(0, functionName_.find("("));
+          }
+        } else {
+          hasError_ = true;
+          break;
+        }
+
+        // check for the first function
+        break;
+      }
+      i++;
+    }
+  }
+
+  bool hasError() { return hasError_; }
+  std::string functionName() { return functionName_; }
+  bool isNativeFunction() { return isNativeFunction_; }
+
+ private:
+  bool hasError_ = false;
+  bool isNativeFunction_ = false;
+  std::vector<std::string> tokens_;
+  std::string functionName_;
+};
+
 void RegisteredExtension::applyV8Extension(ContextRef* context,
                                            Extension* extension) {
   if (extension->source() == nullptr ||
@@ -238,9 +300,15 @@ void RegisteredExtension::applyV8Extension(ContextRef* context,
   }
 
   std::string src = extension->source()->data();
-  std::string prefix = "native function ";
-  size_t prefixPosition = src.find(prefix.c_str());
-  if (prefixPosition == std::string::npos) {
+  ExtensionFunctionChecker checker(src);
+  checker.parseFunction();
+
+  if (checker.hasError()) {
+    LWNODE_LOG_WARN("Invalid usage of native");
+    return;
+  }
+
+  if (!checker.isNativeFunction()) {
     EvalResultHelper::compileRun(context, extension->source()->data());
     return;
   }
@@ -252,9 +320,7 @@ void RegisteredExtension::applyV8Extension(ContextRef* context,
       extension->GetNativeFunctionTemplate(lwIsolate->toV8(), str);
 
   auto esFunctionTemplate = CVAL(*v8FunctionTemplate)->ftpl();
-  src = src.substr(prefixPosition + prefix.length());
-  src = src.substr(0, src.find("("));
-  std::string name = src;
+  std::string name = checker.functionName();
 
   EvalResult r = Evaluator::execute(
       context,

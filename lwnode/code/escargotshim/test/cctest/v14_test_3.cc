@@ -1490,3 +1490,23 @@ THREADED_TEST(BindingDemoCustom2) {
   Local<Value> value = CompileRun("o.f();");
   CHECK_EQ(20, value->Int32Value(context.local()).FromJust());
 }
+
+TEST(NativeFunctionDeclarationErrorCustom) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  const char* name = "nativedeclerr";
+  // Syntax error in extension code.
+  v8::RegisterExtension(std::make_unique<NativeFunctionExtensionCustom>(
+      name, "native\n function abcd();"));
+  const char* extension_names[] = {name};
+  v8::ExtensionConfiguration extensions(1, extension_names);
+  v8::Local<Context> context1 = Context::New(isolate, &extensions);
+  Context::Scope lock(context1);
+
+  v8::Local<Value> result =
+      CompileRun("var a; try { abcd(10); } catch (e) { a = e.stack; }");
+  std::string exception = *v8::String::Utf8Value(isolate, result);
+  CHECK(exception.find("ReferenceError") != std::string::npos);
+}
