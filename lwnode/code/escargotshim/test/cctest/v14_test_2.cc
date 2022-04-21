@@ -612,4 +612,25 @@ THREADED_TEST(IsolatePrepareStackTraceThrow) {
             .FromJust());
 }
 
+TEST(StackTraceLimit) {
+  LocalContext context;
+  Isolate* isolate = context->GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  v8::TryCatch try_catch(isolate);
+  std::string source = "Error.stackTraceLimit = 0;"
+                       "var a;"
+                       "function f() {"
+                       "  throw new Error();"
+                       "};"
+                       "try { f(); }"
+                       "catch (e) { a = e.stack;}";
+  v8::Local<Value> r = CompileRun(source.c_str());
+  CHECK(!try_catch.HasCaught());
+
+  CHECK(v8_str("Error")->Equals(context.local(), r).FromJust());
+
+  std::string exception = *v8::String::Utf8Value(isolate, r);
+}
+
 }  // namespace

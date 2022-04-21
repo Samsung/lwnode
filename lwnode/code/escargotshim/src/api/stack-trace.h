@@ -90,18 +90,17 @@ class StackTrace {
 
   void addStackProperty(ArrayObjectRef* stackTraceVector);
 
-  // FIXME: Having maxStackSize=10 does not print full stack. Find the
-  // 'Error.stackTraceLimit'.
   ArrayObjectRef* genCallSites(
-      const GCManagedVector<Evaluator::StackTraceData>& stackTraceData,
-      int maxStackSize = 10);
+      const GCManagedVector<Evaluator::StackTraceData>& stackTraceData);
 
   StringRef* formatStackTraceStringNodeStyle(ArrayObjectRef* stackTrace);
+
+  static bool getStackTraceLimit(ExecutionStateRef* state,
+                                 double& stackTraceLimit);
 
  private:
   ExecutionStateRef* state_ = nullptr;
   ObjectRef* error_ = nullptr;
-  static size_t getStackTraceLimit(ExecutionStateRef* state);
 
   // NOTE: StackTrace can only be initialized as a local variable
   void* operator new(size_t size);
