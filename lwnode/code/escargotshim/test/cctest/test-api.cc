@@ -947,60 +947,60 @@ THREADED_TEST(ScriptUsingOneByteStringResource) {
 // }
 
 
-// THREADED_TEST(StringConcat) {
-//   {
-//     LocalContext env;
-//     v8::Isolate* isolate = env->GetIsolate();
-//     v8::HandleScope scope(isolate);
-//     const char* one_byte_string_1 = "function a_times_t";
-//     const char* two_byte_string_1 = "wo_plus_b(a, b) {return ";
-//     const char* one_byte_extern_1 = "a * 2 + b;} a_times_two_plus_b(4, 8) + ";
-//     const char* two_byte_extern_1 = "a_times_two_plus_b(4, 8) + ";
-//     const char* one_byte_string_2 = "a_times_two_plus_b(4, 8) + ";
-//     const char* two_byte_string_2 = "a_times_two_plus_b(4, 8) + ";
-//     const char* two_byte_extern_2 = "a_times_two_plus_b(1, 2);";
-//     Local<String> left = v8_str(one_byte_string_1);
+THREADED_TEST(StringConcat) {
+  {
+    LocalContext env;
+    v8::Isolate* isolate = env->GetIsolate();
+    v8::HandleScope scope(isolate);
+    const char* one_byte_string_1 = "function a_times_t";
+    const char* two_byte_string_1 = "wo_plus_b(a, b) {return ";
+    const char* one_byte_extern_1 = "a * 2 + b;} a_times_two_plus_b(4, 8) + ";
+    const char* two_byte_extern_1 = "a_times_two_plus_b(4, 8) + ";
+    const char* one_byte_string_2 = "a_times_two_plus_b(4, 8) + ";
+    const char* two_byte_string_2 = "a_times_two_plus_b(4, 8) + ";
+    const char* two_byte_extern_2 = "a_times_two_plus_b(1, 2);";
+    Local<String> left = v8_str(one_byte_string_1);
 
-//     uint16_t* two_byte_source = AsciiToTwoByteString(two_byte_string_1);
-//     Local<String> right =
-//         String::NewFromTwoByte(env->GetIsolate(), two_byte_source)
-//             .ToLocalChecked();
-//     i::DeleteArray(two_byte_source);
+    uint16_t* two_byte_source = AsciiToTwoByteString(two_byte_string_1);
+    Local<String> right =
+        String::NewFromTwoByte(env->GetIsolate(), two_byte_source)
+            .ToLocalChecked();
+    i::DeleteArray(two_byte_source);
 
-//     Local<String> source = String::Concat(isolate, left, right);
-//     right = String::NewExternalOneByte(
-//                 env->GetIsolate(),
-//                 new TestOneByteResource(i::StrDup(one_byte_extern_1)))
-//                 .ToLocalChecked();
-//     source = String::Concat(isolate, source, right);
-//     right = String::NewExternalTwoByte(
-//                 env->GetIsolate(),
-//                 new TestResource(AsciiToTwoByteString(two_byte_extern_1)))
-//                 .ToLocalChecked();
-//     source = String::Concat(isolate, source, right);
-//     right = v8_str(one_byte_string_2);
-//     source = String::Concat(isolate, source, right);
+    Local<String> source = String::Concat(isolate, left, right);
+    right = String::NewExternalOneByte(
+                env->GetIsolate(),
+                new TestOneByteResource(i::StrDup(one_byte_extern_1)))
+                .ToLocalChecked();
+    source = String::Concat(isolate, source, right);
+    right = String::NewExternalTwoByte(
+                env->GetIsolate(),
+                new TestResource(AsciiToTwoByteString(two_byte_extern_1)))
+                .ToLocalChecked();
+    source = String::Concat(isolate, source, right);
+    right = v8_str(one_byte_string_2);
+    source = String::Concat(isolate, source, right);
 
-//     two_byte_source = AsciiToTwoByteString(two_byte_string_2);
-//     right = String::NewFromTwoByte(env->GetIsolate(), two_byte_source)
-//                 .ToLocalChecked();
-//     i::DeleteArray(two_byte_source);
+    two_byte_source = AsciiToTwoByteString(two_byte_string_2);
+    right = String::NewFromTwoByte(env->GetIsolate(), two_byte_source)
+                .ToLocalChecked();
+    i::DeleteArray(two_byte_source);
 
-//     source = String::Concat(isolate, source, right);
-//     right = String::NewExternalTwoByte(
-//                 env->GetIsolate(),
-//                 new TestResource(AsciiToTwoByteString(two_byte_extern_2)))
-//                 .ToLocalChecked();
-//     source = String::Concat(isolate, source, right);
-//     Local<Script> script = v8_compile(source);
-//     Local<Value> value = script->Run(env.local()).ToLocalChecked();
-//     CHECK(value->IsNumber());
-//     CHECK_EQ(68, value->Int32Value(env.local()).FromJust());
-//   }
-//   CcTest::i_isolate()->compilation_cache()->Clear();
-//   CcTest::CollectAllGarbage();
-//   CcTest::CollectAllGarbage();
-// }
+    source = String::Concat(isolate, source, right);
+    right = String::NewExternalTwoByte(
+                env->GetIsolate(),
+                new TestResource(AsciiToTwoByteString(two_byte_extern_2)))
+                .ToLocalChecked();
+    source = String::Concat(isolate, source, right);
+    Local<Script> script = v8_compile(source);
+    Local<Value> value = script->Run(env.local()).ToLocalChecked();
+    CHECK(value->IsNumber());
+    CHECK_EQ(68, value->Int32Value(env.local()).FromJust());
+  }
+  // CcTest::i_isolate()->compilation_cache()->Clear();
+  CcTest::CollectAllGarbage();
+  CcTest::CollectAllGarbage();
+}
 
 
 THREADED_TEST(GlobalProperties) {
@@ -4746,76 +4746,76 @@ TEST(MessageGetSourceLine) {
       });
 }
 
-// THREADED_TEST(GetSetProperty) {
-//   LocalContext context;
-//   v8::Isolate* isolate = context->GetIsolate();
-//   v8::HandleScope scope(isolate);
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("foo"), v8_num(14))
-//             .FromJust());
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_str("12"), v8_num(92))
-//             .FromJust());
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8::Integer::New(isolate, 16), v8_num(32))
-//             .FromJust());
-//   CHECK(context->Global()
-//             ->Set(context.local(), v8_num(13), v8_num(56))
-//             .FromJust());
-//   Local<Value> foo = CompileRun("this.foo");
-//   CHECK_EQ(14, foo->Int32Value(context.local()).FromJust());
-//   Local<Value> twelve = CompileRun("this[12]");
-//   CHECK_EQ(92, twelve->Int32Value(context.local()).FromJust());
-//   Local<Value> sixteen = CompileRun("this[16]");
-//   CHECK_EQ(32, sixteen->Int32Value(context.local()).FromJust());
-//   Local<Value> thirteen = CompileRun("this[13]");
-//   CHECK_EQ(56, thirteen->Int32Value(context.local()).FromJust());
-//   CHECK_EQ(92, context->Global()
-//                    ->Get(context.local(), v8::Integer::New(isolate, 12))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(92, context->Global()
-//                    ->Get(context.local(), v8_str("12"))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(92, context->Global()
-//                    ->Get(context.local(), v8_num(12))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(32, context->Global()
-//                    ->Get(context.local(), v8::Integer::New(isolate, 16))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(32, context->Global()
-//                    ->Get(context.local(), v8_str("16"))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(32, context->Global()
-//                    ->Get(context.local(), v8_num(16))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(56, context->Global()
-//                    ->Get(context.local(), v8::Integer::New(isolate, 13))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(56, context->Global()
-//                    ->Get(context.local(), v8_str("13"))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-//   CHECK_EQ(56, context->Global()
-//                    ->Get(context.local(), v8_num(13))
-//                    .ToLocalChecked()
-//                    ->Int32Value(context.local())
-//                    .FromJust());
-// }
+THREADED_TEST(GetSetProperty) {
+  LocalContext context;
+  v8::Isolate* isolate = context->GetIsolate();
+  v8::HandleScope scope(isolate);
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("foo"), v8_num(14))
+            .FromJust());
+  CHECK(context->Global()
+            ->Set(context.local(), v8_str("12"), v8_num(92))
+            .FromJust());
+  CHECK(context->Global()
+            ->Set(context.local(), v8::Integer::New(isolate, 16), v8_num(32))
+            .FromJust());
+  CHECK(context->Global()
+            ->Set(context.local(), v8_num(13), v8_num(56))
+            .FromJust());
+  Local<Value> foo = CompileRun("this.foo");
+  CHECK_EQ(14, foo->Int32Value(context.local()).FromJust());
+  Local<Value> twelve = CompileRun("this[12]");
+  CHECK_EQ(92, twelve->Int32Value(context.local()).FromJust());
+  Local<Value> sixteen = CompileRun("this[16]");
+  CHECK_EQ(32, sixteen->Int32Value(context.local()).FromJust());
+  Local<Value> thirteen = CompileRun("this[13]");
+  CHECK_EQ(56, thirteen->Int32Value(context.local()).FromJust());
+  CHECK_EQ(92, context->Global()
+                   ->Get(context.local(), v8::Integer::New(isolate, 12))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(92, context->Global()
+                   ->Get(context.local(), v8_str("12"))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(92, context->Global()
+                   ->Get(context.local(), v8_num(12))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(32, context->Global()
+                   ->Get(context.local(), v8::Integer::New(isolate, 16))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(32, context->Global()
+                   ->Get(context.local(), v8_str("16"))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(32, context->Global()
+                   ->Get(context.local(), v8_num(16))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(56, context->Global()
+                   ->Get(context.local(), v8::Integer::New(isolate, 13))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(56, context->Global()
+                   ->Get(context.local(), v8_str("13"))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+  CHECK_EQ(56, context->Global()
+                   ->Get(context.local(), v8_num(13))
+                   .ToLocalChecked()
+                   ->Int32Value(context.local())
+                   .FromJust());
+}
 
 
 // THREADED_TEST(PropertyAttributes) {
@@ -6298,14 +6298,14 @@ THREADED_TEST(InstanceOf) {
   CHECK(!try_catch.HasCaught());
 }
 
-// THREADED_TEST(MultiRun) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   Local<Script> script = v8_compile("x");
-//   for (int i = 0; i < 10; i++) {
-//     script->Run(context.local()).IsEmpty();
-//   }
-// }
+THREADED_TEST(MultiRun) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  Local<Script> script = v8_compile("x");
+  for (int i = 0; i < 10; i++) {
+    script->Run(context.local()).IsEmpty();
+  }
+}
 
 
 static void GetXValue(Local<Name> name,
