@@ -2437,7 +2437,9 @@ void v8::Object::SetAlignedPointerInInternalField(int index, void* value) {
 void v8::Object::SetAlignedPointerInInternalFields(int argc,
                                                    int indices[],
                                                    void* values[]) {
-  LWNODE_RETURN_VOID;
+  for (int i = 0; i < argc; i++) {
+    SetAlignedPointerInInternalField(indices[i], values[i]);
+  }
 }
 
 }  // namespace v8
