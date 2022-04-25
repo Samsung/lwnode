@@ -114,6 +114,15 @@ MaybeLocal<Value> Script::Run(Local<Context> context) {
   // 1) lwContextUsed->get() ?
   // 2) script->context() ?
 
+  if (lwContext->getAbortScriptExecution()) {
+    auto abortScriptExecutionCb = lwContext->getAbortScriptExecution();
+    abortScriptExecutionCb(lwIsolate->toV8(), context);
+
+    lwIsolate->ScheduleThrow(ValueRef::createUndefined());
+
+    return MaybeLocal<Value>();
+  }
+
   auto r = Evaluator::execute(
       esScript->context(),
       [](ExecutionStateRef* state, ScriptRef* script) -> ValueRef* {

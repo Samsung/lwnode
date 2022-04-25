@@ -269,7 +269,8 @@ void Context::SetErrorMessageForCodeGenerationFromStrings(Local<String> error) {
 
 void Context::SetAbortScriptExecution(
     Context::AbortScriptExecutionCallback callback) {
-  LWNODE_UNIMPLEMENT;
+  auto lwContext = VAL(this)->context();
+  lwContext->SetAbortScriptExecution(callback);
 }
 
 Local<Value> Context::GetContinuationPreservedEmbedderData() const {

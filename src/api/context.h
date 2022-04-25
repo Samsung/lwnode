@@ -55,6 +55,10 @@ class ContextWrap : public ValueWrap {
 
   CallSite* callSite() { return callSite_; }
 
+  void SetAbortScriptExecution(
+      v8::Context::AbortScriptExecutionCallback callback);
+  v8::Context::AbortScriptExecutionCallback getAbortScriptExecution();
+
   void initDebugger();
 
  private:
@@ -71,6 +75,9 @@ class ContextWrap : public ValueWrap {
   Escargot::ValueRef* security_token_ = nullptr;
 
   CallSite* callSite_ = nullptr;
+
+  v8::Context::AbortScriptExecutionCallback abortScriptExecutionCallback_ =
+      nullptr;
 };
 
 }  // namespace EscargotShim

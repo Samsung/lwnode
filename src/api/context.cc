@@ -201,6 +201,16 @@ void ContextWrap::UseDefaultSecurityToken() {
   security_token_ = context_->globalObject();
 }
 
+void ContextWrap::SetAbortScriptExecution(
+    v8::Context::AbortScriptExecutionCallback callback) {
+  abortScriptExecutionCallback_ = callback;
+}
+
+v8::Context::AbortScriptExecutionCallback
+ContextWrap::getAbortScriptExecution() {
+  return abortScriptExecutionCallback_;
+}
+
 }  // namespace EscargotShim
 
 // namespace EscargotShim
