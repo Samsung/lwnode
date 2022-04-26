@@ -669,11 +669,25 @@ Local<v8::Symbol> v8::SymbolObject::ValueOf() const {
 }
 
 MaybeLocal<v8::Value> v8::Date::New(Local<Context> context, double time) {
-  LWNODE_RETURN_LOCAL(Value);
+  EsScope scope(context);
+
+  auto r = Evaluator::execute(
+      scope.context(),
+      [](ExecutionStateRef* state, double time) -> ValueRef* {
+        auto date = DateObjectRef::create(state);
+        date->setTimeValue(time);
+
+        return date;
+      },
+      time);
+  LWNODE_CHECK(r.isSuccessful());
+
+  return Utils::NewLocal<Date>(scope.v8Isolate(), r.result);
 }
 
 double v8::Date::ValueOf() const {
-  LWNODE_RETURN_0;
+  EsScope scope(this);
+  return scope.self()->asDateObject()->primitiveValue();
 }
 
 MaybeLocal<v8::RegExp> v8::RegExp::New(Local<Context> context,

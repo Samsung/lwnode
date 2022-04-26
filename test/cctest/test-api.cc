@@ -14060,14 +14060,14 @@ TEST(WeakCallbackApi) {
 // }
 
 
-// THREADED_TEST(DateAccess) {
-//   LocalContext context;
-//   v8::HandleScope scope(context->GetIsolate());
-//   v8::Local<v8::Value> date =
-//       v8::Date::New(context.local(), 1224744689038.0).ToLocalChecked();
-//   CHECK(date->IsDate());
-//   CHECK_EQ(1224744689038.0, date.As<v8::Date>()->ValueOf());
-// }
+THREADED_TEST(DateAccess) {
+  LocalContext context;
+  v8::HandleScope scope(context->GetIsolate());
+  v8::Local<v8::Value> date =
+      v8::Date::New(context.local(), 1224744689038.0).ToLocalChecked();
+  CHECK(date->IsDate());
+  CHECK_EQ(1224744689038.0, date.As<v8::Date>()->ValueOf());
+}
 
 void CheckIsSymbolAt(v8::Isolate* isolate, v8::Local<v8::Array> properties,
                      unsigned index, const char* name) {
