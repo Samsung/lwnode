@@ -1491,7 +1491,7 @@ THREADED_TEST(BindingDemoCustom2) {
   CHECK_EQ(20, value->Int32Value(context.local()).FromJust());
 }
 
-TEST(NativeFunctionDeclarationErrorCustom) {
+TEST(DISABLED_NativeFunctionDeclarationErrorCustom) {
   LocalContext context;
   v8::Isolate* isolate = context->GetIsolate();
   v8::HandleScope handle_scope(isolate);
