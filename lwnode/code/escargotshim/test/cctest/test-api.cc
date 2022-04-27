@@ -7086,7 +7086,7 @@ static const char* kSimpleExtensionSource =
     "}";
 
 
-TEST(SimpleExtensions) {
+TEST(DISABLED_SimpleExtensions) {
   v8::HandleScope handle_scope(CcTest::isolate());
   v8::RegisterExtension(
       std::make_unique<Extension>("simpletest", kSimpleExtensionSource));
@@ -14785,7 +14785,7 @@ TEST(ObjectClone) {
 
 // Test that we cannot set a property on the global object if there
 // is a read-only property in the prototype chain.
-TEST(ReadOnlyPropertyInGlobalProto) {
+TEST(DISABLED_ReadOnlyPropertyInGlobalProto) {
   v8::Isolate* isolate = CcTest::isolate();
   v8::HandleScope scope(isolate);
   v8::Local<v8::ObjectTemplate> templ = v8::ObjectTemplate::New(isolate);
