@@ -1,0 +1,68 @@
+name: Build lwnode
+on: [ push ]
+jobs:
+  build_lwnode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [ release ]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd lwnode/code/escargotshim/deps/escargot
+          git submodule update --init third_party
+          pushd third_party/wasm/wabt
+          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+          popd
+          popd
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib sed
+      - name: Build lwnode
+        run: |
+          ./configure --without-npm --without-bundled-v8 \
+          --without-inspector --without-node-code-cache --without-node-snapshot \
+          --with-intl none --shared-zlib --dest-os linux --dest-cpu x64 \
+          --engine escargot --escargot-threading --ninja
+          ninja -C out/linux/Release lwnode
+      - name: Run node.js TCs (test.py)
+        run: |
+          tools/test.py -J -p dots --report --time \
+          --timeout 240 --repeat 1 \
+          --skip-tests=$(sed 's/\s#.*//g' ./test/skip_tests.txt | paste -sd,) \
+          --unsupported-tests=$(sed '/#\|^$/d' ./test/skip_features.txt | paste -sd,) \
+          test/parallel test/regression
+
+  cctest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd lwnode/code/escargotshim/deps/escargot
+          git submodule update --init third_party
+          pushd third_party/wasm/wabt
+          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+          popd
+          popd
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib
+      - name: Build cctest
+        run: |
+          lwnode/build-cctest.sh
+      - name: Run cctest
+        run: |
+          out/cctest/out/Debug/cctest
