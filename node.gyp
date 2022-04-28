@@ -1245,17 +1245,6 @@
         }],
       ],
     }, # fuzz_env
-
-    {
-      'target_name': 'cctest',
-      'type': 'executable',
-      'conditions': [
-        ['lwnode=="true"', {
-          'includes': [ 'lwnode/test/node/cctest.gypi' ],
-        }],
-      ]
-    },  # cctest
-
     {
       'target_name': 'cctest8',
       'type': 'executable',
