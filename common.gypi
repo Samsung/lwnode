@@ -81,6 +81,9 @@
 
     ##### end V8 defaults #####
 
+    # @lwnode
+    'node_obj_dir%': 'obj',
+
     'conditions': [
       ['OS == "win"', {
         'os_posix': 0,
@@ -92,7 +95,8 @@
         'v8_postmortem_support%': 1,
       }],
       ['GENERATOR == "ninja"', {
-        'obj_dir': '<(PRODUCT_DIR)/obj',
+        # @lwnode
+        'obj_dir': '<(PRODUCT_DIR)/<(node_obj_dir)',
         'v8_base': '<(PRODUCT_DIR)/obj/tools/v8_gypfiles/libv8_snapshot.a',
       }, {
         'obj_dir%': '<(PRODUCT_DIR)/obj.target',
