@@ -130,11 +130,6 @@
             'LWNODE_ENABLE_EXPERIMENTAL_STACKTRACE=1',
           ],
         }],
-        ['include_node_bindings == "true"', {
-          'dependencies': [
-            '<(node_bindings_dir)/node_bindings.gyp:node_bindings',
-          ],
-        }],
       ],
     },
   ],
