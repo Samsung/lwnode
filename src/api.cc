@@ -314,13 +314,15 @@ void RegisteredExtension::applyV8Extension(ContextRef* context,
   }
 
   // Register v8 native function extension
+  std::string name = checker.functionName();
   auto lwIsolate = IsolateWrap::GetCurrent();
-  v8::Local<v8::String> str;
+  auto v8Name = Utils::NewLocal<String>(
+      lwIsolate->toV8(), StringRef::createFromASCII(name.c_str(), name.size()));
+
   v8::Local<v8::FunctionTemplate> v8FunctionTemplate =
-      extension->GetNativeFunctionTemplate(lwIsolate->toV8(), str);
+      extension->GetNativeFunctionTemplate(lwIsolate->toV8(), v8Name);
 
   auto esFunctionTemplate = CVAL(*v8FunctionTemplate)->ftpl();
-  std::string name = checker.functionName();
 
   EvalResult r = Evaluator::execute(
       context,
