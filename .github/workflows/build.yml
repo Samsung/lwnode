@@ -66,3 +66,41 @@ jobs:
       - name: Run cctest
         run: |
           out/cctest/out/Debug/cctest
+  build_tizen_std:
+    runs-on: ubuntu-20.04
+    #container:
+    #  image: art.sec.samsung.net/circleci-docker/docker-gbs-base:actions
+    #  options: --user root --privileged
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [t70std]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd lwnode/code/escargotshim/deps/escargot
+          git submodule update --init third_party
+          pushd third_party/wasm/wabt
+          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+          popd
+          popd
+      - name: Install Packages
+        run: |
+          echo "deb [trusted=yes] http://download.tizen.org/tools/latest-release/Ubuntu_$(lsb_release -rs)/ /" | \
+          sudo tee /etc/apt/sources.list.d/tizen.list > /dev/null
+          pwd
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib gbs
+      - name: Build Tizen ${{ matrix.profile }}
+        run: |
+          gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --define 'lib_type shared'
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: tizen_std_${{ matrix.profile }}
+          path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
