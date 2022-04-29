@@ -1415,6 +1415,10 @@ Local<String> v8::Object::GetConstructorName() {
 
 Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
                                           IntegrityLevel level) {
+// Note: Debugger and setIntegrityLevel cannot be used together
+#if defined(LWNODE_ENABLE_DEBUGGER)
+  return Just(true);
+#else
   API_ENTER_WITH_CONTEXT(context, Nothing<bool>());
   auto esContext = lwIsolate->GetCurrentContext()->get();
 
@@ -1439,6 +1443,7 @@ Maybe<bool> v8::Object::SetIntegrityLevel(Local<Context> context,
   }
 #endif
   return Just(r.result->asBoolean());
+#endif
 }
 
 Maybe<bool> v8::Object::Delete(Local<Context> context, Local<Value> key) {
