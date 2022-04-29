@@ -75,114 +75,20 @@ http2_optgroup = optparse.OptionGroup(parser, "HTTP2",
 lwnode_optgroup = optparse.OptionGroup(parser, "LightWeight Node.js",
     "Flags that allows you to control LWNode.js build options")
 
-lwnode_optgroup.add_option('--engine',
-    action='store',
-    dest='engine',
+lwnode_optgroup.add_option('--lwnode',
+    action='store_true',
+    dest='lwnode',
     default=False,
-    help='Use escargot JS engine)')
+    help='Configure Lightweight Node.js)')
 
-lwnode_optgroup.add_option('--tizen',
+lwnode_optgroup.add_option('--skip-node-gyp',
     action='store_true',
-    dest='tizen',
+    dest='skip_node_gyp',
     default=False,
-    help='Platform: tizen')
-
-lwnode_optgroup.add_option('--profile',
-    choices=['common', 'tv', 'kiosk'],
-    default='common',
-    help='Build profile: common | tv | kiosk')
-
-lwnode_optgroup.add_option('--enable-external-builtin-script',
-    action='store_true',
-    dest='enable_external_builtin_script',
-    default=False,
-    help='Store builtin scripts outside of executable')
-
-lwnode_optgroup.add_option('--enable-reload-script',
-    action='store_true',
-    dest='enable_reload_script',
-    default=False,
-    help='Reload scripts on demand')
-
-lwnode_optgroup.add_option('--static-escargot',
-    action='store_true',
-    dest='static_escargot',
-    help='link to a static escargot instead of shared linking')
-
-lwnode_optgroup.add_option('--escargot-threading',
-    action='store_true',
-    dest='escargot_threading',
-    help='Enable Escargot threading')
-
-lwnode_optgroup.add_option('--escargot-debugger',
-    action='store_true',
-    dest='escargot_debugger',
-    help='Enable Escargot debugging')
+    help='Skip running node-gyp (create `config.gypi` only)')
 
 parser.add_option_group(lwnode_optgroup)
-
-def get_lwnode_gyp_options():
-  args = []
-
-  if options.debug:
-    args += ['-Dbuild_mode=debug']
-  else:
-    args += ['-Dbuild_mode=release']
-
-  if options.engine == 'escargot' :
-    args += ['-Dlwnode='+ 'true']
-
-    lwnode_jsengine_path = 'lwnode/code/escargotshim'
-    args += ['-Dlwnode_jsengine_path='+ lwnode_jsengine_path]
-
-    if options.enable_external_builtin_script:
-      args += ['-Denable_external_builtin_script=true']
-    else:
-      args += ['-Denable_external_builtin_script=false']
-
-    if options.enable_reload_script:
-      args += ['-Denable_reload_script=true']
-    else:
-      args += ['-Denable_reload_script=false']
-  else:
-    args += ['-Dlwnode='+ 'false']
-
-  if options.tizen:
-    args += ['-Dtarget_os=tizen']
-    args += ['-Dprofile='+ str(options.profile)]
-  else:
-    args += ['-Dtarget_os=linux']
-
-  if options.static_escargot:
-    args += (['-Descargot_lib_type=static_lib'])
-  else:
-    args += (['-Descargot_lib_type=shared_lib'])
-
-  if options.escargot_threading:
-    args += (['-Descargot_threading=1'])
-  else:
-    args += (['-Descargot_threading=0'])
-
-  if options.escargot_debugger:
-    args += (['-Descargot_debugger=1'])
-  else:
-    args += (['-Descargot_debugger=0'])
-
-  args += ['-Dnode_core_target_name=lwnode']
-  args += ['-Dnode_lib_target_name=liblwnode']
-
-  options.verbose = True
-  print_verbose("LWNode.js options: [" + " ".join(str(x) for x in args) + "]")
-  options.verbose = False
-
-  return args
-
-def configure_lwnode(o):
-  o['variables']['javascript_engine'] = 'escargot' if options.engine == 'escargot' else 'v8'
-  if options.engine == 'escargot' :
-    o['variables']['lwnode_external_builtin_script'] = b(options.enable_external_builtin_script)
-    o['variables']['lwnode_reload_script'] = b(options.enable_reload_script)
-# end of @lwnode
+# /@lwnode
 
 # Options should be in alphabetical order but keep --prefix at the top,
 # that's arguably the one people will be looking for most.
@@ -1919,9 +1825,6 @@ configure_intl(output)
 configure_static(output)
 configure_inspector(output)
 configure_section_file(output)
-# @lwnode
-configure_lwnode(output)
-# end of @lwnode
 
 
 # Forward OSS-Fuzz settings
@@ -1955,15 +1858,6 @@ output = {
 }
 if make_global_settings:
   output['make_global_settings'] = make_global_settings
-
-print_verbose(output)
-
-write('config.gypi', do_not_edit +
-      pprint.pformat(output, indent=2) + '\n')
-
-write('config.status', '#!/bin/sh\nset -x\nexec ./configure ' +
-      ' '.join([pipes.quote(arg) for arg in original_argv]) + '\n')
-os.chmod('config.status', 0o775)
 
 
 config = {
@@ -2013,16 +1907,34 @@ if options.compile_commands_json:
 
 # pass the leftover positional arguments to GYP
 gyp_args += args
+
 # @lwnode
-if options.without_bundled_v8:
-  gyp_args += get_lwnode_gyp_options()
-else:
-  gyp_args += ['-Dlwnode='+ 'false']
-# @end of lwnode
+gyp_args += ['-Dlwnode=' + b(options.lwnode)]
+
+if options.skip_node_gyp:
+  output['variables']['gyp_args'] = gyp_args
+
+if not options.lwnode:
+  # all keys added should have default variable
+  gyp_args += ['-Dnode_obj_dir=obj']
+# /@lwnode
 
 if warn.warned and not options.verbose:
   warn('warnings were emitted in the configure phase')
 
-print_verbose("running: \n    " + " ".join(['python', 'tools/gyp_node.py'] + gyp_args))
-run_gyp(gyp_args)
-info('configure completed successfully')
+print_verbose(output)
+write('config.gypi', do_not_edit +
+      pprint.pformat(output, indent=2) + '\n')
+
+write('config.status', '#!/bin/sh\nset -x\nexec ./configure ' +
+      ' '.join([pipes.quote(arg) for arg in original_argv]) + '\n')
+os.chmod('config.status', 0o775)
+
+# @lwnode
+if not options.skip_node_gyp:
+  print_verbose("running: \n    " + " ".join(['python', 'tools/gyp_node.py'] + gyp_args))
+  run_gyp(gyp_args)
+  info('configure completed successfully')
+else:
+  info('node-gyp skipped')
+# /@lwnode
