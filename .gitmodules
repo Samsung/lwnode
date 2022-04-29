@@ -1,3 +1,6 @@
 [submodule "deps/escargot"]
 	path = deps/escargot
 	url = https://github.com/Samsung/escargot.git
+[submodule "deps/lwnode"]
+	path = deps/lwnode
+	url = https://github.sec.samsung.net/lws/lwnode.git
