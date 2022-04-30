@@ -48,33 +48,31 @@ def lwnode_gyp_opts(options):
   args = []
 
   # definitions (node)
-  args += ['-D' + 'node_core_target_name=lwnode']
-  args += ['-D' + 'node_lib_target_name=liblwnode']
-  args += ['-D' + 'node_shared=false']
-  args += ['-D' + 'node_obj_dir=obj/deps/lwnode']
-  args += ['-D' + 'lwnode_jsengine_path=' + ROOT_DIR]
+  args += ['-Dnode_core_target_name=lwnode']
+  args += ['-Dnode_lib_target_name=liblwnode']
+  args += ['-Dnode_shared=false']
+  args += ['-Dnode_obj_dir=obj/deps/lwnode']
+  args += ['-Dlwnode_jsengine_path=' + ROOT_DIR]
 
   # definitions (escargot)
-  args += ['-D' + 'build_mode=' + ('debug' if options.debug else 'release')]
-  args += ['-D' + 'enable_reload_script=' + b(options.reload_script)]
+  args += ['-Dbuild_mode=' + ('debug' if options.debug else 'release')]
   args += [
-      '-D' + 'enable_external_builtin_script=' +
-      b(options.external_builtin_script)
+      '-Denable_external_builtin_script=' +
+      b(not options.without_external_builtins)
   ]
+  args += ['-Denable_reload_script=' + b(not options.without_reload_script)]
   args += [
-      '-D' + 'escargot_lib_type=' +
+      '-Descargot_lib_type=' +
       ('static_lib' if options.static_escargot else 'shared_lib')
   ]
-  args += [
-      '-D' + 'escargot_threading=' + n(not options.without_escargot_threading)
-  ]
-  args += ['-D' + 'escargot_debugger=' + n(options.escargot_debugger)]
+  args += ['-Descargot_threading=' + n(not options.without_escargot_threading)]
+  args += ['-Descargot_debugger=' + n(options.escargot_debugger)]
 
   # definitions (shim && escargot)
   target_os = ('tizen' if options.tizen else 'linux')
-  args += ['-D' + 'target_os=' + target_os]
+  args += ['-Dtarget_os=' + target_os]
   if options.tizen:
-    args += ['-D' + 'profile=' + str(options.profile)]
+    args += ['-Dprofile=' + str(options.profile)]
   return args
 
 
@@ -102,8 +100,9 @@ def main(options):
 
   o = dict()
   o['javascript_engine'] = 'escargot'
-  o['lwnode_external_builtin_script'] = b(options.external_builtin_script)
-  o['lwnode_reload_script'] = b(options.reload_script)
+  o['lwnode_external_builtin_script'] = b(
+      not options.without_external_builtins)
+  o['lwnode_reload_script'] = b(not options.without_reload_script)
   v = config['variables']
   v.update(o)
 
@@ -124,12 +123,10 @@ def main(options):
   gyp_args += ['--depth=.']
   gyp_args += ['--generator-output=' + gen_build_dir]
   gyp_args += ['-Goutput_dir=' + gen_build_dir]
-  gyp_args += ['-D' + 'component=static_library']
-  gyp_args += ['-D' + 'library=static_library']
-  gyp_args += ['-I', NODE_DIR + '/common.gypi']
-  gyp_args += ['-I', NODE_DIR + '/config.gypi']
-  # gyp_args += ['-I', os.path.join(NODE_DIR, 'common.gypi')]
-  # gyp_args += ['-I', os.path.join(NODE_DIR, 'config.gypi')]
+  gyp_args += ['-Dcomponent=static_library']
+  gyp_args += ['-Dlibrary=static_library']
+  gyp_args += ['-I', os.path.join(NODE_DIR, 'common.gypi')]
+  gyp_args += ['-I', os.path.join(NODE_DIR, 'config.gypi')]
   gyp_args += lwnode_gyp_opts(options)
 
   # 4. run gyp
@@ -144,7 +141,7 @@ def setupCLIOptions(parser):
   lwnode_optgroup = optparse.OptionGroup(
       parser,
       'LightWeight Node.js',
-      'Flags that allows you to control LWNode.js build options',
+      'Flags that allow you to control LWNode.js build options',
   )
 
   lwnode_optgroup.add_option(
@@ -163,22 +160,6 @@ def setupCLIOptions(parser):
   )
 
   lwnode_optgroup.add_option(
-      '--enable-external-builtin-script',
-      action='store_true',
-      dest='external_builtin_script',
-      default=False,
-      help='Store builtin scripts outside of executable',
-  )
-
-  lwnode_optgroup.add_option(
-      '--enable-reload-script',
-      action='store_true',
-      dest='reload_script',
-      default=False,
-      help='Reload scripts on demand',
-  )
-
-  lwnode_optgroup.add_option(
       '--static-escargot',
       action='store_true',
       dest='static_escargot',
@@ -186,11 +167,27 @@ def setupCLIOptions(parser):
   )
 
   lwnode_optgroup.add_option(
+      '--without-external-builtins',
+      action='store_true',
+      dest='without_external_builtins',
+      default=False,
+      help='Disable external builtin scripts',
+  )
+
+  lwnode_optgroup.add_option(
+      '--without-reload-script',
+      action='store_true',
+      dest='without_reload_script',
+      default=False,
+      help='Disable script reloading',
+  )
+
+  lwnode_optgroup.add_option(
       '--without-escargot-threading',
       action='store_true',
       dest='without_escargot_threading',
       default=False,
-      help='Enable Escargot threading',
+      help='Disable Escargot threading',
   )
 
   lwnode_optgroup.add_option(
