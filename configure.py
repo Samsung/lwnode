@@ -50,9 +50,9 @@ def lwnode_gyp_opts(opts):
   # definitions (used: node)
   args += ['-Dnode_core_target_name=lwnode']
   args += ['-Dnode_lib_target_name=liblwnode']
-  args += ['-Dnode_shared=false']
   args += ['-Dnode_obj_dir=obj/deps/lwnode']
   args += ['-Dlwnode_jsengine_path=' + ROOT_DIR]
+  args += ['-Dlink_exec_static=' + b(not opts.link_exec_shared)]
 
   # definitions (used: node && escargot)
   args += ['-Dexternal_builtins=' + b(not opts.without_external_builtins)]
@@ -75,7 +75,7 @@ def main(opts):
   configure_path = os.path.join(NODE_DIR, 'configure.py')
 
   node_opts = "--lwnode --skip-node-gyp --ninja \
-    --dest-os=linux \
+    --dest-os=linux --shared \
     --without-bundled-v8 --without-node-code-cache \
     --without-node-snapshot --without-inspector \
     --without-npm --with-intl=none --shared-zlib".split()
@@ -206,6 +206,14 @@ def setupCLIOptions(parser):
       dest='gyp_more_opts',
       default=[],
       help='Append GYP options. Can be used multiple times')
+
+  lwnode_optgroup.add_option(
+      '--link-exec-shared',
+      action='store_true',
+      dest='link_exec_shared',
+      default=False,
+      help='Link the executable with shared lib (%default)',
+  )
 
   lwnode_optgroup.add_option(
       '--debug',
