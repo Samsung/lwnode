@@ -774,7 +774,7 @@
             'deps/node-bindings/node_bindings.gyp:node_bindings',
           ],
           'conditions': [
-            ['enable_external_builtin_script=="true"', {
+            ['external_builtins=="true"', {
               'variables': {
                 'archive_filename%': '<(node_core_target_name).dat'
               },
@@ -997,7 +997,7 @@
             '<(SHARED_INTERMEDIATE_DIR)/node_javascript.cc',
           ],
           'conditions': [
-            ['lwnode=="true" and enable_external_builtin_script=="true"', {
+            ['lwnode=="true" and external_builtins=="true"', {
               'action': [
                 'python', '<@(_inputs)',
                 '--external',
