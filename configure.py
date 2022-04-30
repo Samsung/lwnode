@@ -43,73 +43,67 @@ def read_node_config_gypi(config_gypi_path):
     return ast.literal_eval(content)
 
 
-def lwnode_gyp_opts(options):
+def lwnode_gyp_opts(opts):
   '''Returns GYP options.'''
   args = []
 
-  # definitions (node)
+  # definitions (used: node)
   args += ['-Dnode_core_target_name=lwnode']
   args += ['-Dnode_lib_target_name=liblwnode']
   args += ['-Dnode_shared=false']
   args += ['-Dnode_obj_dir=obj/deps/lwnode']
   args += ['-Dlwnode_jsengine_path=' + ROOT_DIR]
 
-  # definitions (escargot)
-  args += ['-Dbuild_mode=' + ('debug' if options.debug else 'release')]
-  args += [
-      '-Denable_external_builtin_script=' +
-      b(not options.without_external_builtins)
-  ]
-  args += ['-Denable_reload_script=' + b(not options.without_reload_script)]
-  args += [
-      '-Descargot_lib_type=' +
-      ('static_lib' if options.static_escargot else 'shared_lib')
-  ]
-  args += ['-Descargot_threading=' + n(not options.without_escargot_threading)]
-  args += ['-Descargot_debugger=' + n(options.escargot_debugger)]
+  # definitions (used: node && escargot)
+  args += ['-Dexternal_builtins=' + b(not opts.without_external_builtins)]
+  args += ['-Denable_reload_script=' + b(not opts.without_reload_script)]
 
-  # definitions (shim && escargot)
-  target_os = ('tizen' if options.tizen else 'linux')
-  args += ['-Dtarget_os=' + target_os]
-  if options.tizen:
-    args += ['-Dprofile=' + str(options.profile)]
+  # definitions (used: escargot)
+  args += ['-Descargot_build_mode=' + ('debug' if opts.debug else 'release')]
+  args += ['-Descargot_lib_type=' + str(opts.escargot_lib_type)]
+  args += ['-Descargot_threading=' + n(not opts.without_escargot_threading)]
+  args += ['-Descargot_debugger=' + n(opts.escargot_debugger)]
+
+  # definitions (used: shim && escargot)
+  args += ['-Dtarget_os=' + ('tizen' if opts.tizen else 'linux')]
+  args += ['-Dprofile=' + str(opts.profile)] if opts.tizen else []
   return args
 
 
-def main(options):
-  # 1. create `config.gypi` using `NODE_DIR/configure.py`
+def main(opts):
+  # 1. create `NODE_DIR/config.gypi`
   configure_path = os.path.join(NODE_DIR, 'configure.py')
 
-  node_opts = "--ninja --lwnode --skip-node-gyp \
-    --dest-os linux --dest-cpu x64 \
+  node_opts = "--lwnode --skip-node-gyp --ninja \
+    --dest-os=linux \
     --without-bundled-v8 --without-node-code-cache \
     --without-node-snapshot --without-inspector \
-    --without-npm --with-intl none --shared-openssl --shared-zlib".split()
-  node_opts += ['--debug', '--debug-node'] if options.debug else []
+    --without-npm --with-intl=none --shared-zlib".split()
+  node_opts += ['--debug', '--debug-node'] if opts.debug else []
+  node_opts += opts.node_more_opts
 
-  print_verbose('[' + ' '.join(str(x) for x in node_opts) + ']',
-                options.verbose)
+  print_verbose('[ ' + ', '.join(["'%s'" % str(x) for x in node_opts]) + ']',
+                opts.verbose)
 
   subprocess.check_call([sys.executable, configure_path] + node_opts)
 
-  # 2. rewrite `config.gypi` after adding lwnode configurations
-  # these can be referred via `process.config` in Node.js JS side.
+  # 2. rewrite `NODE_DIR/config.gypi` to append the lwnode variables,
+  # which are accessible via `process.config` in Node.js JS side.
   # e.g) `console.log(process.config.variables.javascript_engine)`
   config_gypi_path = os.path.join(NODE_DIR, 'config.gypi')
   config = read_node_config_gypi(config_gypi_path)
 
-  o = dict()
+  o = {}
   o['javascript_engine'] = 'escargot'
-  o['lwnode_external_builtin_script'] = b(
-      not options.without_external_builtins)
-  o['lwnode_reload_script'] = b(not options.without_reload_script)
+  o['lwnode_external_builtin_script'] = b(not opts.without_external_builtins)
+  o['lwnode_reload_script'] = b(not opts.without_reload_script)
   v = config['variables']
   v.update(o)
 
-  print_verbose(o, options.verbose)
+  print_verbose(o, opts.verbose)
 
-  # `gyp_args` is generated when `--skip-node-gyp` is given.
-  # we delete it since it's unnecessary after used here.
+  # `gyp_args` is enabled when `NODE_DIR/config.gypi` is created with
+  # `--skip-node-gyp`. we remove it since it's given for the next step.
   gyp_args = v['gyp_args']
   del v['gyp_args']
 
@@ -117,8 +111,8 @@ def main(options):
   with open(config_gypi_path, 'w') as f:
     f.write(do_not_edit + pprint.pformat(config, indent=2) + '\n')
 
-  # 3. prepare gyp args to generate build configuration
-  target_os = ('tizen' if options.tizen else 'linux')
+  # 3. prepare gyp arguments
+  target_os = ('tizen' if opts.tizen else 'linux')
   gen_build_dir = os.path.join(ROOT_DIR, 'out', target_os)
   gyp_args += ['--depth=.']
   gyp_args += ['--generator-output=' + gen_build_dir]
@@ -127,12 +121,13 @@ def main(options):
   gyp_args += ['-Dlibrary=static_library']
   gyp_args += ['-I', os.path.join(NODE_DIR, 'common.gypi')]
   gyp_args += ['-I', os.path.join(NODE_DIR, 'config.gypi')]
-  gyp_args += lwnode_gyp_opts(options)
+  gyp_args += lwnode_gyp_opts(opts)
+  gyp_args += opts.gyp_more_opts
 
   # 4. run gyp
   gyp = os.path.join(NODE_DIR, 'tools/gyp/gyp')
   gyp_build_file = 'lwnode.gyp'
-  print_verbose([gyp, gyp_build_file, gyp_args], options.verbose)
+  print_verbose([gyp, gyp_build_file, gyp_args], opts.verbose)
   subprocess.check_call([gyp, gyp_build_file] + gyp_args)
   info('configure completed successfully')
 
@@ -140,7 +135,7 @@ def main(options):
 def setupCLIOptions(parser):
   lwnode_optgroup = optparse.OptionGroup(
       parser,
-      'LightWeight Node.js',
+      'Lightweight Node.js',
       'Flags that allow you to control LWNode.js build options',
   )
 
@@ -160,13 +155,6 @@ def setupCLIOptions(parser):
   )
 
   lwnode_optgroup.add_option(
-      '--static-escargot',
-      action='store_true',
-      dest='static_escargot',
-      help='link to a static escargot instead of shared linking',
-  )
-
-  lwnode_optgroup.add_option(
       '--without-external-builtins',
       action='store_true',
       dest='without_external_builtins',
@@ -179,7 +167,7 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='without_reload_script',
       default=False,
-      help='Disable script reloading',
+      help='Disable Escargot script reloading',
   )
 
   lwnode_optgroup.add_option(
@@ -191,12 +179,33 @@ def setupCLIOptions(parser):
   )
 
   lwnode_optgroup.add_option(
+      '--escargot-lib-type',
+      choices=['shared_lib', 'static_lib'],
+      default='shared_lib',
+      help='Escargot lib type: shared_lib | static_lib',
+  )
+
+  lwnode_optgroup.add_option(
       '--escargot-debugger',
       action='store_true',
       dest='escargot_debugger',
       default=False,
       help='Enable Escargot debugging',
   )
+
+  lwnode_optgroup.add_option(
+      '--nopt',
+      action='append',
+      dest='node_more_opts',
+      default=[],
+      help='Append Node.js options. Can be used multiple times')
+
+  lwnode_optgroup.add_option(
+      '--gopt',
+      action='append',
+      dest='gyp_more_opts',
+      default=[],
+      help='Append GYP options. Can be used multiple times')
 
   lwnode_optgroup.add_option(
       '--debug',

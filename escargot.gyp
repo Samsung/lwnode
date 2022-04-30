@@ -6,6 +6,7 @@
     'build_host%': '<(build_host)',
     'asan%': '<(asan)',
     'escargot_dir%': 'deps/escargot',
+    'escargot_build_mode%': 'release',
     "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
     'escargot_threading%': '<(escargot_threading)',
     'escargot_debugger%': '<(escargot_debugger)',
@@ -91,8 +92,8 @@
           '-DESCARGOT_SMALL_CONFIG=1',
           '-DESCARGOT_USE_CUSTOM_LOGGING=ON',
           '-DESCARGOT_ARCH=<(target_arch)',
-          '-DESCARGOT_MODE=<(build_mode)',
           '-DESCARGOT_HOST=<(build_host)',
+          '-DESCARGOT_MODE=<(escargot_build_mode)',
           '-DESCARGOT_OUTPUT=<(escargot_lib_type)',
           '-DESCARGOT_THREADING=<(escargot_threading)',
           '-DESCARGOT_ASAN=<(asan)',
