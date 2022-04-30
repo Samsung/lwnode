@@ -115,7 +115,7 @@ gcc --version
 %endif
 
 %if "%{lib_type}" == "shared"
-%define lib_type_config --shared
+%define lib_type_config --nopt --shared
 %endif
 
 %if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
@@ -136,9 +136,7 @@ echo $CFLAGS
 # building liblwnode.so
 ./configure.py --tizen --verbose \
             --nopt --dest-cpu='%{tizen_arch}' \
-            %{?lib_type_config} \
-            %{?asan_config} \
-            %{?libshared} \
+            %{?lib_type_config} %{?libshared}  %{?asan_config} \
             %{?engine_config}
 
 %if "%{target}" == "lwnode" && "%{lib_type}" == "shared"
@@ -148,8 +146,7 @@ echo $CFLAGS
 # building a static lwnode executable
 ./configure.py --tizen --verbose \
             --nopt --dest-cpu='%{tizen_arch}' \
-            %{?asan_config} \
-            %{?libshared} \
+            %{?lib_type_config} %{?asan_config} \
             %{?engine_config}
 ninja -C %{target_src} %{target}
 %endif
