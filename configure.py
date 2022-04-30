@@ -58,15 +58,16 @@ def lwnode_gyp_opts(opts):
   args += ['-Dexternal_builtins=' + b(not opts.without_external_builtins)]
   args += ['-Denable_reload_script=' + b(not opts.without_reload_script)]
 
+  # definitions (used: shim && escargot)
+  args += ['-Dtarget_os=' + ('tizen' if opts.tizen else 'linux')]
+  args += ['-Dprofile=' + str(opts.profile)] if opts.tizen else []
+
   # definitions (used: escargot)
   args += ['-Descargot_build_mode=' + ('debug' if opts.debug else 'release')]
   args += ['-Descargot_lib_type=' + str(opts.escargot_lib_type)]
   args += ['-Descargot_threading=' + n(not opts.without_escargot_threading)]
   args += ['-Descargot_debugger=' + n(opts.escargot_debugger)]
 
-  # definitions (used: shim && escargot)
-  args += ['-Dtarget_os=' + ('tizen' if opts.tizen else 'linux')]
-  args += ['-Dprofile=' + str(opts.profile)] if opts.tizen else []
   return args
 
 
@@ -144,14 +145,14 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='tizen',
       default=False,
-      help='Build for Tizen Platform',
+      help='Build for Tizen Platform (%default)',
   )
 
   lwnode_optgroup.add_option(
       '--profile',
       choices=['common', 'tv', 'kiosk'],
       default='common',
-      help='Build profile: common | tv | kiosk',
+      help='Tizen profile: common | tv | kiosk (%default)',
   )
 
   lwnode_optgroup.add_option(
@@ -159,7 +160,7 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='without_external_builtins',
       default=False,
-      help='Disable external builtin scripts',
+      help='Disable external builtin scripts (%default)',
   )
 
   lwnode_optgroup.add_option(
@@ -167,7 +168,7 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='without_reload_script',
       default=False,
-      help='Disable Escargot script reloading',
+      help='Disable Escargot script reloading (%default)',
   )
 
   lwnode_optgroup.add_option(
@@ -175,14 +176,14 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='without_escargot_threading',
       default=False,
-      help='Disable Escargot threading',
+      help='Disable Escargot threading (%default)',
   )
 
   lwnode_optgroup.add_option(
       '--escargot-lib-type',
       choices=['shared_lib', 'static_lib'],
       default='shared_lib',
-      help='Escargot lib type: shared_lib | static_lib',
+      help='shared_lib | static_lib (%default)',
   )
 
   lwnode_optgroup.add_option(
@@ -190,7 +191,7 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='escargot_debugger',
       default=False,
-      help='Enable Escargot debugging',
+      help='Enable Escargot debugging (%default)',
   )
 
   lwnode_optgroup.add_option(
@@ -220,7 +221,7 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='debug',
       default=False,
-      help='Debug build',
+      help='Debug build (%default)',
   )
 
   lwnode_optgroup.add_option(
@@ -229,7 +230,7 @@ def setupCLIOptions(parser):
       action='store_true',
       dest='verbose',
       default=False,
-      help='Get more output from this script',
+      help='Get more output from this script (%default)',
   )
 
   parser.add_option_group(lwnode_optgroup)
