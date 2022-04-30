@@ -27,6 +27,7 @@
     'node_lib_target_name%': 'libnode',
     'node_intermediate_lib_type%': 'static_library',
     'node_builtin_modules_path%': '',
+    'link_exec_static%': 'false', #@lwnode
     'library_files': [
       'lib/internal/bootstrap/environment.js',
       'lib/internal/bootstrap/loaders.js',
@@ -267,7 +268,8 @@
       [ 'node_shared=="true"', {
         'node_target_type%': 'shared_library',
         'conditions': [
-          ['OS=="aix"', {
+          # @lwnode `link_exec_static`
+          ['link_exec_static=="true" or OS=="aix"', {
             # For AIX, always generate static library first,
             # It needs an extra step to generate exp and
             # then use both static lib and exp to create
@@ -399,6 +401,13 @@
         }, {
           'dependencies': [ '<(node_lib_target_name)' ],
         }],
+        # @lwnode `link_exec_static`
+        [ 'node_intermediate_lib_type=="static_library" and '
+            'node_shared=="true" and link_exec_static=="true"', {
+          'dependencies': [ 'shared_lib_on_link_exec_static' ],
+        }, {
+          'dependencies': [ '<(node_lib_target_name)' ],
+        }], # /@lwnode
         [ 'node_intermediate_lib_type=="static_library" and node_shared=="false"', {
           'xcode_settings': {
             'OTHER_LDFLAGS': [
@@ -1514,6 +1523,31 @@
   ], # end targets
 
   'conditions': [
+    # @lwnode `link_exec_static`
+    ['link_exec_static=="true" and node_shared=="true"', {
+      'targets': [
+        {
+          'target_name': 'shared_lib_on_link_exec_static',
+          'type': 'shared_library',
+          'product_name': '<(node_core_target_name)',
+          'ldflags': ['--shared'],
+          'cflags': [ '-fPIC' ],
+          'product_extension': '<(shlib_suffix)',
+          'includes': [
+            'node.gypi'
+          ],
+          'dependencies': ['<(node_lib_target_name)'],
+          'include_dirs': [
+            'src',
+            '<(lwnode_jsengine_path)/include',
+          ],
+          'sources': [
+            '<@(library_files)',
+            'common.gypi',
+          ],
+        },
+      ]
+    }], # /@lwnode
     ['OS=="aix" and node_shared=="true"', {
       'targets': [
         {
