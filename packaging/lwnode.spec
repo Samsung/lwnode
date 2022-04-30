@@ -57,53 +57,20 @@ BuildRequires: libasan
 ##############################################
 
 %package devel
-Summary:     Development files for Lightweight node.js
+Summary:     Development files for Lightweight Node.js
 Group:       System/Servers
 Requires:    %{name} = %{version}
 %description devel
-Development files for Lightweight node.js.
+Development files for Lightweight Node.js.
 
 # Initialize the variables
-%{!?target: %define target lwnode} #taget = [lwnode/v8/modules/apps/test]
+%{!?target: %define target lwnode}
 %{!?lib_type: %define lib_type shared}
-%{!?feature_mode: %define feature_mode production}
-%{!?build_app: %define build_app 1}
-%{!?app_name: %define app_name sqlite3}
-%{!?build_test: %define build_test 0}
 
 %description
-Node.js on Escargot is a memory efficient node.js implementation,
-which runs on top of Escargot, a memory optimized JavaScript Engine developed
-by Samsung Research, instead of the default V8 JS engine.
-
-
-# Add subpackage for apps
-%if 0%{?build_app} == 1
-%package %{app_name}
-Summary: lwnode apps
-%description %{app_name}
-lwnode %{app_name} app
-
-# variables related to app
-%define project_path %{_builddir}/%{name}-%{version}
-%define local_app_path %{project_path}/lwnode/apps/%{app_name}
-%define app_out_path %{project_path}/out/apps/%{app_name}
-%define app_files_path /tmp/%{app_name}/files
-%define target_app_path /usr/apps/lwnode/apps/%{app_name}
-%define app_variables BUILD_OUT_PATH=%{app_out_path} APP_PATH=%{local_app_path} FILES_PATH=%{buildroot}%{app_files_path}
-%define app_post_variables APP_PATH=%{target_app_path} FILES_PATH=%{app_files_path}
-%endif
-
-# profile: test
-%if 0%{?build_test} == 1
-%package test
-Summary:     Test files for Lightweight node.js
-Group:       System/Servers
-%description test
-Test files for Lightweight node.js
-
-%define target test
-%endif
+Lightweight Node.js is a memory efficient Node.js implementation,
+which runs on top of Escargot, a memory optimized JavaScript Engine
+developed by Samsung Research, instead of the default V8 JS engine.
 
 %prep
 %setup -q
@@ -135,23 +102,16 @@ gcc --version
 %endif
 
 %if 0%{?asan} == 1
-%define asan_config --enable-asan
+%define asan_config --nopt --enable-asan
 %endif
 
 %if "%{target}" == "lwnode"
 %define target_lib liblwnode
 %define target_src out/tizen/Release
 
-%if %{?static_escargot:0}%{!?static_escargot:1}
-  %define engine_config --without-bundled-v8 --engine escargot
-%else
-  %define engine_config --without-bundled-v8 --engine escargot --static-escargot
+%if 0%{?static_escargot} == 1
+  %define engine_config --nopt --static-escargot
 %endif
-%endif
-
-%if "%{target}" == "v8"
-%define target node
-%define target_src out/v8/Release
 %endif
 
 %if "%{lib_type}" == "shared"
@@ -159,18 +119,11 @@ gcc --version
 %endif
 
 %if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
-  %define libshared --shared-zlib --shared-cares
+  %define libshared --nopt --shared-zlib --nopt --shared-cares
 %else
-  %define libshared --shared-zlib --shared-cares --shared-openssl --shared-nghttp2
+  %define libshared --nopt --shared-zlib --nopt --shared-cares \\\
+                    --nopt --shared-openssl --nopt --shared-nghttp2
 %endif
-
-%if "%{?feature_mode}" == "production"
-  echo -e "\033[0;32m"production"\033[0m"
-%else
-  echo -e "\033[0;32m"development"\033[0m"
-  %define extra_config --escargot-threading
-%endif
-
 
 echo "Build Target:" %{target}
 echo $CFLAGS
@@ -179,45 +132,26 @@ echo $CFLAGS
 ./lwnode/build-modules.sh %{?modules_list} --os=tizen
 %endif
 
-%if "%{target}" == "lwnode" || "%{target}" == "v8"
+%if "%{target}" == "lwnode"
 # building liblwnode.so
-./configure --tizen --without-npm \
-            --without-inspector --without-node-code-cache --without-node-snapshot \
-            --with-intl none %{?libshared} \
-            --enable-reload-script --enable-external-builtin-script \
-            --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --ninja %{?engine_config} %{?extra_config} %{?lib_type_config} %{?asan_config}
+./configure.py --tizen --verbose \
+            --nopt --dest-cpu='%{tizen_arch}' \
+            %{?lib_type_config} \
+            %{?asan_config} \
+            %{?libshared} \
+            %{?engine_config}
 
 %if "%{target}" == "lwnode" && "%{lib_type}" == "shared"
   ninja -C %{target_src} %{target_lib}
 %endif
 
 # building a static lwnode executable
-./configure --tizen --without-npm \
-            --without-inspector --without-node-code-cache --without-node-snapshot \
-            --with-intl none %{?libshared} \
-            --enable-reload-script --enable-external-builtin-script \
-            --dest-os linux --dest-cpu '%{tizen_arch}' \
-            --ninja %{?engine_config} %{?extra_config} %{?asan_config}
+./configure.py --tizen --verbose \
+            --nopt --dest-cpu='%{tizen_arch}' \
+            %{?asan_config} \
+            %{?libshared} \
+            %{?engine_config}
 ninja -C %{target_src} %{target}
-%endif
-
-%if 0%{?build_app} == 1
-%{app_variables} %{local_app_path}/build/build.sh
-%endif
-
-# building the cctest executable
-%if 0%{?build_test} == 1
-%define test_exe cctest
-%define local_test_exe %{project_path}/out/tizen/cctest/out/Release/%{test_exe}
-
-./tools/gyp/gyp ./lwnode/code/escargotshim/test/cctest.gyp --depth=. -f ninja \
-  --generator-output=./out/tizen/cctest -Dbuild_mode=release \
-  -Descargot_lib_type=static_lib -Dtarget_arch=arm -Dtarget_os=tizen \
-  -Denable_experimental=true -Descargot_threading=1 -Dinclude_node_bindings=false \
-  -Descargot_debugger=0
-
-ninja -C ./out/tizen/cctest/out/Release cctest
 %endif
 
 ##############################################
@@ -247,24 +181,6 @@ cp %{target_src}/%{target} %{buildroot}%{_bindir}
 cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 
 %endif # "%{target}" == "lwnode"
-
-# for app files
-%if 0%{?build_app} == 1
-rm -rf %{buildroot}%{app_files_path}
-mkdir -p %{buildroot}%{app_files_path}
-
-%{app_variables} %{local_app_path}/build/install.sh
-mkdir -p %{buildroot}%{target_app_path}/build
-cp %{local_app_path}/build/post.sh %{buildroot}%{target_app_path}/build
-cp %{local_app_path}/build/%{app_name}.manifest %{buildroot}%{target_app_path}
-
-%endif
-
-# for test files
-%if 0%{?build_test} == 1
-mkdir -p %{buildroot}%{_bindir}
-cp %{local_test_exe} %{buildroot}%{_bindir}
-%endif
 
 %clean
 rm -fr ./*.list
@@ -298,18 +214,4 @@ rm -fr ./*.manifest
 %manifest packaging/%{name}.manifest
 %if "%{target}" == "lwnode"
   %{_bindir}/%{target}
-%endif
-
-%if 0%{?build_app} == 1
-%post %{app_name}
-%{app_post_variables} %{target_app_path}/build/post.sh
-
-%files %{app_name}
-%{target_app_path}
-%{app_files_path}
-%endif
-
-%if 0%{?build_test} == 1
-%files test
-%{_bindir}/%{test_exe}
 %endif
