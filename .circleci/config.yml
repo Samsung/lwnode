@@ -83,9 +83,6 @@ jobs:
       - *set_proxy
       - *install_zip
       - checkout
-      # - run:
-      #     name: Check tidy
-      #     command: ./tools/check_tidy.py
       - *check_submodule_status
       - *restore_submodule_cache
       - run: git submodule update --init --recursive
@@ -117,6 +114,14 @@ jobs:
       - store_artifacts:
           path: ~/artifacts
           destination: artifacts
+
+  lint:
+    <<: *config
+    steps:
+      - checkout
+      - run:
+          name: Check tidy
+          command: ./tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
 
   cctest:
     <<: *config
@@ -189,6 +194,9 @@ workflows:
     verify_node:
       jobs:
         - build_release
+    verify_lint:
+      jobs:
+        - lint
     verify_cctest:
       jobs:
         - cctest
