@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# note: this file uses black for formatting
+# note: this uses `black` for formatting.
 
 from __future__ import print_function
 
@@ -35,45 +35,8 @@ TERM_EMPTY = "\033[0m"
 
 
 clang_format_exts = [".cc", ".h"]
-skip_dirs = [
-    "benchmark",
-    "deps",
-    "doc",
-    "lib",
-    "packaging",
-    "src",
-    "test",
-    "tools",
-    "lwnode/code/escargotshim/deps",
-    "lwnode/code/escargotshim/include/cppgc",
-    "lwnode/code/escargotshim/include/libplatform",
-    "lwnode/code/escargotshim/test/cctest/gtest",
-    "lwnode/code/escargotshim/src/libplatform",
-    "lwnode/code/tizen",
-    "lwnode/modules",
-    "lwnode/test",
-    "lwnode/pkgs",
-    "lwnode/apps",
-    "CMakeFiles",
-    ".git",
-    "out",
-]
-skip_files = [
-    "v8-fast-api-calls.h",
-    "v8-inspector.h",
-    "v8-internal.h",
-    "v8-platform.h",
-    "v8-profiler.h",
-    "v8-util.h",
-    "v8-value-serializer-version.h",
-    "v8-version-string.h",
-    "v8-wasm-trap-handler-posix.h",
-    "v8.h",
-    "v8config.h",
-    "test-api.h",
-    "test-api.cc",
-    "test-strings.cc",
-]
+skip_dirs = []
+skip_files = []
 
 
 class Stats(object):
@@ -101,9 +64,14 @@ def check_tidy(src_dir, update, base, stats):
     print("%sprocessing directory: %s%s" % (TERM_PURPLE, src_dir, TERM_EMPTY))
 
     for dirpath, _, filenames in os.walk(src_dir):
-        print("- relpath: %s" % (relpath(dirpath, src_dir)))
+        print("- walk: %s" % (relpath(dirpath)))
+
+        if relpath(dirpath) in skip_dirs:
+            print("- skip: %s" % (relpath(dirpath)))
+            continue
 
         if relpath(dirpath, src_dir) in skip_dirs:
+            print("- skip: %s" % (relpath(dirpath, src_dir)))
             continue
 
         skip = False
@@ -158,25 +126,100 @@ def check_tidy(src_dir, update, base, stats):
                 for diffline in diff:
                     print(diffline, end="")
 
+
+class Filters:
+    def __init__(self):
+        self.plus_dirs = []
+        self.plus_files = []
+        self.minus_dirs = []
+        self.minus_files = []
+
+    def GetPlusDirs(self):
+        return self.plus_dirs[:]
+
+    def GetPlusFiles(self):
+        return self.plus_files[:]
+
+    def GetMinusDirs(self):
+        return self.minus_dirs[:]
+
+    def GetMinusFiles(self):
+        return self.minus_files[:]
+
+    def AddFilters(self, filters):
+        for one in filters.split(","):
+            stripped = one.strip()
+            if stripped:
+                self._parse(one)
+
+    def _isdir(self, name):
+        return True if name.endswith("/") else False
+
+    def _parse(self, filter):
+        name = filter[1:]
+        if filter.startswith("+"):
+            if self._isdir(name):
+                self.plus_dirs.append(name[0:-1])
+            else:
+                self.plus_files.append(name)
+        elif filter.startswith("-"):
+            if self._isdir(name):
+                self.minus_dirs.append(name[0:-1])
+            else:
+                self.minus_files.append(name)
+        else:
+            raise ValueError(
+                "Every filter must start with + or -" " (%s does not)" % one
+            )
+
+
 def main():
-    parser = ArgumentParser(description="Starfish Source Format Checker and Updater")
+    parser = ArgumentParser(description="Source Format Checker and Updater")
     parser.add_argument(
         "--clang-format",
         metavar="PATH",
         default="clang-format-8",
-        help="path to clang-format (default: %(default)s)",
+        help="set the path to clang-format (default: %(default)s)",
     )
     parser.add_argument("--update", action="store_true", help="reformat files")
     parser.add_argument(
-        "dir",
+        "--dir",
         nargs="*",
         default=["."],
         dest="dir",
-        help="directory to process (default: .)",
+        help="set directories to process formatting (default: .)",
+    )
+    parser.add_argument(
+        "--filter",
+        action="append",
+        default=[],
+        dest="filters",
+        help="specify a comma-separated list of file/directory filters. \
+            can be used multiple times. every filter must start with + or -. \
+            a directory must end with a slash, /. \
+            example: --filter=-file.cc,+dir/sub_dir/",
     )
     args = parser.parse_args()
 
     stats = Stats()
+
+    filters = Filters()
+    for filts in args.filters:
+        filters.AddFilters(filts)
+
+    plus_dirs = filters.GetPlusDirs()
+    plus_files = filters.GetPlusFiles()
+
+    args.dir = plus_dirs if plus_dirs else args.dir
+    if plus_files:
+        print(
+            "%swarn: setting files isn't yet supported.%s" % (TERM_YELLOW, TERM_EMPTY)
+        )
+        print(plus_files)
+
+    global skip_dirs, skip_files
+    skip_dirs += filters.GetMinusDirs()
+    skip_files += filters.GetMinusFiles()
 
     for dir in args.dir:
         check_tidy(dir, args.update, args.clang_format, stats)
