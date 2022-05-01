@@ -37,16 +37,26 @@ install_node: &install_node
     name: Install node
     command: |
       curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-      sudo apt install nodejs
+      sudo apt install -y nodejs
       node -v
       npm -version
+
+install_zip: &install_zip
+  run:
+    name: Install zip
+    command: sudo apt install -y zip
+
+show_env_info: &show_env_info
+  run:
+    name: Environment Information
+    command: gcc --version; cmake --version; python --version
 
 # lwnode
 build_lwnode: &build_lwnode
   run:
     name: Build lwnode
     command: |
-      ./configure.py -v --without-external-builtins --without-reload-script
+      ./configure.py -v
       ninja -C out/linux/Release lwnode
 
 check_lwnode_status: &check_lwnode_status
@@ -71,6 +81,7 @@ jobs:
     <<: *config
     steps:
       - *set_proxy
+      - *install_zip
       - checkout
       # - run:
       #     name: Check tidy
@@ -79,9 +90,7 @@ jobs:
       - *restore_submodule_cache
       - run: git submodule update --init --recursive
       - *save_submodule_cache
-      - run:
-          name: Environment Information
-          command: gcc --version; cmake --version; python --version
+      - *show_env_info
       - *check_lwnode_status
       - *restore_lwnode_cache
       - *build_lwnode
