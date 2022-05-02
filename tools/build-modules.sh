@@ -58,6 +58,14 @@ find_and_build_modules() {
   done
 }
 
+check_build_result() {
+  ret=$?
+  if [ $ret -ne 0 ]; then
+    error_echo "Failed to build $1"
+    exit $ret
+  fi
+}
+
 build_module() {
   fancy_echo "build [$1]"
 
@@ -67,7 +75,9 @@ build_module() {
 
   cmake $module_path -B$out_path -H$module_path -DLWNODE_INCLUDES=$LWNODE_INCLUDES_PATH \
     -G Ninja
+  check_build_result $1
   ninja -C $out_path
+  check_build_result $1
 }
 
 if [[ -z $1 ]] || [[ $1 == -* ]]; then

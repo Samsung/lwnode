@@ -25,6 +25,10 @@ class ContextRef;
 class ValueRef;
 }  // namespace Escargot
 
+#ifndef LWNODE_EXPORT
+#define LWNODE_EXPORT __attribute__((visibility("default")))
+#endif
+
 namespace LWNode {
 
 void InitializeProcessMethods(v8::Local<v8::Object> target,
@@ -59,7 +63,7 @@ class MessageLoop {
   std::unique_ptr<Internal> internal_;
 };
 
-class Utils {
+class LWNODE_EXPORT Utils {
  public:
   static Escargot::ContextRef* ToEsContext(v8::Context* context);
 
