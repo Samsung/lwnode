@@ -1161,3 +1161,15 @@ napi_ref_threadsafe_function(napi_env env, napi_threadsafe_function func) {
   CHECK_NOT_NULL(func);
   return reinterpret_cast<v8impl::ThreadSafeFunction*>(func)->Ref();
 }
+
+//@lwnode
+#ifdef LWNODE
+#include "lwnode_api.h"
+napi_status napi_get_context(napi_env env, napi_context& context) {
+  CHECK_NOT_NULL(env);
+  v8::Local<v8::Context> v8Context = env->context();
+  context = *v8Context;
+  return napi_ok;
+}
+#endif
+//end of @lwnode
