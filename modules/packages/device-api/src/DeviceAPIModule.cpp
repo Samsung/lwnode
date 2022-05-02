@@ -14,25 +14,40 @@
  * limitations under the License.
  */
 
-#include <node.h>
-#include <v8.h>
+#include <js_native_api.h>
+#include <node_api.h>
+#include <lwnode_api.h>
 #include "TizenDeviceAPILoaderForEscargot.h"
 #include "lwnode/lwnode.h"
 
 using namespace LWNode;
 
-void Init(const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::Isolate* isolate = args.GetIsolate();
-  auto esContext = Utils::ToEsContext(*isolate->GetCurrentContext());
+static napi_value InitMethod(napi_env env, napi_callback_info info) {
+  napi_status status;
+  napi_context context;
+
+  status = napi_get_context(env, context);
+  assert(status == napi_ok);
+
+  auto esContext = Utils::ToEsContext(context);
 
   auto instance = DeviceAPI::ExtensionManagerInstanceGet(esContext);
   if (!instance) {
     DeviceAPI::initialize(esContext);
   }
+
+  return nullptr;
 }
 
-void initModule(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {
-  NODE_SET_METHOD(exports, "init", Init);
+#define DECLARE_NAPI_METHOD(name, func)                          \
+  { name, 0, func, 0, 0, 0, napi_default, 0 }
+
+napi_value InitModule(napi_env env, napi_value exports) {
+  napi_status status;
+  napi_property_descriptor desc = DECLARE_NAPI_METHOD("init", InitMethod);
+  status = napi_define_properties(env, exports, 1, &desc);
+  assert(status == napi_ok);
+  return exports;
 }
 
-NODE_MODULE(NODE_GYP_MODULE_NAME, initModule)
+NAPI_MODULE(NODE_GYP_MODULE_NAME, InitModule)
