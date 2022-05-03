@@ -15,13 +15,13 @@ set_proxy: &set_proxy
 # Submodule
 check_submodule_status: &check_submodule_status
   run:
-    name: Check submodule status
-    command: git submodule status | tee ~/submodule-status
+    name: Creating cache-submodule reference
+    command: git submodule status | tee ~/cache-submodule
 
 restore_submodule_cache: &restore_submodule_cache
   restore_cache:
-    name: Restoring cached submodules
-    key: v2-submodules-{{ checksum "~/submodule-status" }}
+    name: Restoring cache-submodule
+    key: v3-submodules-{{ checksum "~/cache-submodule" }}
 
 save_submodule_cache: &save_submodule_cache
   save_cache:
@@ -29,7 +29,8 @@ save_submodule_cache: &save_submodule_cache
     paths:
       - .git/modules
       - deps/escargot
-    key: v2-submodules-{{ checksum "~/submodule-status" }}
+      - deps/lwnode
+    key: v3-submodules-{{ checksum "~/cache-submodule" }}
 
 # node
 install_node: &install_node
@@ -61,20 +62,20 @@ build_lwnode: &build_lwnode
 
 check_lwnode_status: &check_lwnode_status
   run:
-    name: Check lwnode status
-    command: git status | tee ~/lwnode-status
+    name: Creating cache-output reference
+    command: ls deps | tee ~/cache-output
 
 restore_lwnode_cache: &restore_lwnode_cache
   restore_cache:
-    name: Restoring cached lwnode
-    key: v2-lwnode-{{ checksum "~/lwnode-status" }}
+    name: Restoring cache-output
+    key: v3-lwnode-{{ checksum "~/cache-output" }}
 
 save_lwnode_cache: &save_lwnode_cache
   save_cache:
-    name: Caching lwnode
+    name: Caching cache-output
     paths:
       - out/linux/Release
-    key: v2-lwnode-{{ checksum "~/lwnode-status" }}
+    key: v3-lwnode-{{ checksum "~/cache-output" }}
 
 jobs:
   build_release:
