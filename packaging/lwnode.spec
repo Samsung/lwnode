@@ -199,15 +199,15 @@ rm -fr ./*.manifest
   %if %{?static_escargot:0}%{!?static_escargot:1}
     %{_libdir}/libescargot.so
   %endif
-  %if "%{lib_type}" == "shared"
-    %{_libdir}/liblwnode.so*
-  %endif
   %{_bindir}/%{target}.dat
+  %{_bindir}/%{target}
 %endif
 %license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
 
 %files devel
 %manifest packaging/%{name}.manifest
 %if "%{target}" == "lwnode"
-  %{_bindir}/%{target}
+  %if "%{lib_type}" == "shared"
+    %{_libdir}/liblwnode.so*
+  %endif
 %endif
