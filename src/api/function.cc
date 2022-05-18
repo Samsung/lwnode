@@ -40,7 +40,8 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
 
   m_implicitArgs[T::kHolderIndex] = ValueWrap::createValue(holder);
   m_implicitArgs[T::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
-  // m_implicitArgs[T::kReturnValueDefaultValueIndex];  // TODO
+  m_implicitArgs[T::kReturnValueDefaultValueIndex] =
+      lwIsolate->undefined_value();
   m_implicitArgs[T::kReturnValueIndex] = lwIsolate->defaultReturnValue();
   m_implicitArgs[T::kDataIndex] = data;
   m_implicitArgs[T::kNewTargetIndex] =
