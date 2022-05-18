@@ -62,5 +62,19 @@
   * [VM](https://nodejs.org/dist/latest-v14.x/docs/api/vm.html)
   * [WASI](https://nodejs.org/dist/latest-v14.x/docs/api/wasi.html)
 
+## Design Decisions and Known Issues
+  * V8's implementation-specific internal APIs are not supported, e.g., Modules, etc.
+  * Due to different GC models, V8's GC-related operations are not supported. Memory management is achieved by lwnode's automatic GC.
+  * Supported user flags are: `--exposed-gc`, `--disallow-code-generation-from-strings`. User flags specific to V8's internal APIs are not supported, e.g., `--max_old_space_size`, etc.
+  * `vm` and `repl`  are not supported for security reasons.
+  * All literal strings are encoded in UTF16, when JS source has been encoded in UTF16.
+  * Known Issues:
+    - In some cases, an async hook ID is set to null.
+    - In some cases, an error message format is slightly different from node.js's error message, although it contains the same information.
+    - In some cases, an event listener cannot receive an event thrown by a child process.
+    - In some cases, a child process cannot obtain values from `process.env`.
+    - `Worker` is experimental. It should be used with caution.
+    - `ValueSerializer` is experimental. It should be used with caution.
+
 ## ECMAScript
   * [node.green](https://node.green/) provides an overview over supported ECMAScript features in our target version of Node.js, `v14.14`.
