@@ -1,4 +1,7 @@
 test-wasm
+test-vm
+test-repl
+test-trace-events
 
 # v8 is required
 test-v8
