@@ -138,9 +138,7 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
   int stacktraceStartIdx = 1;
 
   double stackTraceLimit = 0;
-  if (!getStackTraceLimit(state, stackTraceLimit)) {
-    stackTraceVector = nullptr;
-  } else {
+  if (getStackTraceLimit(state, stackTraceLimit)) {
     size_t maxPrintStackSize =
         std::min(stackTraceLimit, (double)stackTraceData.size());
     for (size_t i = 0; i < maxPrintStackSize; i++) {
