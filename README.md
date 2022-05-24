@@ -10,6 +10,7 @@ The following provides useful information about lwnode:
   - [Build Guide](docs/BUILD.md)
   - [Resource Management](docs/api/lwnode.md): This page introduces about our resource management with a simple example.
   - [Debugging Guide](docs/DEBUG.md)
+  - [Sqlite3 Guide](docs/app-sqlite3.md)
 * [Supported Features](docs/spec.md)
 * [Memory Usage](https://pages.github.sec.samsung.net/lws/lwnode-test-results): Memory usage and binary footprint are reported.
 * [MAINTAINERS.md](MAINTAINERS.md).
