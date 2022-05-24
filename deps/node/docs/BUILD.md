@@ -1,7 +1,7 @@
 # How to build lwnode
 
 ## Supported Platforms
-* Ubuntu 18.04, 16.04
+* Ubuntu 16.04 and above
 * Tizen 4.0 and above
 
 ## Checkout code
