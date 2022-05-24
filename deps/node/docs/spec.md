@@ -39,11 +39,9 @@
   * [Utilities](https://nodejs.org/dist/latest-v14.x/docs/api/util.html)
   * [Zlib](https://nodejs.org/dist/latest-v14.x/docs/api/zlib.html)
 
-## Experimental (with optional runtime flags)
+## Experimental (with optional flags)
   * [Deprecated APIs](https://nodejs.org/dist/latest-v14.x/docs/api/deprecations.html)
-  * [REPL](https://nodejs.org/dist/latest-v14.x/docs/api/repl.html)
   * [Worker threads](https://nodejs.org/dist/latest-v14.x/docs/api/worker_threads.html)
-## Experimental (with compile options)
   * [Modules: ECMAScript modules](https://nodejs.org/dist/latest-v14.x/docs/api/esm.html)
   * [Modules: `module` API](https://nodejs.org/dist/latest-v14.x/docs/api/module.html)
   * [Modules: Packages](https://nodejs.org/dist/latest-v14.x/docs/api/packages.html)
@@ -56,6 +54,7 @@
   * [Inspector](https://nodejs.org/dist/latest-v14.x/docs/api/inspector.html): Specific to V8
   * [Performance hooks](https://nodejs.org/dist/latest-v14.x/docs/api/perf_hooks.html): Specific to V8
   * [Policies](https://nodejs.org/dist/latest-v14.x/docs/api/policy.html)
+  * [REPL](https://nodejs.org/dist/latest-v14.x/docs/api/repl.html)
   * [Report](https://nodejs.org/dist/latest-v14.x/docs/api/report.html): Specific to V8
   * [Trace events](https://nodejs.org/dist/latest-v14.x/docs/api/tracing.html): Specific to V8
   * [V8](https://nodejs.org/dist/latest-v14.x/docs/api/v8.html): Specific to V8
