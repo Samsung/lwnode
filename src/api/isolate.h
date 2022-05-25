@@ -32,7 +32,7 @@ class Isolate : public gc {
   void RegisterTryCatchHandler(v8::TryCatch* that);
   void UnregisterTryCatchHandler(v8::TryCatch* that);
   void SetTerminationOnExternalTryCatch();
-  void ScheduleThrow(Escargot::ValueRef* value);
+
   bool IsExecutionTerminating();
   void CancelScheduledExceptionFromTryCatch(v8::TryCatch* that);
   void ThrowException(Escargot::ValueRef* value);
@@ -50,34 +50,22 @@ class Isolate : public gc {
 
   Escargot::ValueRef* pending_message_obj();
 
-  virtual void SetPendingExceptionAndMessage(
-      Escargot::ValueRef* exception,
-      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData) = 0;
-  virtual bool PropagatePendingExceptionToExternalTryCatch();
-  virtual void ReportPendingMessages(bool isVerbose = false);
-
-  void handleException(EscargotShim::EvalResult&& evalResult);
+  bool PropagatePendingExceptionToExternalTryCatch();
+  void ReportPendingMessages(bool isVerbose = false);
 
   void RunPromiseHook(PromiseHookType type,
                       Escargot::PromiseObjectRef* promise,
                       Escargot::ValueRef* parent);
 
-  virtual void SetPromiseRejectCallback(v8::PromiseRejectCallback callback);
-  virtual void ReportPromiseReject(
-      Escargot::PromiseObjectRef* promise,
-      Escargot::ValueRef* value,
-      Escargot::VMInstanceRef::PromiseRejectEvent event);
-
   void SetFatalErrorHandler(v8::FatalErrorCallback callback) {
     fatal_error_callback_ = callback;
   }
 
-  virtual void SetPrepareStackTraceCallback(
-      v8::PrepareStackTraceCallback callback) {
+  void SetPrepareStackTraceCallback(v8::PrepareStackTraceCallback callback) {
     prepare_stack_trace_callback_ = callback;
   }
 
-  virtual bool HasPrepareStackTraceCallback() const {
+  bool HasPrepareStackTraceCallback() const {
     return prepare_stack_trace_callback_ != nullptr;
   }
 
@@ -93,11 +81,10 @@ class Isolate : public gc {
     prepareStackTraceRecursion_ = recursion;
   }
 
-  virtual ValueRef* RunPrepareStackTraceCallback(
-      ExecutionStateRef* state,
-      EscargotShim::ContextWrap* lwContext,
-      ValueRef* error,
-      ArrayObjectRef* sites);
+  ValueRef* RunPrepareStackTraceCallback(ExecutionStateRef* state,
+                                         EscargotShim::ContextWrap* lwContext,
+                                         ValueRef* error,
+                                         ArrayObjectRef* sites);
 
   void SetAbortOnUncaughtExceptionCallback(
       v8::Isolate::AbortOnUncaughtExceptionCallback callback) {
@@ -136,7 +123,7 @@ class Isolate : public gc {
   // considered.
 
   Escargot::ValueRef* scheduled_exception_{nullptr};
-  v8::PromiseRejectCallback promise_reject_callback_{nullptr};
+
   v8::PromiseHook promise_hook_{nullptr};
   v8::MessageCallback message_callback_{nullptr};
   v8::FatalErrorCallback fatal_error_callback_{nullptr};
@@ -170,7 +157,7 @@ struct BackingStoreComparator {
 
 class IsolateWrap final : public v8::internal::Isolate {
  public:
-  virtual ~IsolateWrap();
+  ~IsolateWrap();
 
   const std::string PRIVATE_VALUES = "__private_values__";
 
@@ -257,10 +244,13 @@ class IsolateWrap final : public v8::internal::Isolate {
   void CollectGarbage(
       GarbageCollectionReason reason = GarbageCollectionReason::kRuntime);
 
+  void ScheduleThrow(Escargot::ValueRef* value);
+
+  void handleException(EscargotShim::EvalResult&& evalResult);
+
   void SetPendingExceptionAndMessage(
       ValueRef* exception,
-      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData)
-      override;
+      GCManagedVector<Escargot::Evaluator::StackTraceData>& stackTraceData);
   void ClearPendingExceptionAndMessage();
 
   void onFatalError(const char* location, const char* message);
@@ -273,6 +263,11 @@ class IsolateWrap final : public v8::internal::Isolate {
   SymbolRef* privateValuesSymbol() { return privateValuesSymbol_.get(); }
 
   void SetPromiseHook(v8::PromiseHook callback);
+
+  void SetPromiseRejectCallback(v8::PromiseRejectCallback callback);
+  void ReportPromiseReject(Escargot::PromiseObjectRef* promise,
+                           Escargot::ValueRef* value,
+                           Escargot::VMInstanceRef::PromiseRejectEvent event);
 
   ThreadManager* thread_manager() { return threadManager_; }
 
@@ -309,6 +304,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize]{};
 
   ThreadManager* threadManager_ = nullptr;
+
+  v8::PromiseRejectCallback promise_reject_callback_{nullptr};
 };
 
 }  // namespace EscargotShim

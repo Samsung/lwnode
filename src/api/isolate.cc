@@ -45,30 +45,6 @@ bool Isolate::IsExecutionTerminating() {
   return false;
 }
 
-void Isolate::ScheduleThrow(Escargot::ValueRef* value) {
-  LWNODE_CALL_TRACE_ID(TRYCATCH);
-  // TODO: There are two types of exception handling.
-  // 1. An exception raised when it should not. Usually this happens
-  // when we are using Escargot API, and caused by incorrect development
-  // of our code and/or escargot, i.e., internal error.
-  // 2. An exception raised by running external script. In this case,
-  // it is the external developer's responsibility to handle an exception
-  // using v8:tryCatch, etc. In this case, we should not do any exception
-  // handling.
-
-  bool rethrow = has_pending_exception();
-
-  set_scheduled_exception(value);
-  set_pending_exception(value);
-
-  if (PropagatePendingExceptionToExternalTryCatch()) {
-    clear_pending_exception();
-    if (!rethrow) {
-      clear_scheduled_exception();
-    }
-  }
-}
-
 void Isolate::RegisterTryCatchHandler(v8::TryCatch* that) {
   LWNODE_CALL_TRACE_ID(TRYCATCH, "%p", that);
   try_catch_handler_ = that;
@@ -218,24 +194,6 @@ void Isolate::RestorePendingMessageFromTryCatch(v8::TryCatch* handler) {
   set_pending_exception(VAL(*handler->Exception())->value());
 }
 
-void Isolate::handleException(EscargotShim::EvalResult&& evalResult) {
-  LWNODE_DCHECK(!evalResult.isSuccessful());
-
-  auto exception = evalResult.error.get();
-
-  if (hasCallDepth()) {
-    if (exception->isObject()) {
-      ExtraDataHelper::setExtraData(
-          exception->asObject(),
-          new ExceptionObjectData(evalResult.stackTrace));
-    }
-    ScheduleThrow(evalResult.error.get());
-  } else {
-    SetPendingExceptionAndMessage(exception, evalResult.stackTrace);
-    ReportPendingMessages();
-  }
-}
-
 void Isolate::RunPromiseHook(PromiseHookType type,
                              Escargot::PromiseObjectRef* promise,
                              Escargot::ValueRef* parent) {
@@ -246,31 +204,6 @@ void Isolate::RunPromiseHook(PromiseHookType type,
   promise_hook_(type,
                 v8::Utils::ToLocal<Promise>(promise),
                 v8::Utils::ToLocal<Value>(parent));
-}
-
-void Isolate::SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
-  promise_reject_callback_ = callback;
-
-  auto fn = [](ExecutionStateRef* state,
-               Escargot::PromiseObjectRef* promise,
-               Escargot::ValueRef* value,
-               Escargot::VMInstanceRef::PromiseRejectEvent event) {
-    IsolateWrap::GetCurrent()->ReportPromiseReject(promise, value, event);
-  };
-
-  IsolateWrap::fromV8(this)->vmInstance()->registerPromiseRejectCallback(fn);
-}
-
-void Isolate::ReportPromiseReject(
-    Escargot::PromiseObjectRef* promise,
-    Escargot::ValueRef* value,
-    Escargot::VMInstanceRef::PromiseRejectEvent event) {
-  PromiseRejectMessage v8Message(v8::Utils::ToLocal<Promise>(promise),
-                                 static_cast<v8::PromiseRejectEvent>(event),
-                                 v8::Utils::ToLocal<Value>(value));
-  if (promise_reject_callback_ && !promise->hasRejectHandlers()) {
-    promise_reject_callback_(v8Message);
-  }
 }
 
 ValueRef* Isolate::RunPrepareStackTraceCallback(ExecutionStateRef* state,
@@ -642,9 +575,9 @@ SymbolRef* IsolateWrap::getApiSymbol(StringRef* name) {
   // FIXME: Use a set
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
-  for (size_t i = 0; i < apiSymbols_.size(); i++) {
-    if (apiSymbols_[i]->description()->equals(name)) {
-      return apiSymbols_[i];
+  for (auto apiSymbols : apiSymbols_) {
+    if (apiSymbols->description()->equals(name)) {
+      return apiSymbols;
     }
   }
 
@@ -676,9 +609,9 @@ SymbolRef* IsolateWrap::getApiPrivateSymbol(StringRef* name) {
   // FIXME: Use a set
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
-  for (size_t i = 0; i < apiPrivateSymbols_.size(); i++) {
-    if (apiPrivateSymbols_[i]->description()->equals(name)) {
-      return apiPrivateSymbols_[i];
+  for (auto apiPrivateSymbol : apiPrivateSymbols_) {
+    if (apiPrivateSymbol->description()->equals(name)) {
+      return apiPrivateSymbol;
     }
   }
 
@@ -695,6 +628,48 @@ void IsolateWrap::CollectGarbage(GarbageCollectionReason reason) {
     global_handles_->releaseWeakValues();
   } else {
     global_handles_->PostGarbageCollectionProcessing();
+  }
+}
+
+void IsolateWrap::ScheduleThrow(Escargot::ValueRef* value) {
+  LWNODE_CALL_TRACE_ID(TRYCATCH);
+  // TODO: There are two types of exception handling.
+  // 1. An exception raised when it should not. Usually this happens
+  // when we are using Escargot API, and caused by incorrect development
+  // of our code and/or escargot, i.e., internal error.
+  // 2. An exception raised by running external script. In this case,
+  // it is the external developer's responsibility to handle an exception
+  // using v8:tryCatch, etc. In this case, we should not do any exception
+  // handling.
+
+  bool rethrow = has_pending_exception();
+
+  set_scheduled_exception(value);
+  set_pending_exception(value);
+
+  if (PropagatePendingExceptionToExternalTryCatch()) {
+    clear_pending_exception();
+    if (!rethrow) {
+      clear_scheduled_exception();
+    }
+  }
+}
+
+void IsolateWrap::handleException(EscargotShim::EvalResult&& evalResult) {
+  LWNODE_DCHECK(!evalResult.isSuccessful());
+
+  auto exception = evalResult.error.get();
+
+  if (hasCallDepth()) {
+    if (exception->isObject()) {
+      ExtraDataHelper::setExtraData(
+          exception->asObject(),
+          new ExceptionObjectData(evalResult.stackTrace));
+    }
+    ScheduleThrow(evalResult.error.get());
+  } else {
+    SetPendingExceptionAndMessage(exception, evalResult.stackTrace);
+    ReportPendingMessages();
   }
 }
 
@@ -816,9 +791,8 @@ void IsolateWrap::SetPromiseHook(v8::PromiseHook callback) {
   // v8::Promise::kEmbedderFieldCount will be set to 1.
   LWNODE_DCHECK(false);
 
-  auto lwIsolate = GetCurrent();
   if (promise_hook_ == nullptr) {
-    lwIsolate->vmInstance()->unregisterPromiseHook();
+    vmInstance()->unregisterPromiseHook();
     return;
   }
 
@@ -830,6 +804,32 @@ void IsolateWrap::SetPromiseHook(v8::PromiseHook callback) {
         (v8::PromiseHookType)type, promise, parent);
   };
 
-  lwIsolate->vmInstance()->registerPromiseHook(fn);
+  vmInstance()->registerPromiseHook(fn);
 }
+
+void IsolateWrap::SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
+  promise_reject_callback_ = callback;
+
+  auto fn = [](ExecutionStateRef* state,
+               Escargot::PromiseObjectRef* promise,
+               Escargot::ValueRef* value,
+               Escargot::VMInstanceRef::PromiseRejectEvent event) {
+    IsolateWrap::GetCurrent()->ReportPromiseReject(promise, value, event);
+  };
+
+  vmInstance()->registerPromiseRejectCallback(fn);
+}
+
+void IsolateWrap::ReportPromiseReject(
+    Escargot::PromiseObjectRef* promise,
+    Escargot::ValueRef* value,
+    Escargot::VMInstanceRef::PromiseRejectEvent event) {
+  PromiseRejectMessage v8Message(v8::Utils::ToLocal<Promise>(promise),
+                                 static_cast<v8::PromiseRejectEvent>(event),
+                                 v8::Utils::ToLocal<Value>(value));
+  if (promise_reject_callback_ && !promise->hasRejectHandlers()) {
+    promise_reject_callback_(v8Message);
+  }
+}
+
 }  // namespace EscargotShim
