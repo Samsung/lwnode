@@ -82,15 +82,12 @@ static ValueRef* throwExceptionWhenEvalCalled(ExecutionStateRef* state,
 }
 
 void Global::initEvalObject(ContextRef* context) {
-  // @note --disallow-code-generation-from-strings as default
-  if (flags()->isOn(Flag::Type::AllowCodeGenerationFromString)) {
-    return;
+  if (flags()->isOn(Flag::Type::DisallowCodeGenerationFromStrings)) {
+    ObjectRefHelper::addNativeFunction(context,
+                                       context->globalObject(),
+                                       StringRef::createFromASCII("eval"),
+                                       throwExceptionWhenEvalCalled);
   }
-
-  ObjectRefHelper::addNativeFunction(context,
-                                     context->globalObject(),
-                                     StringRef::createFromASCII("eval"),
-                                     throwExceptionWhenEvalCalled);
 }
 
 }  // namespace EscargotShim

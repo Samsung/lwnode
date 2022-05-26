@@ -39,7 +39,7 @@ class Flag {
     UseStrict,
     DisableIdleGC,
     TopLevelWait,
-    AllowCodeGenerationFromString,
+    DisallowCodeGenerationFromStrings,
     AbortOnUncaughtException,
     ExposeExternalizeString,
     UnhandledRejections,

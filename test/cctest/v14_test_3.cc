@@ -1086,7 +1086,7 @@ THREADED_TEST(SetGetFlagsCustom) {
                                "--use-strict",
                                "--off-idlegc",
                                "--harmony-top-level-await",
-                               "--allow-code-generation-from-strings",
+                               "--disallow-code-generation-from-strings",
                                "--trace-gc",
                                "--trace-call=",
                                "--internal-log",
@@ -1114,7 +1114,7 @@ THREADED_TEST(SetGetFlagsCustom) {
   CHECK(EscargotShim::Global::flags()->isOn(
       EscargotShim::Flag::Type::TopLevelWait));
   CHECK(EscargotShim::Global::flags()->isOn(
-      EscargotShim::Flag::Type::AllowCodeGenerationFromString));
+      EscargotShim::Flag::Type::DisallowCodeGenerationFromStrings));
   CHECK(EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::TraceGC));
   CHECK(
       EscargotShim::Global::flags()->isOn(EscargotShim::Flag::Type::TraceCall));

@@ -28,8 +28,8 @@ void Flags::initFlags() {
   addFlag<Flag>("--use-strict", Flag::Type::UseStrict);
   addFlag<Flag>("--off-idlegc", Flag::Type::DisableIdleGC);
   addFlag<Flag>("--harmony-top-level-await", Flag::Type::TopLevelWait);
-  addFlag<Flag>("--allow-code-generation-from-strings",
-                Flag::Type::AllowCodeGenerationFromString);
+  addFlag<Flag>("--disallow-code-generation-from-strings",
+                Flag::Type::DisallowCodeGenerationFromStrings);
   addFlag<Flag>("--abort-on-uncaught-exception",
                 Flag::Type::AbortOnUncaughtException);
   addFlag<Flag>("--expose-externalize-string",
