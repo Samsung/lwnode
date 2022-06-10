@@ -13,7 +13,7 @@ git submodule update --init --recursive
 ## How to Compile: Ubuntu
 ### Install required packages
 ```
-sudo apt-get install -y build-essential cmake clang libicu-dev
+sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 ```
 
 ### How to build and run
