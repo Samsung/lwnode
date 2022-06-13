@@ -1554,6 +1554,7 @@ def OuputTestResult(progress, skip_count, excluded_case_paths, options):
   left_count = progress.remaining
   succeed_count = progress.total - failed_count - left_count
   excluded_count = len(excluded_case_paths)
+  expected_count = total_count - skip_count
 
   failed_case_paths = []
 
@@ -1596,19 +1597,11 @@ def OuputTestResult(progress, skip_count, excluded_case_paths, options):
   # report
   print()
 
-  if excluded_count == 0:
-    print("Total: %5d" % total_count)
-  else :
-    print("Total: %5d (%d excluded)" % (total_count, excluded_count))
-  print(
-    "Pass:  %5d (%.2f%%)"
-    % (
-        succeed_count,
-        (succeed_count / total_count) * 100.0,
-    )
-  )
+  print("Total: %5d" % (expected_count))
+  print("Pass:  %5d (%.2f%%)" % ( succeed_count,
+                                 (succeed_count / expected_count) * 100.0))
   print("Fail:  %5d" % failed_count)
-  print("Skip:  %5d" % skip_count)
+  # print("Skip:  %5d" % skip_count)
   if left_count > 0 :
     print("Left:  %5d" % left_count)
 
@@ -1781,6 +1774,7 @@ def Main():
   if options.report:
     print(REPORT_TEMPLATE % {
       'total': len(all_cases),
+      'excluded': len(excluded_case_paths),
       'skipped': len(all_cases) - len(cases_to_run),
       'pass': len([t for t in cases_to_run if PASS in t.outcomes]),
       'fail_ok': len([t for t in cases_to_run if t.outcomes == set([FAIL, OKAY])]),
