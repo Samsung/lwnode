@@ -5,27 +5,47 @@
 * Tizen 4.0 and above
 
 ## Checkout code
-```
+```sh
 git clone git@github.sec.samsung.net:lws/node-escargot.git
 git submodule update --init --recursive
 ```
 
 ## How to Compile: Ubuntu
 ### Install required packages
-```
+```sh
 sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 ```
 
 ### How to build and run
-```
+```sh
 ./lwnode/build.sh
 ./out/linux/Release/lwnode ./test/message/hello_world.js
 ```
 
 ### How to run testcases
+```sh
+./lwnode/test.sh
 ```
-./lwnode/build-cctest.sh
-./cctest
+
+Known Issues:
+* For systems enforcing higher security levels, (e.g., Ubuntu 20.04 and above) an error related to `ERR_SSL_EE_KEY_TOO_SMALL` may be thrown. In that case, update `openssl.cnf` as follows:
+
+```sh
+vi /etc/ssl/openssl.cnf
+
+# Add the following line to the beginning of the config file
+openssl_conf = default_conf
+
+# Add the following lines to the end
+[ default_conf ]
+ssl_conf = ssl_sect
+
+[ssl_sect]
+system_default = system_default_sect
+
+[system_default_sect]
+MinProtocol = TLSv1.2
+CipherString = DEFAULT:@SECLEVEL=1
 ```
 
 ## How to Compile: Tizen
@@ -33,11 +53,17 @@ sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 Set up a gbs build environment on a Ubuntu machine.
 
 ### Build with gbs command
-You can also build by using the gbs command without using the build util.
-When using the gbs command, you need to defien a profile.
-```
-gbs -c ~/gbs.conf build -A arm7l
+The following command builds Tizen rpms.
+
+```sh
+gbs -c .circleci/gbs.conf build -A arm7l
 ```
 
-### Installing lwnode executable
-Install `lwnode-devel.rpm` to get the `lwnode` executable.
+If you are checking out a lwnode development branch from github repo (which includes submodules), add the following two options when building Tizen rpms on a local Linux machine.
+
+```sh
+gbs -c .circleci/gbs.conf build -A arm7l --include-all --incremental
+```
+
+### Installing lwnode .so library
+Install `lwnode-devel.rpm` to get the `lwnode` library.
