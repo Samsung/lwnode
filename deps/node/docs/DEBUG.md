@@ -51,7 +51,7 @@ $ vi lwnode/build.sh
 CONFIG="...
        --escargot-debugger \
        ..."
-$ ./lwnode/build.sh
+$ ./lwnode/build.sh -d
 ```
 
 ## 3. Run debugger with VS Code
@@ -66,11 +66,14 @@ for (let i = 0; i < 10; i++) {
 ```
 
 ```sh
-$ lwnode --start-debug-server ./hello.js
+$ out/linux/Debug/lwnode --start-debug-server ./hello.js
 ```
+
+lwnode will wait for a connection from VS code.
+
 
 2. Open `hello.js` in VS Code and run debugger.
 
 Known Issues:
-* The debugger by default stops at every `*.js` file loaded before loading `hello.js`. This behaviour is expected to be fixed in the next version.
+* The debugger by default stops at every `*.js` file loaded before loading `hello.js`. This behaviour is expected to be fixed in the next version. (i.e., the `console.log()` function will call many subsequence JS functions calls.)
 * To add a break point, wait until `hello.js` is loaded in VS code, and add a break point.
