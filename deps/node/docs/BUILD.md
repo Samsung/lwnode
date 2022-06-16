@@ -1,30 +1,30 @@
 # How to build lwnode
 
-## Supported Platforms
+## 1. Supported Platforms
 * Ubuntu 16.04 and above
 * Tizen 4.0 and above
 
-## Checkout code
+## 2. Checkout code
 ```sh
-git clone git@github.sec.samsung.net:lws/node-escargot.git
-git submodule update --init --recursive
+$ git clone git@github.sec.samsung.net:lws/node-escargot.git
+$ git submodule update --init --recursive
 ```
 
-## How to Compile: Ubuntu
-### Install required packages
+## 3. How to Compile: Ubuntu
+### 3.1. Install required packages
 ```sh
-sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
+$ sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 ```
 
-### How to build and run
+### 3.2. How to build and run
 ```sh
-./lwnode/build.sh
-./out/linux/Release/lwnode ./test/message/hello_world.js
+$ ./lwnode/build.sh
+$ ./out/linux/Release/lwnode ./test/message/hello_world.js
 ```
 
-### How to run testcases
+### 3.3. How to run testcases
 ```sh
-./lwnode/test.sh
+$ ./lwnode/test.sh
 ```
 
 Known Issues:
@@ -48,22 +48,25 @@ MinProtocol = TLSv1.2
 CipherString = DEFAULT:@SECLEVEL=1
 ```
 
-## How to Compile: Tizen
-### Prerequisite
+## 4. How to Compile: Tizen
+### 4.1. Prerequisite
 Set up a gbs build environment on a Ubuntu machine.
 
-### Build with gbs command
+### 4.2. Build with gbs command
 The following command builds Tizen rpms.
 
 ```sh
-gbs -c .circleci/gbs.conf build -A arm7l
+$ gbs -c .circleci/gbs.conf build -A arm7l
 ```
 
 If you are checking out a lwnode development branch from github repo (which includes submodules), add the following two options when building Tizen rpms on a local Linux machine.
 
 ```sh
-gbs -c .circleci/gbs.conf build -A arm7l --include-all --incremental
+$ gbs -c .circleci/gbs.conf build -A arm7l --include-all --incremental
 ```
 
-### Installing lwnode .so library
-Install `lwnode-devel.rpm` to get the `lwnode` library.
+### 4.3. Install a lwnode .so library
+You can optionally install `lwnode-devel.rpm` to get  `liblwnode.so` library.
+```sh
+$ rpm -Uvh lwnode-devel.rpm
+```
