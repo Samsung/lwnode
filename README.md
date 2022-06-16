@@ -6,12 +6,15 @@ a memory optimized JavaScript Engine developed by Samsung Research,
 instead of the default V8 JS engine.
 
 The following provides useful information about lwnode:
-* Guides:
-  - [Build Guide](docs/BUILD.md)
-  - [Resource Management](docs/api/lwnode.md): This page introduces about our resource management with a simple example.
+* [Build Guide](docs/BUILD.md)
+* Lightweight node.js (lwnode)
+  - [Supported Features](docs/spec.md)
   - [Debugging Guide](docs/DEBUG.md)
-  - [Sqlite3 Guide](docs/app-sqlite3.md)
-* [Supported Features](docs/spec.md)
-* [Memory Usage](https://pages.github.sec.samsung.net/lws/lwnode-test-results): Memory usage and binary footprint are reported.
-* [MAINTAINERS.md](MAINTAINERS.md).
-* [GOVERNANCE.md](GOVERNANCE.md)
+  - [Memory Usage](https://pages.github.sec.samsung.net/lws/lwnode-test-results): Memory usage and binary footprint are reported.
+* [JS Backend Service Framework](docs/Framework.md)
+  - [Resource Management](docs/api/lwnode.md): This page introduces about our resource management with a simple example.
+  - [Express App Guide](docs/)
+  - [Sqlite3 App Guide](docs/app-sqlite3.md)
+* Others
+  - [MAINTAINERS.md](MAINTAINERS.md).
+  - [GOVERNANCE.md](GOVERNANCE.md)

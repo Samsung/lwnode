@@ -35,7 +35,7 @@ Install the plugin as follows:
 $ cd lwnode
 $ vi .vscode/launch.json
 ```
-```json
+```
 // .vscode/launch.json
 {
     "version": "0.2.0",
