@@ -13,8 +13,9 @@ The following provides useful information about lwnode:
   - [Memory Usage](https://pages.github.sec.samsung.net/lws/lwnode-test-results): Memory usage and binary footprint are reported.
 * [JS Backend Service Framework](docs/Framework.md)
   - [Resource Management](docs/api/lwnode.md): This page introduces about our resource management with a simple example.
-  - [Express App Guide](docs/)
-  - [Sqlite3 App Guide](docs/app-sqlite3.md)
+  - [Express App Guide](docs/App-express.md)
+    - [App Template](lwnode/apps/template/)
+  - [Sqlite3 App Guide](docs/App-sqlite3.md)
 * Others
   - [MAINTAINERS.md](MAINTAINERS.md).
   - [GOVERNANCE.md](GOVERNANCE.md)
