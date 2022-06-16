@@ -72,17 +72,3 @@ window.onload = async function () {
   }
 };
 ```
-
-## How to Use express
-If you want to use express, edit the file below on your device.
-```bash
-/usr/apps/lwnode/apps/sqlite3/script/userapp.js
-```
-You will see `startUserApp` function. Implement your app here.
-```js
-// /usr/apps/lwnode/apps/sqlite3/script/userapp.js
-function startUserApp(app) {
-  // params
-  // app: app object of express
-}
-```
