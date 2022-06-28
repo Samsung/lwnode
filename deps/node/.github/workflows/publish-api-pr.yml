@@ -1,0 +1,36 @@
+name: Publish API for PR
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: [ rat3 ]
+    container:
+      image: art.sec.samsung.net/circleci-docker/docker-gbs-base:actions
+      options: --user root --privileged -v /home/github:/home/github
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR source
+        uses: CODE-Actions/checkout@v2
+        with:
+          submodule: true
+      - name: Checkout latest source
+        uses: CODE-Actions/checkout@v2
+        with:
+          repository: lws/node-escargot
+          ref: refs/heads/v14
+          path: ./node-escargot
+          submodule: true
+      - name: Generate PR API Document
+        run: |
+          sudo apt -y install doxygen graphviz
+          doxygen docs/Doxyfile
+      - name: Generate latest API Document
+        run: |
+          cd node-escargot
+          doxygen docs/Doxyfile
+          cd ..
+      - name: Publish PR API
+        run: |
+          sudo /home/github/node-escargot/publish-api-pr.sh ${{ github.event.pull_request.number }}

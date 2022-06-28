@@ -1,0 +1,26 @@
+name: Publish API
+
+on:
+  push:
+    branches:
+    - v14
+
+jobs:
+  build:
+    runs-on: [ rat3 ]
+    container:
+      image: art.sec.samsung.net/circleci-docker/docker-gbs-base:actions
+      options: --user root --privileged -v /home/github:/home/github
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source
+        uses: CODE-Actions/checkout@v2
+        with:
+          submodule: true
+      - name: Generate API Document
+        run: |
+          sudo apt -y install doxygen graphviz
+          doxygen docs/Doxyfile
+      - name: Publish API
+        run: |
+          sudo /home/github/node-escargot/publish-api.sh

@@ -1,0 +1,3 @@
+[submodule "lwnode/codes/escargotshim/escargot"]
+	path = lwnode/code/escargotshim/deps/escargot
+	url = https://github.com/Samsung/escargot.git
