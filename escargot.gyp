@@ -44,6 +44,17 @@
         '<(output_dir)/third_party/runtime_icu_binder/libruntime-icu-binder-static.a',
         '<(output_dir)/liblibbf.a',
       ],
+      'escargot_configs': [
+        '-DESCARGOT_SMALL_CONFIG=1',
+        '-DESCARGOT_USE_CUSTOM_LOGGING=ON',
+        '-DESCARGOT_ARCH=<(target_arch)',
+        '-DESCARGOT_HOST=<(build_host)',
+        '-DESCARGOT_MODE=<(escargot_build_mode)',
+        '-DESCARGOT_OUTPUT=<(escargot_lib_type)',
+        '-DESCARGOT_THREADING=<(escargot_threading)',
+        '-DESCARGOT_ASAN=<(asan)',
+        '-DESCARGOT_DEBUGGER=<(escargot_debugger)',
+      ],
     },
     'all_dependent_settings': {
       'libraries': [
@@ -83,21 +94,19 @@
     },
     'actions': [
       {
+        'action_name': 'print configs',
+        'inputs':  [],
+        'outputs': ['<(SHARED_INTERMEDIATE_DIR)'],
+        'action': ['printf', '%s\\n', '<@(escargot_configs)'],
+      },
+      {
         'action_name': 'config escargot',
         'inputs':  ['./escargot.gyp', '<@(configs)'],
         'outputs': ['<(output_dir)'],
         'action': [
           'cmake', '<(escargot_dir)', '-B<(output_dir)',
           '-GNinja',
-          '-DESCARGOT_SMALL_CONFIG=1',
-          '-DESCARGOT_USE_CUSTOM_LOGGING=ON',
-          '-DESCARGOT_ARCH=<(target_arch)',
-          '-DESCARGOT_HOST=<(build_host)',
-          '-DESCARGOT_MODE=<(escargot_build_mode)',
-          '-DESCARGOT_OUTPUT=<(escargot_lib_type)',
-          '-DESCARGOT_THREADING=<(escargot_threading)',
-          '-DESCARGOT_ASAN=<(asan)',
-          '-DESCARGOT_DEBUGGER=<(escargot_debugger)'
+          '<@(escargot_configs)',
         ],
       },
       {
