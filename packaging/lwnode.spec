@@ -36,7 +36,6 @@ BuildRequires: pkgconfig(icu-uc)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: nghttp2-devel
 BuildRequires: pkgconfig(libcares)
-BuildRequires: pkgconfig(sqlite3)
 
 %if (0%{?tizen_version_major} >= 6)
 BuildRequires: pkgconfig(openssl1.1)
