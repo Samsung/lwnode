@@ -71,9 +71,12 @@ build_module() {
 
   local out_path=$BUILD_OUT_ROOT_PATH/$TARGET_OS/$1
   local module_path=$MODULES_ROOT_PATH/$1
+  local definitions="-DBUILDING_NODE_EXTENSION;-DLWNODE"
   mkdir -p $out_path
 
-  cmake $module_path -B$out_path -H$module_path -DLWNODE_INCLUDES=$LWNODE_INCLUDES_PATH \
+  cmake $module_path -B$out_path -H$module_path \
+    -DLWNODE_INCLUDES=$LWNODE_INCLUDES_PATH     \
+    -DLWNODE_DEFINITIONS=$definitions           \
     -G Ninja
   check_build_result $1
   ninja -C $out_path
