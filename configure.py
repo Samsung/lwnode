@@ -10,7 +10,7 @@ import sys
 
 script_dir = os.path.dirname(__file__)
 ROOT_DIR = os.path.abspath(script_dir)
-NODE_DIR = os.path.join(ROOT_DIR, 'deps', 'lwnode')
+NODE_DIR = os.path.join(ROOT_DIR, 'deps', 'node')
 
 
 def print_verbose(x, verbose=True):
@@ -50,7 +50,7 @@ def lwnode_gyp_opts(opts):
   # definitions (used: node)
   args += ['-Dnode_core_target_name=lwnode']
   args += ['-Dnode_lib_target_name=liblwnode']
-  args += ['-Dnode_obj_dir=obj/deps/lwnode']
+  args += ['-Dnode_obj_dir=obj/deps/node']
   args += ['-Dlwnode_jsengine_path=' + ROOT_DIR]
 
   # definitions (used: node && escargot)

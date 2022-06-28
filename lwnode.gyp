@@ -16,6 +16,6 @@
   'targets': [{
     'target_name': 'lwnode',
     'type': 'none',
-    'dependencies': ['deps/lwnode/node.gyp:lwnode'],
+    'dependencies': ['deps/node/node.gyp:lwnode'],
   },],
 }
