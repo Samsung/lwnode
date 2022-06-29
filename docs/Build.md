@@ -18,13 +18,14 @@ $ sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 
 ### 3.2. How to build and run
 ```sh
-$ ./lwnode/build.sh
+$ ./configure.py
+$ ninja -C out/linux/Release lwnode
 $ ./out/linux/Release/lwnode ./test/message/hello_world.js
 ```
 
 ### 3.3. How to run testcases
 ```sh
-$ ./lwnode/test.sh
+$ ./tools/test.sh
 ```
 
 Known Issues:
@@ -56,13 +57,13 @@ Set up a gbs build environment on a Ubuntu machine.
 The following command builds Tizen rpms.
 
 ```sh
-$ gbs -c .circleci/gbs.conf build -A arm7l
+$ gbs -c .github/gbs.conf build -A arm7l
 ```
 
 If you are checking out a lwnode development branch from github repo (which includes submodules), add the following two options when building Tizen rpms on a local Linux machine.
 
 ```sh
-$ gbs -c .circleci/gbs.conf build -A arm7l --include-all --incremental
+$ gbs -c .github/gbs.conf build -A arm7l --include-all --incremental
 ```
 
 ### 4.3. Install a lwnode .so library

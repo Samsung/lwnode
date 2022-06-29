@@ -59,7 +59,8 @@ $ vi .vscode/launch.json
 Compile `lwnode` with a debugger option.
 ```sh
 $ cd lwnode
-$ ./lwnode/build.sh -di
+$ ./configure --debug --escargot-debugger
+$ ninja -C out/linux/Debug lwnode
 ```
 
 ## 3. Run debugger with VS Code
