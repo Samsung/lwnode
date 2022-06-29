@@ -1,0 +1,118 @@
+name: Build lwnode
+on: [ push ]
+jobs:
+  build_lwnode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [ release ]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd deps/escargot
+          git submodule update --init third_party
+          pushd third_party/wasm/wabt
+          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+          popd
+          popd
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib sed clang-format-8
+      # - name: Check tidy
+      #   run: |
+      #     ./tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
+      - name: Build lwnode
+        run: |
+          ./configure.py
+          ninja -C out/linux/Release lwnode
+      - name: Run node.js TCs (test.py)
+        run: |
+          pushd $(pwd)/deps/node
+          ./tools/test.py \
+            -J -p dots --report --time --timeout 240 --repeat 1 \
+            --shell=../../out/linux/Release/lwnode \
+            --skip-tests=$(sed 's/\s#.*//g' test/skip_tests.txt | paste -sd,) \
+            --unsupported-tests=$(sed '/#\|^$/d' test/skip_features.txt | paste -sd,) \
+            test/parallel test/regression
+          popd
+  cctest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd deps/escargot
+          git submodule update --init third_party
+          pushd third_party/wasm/wabt
+          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+          popd
+          popd
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib
+      - name: Build cctest
+        run: |
+          export ROOT=$PWD
+          export OUT_PATH=$ROOT/out/cctest
+          export ARCH="x64"
+          export ASAN=1
+          export GYP=deps/node/tools/gyp/gyp
+          $GYP ./test/cctest.gyp --depth=. -f ninja \
+            --generator-output=$OUT_PATH -Dasan=$ASAN -Descargot_build_mode=debug \
+            -Descargot_lib_type=static_lib -Dtarget_arch=$ARCH -Dtarget_os=linux \
+            -Denable_experimental=true -Descargot_threading=1 \
+            -Descargot_debugger=0
+          ninja -C $OUT_PATH/out/Debug cctest
+      - name: Run cctest
+        run: |
+          out/cctest/out/Debug/cctest
+  build_tizen_std:
+    runs-on: ubuntu-20.04
+    #container:
+    #  image: art.sec.samsung.net/circleci-docker/docker-gbs-base:actions
+    #  options: --user root --privileged
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [t70std]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd deps/escargot
+          git submodule update --init third_party
+          pushd third_party/wasm/wabt
+          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
+          popd
+          popd
+      - name: Install Packages
+        run: |
+          echo "deb [trusted=yes] http://download.tizen.org/tools/latest-release/Ubuntu_$(lsb_release -rs)/ /" | \
+          sudo tee /etc/apt/sources.list.d/tizen.list > /dev/null
+          pwd
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib gbs
+      - name: Build Tizen ${{ matrix.profile }}
+        run: |
+          gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --define 'lib_type shared'
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: tizen_std_${{ matrix.profile }}
+          path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
