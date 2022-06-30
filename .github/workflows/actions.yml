@@ -1,4 +1,4 @@
-name: Build lwnode
+name: lwnode actions
 on: [ push, pull_request ]
 jobs:
   build_lwnode:
