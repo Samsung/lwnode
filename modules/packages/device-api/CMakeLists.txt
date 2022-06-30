@@ -12,10 +12,9 @@ include_directories(${LWNODE_INCLUDES})
 
 file (GLOB_RECURSE SOURCE_FILES src/*.cpp)
 include_directories(
-  ../../../src
-  ../../code/escargotshim/deps/escargot/src/api
-  ../../code/escargotshim/deps/escargot/third_party/GCutil
-  ../../code/escargotshim/deps/escargot/third_party/GCutil/bdwgc/include
+  ${PROJECT_ROOT_PATH}/deps/escargot/src/api
+  ${PROJECT_ROOT_PATH}/deps/escargot/third_party/GCutil
+  ${PROJECT_ROOT_PATH}/deps/escargot/third_party/GCutil/bdwgc/include
   include
   ${PACKAGES_INCLUDE_DIRS}
 )

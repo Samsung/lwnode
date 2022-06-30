@@ -128,7 +128,7 @@ echo "Build Target:" %{target}
 echo $CFLAGS
 
 %if "%{target}" == "modules"
-./lwnode/build-modules.sh %{?modules_list} --os=tizen
+./tools/build-modules.sh %{?modules_list} --os=tizen
 %endif
 
 %if "%{target}" == "lwnode"

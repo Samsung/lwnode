@@ -8,15 +8,13 @@
     {
       'target_name': 'node_bindings',
       'type': 'static_library',
-      'dependencies': [
-        '../../../../../deps/uv/uv.gyp:libuv',
-       ],
       'defines': [
       ],
       'includes': [
       ],
       'include_dirs': [
         'include',
+        '../../deps/node/deps/uv/include'
       ],
       'sources': [
         'src/gmainloop_node_bindings.cc'
