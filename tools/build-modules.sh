@@ -16,9 +16,9 @@
 TARGET_OS="linux"
 
 PROJECT_ROOT_PATH=$PWD
-MODULES_ROOT_PATH=$PROJECT_ROOT_PATH/lwnode/modules
+PACKAGES_ROOT_PATH=$PROJECT_ROOT_PATH/modules/packages
 BUILD_OUT_ROOT_PATH=$PROJECT_ROOT_PATH/out/modules
-LWNODE_INCLUDES_PATH="$PROJECT_ROOT_PATH/src;$PROJECT_ROOT_PATH/lwnode/code/escargotshim/include"
+LWNODE_INCLUDES_PATH="$PROJECT_ROOT_PATH/deps/node/src;$PROJECT_ROOT_PATH/include"
 
 fancy_echo() {
   local BOLD="\033[1m"
@@ -50,7 +50,7 @@ find_and_build_modules() {
   local module_list=($(echo $1 | tr "," "\n"))
 
   for module in "${module_list[@]}"; do
-    if [ -d "$MODULES_ROOT_PATH/$module" ]; then
+    if [ -d "$PACKAGES_ROOT_PATH/$module" ]; then
       build_module $module
     else
       error_echo "Cannot find module: $module"
@@ -70,11 +70,12 @@ build_module() {
   fancy_echo "build [$1]"
 
   local out_path=$BUILD_OUT_ROOT_PATH/$TARGET_OS/$1
-  local module_path=$MODULES_ROOT_PATH/$1
+  local module_path=$PACKAGES_ROOT_PATH/$1
   local definitions="-DBUILDING_NODE_EXTENSION;-DLWNODE"
   mkdir -p $out_path
 
   cmake $module_path -B$out_path -H$module_path \
+    -DPROJECT_ROOT_PATH=$PROJECT_ROOT_PATH      \
     -DLWNODE_INCLUDES=$LWNODE_INCLUDES_PATH     \
     -DLWNODE_DEFINITIONS=$definitions           \
     -G Ninja

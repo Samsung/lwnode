@@ -7,7 +7,7 @@ set(CMAKE_C_FLAGS "-std=gnu++1y -fPIE -Wno-invalid-offsetof -Wno-error=format=")
 add_definitions(${LWNODE_DEFINITIONS} -DNDEBUG)
 include_directories(
   ${LWNODE_INCLUDES}
-  ../../code/escargotshim/deps/node-bindings/include
+  ${PROJECT_ROOT_PATH}/deps/node-bindings/include
 )
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cc)

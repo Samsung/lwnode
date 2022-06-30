@@ -780,7 +780,7 @@
         [ 'lwnode=="true"', {
           'dependencies': [
             '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
-            'deps/node-bindings/node_bindings.gyp:node_bindings',
+            '<(lwnode_jsengine_path)/deps/node-bindings/node_bindings.gyp:node_bindings',
           ],
           'conditions': [
             ['external_builtins=="true"', {
