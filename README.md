@@ -1,5 +1,8 @@
 # Lightweight Node.js
 
+[![License](https://img.shields.io/badge/LICENSE-Apache%202-blue)](LICENSE)
+[![Actions Status](https://github.com/Samsung/lwnode/actions/workflows/actions.yml/badge.svg)](https://github.com/Samsung/lwnode/actions)
+
 Lightweight Node.js is a memory efficient Node.js implementation,
 which runs on top of [Escargot](https://github.com/Samsung/escargot),
 a memory optimized JavaScript Engine developed by Samsung Research,
