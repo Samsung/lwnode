@@ -82,8 +82,8 @@ def main(opts):
   node_opts += ['--debug', '--debug-node'] if opts.debug else []
   node_opts += opts.node_more_opts
 
-  print_verbose('[ ' + ', '.join(["'%s'" % str(x) for x in node_opts]) + ']',
-                opts.verbose)
+  print_verbose('* node options', opts.verbose)
+  print_verbose(node_opts, opts.verbose)
 
   subprocess.check_call([sys.executable, configure_path] + node_opts)
 
@@ -98,9 +98,11 @@ def main(opts):
   o['lwnode_external_builtin_script'] = b(not opts.without_external_builtins)
   o['lwnode_reload_script'] = b(not opts.without_reload_script)
   v = config['variables']
-  v.update(o)
 
+  print_verbose('* extends config.gypi', opts.verbose)
   print_verbose(o, opts.verbose)
+  print_verbose(v, opts.verbose)
+  v.update(o)
 
   # `gyp_args` is enabled when `NODE_DIR/config.gypi` is created with
   # `--skip-node-gyp`. we remove it since it's given for the next step.
@@ -127,6 +129,7 @@ def main(opts):
   # 4. run gyp
   gyp = os.path.join(NODE_DIR, 'tools/gyp/gyp')
   gyp_build_file = 'lwnode.gyp'
+  print_verbose('* gyp command', opts.verbose)
   print_verbose([gyp, gyp_build_file, gyp_args], opts.verbose)
   subprocess.check_call([gyp, gyp_build_file] + gyp_args)
   info('configure completed successfully')
