@@ -20,7 +20,7 @@ $ sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 ```sh
 $ ./configure.py
 $ ninja -C out/linux/Release lwnode
-$ ./out/linux/Release/lwnode ./test/message/hello_world.js
+$ ./out/linux/Release/lwnode ./deps/node/test/message/hello_world.js
 ```
 
 ### 3.3. How to run testcases

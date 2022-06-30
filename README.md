@@ -10,9 +10,9 @@ The following provides useful information about lwnode:
 * Lightweight node.js (lwnode)
   - [Supported Features](docs/Spec.md)
   - [Debugging Guide](docs/Debugger.md)
-  - [Memory Usage](https://pages.github.sec.samsung.net/lws/lwnode-test-results): Memory usage and binary footprint are reported.
+  - [Memory Usage Report](https://pages.github.sec.samsung.net/lws/lwnode-test-results) (Not accessible from public)
 * [JS Backend Service Framework](docs/Framework.md)
-  - [Resource Management](docs/lwnode.md): This page introduces about our resource management with a simple example.
+  - [Resource Management](docs/lwnode.md)
   - [Service App Guide](docs/App-service.md)
     - [App Template](modules/apps/template/)
   - [DB Service and Client App Guide](docs/App-db-service.md)
