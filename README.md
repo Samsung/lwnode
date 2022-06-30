@@ -14,7 +14,7 @@ The following provides useful information about lwnode:
 * [JS Backend Service Framework](docs/Framework.md)
   - [Resource Management](docs/lwnode.md): This page introduces about our resource management with a simple example.
   - [Service App Guide](docs/App-service.md)
-    - [App Template](lwnode/apps/template/)
+    - [App Template](modules/apps/template/)
   - [DB Service and Client App Guide](docs/App-db-service.md)
 * Others
   - [MAINTAINERS.md](MAINTAINERS.md).
