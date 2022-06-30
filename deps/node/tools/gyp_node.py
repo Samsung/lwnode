@@ -2,6 +2,7 @@
 from __future__ import print_function
 import os
 import sys
+import pprint
 
 script_dir = os.path.dirname(__file__)
 node_root  = os.path.normpath(os.path.join(script_dir, os.pardir))
@@ -13,7 +14,7 @@ import gyp
 # to be written.
 output_dir = os.path.join(os.path.abspath(node_root), 'out')
 
-def run_gyp(args):
+def run_gyp(args, debug=False):
   # GYP bug.
   # On msvs it will crash if it gets an absolute path.
   # On Mac/make it will crash if it doesn't get an absolute path.
@@ -62,10 +63,15 @@ def run_gyp(args):
   args.append('-Dcomponent=static_library')
   args.append('-Dlibrary=static_library')
 
-  rc = gyp.main(args)
-  if rc != 0:
-    print('Error running GYP')
-    sys.exit(rc)
+  if (debug):
+    # @lwnode
+    print('* run_gyp')
+    pprint.pprint(args, indent=2)
+  else:
+    rc = gyp.main(args)
+    if rc != 0:
+      print('Error running GYP')
+      sys.exit(rc)
 
 
 if __name__ == '__main__':

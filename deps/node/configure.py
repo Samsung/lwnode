@@ -87,6 +87,12 @@ lwnode_optgroup.add_option('--skip-node-gyp',
     default=False,
     help='Skip running node-gyp (create `config.gypi` only)')
 
+lwnode_optgroup.add_option('--debug-run-gyp',
+    action='store_true',
+    dest='debug_run_gyp',
+    default=False,
+    help='Debug running node-gyp (should use with `--skip-node-gyp`)')
+
 parser.add_option_group(lwnode_optgroup)
 # /@lwnode
 
@@ -1936,5 +1942,7 @@ if not options.skip_node_gyp:
   run_gyp(gyp_args)
   info('configure completed successfully')
 else:
+  if options.debug_run_gyp:
+    run_gyp(gyp_args, True)
   info('node-gyp skipped')
 # /@lwnode
