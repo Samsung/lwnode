@@ -20,22 +20,12 @@ Group:         System/Servers
 License:       Apache-2.0 and MIT and BSD-2-Clause and BSD-3-Clause and BOEHM-GC and ICU and LGPL-2.1+ and Zlib
 Source:        %{name}-%{version}.tar.gz
 
-BuildRequires: cmake
-BuildRequires: make
-BuildRequires: python
-BuildRequires: ninja
-BuildRequires: zip
-BuildRequires: rsync
-BuildRequires: pkgconfig(dlog)
-BuildRequires: pkgconfig(aul)
-BuildRequires: pkgconfig(capi-appfw-app-common)
-BuildRequires: pkgconfig(capi-system-info)
-BuildRequires: pkgconfig(capi-system-system-settings)
-BuildRequires: pkgconfig(icu-i18n)
-BuildRequires: pkgconfig(icu-uc)
-BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: cmake, python, ninja, zip, rsync
+BuildRequires: pkgconfig(icu-i18n), pkgconfig(icu-uc), pkgconfig(libcares)
 BuildRequires: nghttp2-devel
-BuildRequires: pkgconfig(libcares)
+BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(dlog), pkgconfig(aul), pkgconfig(capi-appfw-app-common)
+BuildRequires: pkgconfig(capi-system-info), pkgconfig(capi-system-system-settings)
 
 %if (0%{?tizen_version_major} >= 6)
 BuildRequires: pkgconfig(openssl1.1)
