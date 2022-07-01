@@ -113,6 +113,11 @@
             'LWNODE_PLATFORM_LINUX=1',
           ],
         }],
+        ['target_os=="tizen"', {
+          'dependencies': [
+            'deps/tizen.gyp:dlog',
+          ],
+        }],
         ['library == "shared_library"', {
           'defines': ['BUILDING_V8_SHARED'],
         }],
