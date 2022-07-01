@@ -129,9 +129,15 @@ def main(opts):
   # 4. run gyp
   gyp = os.path.join(NODE_DIR, 'tools/gyp/gyp')
   gyp_build_file = 'lwnode.gyp'
+  command = [gyp, gyp_build_file] + gyp_args
   print_verbose('* gyp command', opts.verbose)
-  print_verbose([gyp, gyp_build_file, gyp_args], opts.verbose)
-  subprocess.check_call([gyp, gyp_build_file] + gyp_args)
+  print_verbose(command, opts.verbose)
+  try:
+    subprocess.check_call(command)
+  except subprocess.CalledProcessError:
+    print('Error running GYP')
+    print_verbose(' '.join(["%s" % str(x) for x in command]), True)
+    sys.exit(1)
   info('configure completed successfully')
 
 
