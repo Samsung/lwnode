@@ -29,7 +29,7 @@ BuildRequires: rsync
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(capi-appfw-app-common)
-BuildRequires: pkgconfig(capi-system-info),
+BuildRequires: pkgconfig(capi-system-info)
 BuildRequires: pkgconfig(capi-system-system-settings)
 BuildRequires: pkgconfig(icu-i18n)
 BuildRequires: pkgconfig(icu-uc)
@@ -55,16 +55,9 @@ BuildRequires: libasan
 # Packages for profiles
 ##############################################
 
-%package devel
-Summary:     Development files for Lightweight Node.js
-Group:       System/Servers
-Requires:    %{name} = %{version}
-%description devel
-Development files for Lightweight Node.js.
-
 # Initialize the variables
 %{!?target: %define target lwnode}
-%{!?lib_type: %define lib_type shared}
+%{!?lib_type: %define lib_type static} # <shared|static>
 
 %description
 Lightweight Node.js is a memory efficient Node.js implementation,
@@ -81,7 +74,7 @@ developed by Samsung Research, instead of the default V8 JS engine.
 
 %build
 gcc --version
-
+rpmbuild --version
 
 ##############################################
 ## Build rules for each profile
@@ -100,30 +93,6 @@ gcc --version
 %define tizen_arch x64
 %endif
 
-%if 0%{?asan} == 1
-%define asan_config --nopt --enable-asan
-%endif
-
-%if "%{target}" == "lwnode"
-%define target_lib liblwnode
-%define target_src out/tizen/Release
-
-%if 0%{?static_escargot} == 1
-  %define engine_config --nopt --static-escargot
-%endif
-%endif
-
-%if "%{lib_type}" == "shared"
-%define lib_type_config --nopt --shared
-%endif
-
-%if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
-  %define libshared --nopt --shared-zlib --nopt --shared-cares
-%else
-  %define libshared --nopt --shared-zlib --nopt --shared-cares \\\
-                    --nopt --shared-openssl --nopt --shared-nghttp2
-%endif
-
 echo "Build Target:" %{target}
 echo $CFLAGS
 
@@ -132,22 +101,33 @@ echo $CFLAGS
 %endif
 
 %if "%{target}" == "lwnode"
-# building liblwnode.so
-./configure.py --tizen --verbose \
-            --nopt --dest-cpu='%{tizen_arch}' \
-            %{?lib_type_config} %{?libshared}  %{?asan_config} \
-            %{?engine_config}
+  %define target_src out/tizen/Release
 
-%if "%{target}" == "lwnode" && "%{lib_type}" == "shared"
-  ninja -C %{target_src} %{target_lib}
-%endif
+  %if 0%{?asan} == 1
+    %define asan_config --nopt --enable-asan
+  %endif
 
-# building a static lwnode executable
-./configure.py --tizen --verbose \
-            --nopt --dest-cpu='%{tizen_arch}' \
-            %{?lib_type_config} %{?asan_config} \
-            %{?engine_config}
-ninja -C %{target_src} %{target}
+  %if "%{lib_type}" == "shared"
+    %define lib_type_config --nopt --shared
+  %endif
+
+  %if 0%{?static_escargot} == 1
+    %define jsengine_config --nopt --static-escargot
+  %endif
+
+  %if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
+    %define external_libs_config --nopt --shared-zlib --nopt --shared-cares
+  %else
+    %define external_libs_config --nopt --shared-zlib --nopt --shared-cares \\\
+                        --nopt --shared-openssl --nopt --shared-nghttp2
+  %endif
+
+  # building lwnode executable
+  ./configure.py --tizen --verbose \
+              --nopt --dest-cpu='%{tizen_arch}' \
+              %{?lib_type_config} %{?asan_config} \
+              %{?external_libs_config} %{?jsengine_config}
+  ninja -C %{target_src} %{target}
 %endif
 
 ##############################################
@@ -160,6 +140,7 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
 rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
+
 %if "%{target}" == "lwnode"
   %if %{?static_escargot:0}%{!?static_escargot:1}
     cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
@@ -167,16 +148,12 @@ rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
   %if "%{lib_type}" == "shared"
     cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
   %endif
-
-# for devel files
-%if %{?debug_symbols:0}%{!?debug_symbols:1}
-  strip -v -g %{target_src}/%{target}
+  %if %{?debug_symbols:0}%{!?debug_symbols:1}
+    strip -v -g %{target_src}/%{target}
+  %endif
+  cp %{target_src}/%{target} %{buildroot}%{_bindir}
+  cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 %endif
-
-cp %{target_src}/%{target} %{buildroot}%{_bindir}
-cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
-
-%endif # "%{target}" == "lwnode"
 
 %clean
 rm -fr ./*.list
@@ -199,15 +176,10 @@ rm -fr ./*.manifest
   %if %{?static_escargot:0}%{!?static_escargot:1}
     %{_libdir}/libescargot.so
   %endif
+  %if "%{lib_type}" == "shared"
+    %{_libdir}/liblwnode.so*
+  %endif
   %{_bindir}/%{target}.dat
   %{_bindir}/%{target}
 %endif
 %license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
-
-%files devel
-%manifest packaging/%{name}.manifest
-%if "%{target}" == "lwnode"
-  %if "%{lib_type}" == "shared"
-    %{_libdir}/liblwnode.so*
-  %endif
-%endif
