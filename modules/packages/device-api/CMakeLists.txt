@@ -3,7 +3,7 @@ set (CMAKE_CXX_STANDARD 11)
 project (device-api)
 
 find_package (PkgConfig REQUIRED)
-pkg_check_modules(PACKAGES REQUIRED dlog)
+pkg_check_modules(PACKAGES REQUIRED dlog glib-2.0)
 
 set(CMAKE_C_FLAGS "-std=gnu++14 -fPIE -Wno-invalid-offsetof -Wno-error=format=")
 
@@ -22,4 +22,4 @@ include_directories(
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
-target_link_libraries(${PROJECT_NAME} dlog)
+target_link_libraries(${PROJECT_NAME} dlog glib-2.0)

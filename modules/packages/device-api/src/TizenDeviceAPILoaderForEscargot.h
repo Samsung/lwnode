@@ -51,6 +51,7 @@ class ESPostListener;
 
 #define SUPPORTED_TIZEN_PROPERTY(F) \
   F(application)                    \
+  F(bluetooth)                      \
   F(filesystem)                     \
   F(mediacontroller)                \
   F(messageport)                    \

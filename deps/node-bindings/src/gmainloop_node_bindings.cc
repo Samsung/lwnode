@@ -17,9 +17,6 @@
 #include <glib.h>
 #include <cassert>
 #include "uv.h"
-#ifdef HOST_TIZEN
-#include "Extension.h"
-#endif
 
 #include "node_bindings.h"
 
@@ -100,13 +97,6 @@ void GmainLoopInit(GmainLoopNodeBindings* self) {
 
   g_source_attach(uvsource, gcontext);
   g_source_unref(uvsource);
-
-#ifdef HOST_TIZEN
-  DeviceAPI::ESPostMessageListener::SetMainThreadIdlerRegister(
-      [](DeviceAPI::ESPostMessageListener::Idler_t idler, void* data) {
-        g_idle_add(idler, data);
-      });
-#endif
 }
 
 void GmainLoopStart() {
