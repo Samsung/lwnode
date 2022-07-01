@@ -39,11 +39,16 @@
           'defines': ['NDEBUG'],
         },
       },
+      'conditions': [
+        ['target_os=="tizen"', {
+          'defines': ['HOST_TIZEN'],
+        }],
+      ],
     },
     'conditions': [
       ['target_os=="tizen"', {
+        'defines': ['HOST_TIZEN'],
         'target_defaults': {
-          'defines': ['HOST_TIZEN'],
           'cflags': [
             '-Os',
             '-fPIE',
