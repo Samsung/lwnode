@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include <glib.h>
 #include <js_native_api.h>
-#include <node_api.h>
 #include <lwnode_api.h>
+#include <node_api.h>
+#include "Extension.h"
 #include "TizenDeviceAPILoaderForEscargot.h"
 #include "lwnode/lwnode.h"
 
@@ -31,6 +33,38 @@ static napi_value InitMethod(napi_env env, napi_callback_info info) {
 
   auto esContext = Utils::ToEsContext(context);
 
+  struct Params {
+    Params(DeviceAPI::ESPostMessageListener::Idler_t idler,
+           void* data,
+           napi_env env)
+        : idler(idler), data(data), env(env) {}
+    DeviceAPI::ESPostMessageListener::Idler_t idler{nullptr};
+    void* data{nullptr};
+    napi_env env{nullptr};
+  };
+
+  DeviceAPI::ESPostMessageListener::SetMainThreadIdlerRegister(
+      [env](DeviceAPI::ESPostMessageListener::Idler_t idler, void* data) {
+        g_idle_add(
+            [](void* data) {
+              Params* params = reinterpret_cast<Params*>(data);
+              napi_handle_scope scope = nullptr;
+              napi_status status;
+
+              status = napi_open_handle_scope(params->env, &scope);
+              assert(status == napi_ok);
+
+              auto result = params->idler(params->data);
+
+              status = napi_close_handle_scope(params->env, scope);
+              assert(status == napi_ok);
+
+              delete params;
+              return result;
+            },
+            new Params(idler, data, env));
+      });
+
   auto instance = DeviceAPI::ExtensionManagerInstanceGet(esContext);
   if (!instance) {
     DeviceAPI::initialize(esContext);
@@ -39,7 +73,7 @@ static napi_value InitMethod(napi_env env, napi_callback_info info) {
   return nullptr;
 }
 
-#define DECLARE_NAPI_METHOD(name, func)                          \
+#define DECLARE_NAPI_METHOD(name, func)                                        \
   { name, 0, func, 0, 0, 0, napi_default, 0 }
 
 napi_value InitModule(napi_env env, napi_value exports) {

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "XW_Extension.h"
 #include "XW_Extension_SyncMessage.h"
@@ -213,7 +214,7 @@ public:
 
     // @escargot
     typedef int (*Idler_t)(void* data);
-    typedef void (*IdlerRegister_t)(Idler_t idler, void* data);
+    typedef std::function<void(Idler_t idler, void* data)> IdlerRegister_t;
     static void SetMainThreadIdlerRegister(IdlerRegister_t idlerRegister)
     {
         AddIdlerToMainThread = idlerRegister;
