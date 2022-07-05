@@ -66,3 +66,32 @@
 #define LWNODE_DLOG_ERROR(fmt, ...)
 #define FATAL(fmt, ...)
 #endif
+
+struct DLogConfig : Logger::Output::Config {
+  DLogConfig(const std::string& t) : tag(t) {}
+  std::string tag;
+};
+
+class LWNodeLogger : public Logger {
+ public:
+  LWNodeLogger(std::shared_ptr<DLogConfig> config) { outConfig_ = config; }
+};
+
+class DlogOut : public Logger::Output {
+ public:
+  void flush(std::stringstream& ss,
+             std::shared_ptr<Output::Config> config = nullptr) override;
+  void appendEndOfLine(std::stringstream& ss) override;
+};
+
+class LogKind {
+ public:
+  static std::shared_ptr<DLogConfig> user() { return getInstance()->user_; }
+  static std::shared_ptr<DLogConfig> lwnode() { return getInstance()->lwnode_; }
+  static LogKind* getInstance();
+
+ private:
+  LogKind();
+  std::shared_ptr<DLogConfig> user_;
+  std::shared_ptr<DLogConfig> lwnode_;
+};

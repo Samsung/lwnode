@@ -53,6 +53,7 @@
         'src/api/utils/logger/flags.cc',
         'src/api/utils/logger/logger-impl.cc',
         'src/api/utils/logger/logger-util.cc',
+        'src/api/utils/logger/logger.cc',
         'src/api/arraybuffer-allocator.cc',
         'src/api/arraybuffer-deleter.cc',
         'src/api/es-helper.cc',

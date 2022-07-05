@@ -16,6 +16,7 @@
 
 #pragma once
 
+#if !defined(HOST_TIZEN)
 #define CLR_RESET "\033[0m"
 #define CLR_DIM "\033[0;2m"
 #define CLR_RED "\033[0;31m"
@@ -35,3 +36,24 @@
 #define CLR_BGREEN "\033[01;32m"
 #define CLR_WHITE "\033[01;37m"
 #define CLR_REDBG "\033[0;41m"
+#else
+#define CLR_RESET ""
+#define CLR_DIM ""
+#define CLR_RED ""
+#define CLR_GREEN ""
+#define CLR_GREY ""
+#define CLR_BLACK ""
+#define CLR_YELLOW ""
+#define CLR_BLUE ""
+#define CLR_MAGENTA ""
+#define CLR_CYAN ""
+#define CLR_DARKGREY ""
+#define CLR_BRED ""
+#define CLR_BYELLOW ""
+#define CLR_BBLUE ""
+#define CLR_BMAGENTA ""
+#define CLR_BCYAN ""
+#define CLR_BGREEN ""
+#define CLR_WHITE ""
+#define CLR_REDBG ""
+#endif
