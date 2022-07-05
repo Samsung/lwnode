@@ -361,13 +361,11 @@
         '<(lwnode_jsengine_path)/include'
       ],
 
-      'sources': [
-        'src/node_main.cc'
-      ],
-
       'dependencies': [
         'deps/histogram/histogram.gyp:histogram',
         'deps/uvwasi/uvwasi.gyp:uvwasi',
+        # @lwnode
+        '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
       ],
 
       'msvs_settings': {
@@ -385,6 +383,25 @@
       'msvs_disabled_warnings!': [4244],
 
       'conditions': [
+        # @lwnode
+        [ 'lwnode=="true"', {
+          'cflags': ['-Wno-write-strings'],
+          'sources': [
+            'src/node_main_lw.cc',
+            'src/lwnode/aul-event-receiver.cc'
+          ],
+        }, {
+          'sources': [
+            'src/node_main.cc'
+          ],
+        }],
+        ['target_os=="tizen"', {
+          'dependencies': [
+            '<(lwnode_jsengine_path)/deps/tizen.gyp:dlog',
+            '<(lwnode_jsengine_path)/deps/tizen.gyp:appcommon',
+          ],
+        }],
+        # /@lwnode
         [ 'error_on_warn=="true"', {
           'cflags': ['-Werror'],
           'xcode_settings': {
