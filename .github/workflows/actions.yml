@@ -25,9 +25,6 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y ninja-build gcc-multilib g++-multilib sed clang-format-8
-      # - name: Check tidy
-      #   run: |
-      #     ./tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
       - name: Build lwnode
         run: |
           ./configure.py
@@ -119,3 +116,18 @@ jobs:
         with:
           name: tizen_std_${{ matrix.profile }}
           path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib sed clang-format-8
+      - name: Lint CC
+        run: |
+          python2 ./tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
