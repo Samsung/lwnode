@@ -96,10 +96,6 @@ rpmbuild --version
 echo "Build Target:" %{target}
 echo $CFLAGS
 
-%if "%{target}" == "modules"
-./tools/build-modules.sh %{?modules_list} --os=tizen
-%endif
-
 %if "%{target}" == "lwnode"
   %define target_src out/tizen/Release
 

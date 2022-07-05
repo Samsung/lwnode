@@ -110,7 +110,7 @@ jobs:
           sudo apt install -y ninja-build gcc-multilib g++-multilib gbs
       - name: Build Packages
         run: |
-          gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --define 'target modules' --define 'modules_list device-api,gmain-loop' --define 'build_app 0'
+          gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --packaging-dir modules/packages/packaging
       - name: Build Tizen ${{ matrix.profile }}
         run: |
           gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --define 'lib_type shared'
