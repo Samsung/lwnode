@@ -57,7 +57,7 @@ rpmbuild --version
 echo "Build Modules:" %{modules_list}
 echo $CFLAGS
 
-./tools/build-modules.sh %{?modules_list} --os=tizen
+./tools/build-modules.sh %{?modules_list} --os=tizen --clean-after
 
 ##############################################
 ## Install
@@ -67,9 +67,7 @@ echo $CFLAGS
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{target_modules_path}
 
-cd out/modules/tizen
-cp --parents */*.node %{buildroot}%{target_modules_path}
-cd -
+cp -rf out/modules/tizen/* %{buildroot}%{target_modules_path}
 
 %clean
 rm -fr ./*.list
