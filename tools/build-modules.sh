@@ -19,6 +19,7 @@ PROJECT_ROOT_PATH=$PWD
 PACKAGES_ROOT_PATH=$PROJECT_ROOT_PATH/modules/packages
 BUILD_OUT_ROOT_PATH=$PROJECT_ROOT_PATH/out/modules
 LWNODE_INCLUDES_PATH="$PROJECT_ROOT_PATH/deps/node/src;$PROJECT_ROOT_PATH/include"
+CLEAN_AFTER=false
 
 fancy_echo() {
   local BOLD="\033[1m"
@@ -82,6 +83,14 @@ build_module() {
   check_build_result $1
   ninja -C $out_path
   check_build_result $1
+
+  if [ "$CLEAN_AFTER" = true ] ; then
+    echo 'clean cmake files'
+    find $out_path -type f ! -name '*.node' -delete
+    rm -rf $out_path/CMakeFiles
+  fi
+
+  cp -f $module_path/*.js $out_path/
 }
 
 if [[ -z $1 ]] || [[ $1 == -* ]]; then
@@ -96,6 +105,9 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
   --os=*)
     TARGET_OS="${1#*=}"
+    ;;
+  --clean-after)
+    CLEAN_AFTER=true
     ;;
   *)
     echo "Unknown option $1"
