@@ -23,7 +23,7 @@
 #include "api/global.h"
 #include "color.h"
 #include "flags.h"
-#include "logger.h"
+#include "logger-util.h"
 
 // --- Formatter ---
 
@@ -104,7 +104,7 @@ void LogTRACE::printHeader(std::stringstream& stream) {
 }
 
 // --- Logger ---
-thread_local std::shared_ptr<StdOut> s_loggerOutput;
+static thread_local std::shared_ptr<StdOut> s_loggerOutput;
 
 Logger::Logger(const std::string& header, std::shared_ptr<Output> out)
     : out_(out) {
@@ -113,32 +113,31 @@ Logger::Logger(const std::string& header, std::shared_ptr<Output> out)
 
 Logger::Logger(LogFormatter&& formatter, std::shared_ptr<Output> out)
     : out_(out) {
-  if (formatter.isEnabled()) {
+  isEnabled_ = formatter.isEnabled();
+  if (isEnabled_) {
     initialize(formatter.header(), out_);
   }
 }
 
 Logger::~Logger() {
-  if (out_ == nullptr) {
+  if (!isEnabled_) {
     return;
   }
-  stream_ << CLR_RESET << std::endl;
-  out_->flush(stream_);
+  if (out_ == nullptr) {
+    out_ = LogOption::getDefalutOutput();
+  }
+  out_->appendEndOfLine(stream_);
+  out_->flush(stream_, outConfig_);
 }
 
 void Logger::initialize(const std::string& header,
                         std::shared_ptr<Output> out) {
-  if (out_ == nullptr) {
-    if (s_loggerOutput == nullptr) {
-      s_loggerOutput = std::make_shared<StdOut>();
-    }
-    out_ = s_loggerOutput;
-  }
+  out_ = (out == nullptr) ? LogOption::getDefalutOutput() : out;
   stream_ << header;
 }
 
 Logger& Logger::print(const char* string_without_format_specifiers) {
-  if (out_ == nullptr) {
+  if (!isEnabled_) {
     return *this;
   }
 
@@ -154,13 +153,21 @@ Logger& Logger::print(const char* string_without_format_specifiers) {
 
 Logger& Logger::flush() {
   if (out_) {
-    out_->flush(stream_);
+    out_->flush(stream_, outConfig_);
   }
   stream_.str("");
   return *this;
 }
 // --- Output ---
 
-void StdOut::flush(std::stringstream& stream) {
+void StdOut::flush(std::stringstream& stream,
+                   std::shared_ptr<Output::Config> config) {
   std::cout << stream.str();
 }
+
+void StdOut::appendEndOfLine(std::stringstream& ss) {
+  ss << CLR_RESET << std::endl;
+};
+
+// --- Option ---
+OutputInstantiator LogOption::s_outputInstantiator_;

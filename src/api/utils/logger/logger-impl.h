@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cassert>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -69,10 +70,14 @@ class Logger {
  public:
   class Output {
    public:
-    virtual void flush(std::stringstream& ss) = 0;
+    struct Config {};
+    virtual void flush(std::stringstream& ss,
+                       std::shared_ptr<Output::Config> config = nullptr) = 0;
+    virtual void appendEndOfLine(std::stringstream& ss) = 0;
   };
 
-  Logger(const std::string& header = "", std::shared_ptr<Output> out = nullptr);
+  Logger() = default;
+  Logger(const std::string& header, std::shared_ptr<Output> out = nullptr);
   Logger(LogFormatter&& formatter, std::shared_ptr<Output> out = nullptr);
   ~Logger();
 
@@ -82,9 +87,22 @@ class Logger {
     return *this;
   }
 
+  template <typename T, typename... TArgs>
+  Logger& log(const T& v, TArgs... args) {
+    stream_ << v << " ";
+    log(args...);
+    return *this;
+  }
+  template <typename T>
+  Logger& log(const T& v) {
+    stream_ << v;
+    return *this;
+  }
+  Logger& log() { return *this; }
+
   template <typename T, typename... Args>
   Logger& print(const char* format, T value, Args... args) {
-    if (out_ == nullptr) {
+    if (!isEnabled_) {
       return *this;
     }
 
@@ -111,18 +129,46 @@ class Logger {
     assert(((void)"logical error: should not come here", false));
     return *this;
   };
-
   Logger& print(const char* string_without_format_specifiers = "");
   Logger& flush();
 
- private:
+ protected:
   std::shared_ptr<Output> out_;
-  std::stringstream stream_;
+  std::shared_ptr<Output::Config> outConfig_;
 
+ private:
+  std::stringstream stream_;
+  bool isEnabled_{true};
   void initialize(const std::string& header, std::shared_ptr<Output> out);
 };
 
 class StdOut : public Logger::Output {
  public:
-  void flush(std::stringstream& ss) override;
+  void appendEndOfLine(std::stringstream& ss) override;
+  void flush(std::stringstream& ss,
+             std::shared_ptr<Output::Config> config = nullptr) override;
+};
+
+using OutputInstantiator = std::function<std::shared_ptr<Logger::Output>()>;
+
+class LogOption {
+ public:
+  static void setDefaultOutputInstantiator(OutputInstantiator fn) {
+    s_outputInstantiator_ = fn;
+  }
+
+  static OutputInstantiator getOutputInstantiator() {
+    return s_outputInstantiator_;
+  }
+
+  static std::shared_ptr<Logger::Output> getDefalutOutput() {
+    if (s_outputInstantiator_ == nullptr) {
+      // Set default output
+      s_outputInstantiator_ = []() { return std::make_shared<StdOut>(); };
+    }
+    return s_outputInstantiator_();
+  }
+
+ private:
+  static OutputInstantiator s_outputInstantiator_;
 };
