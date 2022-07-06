@@ -2,7 +2,7 @@
 
 `lwnode` provides preliminary debugging capabilities via VS code. This document shows you how to debug a `hello.js`.
 
-We assume `lwnode` is checkouted out in the `lwnode` directory in the following code example. The default directory can be either `lwnode` or `node-escargot` depending on from which repo the source code has checkouted out.
+We assume `lwnode` is checked out in the `lwnode` directory in the following code example.
 
 ## 1. Setup VS Code for lwnode
 
