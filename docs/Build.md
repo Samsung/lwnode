@@ -6,7 +6,7 @@
 
 ## 2. Checkout code
 ```sh
-$ git clone git@github.sec.samsung.net:lws/node-escargot.git
+$ git clone git@github.com:Samsung/lwnode.git
 $ git submodule update --init --recursive
 ```
 
@@ -21,6 +21,13 @@ $ sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
 $ ./configure.py
 $ ninja -C out/linux/Release lwnode
 $ ./out/linux/Release/lwnode ./deps/node/test/message/hello_world.js
+```
+
+```sh
+# for debug build
+$ ./configure.py --debug
+$ ninja -C out/linux/Debug lwnode
+$ ./out/linux/Debug/lwnode ./deps/node/test/message/hello_world.js
 ```
 
 ### 3.3. How to run testcases
@@ -51,23 +58,17 @@ CipherString = DEFAULT:@SECLEVEL=1
 
 ## 4. How to Compile: Tizen
 ### 4.1. Prerequisite
-Set up a gbs build environment on a Ubuntu machine.
+[Install GBS tools](https://docs.tizen.org/platform/developing/installing/) on a Linux machine.
 
 ### 4.2. Build with gbs command
-The following command builds Tizen rpms.
+The following command builds Tizen RPMs.
 
 ```sh
 $ gbs -c .github/gbs.conf build -A arm7l
 ```
 
-If you are checking out a lwnode development branch from github repo (which includes submodules), add the following two options when building Tizen rpms on a local Linux machine.
+If you are checking out `lwnode` from the GitHub repo (which includes submodules), add the following two options when building Tizen RPMs on your Linux machine.
 
 ```sh
 $ gbs -c .github/gbs.conf build -A arm7l --include-all --incremental
-```
-
-### 4.3. Install a lwnode .so library
-You can optionally install `lwnode-devel.rpm` to get  `liblwnode.so` library.
-```sh
-$ rpm -Uvh lwnode-devel.rpm
 ```

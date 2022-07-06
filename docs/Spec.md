@@ -67,6 +67,8 @@
   * Supported user flags are: `--exposed-gc`, `--disallow-code-generation-from-strings`. User flags specific to V8's internal APIs are not supported, e.g., `--max_old_space_size`, etc.
   * `vm` and `repl`  are not supported for security reasons.
   * All literal strings are encoded in UTF16, when JS source has been encoded in UTF16.
+  * If a JS source code file is encoded in UTF16, all literal strings in the file will also be encoded in UTF16 even if UTF8 is sufficient. This decision is to reduce memory usage by reusing the same string literals internally.
+
   * Known Issues:
     - In some cases, an async hook ID is set to null.
     - In some cases, an error message format is slightly different from node.js's error message, although it contains the same information.

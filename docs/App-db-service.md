@@ -5,8 +5,8 @@ In this guide, we will show you how to write a `hello world` database service ap
 ## 1. Run DB service on a server
 
 ### 1.1. Build and install a DB service app
-[Build lwnode rpms](Build.md) and
-install `lwnode-sqlite3.armv7l.rpm` on your device. The rpms can also be downloaded from [tizen.org](https://download.tizen.org/snapshots/tizen/unified/latest/repos/standard/packages/armv7l/).
+[Build lwnode RPMs](Build.md) and
+install `lwnode-sqlite3.armv7l.rpm` on your device. The RPMs can also be downloaded from [tizen.org](https://download.tizen.org/snapshots/tizen/unified/latest/repos/standard/packages/armv7l/).
 ```sh
 $ rpm -Uvh lwnode-sqlite3.armv7l.rpm
 ```

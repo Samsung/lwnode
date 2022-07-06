@@ -3,9 +3,9 @@
 In this guide, we will show you how to write a `hello world`  service app.
 
 ## 1. Create a service app
-You can start developing a service app by using a service app [template](../lwnode/apps/template/).
+You can start developing a service app by using a service app [template](../modules/apps/template/).
 
-Copy the template, and start editing `lib/index.js`. The template contains [code](../lwnode/apps/template/lib/index.js) to print `hello world`.
+Copy the template, and start editing `lib/index.js`. The template contains [code](../modules/apps/template/lib/index.js) to print `hello world`.
 
 ## 2. Compile and run the service app on Linux
 
@@ -41,9 +41,9 @@ While developing, you can run the service app on Linux as follows.
 Build Tizen RPMs as follows.
 
 ```sh
-gbs -c ./packaging/gbs.conf build \
+gbs -c .github/gbs.conf build \
     -A armv7l \
-    -P profile.t65std \
+    -P profile.t70std \
     -B ~/GBS-ROOT/helloworld \
     --include-all --incremental
 ```
