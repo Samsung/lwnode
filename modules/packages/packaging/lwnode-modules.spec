@@ -32,7 +32,8 @@ BuildRequires: pkgconfig(glib-2.0)
 
 # Initialize the variables
 %{!?modules_list: %define modules_list gmain-loop,device-api}
-%define target_modules_path /usr/apps/lwnode/node_modules/
+%define target_lwnode_path /usr/apps/lwnode
+%define target_modules_path %{target_lwnode_path}/node_modules
 %define local_modules_path modules/packages
 
 %description
@@ -84,8 +85,8 @@ rm -fr ./*.manifest
 ##############################################
 
 %files
-%defattr(-,root,root,-)
+%defattr(-,tizenglobalapp,root,-)
 %manifest %{local_modules_path}/packaging/%{name}.manifest
-%{target_modules_path}
+%{target_lwnode_path}
 
 %license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
