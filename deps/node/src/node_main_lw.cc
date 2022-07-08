@@ -15,6 +15,7 @@
  */
 
 #include <cstdio>
+#include "lwnode.h"
 #include "lwnode/aul-event-receiver.h"
 #include "node.h"
 
@@ -72,6 +73,8 @@ int main(int argc, char* argv[]) {
   setvbuf(stderr, nullptr, _IONBF, 0);
 
   if (AULEventReceiver::getInstance()->start(argc, argv)) {
+    LWNode::SystemInfo::getInstance()->add("aul");
+
     char* args[] = {"", "index.js", nullptr};
     return node::Start(2, args);
   }
