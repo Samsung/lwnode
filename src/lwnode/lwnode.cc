@@ -199,6 +199,19 @@ static ValueRef* checkIfHandledAsOneByteString(ExecutionStateRef* state,
   return ValueRef::createUndefined();
 }
 
+static ValueRef* hasSystemInfo(ExecutionStateRef* state,
+                               ValueRef* thisValue,
+                               size_t argc,
+                               ValueRef** argv,
+                               bool isConstructCall) {
+  if (argc <= 0 || !argv[0]->isString()) {
+    return ValueRef::create(false);
+  }
+
+  auto info = argv[0]->asString()->toStdUTF8String();
+  return ValueRef::create(SystemInfo::getInstance()->has(info));
+}
+
 void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
   auto esTarget = CVAL(*target)->value()->asObject();
@@ -220,6 +233,7 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
             CreateReloadableSourceFromFile);
 #endif
   SetMethod(esContext, esTarget, "getGCMemoryStats", getGCMemoryStats);
+  SetMethod(esContext, esTarget, "hasSystemInfo", hasSystemInfo);
 }
 
 void IdleGC(v8::Isolate* isolate) {
@@ -277,6 +291,27 @@ Escargot::ContextRef* Utils::ToEsContext(v8::Context* context) {
 v8::Local<v8::Value> Utils::NewLocal(v8::Isolate* isolate,
                                      Escargot::ValueRef* ptr) {
   return v8::Utils::NewLocal<v8::Value>(isolate, ptr);
+}
+
+SystemInfo::SystemInfo() {
+#ifdef HOST_TIZEN
+  infos_.push_back("tizen");
+#else
+  infos_.push_back("linux");
+#endif
+}
+
+SystemInfo* SystemInfo::getInstance() {
+  static SystemInfo s_instance;
+  return &s_instance;
+}
+
+void SystemInfo::add(const char* info) {
+  infos_.push_back(info);
+}
+
+bool SystemInfo::has(const std::string& info) {
+  return std::find(infos_.begin(), infos_.end(), info) != infos_.end();
 }
 
 }  // namespace LWNode

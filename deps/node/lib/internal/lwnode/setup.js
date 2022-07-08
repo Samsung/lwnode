@@ -89,6 +89,11 @@ function wrapLWNodeMethods(binding) {
       _internalLog(`feature '${name}': ${enabled}`);
       return enabled;
     },
+    hasSystemInfo: (...args) => {
+      if (binding.hasSystemInfo) {
+        return binding.hasSystemInfo.apply(null, args);
+      }
+    },
   };
 }
 

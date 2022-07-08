@@ -71,4 +71,16 @@ class LWNODE_EXPORT Utils {
                                        Escargot::ValueRef* ptr);
 };
 
+class SystemInfo {
+  public:
+  static SystemInfo* getInstance();
+  
+  void add(const char* info);
+  bool has(const std::string& info);
+
+  private:
+    SystemInfo();
+    std::vector<std::string> infos_;
+};
+
 }  // namespace LWNode
