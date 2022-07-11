@@ -22,14 +22,28 @@
 #include "TizenDeviceAPILoaderForEscargot.h"
 #include "lwnode/lwnode.h"
 
+#define NAPI_CALL(call)                                                        \
+  do {                                                                         \
+    napi_status status = call;                                                 \
+    assert(status == napi_ok && #call " failed");                              \
+  } while (0);
+
 using namespace LWNode;
 
+static void runInitialScript(napi_env env) {
+  const char* scriptText =
+      "if(!global.WebAPIException){ "
+      "global.WebAPIException = xwalk.utils.global.WebAPIException;}";
+  napi_value script, result;
+  NAPI_CALL(
+      napi_create_string_utf8(env, scriptText, strlen(scriptText), &script));
+  NAPI_CALL(napi_run_script(env, script, &result));
+}
+
 static napi_value InitMethod(napi_env env, napi_callback_info info) {
-  napi_status status;
   napi_context context;
 
-  status = napi_get_context(env, context);
-  assert(status == napi_ok);
+  NAPI_CALL(napi_get_context(env, context));
 
   auto esContext = Utils::ToEsContext(context);
 
@@ -49,15 +63,12 @@ static napi_value InitMethod(napi_env env, napi_callback_info info) {
             [](void* data) {
               Params* params = reinterpret_cast<Params*>(data);
               napi_handle_scope scope = nullptr;
-              napi_status status;
 
-              status = napi_open_handle_scope(params->env, &scope);
-              assert(status == napi_ok);
+              NAPI_CALL(napi_open_handle_scope(params->env, &scope));
 
               auto result = params->idler(params->data);
 
-              status = napi_close_handle_scope(params->env, scope);
-              assert(status == napi_ok);
+              NAPI_CALL(napi_close_handle_scope(params->env, scope));
 
               delete params;
               return result;
@@ -70,6 +81,8 @@ static napi_value InitMethod(napi_env env, napi_callback_info info) {
     DeviceAPI::initialize(esContext);
   }
 
+  runInitialScript(env);
+
   return nullptr;
 }
 
@@ -77,10 +90,8 @@ static napi_value InitMethod(napi_env env, napi_callback_info info) {
   { name, 0, func, 0, 0, 0, napi_default, 0 }
 
 napi_value InitModule(napi_env env, napi_value exports) {
-  napi_status status;
   napi_property_descriptor desc = DECLARE_NAPI_METHOD("init", InitMethod);
-  status = napi_define_properties(env, exports, 1, &desc);
-  assert(status == napi_ok);
+  NAPI_CALL(napi_define_properties(env, exports, 1, &desc));
   return exports;
 }
 
