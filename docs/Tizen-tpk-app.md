@@ -1,53 +1,59 @@
-# How to make tpk for Tizen App
+# Tizen Service App Guide
 
-In this guide, we will show you how to write a `hello world` tizen tpk app.
+In this guide, we will show you how to write a `hello world` tpk (Tizen Package) using `lwnode`.
 
-## 1. Create a tpk app with Tizen CLI
+## 1. Generate a Tizen native app project using Tizen CLI
 
-### Create project
+### Create a project
 
 Create a project with the command below.
+
 `tizen create native-project -n <app-name> -p <profile> -t ServiceApp`
 
 For example,
-```sh
+```console
 tizen create native-project -p iot-headless-6.5 -t ServiceApp -n "helloworld"
 ```
 
-### Make index.js in 'res' folder
+### Add `index.js` in the `res` folder
 
-Make entry point JavaScript file(`index.js`) in `res` foler to start lwnode.
+There will be a `res` folder in your project. It's the place where your code should be. 
+
+Create a JavaScript file named `index.js` in the folder. It will be an entry point for your app.
 
 For example,
 ```js
-// res/index.js
+// path: res/index.js
 console.log('hello world');
 ```
 
-### Modify `tizen-manifest.xml`
+### Configure your application information
 
-To start lwnode for executable file, modify `exec` path in `tizen-mainifest.xml`.
+`tizen-manifest.xml`, the application manifest, consists of application information, such as 
+package, privileges, and version which are available for your application. To run your code on `lwnode`, 
+you need to write an executable file path as below.
 
-```
+```xml
+<!-- add `/usr/bin/lwnode` into the `exec` attribute. -->
 <service-application appid="org.example.hello" exec="/usr/bin/lwnode" ...>
 ```
 
 
-## 2. Package App
+## 2. Create a tpk (Tizen Package)
 
-Use the command below to package the app.
+Use the commands below to pack your app as a tpk.
 
-```sh
+```console
 mkdir -p .buildResult
 zip ./.buildResult/<app-id>.tpk * -r
 tizen package -t tpk -- ./.buildResult/<app-id>.tpk
 ```
 
-## 3. Install and Run App on device
+## 3. Install and run the app on a device
 
-After moving the tpk file to the device, install and run it.
-And then check the console log using `dlogutil <app-id>`.
+Install the Tizen package on a target device and run it.
+You can find the console log, `hello world`, using `dlogutil <app-id>`.
 
-```sh
+```console
 dlogutil <app-id>
 ```
