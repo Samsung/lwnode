@@ -40,7 +40,7 @@ var serviceReply =
     if (adapter.powered)
     {
       console.log("Bluetooth is successfully turned on");
-      adapter.getKnownDevices(onGotDevices, onError);
+      startDiscovery();
     }
     else
     {
@@ -53,21 +53,40 @@ var serviceReply =
     alert("Bluetooth Settings application reported failure");
   }
 };
-/* getKnownDevices sample code. */
+/* Discovery sample code. */
 
-function onGotDevices(devices)
+function startDiscovery()
 {
-  console.log("Devices");
-  for (var i = 0; i < devices.length; i++)
+  var discoverDevicesSuccessCallback =
   {
-    console.log(" Name: " + devices[i].name + ", Address: " + devices[i].address);
-  }
-  console.log("Total: " + devices.length);
-}
+    onstarted: function()
+    {
+      console.log("Device discovery started");
+    },
+    ondevicefound: function(device)
+    {
+      console.log("Found device - name: " + device.name + ", Address: " + device.address);
+    },
+    ondevicedisappeared: function(address)
+    {
+      console.log("Device disappeared: " + address);
+    },
+    onfinished: function(devices)
+    {
+      console.log("Found Devices");
+      for (var i = 0; i < devices.length; i++)
+      {
+        console.log("Name: " + devices[i].name + ", Address: " + devices[i].address);
+      }
+      console.log("Total: " + devices.length);
+    }
+  };
 
-function onError(e)
-{
-  console.log("Error: " + e.message);
+  /* Starts searching for nearby devices, for about 12 sec. */
+  adapter.discoverDevices(discoverDevicesSuccessCallback, function(e)
+  {
+    console.log("Failed to search devices: " + e.message + "(" + e.name + ")");
+  });
 }
 
 /* Execution. */
@@ -75,7 +94,7 @@ function onError(e)
 if (adapter.powered)
 {
   console.log("Bluetooth is already enabled");
-  adapter.getKnownDevices(onGotDevices, onError);
+  startDiscovery();
 }
 else
 {
