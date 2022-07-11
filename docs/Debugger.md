@@ -75,6 +75,7 @@ $ out/linux/Debug/lwnode --start-debug-server ./hello.js
 A sample of `hello.js` is given below.
 ```js
 // hello.js
+console.log('hello world');
 let sum = 0;
 for (let i = 0; i < 10; i++) {
   sum += 1;
@@ -93,8 +94,3 @@ On VS Code, run as follows:
 * Select `Run and Debug (ctrl+shift+D)` on the left panel
 * Set target to `Debug: lwnode` found on the top
 * Select `Run -> Start Debugging (F5)` on the menu
-
-
-Known Issues:
-* The debugger by default stops at every `*.js` file loaded before loading `hello.js`. This behaviour is expected to be fixed in the next version. (i.e., the `console.log()` function will call many subsequence JS functions calls.)
-* To add a break point, wait until `hello.js` is loaded in VS code, and add a break point.
