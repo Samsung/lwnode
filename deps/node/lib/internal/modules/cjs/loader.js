@@ -603,6 +603,11 @@ if (isWindows) {
     // Append /node_modules to handle root paths.
     paths.push('/node_modules');
 
+    // @lwnode
+    if (process.lwnode.hasSystemInfo('tizen')) {
+      paths.push('/usr/apps/lwnode/node_modules');
+    }
+
     return paths;
   };
 }
