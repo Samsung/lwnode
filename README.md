@@ -18,6 +18,8 @@ The following provides useful information about lwnode:
   - [Service App Guide](docs/App-service.md)
     - [App Template](modules/apps/template/)
   - [DB Service and Client App Guide](docs/App-db-service.md)
+* Tizen Application
+  - [tpk app](docs/Tizen-tpk-app.md)
 * Others
   - [MAINTAINERS.md](MAINTAINERS.md).
   - [GOVERNANCE.md](GOVERNANCE.md)
