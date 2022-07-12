@@ -1,0 +1,46 @@
+P /.git
+P /.github
+
+- /tools
+- /sample
+- /deps/node/test
+
+- /deps/escargot/build/windows
+- /deps/escargot/third_party/windows
+- /deps/escargot/third_party/GCutil/windows
+- /deps/escargot/third_party/googletest
+- /deps/escargot/third_party/wasm/wabt/docs
+- /deps/escargot/third_party/wasm/wabt/fuzz-in
+- /deps/escargot/third_party/wasm/wabt/man
+- /deps/escargot/third_party/wasm/wabt/scripts
+- /deps/escargot/third_party/wasm/wabt/wasm2c
+- /deps/escargot/test
+- /deps/escargot/tools
+
+- /out
+- /dpes/node/benchmark
+- /deps/node/deps/npm
+- /deps/node/deps/zlib
+- /deps/node/tools/node_modules
+- /deps/node/tools/gyp/tools/Xcode
+- .git
+- .github
+- .gitmodules
+- .gitattributes
+- .editorconfig
+- .eslintignore
+- .eslintrc.yaml
+- .remarkrc
+
++ /deps/node/lib/internal/test
++ /test
+- test
+- testing
+- jinja2
+
+- *.pyc
+- *.a
+- *.so
+- *.o
+- CMakeCache.txt
+- CMakeFiles

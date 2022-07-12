@@ -3,13 +3,13 @@
 [![License](https://img.shields.io/badge/LICENSE-Apache%202-blue)](LICENSE)
 [![Actions Status](https://github.com/Samsung/lwnode/actions/workflows/actions.yml/badge.svg)](https://github.com/Samsung/lwnode/actions)
 
-Lightweight Node.js is a memory efficient Node.js implementation,
+Lightweight Node.js (`lwnode`) is a memory efficient Node.js implementation,
 which runs on top of [Escargot](https://github.com/Samsung/escargot),
 a memory optimized JavaScript Engine developed by Samsung Research.
 
 The following provides useful information about lwnode:
 * [Build Guide](docs/Build.md)
-* Lightweight node.js (lwnode)
+* Lightweight node.js
   - [Supported Features](docs/Spec.md)
   - [Modules](docs/lwnode-modules.md)
   - [Debugging Guide](docs/Debugger.md)
@@ -22,5 +22,6 @@ The following provides useful information about lwnode:
 * Tizen Application
   - [tpk app](docs/Tizen-tpk-app.md)
 * Others
-  - [MAINTAINERS.md](MAINTAINERS.md).
+  - [Internal.md](docs/Internal.md)
+  - [MAINTAINERS.md](MAINTAINERS.md)
   - [GOVERNANCE.md](GOVERNANCE.md)
