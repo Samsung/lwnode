@@ -11,6 +11,7 @@ The following provides useful information about lwnode:
 * [Build Guide](docs/Build.md)
 * Lightweight node.js (lwnode)
   - [Supported Features](docs/Spec.md)
+  - [Modules](docs/lwnode-modules.md)
   - [Debugging Guide](docs/Debugger.md)
   - [Memory Usage Report](https://pages.github.sec.samsung.net/lws/lwnode-test-results) (Not accessible from public)
 * [JS Backend Service Framework](docs/Framework.md)
