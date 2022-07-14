@@ -33,7 +33,7 @@ function wrapLWNodeMethods(binding) {
 
   return {
     _print: (...args) => {
-      _internalLog.apply(null, arguments);
+      binding.logger.apply(null, args);
     },
     _ptr: (...args) => {
       if (isDebugBuild && binding.print) {

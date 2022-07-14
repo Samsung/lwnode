@@ -6,6 +6,10 @@
 #include "debug_utils.h"
 #include "env.h"
 
+#ifdef LWNODE
+#include "lwnode.h"
+#endif
+
 #include <type_traits>
 
 namespace node {
@@ -126,7 +130,10 @@ std::string COLD_NOINLINE SPrintF(  // NOLINT(runtime/string)
 
 template <typename... Args>
 void COLD_NOINLINE FPrintF(FILE* file, const char* format, Args&&... args) {
-  FWrite(file, SPrintF(format, std::forward<Args>(args)...));
+  // @lwnode
+  auto str = SPrintF(format, std::forward<Args>(args)...);
+  FWrite(file, LWNode::Utils::trimLastNewLineIfNeeded(std::move(str)));
+  // FWrite(file, SPrintF(format, std::forward<Args>(args)...));
 }
 
 template <typename... Args>

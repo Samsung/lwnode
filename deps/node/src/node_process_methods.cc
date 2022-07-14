@@ -431,6 +431,13 @@ static void ReallyExit(const FunctionCallbackInfo<Value>& args) {
   env->Exit(code);
 }
 
+void Logger(const FunctionCallbackInfo<Value>& args) {
+  CHECK(args.Length() == 1 && args[0]->IsString() &&
+        "must be called with a single string");
+  Utf8Value message(args.GetIsolate(), args[0]);
+  FPrintF(stderr, "%s", message);
+}
+
 static void InitializeProcessMethods(Local<Object> target,
                                      Local<Value> unused,
                                      Local<Context> context,
@@ -465,6 +472,7 @@ static void InitializeProcessMethods(Local<Object> target,
   env->SetMethod(target, "patchProcessObject", PatchProcessObject);
 #ifdef LWNODE
   LWNode::InitializeProcessMethods(target, context);
+  env->SetMethod(target, "logger", Logger);
 #endif
 }
 
