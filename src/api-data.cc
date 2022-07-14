@@ -489,6 +489,7 @@ void v8::WasmModuleObject::CheckCast(Value* that) {
 
 v8::BackingStore::~BackingStore() {
   auto lwIsolate = IsolateWrap::GetCurrent();
+  LWNODE_CHECK(lwIsolate != nullptr);
   lwIsolate->removeBackingStore(reinterpret_cast<BackingStoreRef*>(this));
 }
 

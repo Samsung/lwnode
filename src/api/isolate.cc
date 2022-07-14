@@ -20,6 +20,7 @@
 #include "context.h"
 #include "es-helper.h"
 #include "extra-data.h"
+#include "utils/compiler.h"
 #include "utils/gc-util.h"
 #include "utils/misc.h"
 
@@ -250,8 +251,23 @@ using namespace Escargot;
 
 namespace EscargotShim {
 
-THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
-THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
+/*
+  Note: why should these global variables be exported?
+
+  v8 uses std::unique_ptr or std::shared_ptr as a holder when a BackingStore is
+  transferred. In order to keep or destroy the BackingStore at right time, we
+  use the `BackingStore` destructor.
+
+  v8::BackingStore::~BackingStore() {
+    auto lwIsolate = IsolateWrap::GetCurrent(); // <-
+    ...
+  }
+
+  Since the holder is outside this module, if the global variables aren't
+  exported, they will be invisible when linked as shared library.
+*/
+LWNODE_EXPORT THREAD_LOCAL IsolateWrap* IsolateWrap::s_currentIsolate;
+LWNODE_EXPORT THREAD_LOCAL IsolateWrap* IsolateWrap::s_previousIsolate;
 
 IsolateWrap::IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "malc: %p", this);
