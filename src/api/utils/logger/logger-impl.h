@@ -74,6 +74,7 @@ class Logger {
     virtual void flush(std::stringstream& ss,
                        std::shared_ptr<Output::Config> config = nullptr) = 0;
     virtual void appendEndOfLine(std::stringstream& ss) = 0;
+    virtual bool hasAutoAppendEndOfLine() = 0;
   };
 
   Logger() = default;
@@ -138,13 +139,15 @@ class Logger {
 
  private:
   std::stringstream stream_;
+  std::stringstream footer_;
   bool isEnabled_{true};
   void initialize(const std::string& header, std::shared_ptr<Output> out);
 };
 
 class StdOut : public Logger::Output {
  public:
-  void appendEndOfLine(std::stringstream& ss) override;
+  bool hasAutoAppendEndOfLine() override { return false; }
+  void appendEndOfLine(std::stringstream& ss) override{};
   void flush(std::stringstream& ss,
              std::shared_ptr<Output::Config> config = nullptr) override;
 };
