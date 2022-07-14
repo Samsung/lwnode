@@ -43,6 +43,17 @@ function createWritableStdioStream(fd) {
   // Note stream._type is used for test-module-load-list.js
   switch (guessHandleType(fd)) {
     case 'TTY':
+      // @lwnode
+      if (process.lwnode) {
+        const { Writable } = require('stream');
+        stream = new Writable({
+          write(chunk, encoding, callback) {
+            process.lwnode._print(chunk.toString());
+            callback();
+          }
+        });
+        break;
+      }
       const tty = require('tty');
       stream = new tty.WriteStream(fd);
       stream._type = 'tty';

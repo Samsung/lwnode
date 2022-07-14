@@ -19,6 +19,8 @@
 #include <v8.h>
 #include <functional>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace Escargot {
 class ContextRef;
@@ -69,12 +71,14 @@ class LWNODE_EXPORT Utils {
 
   static v8::Local<v8::Value> NewLocal(v8::Isolate* isolate,
                                        Escargot::ValueRef* ptr);
+
+  static std::string trimLastNewLineIfNeeded(std::string&& str);
 };
 
 class SystemInfo {
   public:
   static SystemInfo* getInstance();
-  
+
   void add(const char* info);
   bool has(const std::string& info);
 

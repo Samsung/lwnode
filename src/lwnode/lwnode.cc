@@ -293,6 +293,15 @@ v8::Local<v8::Value> Utils::NewLocal(v8::Isolate* isolate,
   return v8::Utils::NewLocal<v8::Value>(isolate, ptr);
 }
 
+std::string Utils::trimLastNewLineIfNeeded(std::string&& str) {
+  if (LogOption::getDefalutOutput()->hasAutoAppendEndOfLine()) {
+    // NOTE: We don't consider other OSs except linux.
+    static const std::string s_delimiter = "\n";
+    str.erase(str.find_last_not_of(s_delimiter) + 1);
+  }
+  return std::move(str);
+}
+
 SystemInfo::SystemInfo() {
 #ifdef HOST_TIZEN
   infos_.push_back("tizen");

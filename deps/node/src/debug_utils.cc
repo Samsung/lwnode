@@ -474,7 +474,9 @@ std::vector<std::string> NativeSymbolDebuggingContext::GetLoadedLibraries() {
 void FWrite(FILE* file, const std::string& str) {
   auto simple_fwrite = [&]() {
     // The return value is ignored because there's no good way to handle it.
-    fwrite(str.data(), str.size(), 1, file);
+    // fwrite(str.data(), str.size(), 1, file);
+    // @lwnode
+    LWNODE_USER_LOG(str);
   };
 
   if (file != stderr && file != stdout) {
