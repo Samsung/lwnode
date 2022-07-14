@@ -82,6 +82,7 @@ class DlogOut : public Logger::Output {
   void flush(std::stringstream& ss,
              std::shared_ptr<Output::Config> config = nullptr) override;
   void appendEndOfLine(std::stringstream& ss) override;
+  bool hasAutoAppendEndOfLine() override { return true; }
 };
 
 class LogKind {

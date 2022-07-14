@@ -111,12 +111,15 @@ Logger::Logger(const std::string& header, std::shared_ptr<Output> out)
   initialize(header, out);
 }
 
+// TODO: Extract LogFormatter handling.
+// TODO: Refactor ouput instance creation with flyweight pattern.
 Logger::Logger(LogFormatter&& formatter, std::shared_ptr<Output> out)
     : out_(out) {
   isEnabled_ = formatter.isEnabled();
   if (isEnabled_) {
     initialize(formatter.header(), out_);
   }
+  footer_ << CLR_RESET << std::endl;
 }
 
 Logger::~Logger() {
@@ -126,6 +129,7 @@ Logger::~Logger() {
   if (out_ == nullptr) {
     out_ = LogOption::getDefalutOutput();
   }
+  stream_ << footer_.str();
   out_->appendEndOfLine(stream_);
   out_->flush(stream_, outConfig_);
 }
@@ -153,6 +157,7 @@ Logger& Logger::print(const char* string_without_format_specifiers) {
 
 Logger& Logger::flush() {
   if (out_) {
+    out_->appendEndOfLine(stream_);
     out_->flush(stream_, outConfig_);
   }
   stream_.str("");
@@ -162,12 +167,8 @@ Logger& Logger::flush() {
 
 void StdOut::flush(std::stringstream& stream,
                    std::shared_ptr<Output::Config> config) {
-  std::cout << stream.str();
+  std::cerr << stream.str();
 }
-
-void StdOut::appendEndOfLine(std::stringstream& ss) {
-  ss << CLR_RESET << std::endl;
-};
 
 // --- Option ---
 OutputInstantiator LogOption::s_outputInstantiator_;

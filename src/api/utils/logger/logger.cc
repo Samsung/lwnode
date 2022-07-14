@@ -15,35 +15,34 @@
  */
 
 #include "logger.h"
+#include <iomanip>  // for setfill and setw
 
 // Dlog
 #ifdef HOST_TIZEN
 #include <dlog.h>
+#endif
 
 void DlogOut::flush(std::stringstream& ss,
                     std::shared_ptr<Output::Config> config) {
   auto c =
       config ? std::static_pointer_cast<DLogConfig>(config) : LogKind::lwnode();
+#ifdef HOST_TIZEN
   dlog_print(DLOG_INFO, c->tag.c_str(), "%s", ss.str().c_str());
-}
-
-void DlogOut::appendEndOfLine(std::stringstream& ss){
-    /* NOTHING */
-};
-
 #else
-// TEST
-void DlogOut::flush(std::stringstream& ss,
-                    std::shared_ptr<Output::Config> config) {
-  auto c =
-      config ? std::static_pointer_cast<DLogConfig>(config) : LogKind::lwnode();
-  std::cout << c->tag << " " << ss.str();
+  // For testing. StdOut will be used to flush buffers through stdout.
+  std::cerr << std::left << std::setfill(' ') << std::setw(6) << c->tag << " "
+            << ss.str();
+#endif
 }
 
 void DlogOut::appendEndOfLine(std::stringstream& ss) {
+#ifdef HOST_TIZEN
+  /* NOTHING */
+#else
+  // For testing. StdOut will be used to flush buffers through stdout.
   ss << std::endl;
-};
 #endif
+};
 
 // LogKind
 LogKind* LogKind::getInstance() {
