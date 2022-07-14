@@ -24,27 +24,27 @@
 int AULEventReceiver::aulEventHandler(aul_type type, bundle* b, void* data) {
   switch (type) {
     case AUL_START: {
-      LWNODE_LOG_INFO("AUL_START");
+      LWNODE_DEV_LOG("AUL_START");
       char* json = nullptr;
       if (BUNDLE_ERROR_NONE != bundle_to_json(b, &json)) {
-        LWNODE_LOG_ERROR("bundle_to_json");
+        LWNODE_DEV_LOG("ERROR: bundle_to_json");
         return 0;
       }
-      LWNODE_LOG_INFO("[AUL] %s", json);
+      LWNODE_DEV_LOG("[AUL]", json);
       // NOTE: usage: process.on('message', (message) => {})
-      // nescargot::push_aul_message(json);
+      // push_aul_message(json);
       free(json);
       break;
     }
     case AUL_RESUME:
-      LWNODE_LOG_INFO("AUL_RESUME");
+      LWNODE_DEV_LOG("AUL_RESUME");
       break;
     case AUL_TERMINATE:
-      LWNODE_LOG_INFO("AUL_TERMINATE");
-      // nescargot::push_aul_termination_message();
+      LWNODE_DEV_LOG("AUL_TERMINATE");
+      // push_aul_termination_message();
       break;
     default:
-      LWNODE_LOG_INFO("AUL EVENT (%d)", type);
+      LWNODE_DEV_LOGF("AUL EVENT (%d)", type);
       break;
   }
   return 0;
@@ -59,7 +59,7 @@ bool AULEventReceiver::hasAulArguments(int argc, char* argv[]) {
       bundle_iterate(
           parsed,
           [](const char* key, const char* value, void* d) {
-            LWNODE_LOG_INFO("bundle - key: %s, value: %s", key, value);
+            LWNODE_DEV_LOGF("bundle - key: %s, value: %s", key, value);
           },
           NULL);
       result = true;
@@ -74,6 +74,9 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
   isEventReceiverRunning_ = false;
 
   if (hasAulArguments(argc, argv)) {
+    isEventReceiverRunning_ = true;
+    initLoggerOutput();
+
     aul_launch_init(aulEventHandler, nullptr);
     aul_launch_argv_handler(argc, argv);
 
@@ -81,15 +84,16 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
     aul_app_get_appid_bypid(getpid(), appid, kMaxPackageNameSize);
     appid_ = appid;
 
+    LWNODE_DEV_LOG("appid: ", appid_);
+
     if (uv_chdir(app_get_resource_path()) != 0) {
-      LWNODE_LOG_ERROR("Failed to change directory. (%d)", -errno);
+      LWNODE_DEV_LOGF("ERROR: Failed to change directory. (%d)", -errno);
       exit(-errno);
     }
-    isEventReceiverRunning_ = true;
+    return isEventReceiverRunning_;
   }
 
   initLoggerOutput();
-
   return isEventReceiverRunning_;
 }
 #endif
@@ -104,6 +108,10 @@ bool AULEventReceiver::isEventReceiverRunning() {
 }
 
 void AULEventReceiver::initLoggerOutput() {
+  if (!appid_.empty()) {
+    LogKind::user()->tag = appid_;
+  }
+
   LogOption::setDefaultOutputInstantiator([&]() {
     static thread_local std::shared_ptr<Logger::Output> s_loggerOutput;
     if (s_loggerOutput == nullptr) {
@@ -111,7 +119,7 @@ void AULEventReceiver::initLoggerOutput() {
                            ? std::static_pointer_cast<Logger::Output>(
                                  std::make_shared<DlogOut>())
                            : std::static_pointer_cast<Logger::Output>(
-                                 std::make_shared<DlogOut>());
+                                 std::make_shared<StdOut>());
     }
     return s_loggerOutput;
   });

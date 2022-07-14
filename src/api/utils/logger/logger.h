@@ -20,6 +20,12 @@
 #include "logger-impl.h"
 #include "logger-util.h"
 
+// loggers using LWNodeLogger which supports dlog
+#define LWNODE_USER_LOG(...) LWNodeLogger(LogKind::user()).log(__VA_ARGS__)
+#define LWNODE_DEV_LOG(...) LWNodeLogger(LogKind::lwnode()).log(__VA_ARGS__)
+#define LWNODE_DEV_LOGF(fmt, ...)                                              \
+  LWNodeLogger(LogKind::lwnode()).print(fmt, ##__VA_ARGS__)
+
 // loggers (release)
 #define LWNODE_LOG(tag) Logger(LogTYPED(LogTYPED::Type::tag))
 #define LWNODE_LOGF(tag, fmt, ...) LWNODE_LOG(tag).print(fmt, ##__VA_ARGS__)

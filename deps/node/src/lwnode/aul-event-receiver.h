@@ -32,7 +32,9 @@ class AULEventReceiver {
   bool hasAulArguments(int argc, char* argv[]);
   bool start(int argc, char* argv[]);
 #else
-  bool start(int argc, char* argv[]) { return false; }
+  bool start(int argc, char* argv[]) {
+    return false;
+  }
 #endif
 
   void initLoggerOutput();
