@@ -1899,9 +1899,13 @@ int BigInt::WordCount() const {
 
 void BigInt::ToWordsArray(int* sign_bit,
                           int* word_count,
-                          uint64_t* words) const {}
+                          uint64_t* words) const {
+  LWNODE_RETURN_VOID;
+}
 
-void Isolate::ReportExternalAllocationLimitReached() {}
+void Isolate::ReportExternalAllocationLimitReached() {
+  LWNODE_RETURN_VOID;
+}
 
 // Node v14.x ABI compat dummy.
 void Isolate::CheckMemoryPressure() {
