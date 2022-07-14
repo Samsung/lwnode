@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [ release ]
+        config: [ '', '--nopt --shared' ]
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
           sudo apt install -y ninja-build gcc-multilib g++-multilib sed clang-format-8
       - name: Build lwnode
         run: |
-          ./configure.py
+          ./configure.py ${{ matrix.config }}
           ninja -C out/linux/Release lwnode
       - name: Run node.js TCs (test.py)
         run: |
