@@ -16,11 +16,10 @@ The following provides useful information about lwnode:
   - [Memory Usage Report](https://pages.github.sec.samsung.net/lws/lwnode-test-results) (Not accessible from public)
 * [JS Backend Service Framework](docs/Framework.md)
   - [Resource Management](docs/lwnode.md)
-  - [Service App Guide](docs/App-service.md)
+  - [Service App Guide (RPMs)](docs/App-service.md)
     - [App Template](modules/apps/template/)
+  - [Tizen Service App Guide (TPKs)](docs/Tizen-tpk-app.md)
   - [DB Service and Client App Guide](docs/App-db-service.md)
-* Tizen Application
-  - [tpk app](docs/Tizen-tpk-app.md)
 * Others
   - [Internal.md](docs/Internal.md)
   - [MAINTAINERS.md](MAINTAINERS.md)
