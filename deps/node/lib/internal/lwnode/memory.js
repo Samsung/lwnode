@@ -75,11 +75,19 @@ function formatMemStats(size, option) {
  *  }} [stats=] if undefined, gc stats from native bindings is used.
  * @return {MemoryStats}
  */
-function createMemStats(stats = rawMethods.getGCMemoryStats()) {
+function createMemStats(stats) {
+  if (stats === undefined) {
+    stats = {
+      ...rawMethods.getGCMemoryStats(),
+      pssSwap: rawMethods.PssSwapUsage() * 1024,
+    };
+  }
+
   return {
     heap: formatMemStats(stats.heapSize),
     sinceLastGc: formatMemStats(stats.bytesSinceGC),
     unmapped: formatMemStats(stats.unmappedBytes),
+    pssSwap: formatMemStats(stats.pssSwap),
   };
 }
 
@@ -93,6 +101,7 @@ class MemDiff {
     heapSize: 0,
     unmappedBytes: 0,
     bytesSinceGC: 0,
+    pssSwap: 0,
   });
 
   constructor() {
@@ -118,12 +127,14 @@ class MemDiff {
         this.#cur.sinceLastGc[1],
         this.#max.sinceLastGc[1],
       ),
+      pssSwap: Math.max(this.#cur.pssSwap[1], this.#max.pssSwap[1]),
     });
 
     /** @type {FileSizeOption} */
     const heap = this.#cur.heap[1] - this.#last.heap[1];
     const unmapped = this.#cur.unmapped[1] - this.#last.unmapped[1];
     const sinceLastGc = this.#cur.sinceLastGc[1] - this.#last.sinceLastGc[1];
+    const pssSwap = this.#cur.pssSwap[1] - this.#last.pssSwap[1];
     const option = { signed: true, fractionalDigits: 2 };
 
     /**
@@ -141,6 +152,7 @@ class MemDiff {
         heap: formatMemStats(heap, option),
         unmapped: formatMemStats(unmapped, option),
         sinceLastGc: formatMemStats(sinceLastGc, option),
+        pssSwap: formatMemStats(pssSwap, option),
       },
     };
   }
@@ -265,17 +277,26 @@ class MemWatcher extends EventEmitter {
   #diff;
   #maxTracker;
   #limitTracker;
+  #memType;
 
   /**
    * @param {number} delay heap size (bytes)
    * @param {EventEmitter} emitter
+   * @param {number} limit heap threshold size (bytes)
+   * @param {string} memType `gc` or `pss` (default: pss)
    */
-  constructor({ delay = kGcInterval, maxIgnoreCount = 2, limit } = {}) {
+  constructor({
+    delay = kGcInterval,
+    maxIgnoreCount = 2,
+    limit,
+    memType = 'pss',
+  } = {}) {
     super([arguments]);
 
     this.#delay = delay;
     this.#statsTimerId = null;
     this.#diff = new MemDiff();
+    this.#memType = memType == 'pss' ? 'pssSwap' : 'heap';
 
     this.#maxTracker = new MaxValueTracker(maxIgnoreCount, {
       onMaxUpdated: ({ growth, current, count, elapsed }) => {
@@ -293,13 +314,13 @@ class MemWatcher extends EventEmitter {
           const gap = current - limit;
           const data = {
             // reason: `Current memory usage exceeds the threshold value.`,
-            gap: [getHumanSize(gap, { signed: true }), gap],
+            gap: [getHumanSize(gap, { signed: false }), gap],
             current: [getHumanSize(current), current],
             limit: [getHumanSize(limit), limit],
           };
           data.reason =
             `Current memory usage (${data.current[0]}) exceeds ` +
-            `(${data.gap[0]}) over the threshold value (${data.limit[0]}).`;
+            `${data.gap[0]} over the threshold value (${data.limit[0]}).`;
           this.emit('limit', data);
         },
       });
@@ -334,11 +355,11 @@ class MemWatcher extends EventEmitter {
             this.emit('stats', result);
 
             if (this.listeners('limit').length) {
-              this.#limitTracker?.update(result.current.heap[1]);
+              this.#limitTracker?.update(result.current[this.#memType][1]);
             }
 
             if (this.listeners('max').length) {
-              this.#maxTracker?.update(result.max.heap[1]);
+              this.#maxTracker?.update(result.max[this.#memType][1]);
             }
           }, this.#delay);
         }
