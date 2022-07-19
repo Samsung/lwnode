@@ -38,7 +38,7 @@ watcher.on(
   }),
 );
 
-const idi = setInterval(makesLeaks(), 500);
+const idi = setInterval(makesLeaks(), 100);
 const idt = setTimeout(teardown, common.platformTimeout(1000 * 60));
 
 function teardown() {
