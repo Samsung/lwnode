@@ -15,6 +15,7 @@
  */
 
 const EventEmitter = require('events');
+const { validateCallback, validateInteger } = require('internal/validators');
 const rawMethods = internalBinding('process_methods');
 
 /**
@@ -161,7 +162,7 @@ class MemDiff {
  * }}
  */
 
-class ValueTracker {
+class MaxValueTracker {
   #onMaxUpdated;
   #maxIgnoreCount;
   #records;
@@ -222,23 +223,61 @@ class ValueTracker {
   }
 }
 
+/**
+ * @callback OnLimitUpdated
+ * @param {{
+ *  current: number,
+ *  limit: number,
+ * }}
+ */
+
+class LimitValueTracker {
+  #onLimitUpdated;
+  #limit;
+  /**
+   * @param {number} limit
+   * @param {{ onLimitUpdated: OnLimitUpdated }}
+   */
+  constructor(limit, { onLimitUpdated }) {
+    validateInteger(limit);
+    validateCallback(onLimitUpdated);
+
+    /** @type {number} */
+    this.#limit = limit;
+
+    /** @type {OnLimitUpdated} */
+    this.#onLimitUpdated = onLimitUpdated;
+  }
+
+  /**
+   * @param {number} current a value to update
+   */
+  update(current) {
+    if (current > this.#limit) {
+      this.#onLimitUpdated({ current, limit: this.#limit });
+    }
+  }
+}
+
 class MemWatcher extends EventEmitter {
   #statsTimerId;
   #delay;
   #diff;
-  #tracker;
+  #maxTracker;
+  #limitTracker;
 
   /**
    * @param {number} delay heap size (bytes)
    * @param {EventEmitter} emitter
    */
-  constructor({ delay = kGcInterval, maxIgnoreCount = 2 } = {}) {
+  constructor({ delay = kGcInterval, maxIgnoreCount = 2, limit } = {}) {
     super([arguments]);
 
     this.#delay = delay;
     this.#statsTimerId = null;
     this.#diff = new MemDiff();
-    this.#tracker = new ValueTracker(maxIgnoreCount, {
+
+    this.#maxTracker = new MaxValueTracker(maxIgnoreCount, {
       onMaxUpdated: ({ growth, current, count, elapsed }) => {
         this.emit('max', {
           reason: `Max value growth occurred ${count} times over ${elapsed}s`,
@@ -247,6 +286,24 @@ class MemWatcher extends EventEmitter {
         });
       },
     });
+
+    if (limit !== undefined) {
+      this.#limitTracker = new LimitValueTracker(limit, {
+        onLimitUpdated: ({ current, limit }) => {
+          const gap = current - limit;
+          const data = {
+            // reason: `Current memory usage exceeds the threshold value.`,
+            gap: [getHumanSize(gap, { signed: true }), gap],
+            current: [getHumanSize(current), current],
+            limit: [getHumanSize(limit), limit],
+          };
+          data.reason =
+            `Current memory usage (${data.current[0]}) exceeds ` +
+            `(${data.gap[0]}) over the threshold value (${data.limit[0]}).`;
+          this.emit('limit', data);
+        },
+      });
+    }
 
     this.setMaxListeners(5);
     this.on('newListener', this.#onnewListener);
@@ -261,20 +318,27 @@ class MemWatcher extends EventEmitter {
   }
 
   #hasListener() {
-    return ['stats', 'max'].some((event) => this.listeners(event).length > 0);
+    return ['stats', 'max', 'limit'].some(
+      (event) => this.listeners(event).length > 0,
+    );
   }
 
   #onnewListener(event) {
     switch (event) {
       case 'max':
       case 'stats':
+      case 'limit':
         if (this.#hasListener() == false) {
           this.#statsTimerId = setInterval(() => {
-            let current = this.#diff.check();
-            this.emit('stats', current);
+            let result = this.#diff.check();
+            this.emit('stats', result);
+
+            if (this.listeners('limit').length) {
+              this.#limitTracker?.update(result.current.heap[1]);
+            }
 
             if (this.listeners('max').length) {
-              this.#tracker.update(current.max.heap[1]);
+              this.#maxTracker?.update(result.max.heap[1]);
             }
           }, this.#delay);
         }
@@ -287,7 +351,10 @@ class MemWatcher extends EventEmitter {
   #onremoveListener(event) {
     switch (event) {
       case 'max':
-        this.#tracker.reset();
+        this.#maxTracker?.reset();
+      // fall-through
+      case 'limit':
+        this.#limitTracker?.reset();
       // fall-through
       case 'stats':
         if (this.#hasListener() == false) {
