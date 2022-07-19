@@ -37,6 +37,9 @@ class Platform : public PlatformRef {
   void* onMallocArrayBufferObjectDataBuffer(size_t sizeInByte) override;
   void onFreeArrayBufferObjectDataBuffer(void* buffer,
                                          size_t sizeInByte) override;
+  void* onReallocArrayBufferObjectDataBuffer(void* oldBuffer,
+                                             size_t oldSizeInByte,
+                                             size_t newSizeInByte) override;
 
   LoadModuleResult onLoadModule(ContextRef* relatedContext,
                                 ScriptRef* whereRequestFrom,

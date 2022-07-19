@@ -58,6 +58,12 @@ void Platform::onFreeArrayBufferObjectDataBuffer(void* buffer,
   return allocator_->Free(buffer, sizeInByte);
 }
 
+void* Platform::onReallocArrayBufferObjectDataBuffer(void* oldBuffer,
+                                                     size_t oldSizeInByte,
+                                                     size_t newSizeInByte) {
+  return allocator_->Reallocate(oldBuffer, oldSizeInByte, newSizeInByte);
+}
+
 PlatformRef::LoadModuleResult Platform::onLoadModule(
     ContextRef* relatedContext,
     ScriptRef* whereRequestFrom,
