@@ -13,7 +13,7 @@ The following provides useful information about lwnode:
   - [Supported Features](docs/Spec.md)
   - [Modules](docs/lwnode-modules.md)
   - [Debugging Guide](docs/Debugger.md)
-  - [Memory Usage Report](https://pages.github.sec.samsung.net/lws/lwnode-test-results) (Not accessible from public)
+  - [Memory Usage Report](https://pages.github.sec.samsung.net/lws/lwnode) (Not accessible from public)
 * [JS Backend Service Framework](docs/Framework.md)
   - [Resource Management](docs/lwnode.md)
   - [Service App Guide (RPMs)](docs/App-service.md)
