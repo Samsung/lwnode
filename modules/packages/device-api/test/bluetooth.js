@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-require('./gmain-loop').init();
-require('./device-api').init();
+require('gmain-loop').init();
+require('device-api').init();
 
 var adapter = tizen.bluetooth.getDefaultAdapter();
 
