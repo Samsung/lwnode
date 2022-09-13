@@ -36,7 +36,7 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-hash=`git log | head -1 | cut -f2 -d' ' | cut -c 1-7`
+hash=`git rev-parse --short HEAD`
 today=`date +%y%m%d`
 
 pushd ../$repo
