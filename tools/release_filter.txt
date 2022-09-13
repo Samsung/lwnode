@@ -23,6 +23,7 @@ P /.github
 - /deps/node/deps/zlib
 - /deps/node/tools/node_modules
 - /deps/node/tools/gyp/tools/Xcode
+- /modules/apps/template/bin/lwnode
 - .git
 - .github
 - .gitmodules
