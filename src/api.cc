@@ -241,11 +241,12 @@ class ExtensionFunctionChecker {
     char buffer[src.size() + 1];
     strncpy(buffer, src.c_str(), src.size());
 
-    char* ptr = strtok(buffer, " ");
+    char* next = nullptr;
+    char* ptr = strtok_r(buffer, " ", &next);
     std::vector<std::string> tokens;
     while (ptr != nullptr) {
       tokens.push_back(ptr);
-      ptr = strtok(nullptr, " ");
+      ptr = strtok_r(nullptr, " ", &next);
     }
 
     return tokens;
