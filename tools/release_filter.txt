@@ -1,7 +1,6 @@
 P /.git
 P /.github
 
-- /tools
 - /sample
 - /deps/node/test
 
