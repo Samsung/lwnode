@@ -34,6 +34,7 @@ class Platform : public PlatformRef {
   static void Dispose();
 
   void markJSJobEnqueued(ContextRef* relatedContext) override;
+  void markJSJobFromAnotherThreadExists(ContextRef* relatedContext) override;
   void* onMallocArrayBufferObjectDataBuffer(size_t sizeInByte) override;
   void onFreeArrayBufferObjectDataBuffer(void* buffer,
                                          size_t sizeInByte) override;
@@ -43,13 +44,15 @@ class Platform : public PlatformRef {
 
   LoadModuleResult onLoadModule(ContextRef* relatedContext,
                                 ScriptRef* whereRequestFrom,
-                                StringRef* moduleSrc) override;
+                                StringRef* moduleSrc,
+                                ModuleType type) override;
   void didLoadModule(ContextRef* relatedContext,
                      OptionalRef<ScriptRef> referrer,
                      ScriptRef* loadedModule) override;
   void hostImportModuleDynamically(ContextRef* relatedContext,
                                    ScriptRef* referrer,
                                    StringRef* src,
+                                   ModuleType type,
                                    PromiseObjectRef* promise) override;
 
   void customInfoLogger(const char* format, va_list args) override {}
