@@ -49,6 +49,8 @@ void Platform::markJSJobEnqueued(ContextRef* relatedContext) {
   // @note the timing to handle pending jobs depends on clients
 }
 
+void Platform::markJSJobFromAnotherThreadExists(ContextRef* relatedContext) {}
+
 void* Platform::onMallocArrayBufferObjectDataBuffer(size_t sizeInByte) {
   return allocator_->Allocate(sizeInByte);
 }
@@ -67,7 +69,8 @@ void* Platform::onReallocArrayBufferObjectDataBuffer(void* oldBuffer,
 PlatformRef::LoadModuleResult Platform::onLoadModule(
     ContextRef* relatedContext,
     ScriptRef* whereRequestFrom,
-    StringRef* moduleSrc) {
+    StringRef* moduleSrc,
+    ModuleType type) {
   LWNODE_DLOG_INFO("onLoadModule: %s", moduleSrc->toStdUTF8String().c_str());
   LWNODE_UNIMPLEMENT;
 
@@ -84,6 +87,7 @@ void Platform::didLoadModule(ContextRef* relatedContext,
 void Platform::hostImportModuleDynamically(ContextRef* relatedContext,
                                            ScriptRef* referrer,
                                            StringRef* src,
+                                           ModuleType type,
                                            PromiseObjectRef* promise) {
   LWNODE_UNIMPLEMENT;
 }
