@@ -91,7 +91,7 @@ class GCHeap : public gc {
     void* data = nullptr;
   };
   typedef GC_word GC_heap_pointer;
-  typedef std::pair<GC_heap_pointer, AddressInfo> HeapSegment;
+  typedef std::pair<const GC_heap_pointer, AddressInfo> HeapSegment;
 
   void acquire(void* address, Kind kind, void* data);
   void release(void* address, Kind kind);
