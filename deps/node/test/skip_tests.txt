@@ -106,7 +106,6 @@ test/parallel/test-trace-events-promises.js
 test/parallel/test-trace-events-v8.js
 test/parallel/test-trace-events-vm.js
 test/parallel/test-trace-events-worker-metadata.js
-test/parallel/test-ttywrap-stack.js
 test/parallel/test-unhandled-exception-rethrow-error.js
 test/parallel/test-util-format.js
 test/parallel/test-util-inspect-long-running.js

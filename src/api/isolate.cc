@@ -830,6 +830,11 @@ void IsolateWrap::SetPromiseRejectCallback(v8::PromiseRejectCallback callback) {
                Escargot::PromiseObjectRef* promise,
                Escargot::ValueRef* value,
                Escargot::VMInstanceRef::PromiseRejectEvent event) {
+    // first check stack and trigger an exception if stack is already full
+    state->checkStackOverflow();
+    // then, temporally disable stack overflow to execute the callback without
+    // any exception
+    StackOverflowDisabler disabler(state);
     IsolateWrap::GetCurrent()->ReportPromiseReject(promise, value, event);
   };
 
