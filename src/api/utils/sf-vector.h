@@ -148,7 +148,6 @@ class Vector {
 
   void erase(size_t start, size_t end) {
     if (start == end) return;
-    assert(start >= 0);
     assert(end <= m_size);
 
     size_t howMuch = end - start;
@@ -351,7 +350,6 @@ class Vector {
 
     size_t end = start + sizeToErase;
     assert(start < end);
-    assert(start >= 0);
     assert(end <= m_size);
 
     size_t c = end - start;
@@ -384,7 +382,6 @@ class Vector {
 
     size_t end = start + sizeToErase;
     assert(start < end);
-    assert(start >= 0);
     assert(end <= m_size);
 
     size_t c = end - start;
