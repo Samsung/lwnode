@@ -16,8 +16,10 @@
 
 #include <string>
 
+#ifndef __FILE_NAME__
 #define __FILE_NAME__                                                          \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif
 
 #define __FUNCTION_NAME__ getPrettyFunctionName(__PRETTY_FUNCTION__)
 
