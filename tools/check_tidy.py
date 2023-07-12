@@ -16,8 +16,6 @@
 
 # note: this uses `black` for formatting.
 
-from __future__ import print_function
-
 import os
 import subprocess
 import sys
@@ -96,7 +94,9 @@ def check_tidy(src_dir, update, base, stats):
 
             with open(file, "r") as f:
                 original = f.readlines()
-            formatted = subprocess.check_output([clang_format, "-style=file", file])
+            formatted = subprocess.check_output(
+                [clang_format, "-style=file", file], encoding="utf-8"
+            )
 
             if update:
                 with open(file, "w") as f:
