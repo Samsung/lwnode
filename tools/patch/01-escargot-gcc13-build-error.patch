@@ -1,0 +1,12 @@
+diff --git raw/src/api/EscargotPublic.h fix/src/api/EscargotPublic.h
+index 3a8362a9..6fc888d1 100644
+--- raw/src/api/EscargotPublic.h
++++ fix/src/api/EscargotPublic.h
+@@ -30,6 +30,7 @@
+ 
+ #include <cstdlib>
+ #include <cstddef>
++#include <cstdint>
+ #include <cstring>
+ #include <string>
+ #include <vector>
