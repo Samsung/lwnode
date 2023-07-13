@@ -23,6 +23,10 @@ git submodule update --init
 pushd deps/escargot
 git submodule update --init third_party
 
+# Patch update code for escargot
+find ../../tools/patch -type f -name "*escargot*.patch" \
+  -exec patch -p1 --forward -r /dev/null -i {} \;
+
 # Patch update code for wasm
 pushd third_party/wasm/wabt
 patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
