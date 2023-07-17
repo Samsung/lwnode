@@ -2,7 +2,7 @@ name: lwnode actions
 on: [ push, pull_request ]
 jobs:
   build_lwnode:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -40,7 +40,7 @@ jobs:
             test/parallel test/regression
           popd
   cctest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
       - name: Checkout source
@@ -117,7 +117,7 @@ jobs:
           name: tizen_std_${{ matrix.profile }}
           path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -129,9 +129,8 @@ jobs:
           python-version: '3.10'
       - name: Install Packages
         run: |
-          sudo add-apt-repository "deb http://mirrors.kernel.org/ubuntu/ focal main universe"
-          sudo apt-get update
-          sudo apt-get install -y clang-format-8
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib sed clang-format-8
       - name: Lint CC
         run: |
           tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
