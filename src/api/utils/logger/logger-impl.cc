@@ -167,7 +167,7 @@ Logger& Logger::flush() {
 
 void StdOut::flush(std::stringstream& stream,
                    std::shared_ptr<Output::Config> config) {
-  std::cerr << stream.str();
+  fprintf(stderr, "%s", stream.str().c_str());
 }
 
 // --- Option ---

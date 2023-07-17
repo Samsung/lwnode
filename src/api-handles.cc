@@ -43,13 +43,10 @@ HandleScope::~HandleScope() {
 }
 
 void* HandleScope::operator new(size_t) {
-  LWNODE_UNIMPLEMENT;
-  // TODO: abort : only stack is available
-  return new HandleScope(nullptr);
+  std::abort();
 }
 void* HandleScope::operator new[](size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new HandleScope(nullptr);
+  std::abort();
 }
 void HandleScope::operator delete(void*, size_t) {
   LWNODE_UNIMPLEMENT;
@@ -120,18 +117,16 @@ i::Address* EscapableHandleScope::Escape(i::Address* escape_value) {
 }
 
 void* EscapableHandleScope::operator new(size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new EscapableHandleScope(nullptr);
+  std::abort();
 }
 void* EscapableHandleScope::operator new[](size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new EscapableHandleScope(nullptr);
+  std::abort();
 }
 void EscapableHandleScope::operator delete(void*, size_t) {
-  LWNODE_UNIMPLEMENT;
+  std::abort();
 }
 void EscapableHandleScope::operator delete[](void*, size_t) {
-  LWNODE_UNIMPLEMENT;
+  std::abort();
 }
 
 SealHandleScope::SealHandleScope(Isolate* isolate)
@@ -147,18 +142,16 @@ SealHandleScope::~SealHandleScope() {
 }
 
 void* SealHandleScope::operator new(size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new SealHandleScope(nullptr);
+  std::abort();
 }
 void* SealHandleScope::operator new[](size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new SealHandleScope(nullptr);
+  std::abort();
 }
 void SealHandleScope::operator delete(void*, size_t) {
-  LWNODE_UNIMPLEMENT;
+  std::abort();
 }
 void SealHandleScope::operator delete[](void*, size_t) {
-  LWNODE_UNIMPLEMENT;
+  std::abort();
 }
 
 void Context::Enter() {
