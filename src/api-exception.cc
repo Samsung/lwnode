@@ -82,18 +82,16 @@ v8::TryCatch::~TryCatch() {
 }
 
 void* v8::TryCatch::operator new(size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new TryCatch(nullptr);
+  std::abort();
 }
 void* v8::TryCatch::operator new[](size_t) {
-  LWNODE_UNIMPLEMENT;
-  return new TryCatch(nullptr);
+  std::abort();
 }
 void v8::TryCatch::operator delete(void*, size_t) {
-  LWNODE_UNIMPLEMENT;
+  std::abort();
 }
 void v8::TryCatch::operator delete[](void*, size_t) {
-  LWNODE_UNIMPLEMENT;
+  std::abort();
 }
 
 bool v8::TryCatch::HasCaught() const {
