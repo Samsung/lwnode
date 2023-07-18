@@ -37,14 +37,24 @@ BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: nghttp2-devel
 BuildRequires: pkgconfig(libcares)
 
-%if (0%{?tizen_version_major} >= 6)
+%if (0%{?tizen_version_major} >= 8)
+BuildRequires: pkgconfig(openssl3)
+%endif
+
+%if (0%{?tizen_version_major} == 7 || 0%{?tizen_version_major} == 6)
+BuildRequires: pkgconfig(openssl1.1)
+%endif
+
+%if (0%{?tizen_version_major} == 5)
+%if (0%{?tizen_version_minor} >= 5)
 BuildRequires: pkgconfig(openssl1.1)
 %else
-  %if (0%{?tizen_version_major} == 5) && (0%{?tizen_version_minor} == 5)
-BuildRequires: pkgconfig(openssl1.1)
-  %else
 BuildRequires: pkgconfig(openssl)
-  %endif
+%endif
+%endif
+
+%if (0%{?tizen_version_major} < 5)
+BuildRequires: pkgconfig(openssl)
 %endif
 
 %if 0%{?asan} == 1
