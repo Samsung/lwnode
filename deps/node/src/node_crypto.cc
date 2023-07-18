@@ -4579,11 +4579,11 @@ static unsigned int GetBytesOfRS(const ManagedEVPPKey& pkey) {
   int bits, base_id = EVP_PKEY_base_id(pkey.get());
 
   if (base_id == EVP_PKEY_DSA) {
-    DSA* dsa_key = EVP_PKEY_get0_DSA(pkey.get());
+    const DSA* dsa_key = EVP_PKEY_get0_DSA(pkey.get());
     // Both r and s are computed mod q, so their width is limited by that of q.
     bits = BN_num_bits(DSA_get0_q(dsa_key));
   } else if (base_id == EVP_PKEY_EC) {
-    EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(pkey.get());
+    const EC_KEY* ec_key = EVP_PKEY_get0_EC_KEY(pkey.get());
     const EC_GROUP* ec_group = EC_KEY_get0_group(ec_key);
     bits = EC_GROUP_order_bits(ec_group);
   } else {
