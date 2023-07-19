@@ -558,8 +558,9 @@ static MaybeLocal<Promise> ImportModuleDynamically(
                     ->Uint32Value(context)
                     .ToChecked();
   if (type == ScriptType::kScript) {
-    contextify::ContextifyScript* wrap = env->id_to_script_map.find(id)->second;
-    object = wrap->object();
+    auto it = env->id_to_function_map.find(id);
+    CHECK_NE(it, env->id_to_function_map.end());
+    object = it->second->object();
   } else if (type == ScriptType::kModule) {
     ModuleWrap* wrap = ModuleWrap::GetFromID(env, id);
     object = wrap->object();

@@ -777,8 +777,8 @@ MaybeLocal<v8::Object> v8::RegExp::Exec(Local<Context> context,
         }
 
         auto vector = ValueVectorRef::create();
-        for (auto tokens : result.m_matchResults) {
-          for (auto token : tokens) {
+        for (auto& tokens : result.m_matchResults) {
+          for (auto& token : tokens) {
             auto match = subject->substring(token.m_start, token.m_end);
             vector->pushBack(match);
           }
