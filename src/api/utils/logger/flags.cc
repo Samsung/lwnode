@@ -96,7 +96,7 @@ void Flags::add(const std::string& userOption) {
     std::string optionValues = userOption.substr(userOption.find_first_of('=') +
                                                  1);  // +1 for skipping '='
     auto tokens = strSplit(optionValues, ',');
-    for (auto token : tokens) {
+    for (auto& token : tokens) {
       flag->addValue(token);
     }
   }
