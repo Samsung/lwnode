@@ -17,9 +17,6 @@ jobs:
         run: |
           pushd deps/escargot
           git submodule update --init third_party
-          pushd third_party/wasm/wabt
-          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
-          popd
           popd
       - name: Install Packages
         run: |
@@ -51,9 +48,6 @@ jobs:
         run: |
           pushd deps/escargot
           git submodule update --init third_party
-          pushd third_party/wasm/wabt
-          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
-          popd
           popd
       - name: Install Packages
         run: |
@@ -94,9 +88,6 @@ jobs:
         run: |
           pushd deps/escargot
           git submodule update --init third_party
-          pushd third_party/wasm/wabt
-          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
-          popd
           popd
       - name: Install Packages
         run: |
