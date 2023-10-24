@@ -62,6 +62,7 @@ test/parallel/test-policy-scopes.js
 test/parallel/test-preload.js
 test/parallel/test-process-env-allowed-flags-are-documented.js
 test/parallel/test-process-env-symbols.js
+test/parallel/test-process-env-tz.js
 test/parallel/test-process-env.js
 test/parallel/test-process-versions.js
 test/parallel/test-promise-reject-callback-exception.js
