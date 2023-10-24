@@ -2,7 +2,7 @@ name: lwnode actions
 on: [ push, pull_request ]
 jobs:
   build_lwnode:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -17,9 +17,6 @@ jobs:
         run: |
           pushd deps/escargot
           git submodule update --init third_party
-          pushd third_party/wasm/wabt
-          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
-          popd
           popd
       - name: Install Packages
         run: |
@@ -39,6 +36,10 @@ jobs:
             --unsupported-tests=$(sed '/#\|^$/d' test/skip_features.txt | paste -sd,) \
             test/parallel test/regression
           popd
+      - if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 60
+
   cctest:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -51,9 +52,6 @@ jobs:
         run: |
           pushd deps/escargot
           git submodule update --init third_party
-          pushd third_party/wasm/wabt
-          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
-          popd
           popd
       - name: Install Packages
         run: |
@@ -94,9 +92,6 @@ jobs:
         run: |
           pushd deps/escargot
           git submodule update --init third_party
-          pushd third_party/wasm/wabt
-          patch -p0 --forward -r /dev/null -i ../../../tools/test/wasm-js/wabt_patch
-          popd
           popd
       - name: Install Packages
         run: |
