@@ -65,7 +65,12 @@ bool convertUTF8ToUTF16le(char** buffer,
 
   size_t utf16Size = utf16.size() * 2;
 
-  *buffer = (char*)allocateStringBuffer(utf16Size + 1);
+  void* allocatedStringBuffer = allocateStringBuffer(utf16Size + 1);
+  if (allocatedStringBuffer == NULL) {
+    return false;
+  }
+
+  *buffer = static_cast<char*>(allocatedStringBuffer);
   memcpy(*buffer, utf16.data(), utf16Size);
   (*buffer)[utf16Size] = '\0';
 
