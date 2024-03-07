@@ -178,7 +178,9 @@ void MemoryTracker::TrackField(const char* edge_name,
                                const T& value,
                                const char* node_name) {
   // For numbers, creating new nodes is not worth the overhead.
-  CurrentNode()->size_ += sizeof(T);
+  if (CurrentNode() != nullptr) {
+    CurrentNode()->size_ += sizeof(T);
+  }
 }
 
 template <typename T, typename U>
