@@ -75,16 +75,17 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
 
   if (hasAulArguments(argc, argv)) {
     isEventReceiverRunning_ = true;
-    initLoggerOutput();
-
-    aul_launch_init(aulEventHandler, nullptr);
-    aul_launch_argv_handler(argc, argv);
 
     char appid[kMaxPackageNameSize + 1];
     aul_app_get_appid_bypid(getpid(), appid, kMaxPackageNameSize);
     appid_ = appid;
 
-    LWNODE_DEV_LOG("appid: ", appid_);
+    initLoggerOutput(appid_);
+
+    LWNODE_DEV_LOG("appid:", appid_);
+
+    aul_launch_init(aulEventHandler, nullptr);
+    aul_launch_argv_handler(argc, argv);
 
     char* path = app_get_resource_path();
     if (uv_chdir(path) != 0) {
@@ -110,9 +111,9 @@ bool AULEventReceiver::isEventReceiverRunning() {
   return isEventReceiverRunning_;
 }
 
-void AULEventReceiver::initLoggerOutput() {
-  if (!appid_.empty()) {
-    LogKind::user()->tag = appid_;
+void AULEventReceiver::initLoggerOutput(const std::string tag) {
+  if (!tag.empty()) {
+    LogKind::user()->tag = tag;
   }
 
   LogOption::setDefaultOutputInstantiator([&]() {
