@@ -37,7 +37,7 @@ class AULEventReceiver {
   }
 #endif
 
-  void initLoggerOutput();
+  void initLoggerOutput(const std::string tag = "");
   bool isEventReceiverRunning();
 
  private:
