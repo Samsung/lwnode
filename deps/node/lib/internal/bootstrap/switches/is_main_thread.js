@@ -41,19 +41,27 @@ const { guessHandleType } = internalBinding('util');
 function createWritableStdioStream(fd) {
   let stream;
   // Note stream._type is used for test-module-load-list.js
+
+  // @lwnode
+  if (process.lwnode) {
+    // The handle type guessed of stdout(1) or stderr(2) can be PIPE on tizen.
+    if (process.lwnode.hasSystemInfo('tizen') && (fd === 1 || fd === 2)) {
+      const { Writable } = require('stream');
+      stream = new Writable({
+        write(chunk, encoding, callback) {
+          process.lwnode._print(chunk.toString());
+          callback();
+        }
+      });
+      // For supporting legacy API we put the FD here.
+      stream.fd = fd;
+      stream._isStdio = true;
+      return stream;
+    }
+  }
+
   switch (guessHandleType(fd)) {
     case 'TTY':
-      // @lwnode
-      if (process.lwnode) {
-        const { Writable } = require('stream');
-        stream = new Writable({
-          write(chunk, encoding, callback) {
-            process.lwnode._print(chunk.toString());
-            callback();
-          }
-        });
-        break;
-      }
       const tty = require('tty');
       stream = new tty.WriteStream(fd);
       stream._type = 'tty';
