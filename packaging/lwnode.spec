@@ -67,7 +67,8 @@ BuildRequires: libasan
 
 # Initialize the variables
 %{!?target: %define target lwnode}
-%{!?lib_type: %define lib_type static} # <shared|static>
+%{!?lib_type: %define lib_type shared} # <shared|static>
+%{!?static_escargot: %define static_escargot 0}
 
 %description
 Lightweight Node.js is a memory efficient Node.js implementation,
@@ -108,6 +109,7 @@ echo $CFLAGS
 
 %if "%{target}" == "lwnode"
   %define target_src out/tizen/Release
+  %define target_lib %{target_src}/lib
 
   %if 0%{?asan} == 1
     %define asan_config --nopt --enable-asan
@@ -118,7 +120,7 @@ echo $CFLAGS
   %endif
 
   %if 0%{?static_escargot} == 1
-    %define jsengine_config --nopt --static-escargot
+    %define jsengine_config --escargot-lib-type static_lib
   %endif
 
   %if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
@@ -145,14 +147,16 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
-rm -f %{target_src}/lib/*.tmp %{target_src}/lib/*.TOC
+rm -f %{target_lib}/*.tmp %{target_lib}/*.TOC
 
 %if "%{target}" == "lwnode"
-  %if %{?static_escargot:0}%{!?static_escargot:1}
+  %if 0%{?static_escargot} == 0
+    strip -v -g %{target_src}/gen/escargot/libescargot.so
     cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
   %endif
   %if "%{lib_type}" == "shared"
-    cp %{target_src}/lib/liblwnode.so* %{buildroot}%{_libdir}
+    strip -v -g %{target_lib}/liblwnode.so*
+    cp %{target_lib}/liblwnode.so* %{buildroot}%{_libdir}
   %endif
   %if %{?debug_symbols:0}%{!?debug_symbols:1}
     strip -v -g %{target_src}/%{target}
@@ -179,7 +183,7 @@ rm -fr ./*.manifest
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
 %if "%{target}" == "lwnode"
-  %if %{?static_escargot:0}%{!?static_escargot:1}
+  %if 0%{?static_escargot} == 0
     %{_libdir}/libescargot.so
   %endif
   %if "%{lib_type}" == "shared"

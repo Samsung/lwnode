@@ -1237,6 +1237,10 @@ def configure_node(o):
     shlib_suffix = '%s.a'
   else:
     shlib_suffix = 'so.%s'
+  # @lwnode
+  if options.lwnode:
+    shlib_suffix = 'so'
+  
   if '%s' in shlib_suffix:
     shlib_suffix %= node_module_version
 
