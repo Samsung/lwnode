@@ -26,6 +26,7 @@ BuildRequires: python
 BuildRequires: ninja
 BuildRequires: zip
 BuildRequires: rsync
+BuildRequires: curl
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(capi-appfw-app-common)
