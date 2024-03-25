@@ -83,16 +83,3 @@ $ gbs -c .github/gbs.conf build -A arm7l --include-all --incremental --define 'l
 
 Options list:
 `lib_type` : shared(default)|static
-
-### 4.3. build lwnode module
-We provide several modules. To build them, use the command below.
-
-```sh
-$ gbs -c .github/gbs.conf build -A arm7l --packaging-dir modules/packages/packaging --include-all --incremental
-```
-
-You can find build result file in `out/modules/tizen`.
-
-Modules lists:
-[device-api](modules/packages/device-api/README.md) 
-[gamain-loop](modules/packages/gamain-loop/README.md) 
