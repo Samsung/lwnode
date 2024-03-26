@@ -15,8 +15,10 @@
  */
 
 #include "aul-event-receiver.h"
+#include <assert.h>
 #include <unistd.h>  // getpid
 #include <uv.h>
+#include <sstream>
 #include "trace.h"
 
 #ifdef HOST_TIZEN
@@ -50,18 +52,27 @@ int AULEventReceiver::aulEventHandler(aul_type type, bundle* b, void* data) {
   return 0;
 }
 
-bool AULEventReceiver::hasAulArguments(int argc, char* argv[]) {
+bool AULEventReceiver::hasAulArguments(int argc,
+                                       char* argv[],
+                                       std::string& parsed_bundle) {
   bool result = false;
 
   bundle* parsed = bundle_import_from_argv(argc, argv);
   if (parsed) {
     if (bundle_get_val(parsed, AUL_K_STARTTIME)) {
+      std::ostringstream oss;
+
       bundle_iterate(
           parsed,
-          [](const char* key, const char* value, void* d) {
-            LWNODE_DEV_LOGF("bundle - key: %s, value: %s", key, value);
+          [](const char* key, const char* value, void* data) {
+            std::ostringstream* oss =
+                reinterpret_cast<std::ostringstream*>(data);
+            *oss << "bundle - key: " << key << ", value: " << value
+                 << std::endl;
           },
-          NULL);
+          &oss);
+
+      parsed_bundle = oss.str();
       result = true;
     }
     bundle_free(parsed);
@@ -71,21 +82,21 @@ bool AULEventReceiver::hasAulArguments(int argc, char* argv[]) {
 }
 
 bool AULEventReceiver::start(int argc, char* argv[]) {
-  isEventReceiverRunning_ = false;
+  std::string parsed_bundle;
 
-  if (hasAulArguments(argc, argv)) {
-    isEventReceiverRunning_ = true;
+  if (hasAulArguments(argc, argv, parsed_bundle)) {
+    aul_launch_init(aulEventHandler, nullptr);
+    aul_launch_argv_handler(argc, argv);
 
     char appid[kMaxPackageNameSize + 1];
     aul_app_get_appid_bypid(getpid(), appid, kMaxPackageNameSize);
+
     appid_ = appid;
 
-    initLoggerOutput(appid_);
+    initLoggerOutput(true, appid_);
 
-    LWNODE_DEV_LOG("appid:", appid_);
-
-    aul_launch_init(aulEventHandler, nullptr);
-    aul_launch_argv_handler(argc, argv);
+    LWNODE_DEV_LOG(parsed_bundle);
+    LWNODE_DEV_LOG("appid: ", appid_);
 
     char* path = app_get_resource_path();
     if (uv_chdir(path) != 0) {
@@ -94,11 +105,14 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
       exit(-errno);
     }
     free(path);
-    return isEventReceiverRunning_;
+
+    assert(!appid_.empty());
+    return isEventReceiverRunning();
   }
 
-  initLoggerOutput();
-  return isEventReceiverRunning_;
+  initLoggerOutput(false);
+  assert(appid_.empty());
+  return isEventReceiverRunning();
 }
 #endif
 
@@ -108,18 +122,19 @@ AULEventReceiver* AULEventReceiver::getInstance() {
 }
 
 bool AULEventReceiver::isEventReceiverRunning() {
-  return isEventReceiverRunning_;
+  return !appid_.empty();
 }
 
-void AULEventReceiver::initLoggerOutput(const std::string tag) {
+void AULEventReceiver::initLoggerOutput(bool isEventReceiverRunning,
+                                        const std::string tag) {
   if (!tag.empty()) {
     LogKind::user()->tag = tag;
   }
 
-  LogOption::setDefaultOutputInstantiator([&]() {
+  LogOption::setDefaultOutputInstantiator([&isEventReceiverRunning]() {
     static thread_local std::shared_ptr<Logger::Output> s_loggerOutput;
     if (s_loggerOutput == nullptr) {
-      s_loggerOutput = isEventReceiverRunning()
+      s_loggerOutput = isEventReceiverRunning
                            ? std::static_pointer_cast<Logger::Output>(
                                  std::make_shared<DlogOut>())
                            : std::static_pointer_cast<Logger::Output>(
