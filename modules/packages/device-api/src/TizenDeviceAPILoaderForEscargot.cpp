@@ -65,9 +65,6 @@ void printArguments(ContextRef* context, size_t argc, ValueRef** argv)
 
 void* ExtensionManagerInstance::operator new(size_t size)
 {
-
-
-
     static bool typeInited = false;
     static GC_descr descr;
     if (!typeInited) {
@@ -98,30 +95,25 @@ void* ExtensionManagerInstance::operator new(size_t size)
 wrt::xwalk::Extension* ExtensionManagerInstance::getExtension(
     const char* apiName)
 {
-    DEVICEAPI_LOG_INFO("Creating a new extension: %s\n", apiName);
+    
     auto extensionManager = wrt::xwalk::ExtensionManager::GetInstance();
     wrt::xwalk::ExtensionMap& extensions = extensionManager->extensions();
 
+    const char* extensionsDirPath = "/usr/lib/tizen-extensions-crosswalk";
     auto it = extensions.find(apiName);
     if (it == extensions.end()) {
-        DEVICEAPI_LOG_INFO("Enter");
+        DEVICEAPI_LOG_INFO("Creating a new extension: %s\n", apiName);
         char library_path[512];
         if (!strcmp(apiName, "tizen")) {
-            snprintf(library_path, 512,
-                     "/usr/lib/tizen-extensions-crosswalk/libtizen.so");
+            snprintf(library_path, 512, "%s/libtizen.so", extensionsDirPath);
         } else if (!strcmp(apiName, "sensorservice")) {
-            snprintf(library_path, 512,
-                     "/usr/lib/tizen-extensions-crosswalk/libtizen_sensor.so");
+            snprintf(library_path, 512, "%s/libtizen_sensor.so", extensionsDirPath);
         } else if (!strcmp(apiName, "sa")) {
-            snprintf(library_path, 512,
-                     "/usr/lib/tizen-extensions-crosswalk/libwebapis_sa.so");
+            snprintf(library_path, 512, "%s/libwebapis_sa.so", extensionsDirPath);
         } else if (!strcmp(apiName, "tvaudiocontrol")) {
-            snprintf(library_path, 512,
-                     "/usr/lib/tizen-extensions-crosswalk/libtizen_tvaudio.so");
+            snprintf(library_path, 512, "%s/libtizen_tvaudio.so", extensionsDirPath);
         } else {
-            snprintf(library_path, 512,
-                     "/usr/lib/tizen-extensions-crosswalk/libtizen_%s.so",
-                     apiName);
+            snprintf(library_path, 512, "%s/libtizen_%s.so", extensionsDirPath, apiName);
         }
 
         wrt::xwalk::Extension* extension =
@@ -136,6 +128,7 @@ wrt::xwalk::Extension* ExtensionManagerInstance::getExtension(
             return nullptr;
         }
     } else {
+        DEVICEAPI_LOG_INFO("Load extension: %s\n", apiName);
         return it->second;
     }
 }
@@ -881,9 +874,9 @@ ExtensionManagerInstance::~ExtensionManagerInstance()
     std::lock_guard<std::mutex> guard(s_mutex);
     DEVICEAPI_LOG_INFO(
         "ExtensionManagerInstance delete ExtensionManagerInstance %p", this);
-    for (auto it : m_extensionInstances)
+    for (auto& it : m_extensionInstances)
         delete it.second;
-    for (auto it : m_postListeners)
+    for (auto& it : m_postListeners)
         it->finalize();
     auto it = s_extensionManagerInstances.find(m_context);
     s_extensionManagerInstances.erase(it);

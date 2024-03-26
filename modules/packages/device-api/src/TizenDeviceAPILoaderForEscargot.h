@@ -151,7 +151,8 @@ class ExtensionManagerInstance : public gc {
 #undef DECLARE_TIZEN_OBJECT
 
   // static members
-  typedef std::map<Escargot::ContextRef*, ExtensionManagerInstance*>
+  typedef std::map<Escargot::ContextRef*, 
+    Escargot::PersistentRefHolder<ExtensionManagerInstance>>
       ExtensionManagerInstanceMap;
   static ExtensionManagerInstanceMap s_extensionManagerInstances;
   static std::mutex s_mutex;
