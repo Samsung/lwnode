@@ -23,6 +23,10 @@
 #include <sstream>
 #include <string>
 
+#ifndef LWNODE_EXPORT
+#define LWNODE_EXPORT __attribute__((visibility("default")))
+#endif
+
 class LogFormatter {
  public:
   std::string header();
@@ -154,7 +158,7 @@ class StdOut : public Logger::Output {
 
 using OutputInstantiator = std::function<std::shared_ptr<Logger::Output>()>;
 
-class LogOption {
+class LWNODE_EXPORT LogOption {
  public:
   static void setDefaultOutputInstantiator(OutputInstantiator fn) {
     s_outputInstantiator_ = fn;
@@ -166,8 +170,11 @@ class LogOption {
 
   static std::shared_ptr<Logger::Output> getDefalutOutput() {
     if (s_outputInstantiator_ == nullptr) {
-      // Set default output
-      s_outputInstantiator_ = []() { return std::make_shared<StdOut>(); };
+      static std::shared_ptr<Logger::Output> default_output;
+      if (default_output == nullptr) {
+        default_output = std::make_shared<StdOut>();
+      }
+      return default_output;
     }
     return s_outputInstantiator_();
   }

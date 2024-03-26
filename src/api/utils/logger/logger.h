@@ -78,12 +78,12 @@ struct DLogConfig : Logger::Output::Config {
   std::string tag;
 };
 
-class LWNodeLogger : public Logger {
+class LWNODE_EXPORT LWNodeLogger : public Logger {
  public:
   LWNodeLogger(std::shared_ptr<DLogConfig> config) { outConfig_ = config; }
 };
 
-class DlogOut : public Logger::Output {
+class LWNODE_EXPORT DlogOut : public Logger::Output {
  public:
   void flush(std::stringstream& ss,
              std::shared_ptr<Output::Config> config = nullptr) override;
@@ -91,7 +91,7 @@ class DlogOut : public Logger::Output {
   bool hasAutoAppendEndOfLine() override { return true; }
 };
 
-class LogKind {
+class LWNODE_EXPORT LogKind {
  public:
   static std::shared_ptr<DLogConfig> user() { return getInstance()->user_; }
   static std::shared_ptr<DLogConfig> lwnode() { return getInstance()->lwnode_; }
