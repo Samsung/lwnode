@@ -29,20 +29,18 @@ class AULEventReceiver {
 
 #ifdef HOST_TIZEN
   static int aulEventHandler(aul_type type, bundle* b, void* data);
-  bool hasAulArguments(int argc, char* argv[]);
+  bool hasAulArguments(int argc, char* argv[], std::string& parsed_bundle);
   bool start(int argc, char* argv[]);
 #else
-  bool start(int argc, char* argv[]) {
-    return false;
-  }
+  bool start(int argc, char* argv[]) { return false; }
 #endif
 
-  void initLoggerOutput(const std::string tag = "");
+  void initLoggerOutput(bool isEventReceiverRunning,
+                        const std::string tag = "");
   bool isEventReceiverRunning();
 
  private:
   AULEventReceiver() = default;
-  bool isEventReceiverRunning_{false};
   static const int kMaxPackageNameSize{512};
   std::string appid_;
 };

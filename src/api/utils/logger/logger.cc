@@ -26,14 +26,11 @@ void DlogOut::flush(std::stringstream& ss,
                     std::shared_ptr<Output::Config> config) {
   auto c =
       config ? std::static_pointer_cast<DLogConfig>(config) : LogKind::lwnode();
-
-  // TODO: handle the case where users manually select a logging method.
-
 #ifdef HOST_TIZEN
   dlog_print(DLOG_INFO, c->tag.c_str(), "%s", ss.str().c_str());
 #else
   // For testing. StdOut will be used to flush buffers through stdout.
-  std::cerr << std::left << std::setfill(' ') << std::setw(6) << c->tag << " "
+  std::cout << std::left << std::setfill(' ') << std::setw(6) << c->tag << " "
             << ss.str();
 #endif
 }
