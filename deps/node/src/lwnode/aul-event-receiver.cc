@@ -131,9 +131,12 @@ void AULEventReceiver::initLoggerOutput(bool isEventReceiverRunning,
     LogKind::user()->tag = tag;
   }
 
-  LogOption::setDefaultOutputInstantiator([&isEventReceiverRunning]() {
+  LogOption::setDefaultOutputInstantiator([isEventReceiverRunning]() {
     static thread_local std::shared_ptr<Logger::Output> s_loggerOutput;
     if (s_loggerOutput == nullptr) {
+      fprintf(stdout,
+              "logger type: %s",
+              isEventReceiverRunning ? "dlog" : "stdout");
       s_loggerOutput = isEventReceiverRunning
                            ? std::static_pointer_cast<Logger::Output>(
                                  std::make_shared<DlogOut>())
