@@ -19,6 +19,7 @@
 #include <unistd.h>  // getpid
 #include <uv.h>
 #include <sstream>
+#include "lwnode.h"
 #include "trace.h"
 
 #ifdef HOST_TIZEN
@@ -92,6 +93,8 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
     aul_app_get_appid_bypid(getpid(), appid, kMaxPackageNameSize);
 
     appid_ = appid;
+
+    LWNode::SystemInfo::getInstance()->add("appid", appid);
 
     initLoggerOutput(true, appid_);
 

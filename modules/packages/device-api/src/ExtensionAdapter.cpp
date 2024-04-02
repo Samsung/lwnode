@@ -5,6 +5,7 @@
 
 #include "TizenDeviceAPIBase.h"
 #include "TizenDeviceAPILoaderForEscargot.h"
+#include "TizenRuntimeInfo.h"
 #include "ExtensionAdapter.h"
 
 namespace wrt {
@@ -283,6 +284,16 @@ namespace xwalk {
                                                     char* value,
                                                     unsigned int value_len)
     {
+        // If the value is 'application_id', 'package_id', 'app_root' or
+        // 'privileges' the xw_extension is fixed to 0 in webapi.
+        if (xw_extension == 0) {
+          const std::string info =
+              DeviceAPI::TizenRuntimeInfo::getInstance()->getRuntimeVariable(key);
+
+          strncpy(value, info.c_str(), value_len);
+          return;
+        }
+
         Extension* extension = GetExtension(xw_extension);
         CHECK(extension, xw_extension);
         extension->GetRuntimeVariable(key, value, value_len);

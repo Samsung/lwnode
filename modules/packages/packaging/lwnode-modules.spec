@@ -23,8 +23,12 @@ Source:        %{name}-%{version}.tar.gz
 BuildRequires: cmake
 BuildRequires: make
 BuildRequires: ninja
+BuildRequires: boost-devel
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(pkgmgr-info)
+BuildRequires: pkgconfig(manifest-parser)
+BuildRequires: pkgconfig(tpk-manifest-handlers)
 
 ##############################################
 # Packages for profiles
