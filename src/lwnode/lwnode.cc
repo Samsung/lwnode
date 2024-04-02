@@ -304,9 +304,9 @@ std::string Utils::trimLastNewLineIfNeeded(std::string&& str) {
 
 SystemInfo::SystemInfo() {
 #ifdef HOST_TIZEN
-  infos_.push_back("tizen");
+  add("tizen");
 #else
-  infos_.push_back("linux");
+  add("linux");
 #endif
 }
 
@@ -315,12 +315,22 @@ SystemInfo* SystemInfo::getInstance() {
   return &s_instance;
 }
 
-void SystemInfo::add(const char* info) {
-  infos_.push_back(info);
+void SystemInfo::add(const char* info, const char* value) {
+  infos_.insert({info, value});
 }
 
 bool SystemInfo::has(const std::string& info) {
-  return std::find(infos_.begin(), infos_.end(), info) != infos_.end();
+  return infos_.find(info) != infos_.end();
+}
+
+bool SystemInfo::get(const char* info, std::string& value) {
+  auto iter = infos_.find(info);
+  if (iter == infos_.end()) {
+    return false;
+  }
+
+  value = iter->second;
+  return true;
 }
 
 }  // namespace LWNode

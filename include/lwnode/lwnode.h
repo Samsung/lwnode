@@ -20,7 +20,7 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 namespace Escargot {
 class ContextRef;
@@ -75,16 +75,17 @@ class LWNODE_EXPORT Utils {
   static std::string trimLastNewLineIfNeeded(std::string&& str);
 };
 
-class SystemInfo {
-  public:
+class LWNODE_EXPORT SystemInfo {
+ public:
   static SystemInfo* getInstance();
 
-  void add(const char* info);
+  void add(const char* key, const char* value = "");
   bool has(const std::string& info);
+  bool get(const char* info, std::string& value);
 
-  private:
-    SystemInfo();
-    std::vector<std::string> infos_;
+ private:
+  SystemInfo();
+  std::unordered_map<std::string, std::string> infos_;
 };
 
 }  // namespace LWNode
