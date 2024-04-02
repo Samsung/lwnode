@@ -42,6 +42,25 @@ def read_node_config_gypi(config_gypi_path):
     content = f.read()
     return ast.literal_eval(content)
 
+def get_git_hash():
+    git_rev = ""
+    git_diff = ""
+
+    try:
+        subprocess.call(
+            ["git", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        query_git_rev = "echo $(git log --pretty=format:'%h' -n 1)"
+        query_git_diff = "echo $(git diff --quiet --exit-code || echo +)"
+        git_rev = (
+            subprocess.check_output(query_git_rev, shell=True).decode("utf-8").strip()
+        )
+        git_diff = (
+            subprocess.check_output(query_git_diff, shell=True).decode("utf-8").strip()
+        )
+    except Exception:
+        git_rev = "N/A"
+    return str(git_rev + git_diff if git_rev != ("" or "N/A") else "N/A")
 
 def lwnode_gyp_opts(opts):
   '''Returns GYP options.'''
@@ -60,6 +79,7 @@ def lwnode_gyp_opts(opts):
   # definitions (used: shim && escargot)
   args += ['-Dtarget_os=' + ('tizen' if opts.tizen else 'linux')]
   args += ['-Dprofile=' + str(opts.profile)] if opts.tizen else []
+  args += ['-Drevision=' + opts.revision]
 
   # definitions (used: escargot)
   args += ['-Descargot_build_mode=' + ('debug' if opts.debug else 'release')]
@@ -71,6 +91,9 @@ def lwnode_gyp_opts(opts):
 
 
 def main(opts):
+  if opts.revision == "":
+    opts.revision = get_git_hash()
+
   # 1. create `NODE_DIR/config.gypi`
   configure_path = os.path.join(NODE_DIR, 'configure.py')
 
@@ -97,6 +120,7 @@ def main(opts):
   o['javascript_engine'] = 'escargot'
   o['lwnode_external_builtin_script'] = b(not opts.without_external_builtins)
   o['lwnode_reload_script'] = b(not opts.without_reload_script)
+  o['lwnode_revision'] = opts.revision
   v = config['variables']
 
   print_verbose('* extends config.gypi', opts.verbose)
@@ -146,6 +170,13 @@ def setupCLIOptions(parser):
       parser,
       'Lightweight Node.js',
       'Flags that allow you to control LWNode.js build options',
+  )
+
+  lwnode_optgroup.add_option(
+      '--revision',
+      dest="revision",
+      help="Set a revision string",
+      default="",
   )
 
   lwnode_optgroup.add_option(

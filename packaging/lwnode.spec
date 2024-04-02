@@ -132,7 +132,7 @@ echo $CFLAGS
   %endif
 
   # building lwnode executable
-  ./configure.py --tizen --verbose \
+  ./configure.py --tizen --verbose --revision='%{?revision}' \
               --nopt --dest-cpu='%{tizen_arch}' \
               %{?lib_type_config} %{?asan_config} \
               %{?external_libs_config} %{?jsengine_config}

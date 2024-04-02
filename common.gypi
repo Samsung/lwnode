@@ -2,6 +2,7 @@
   'variables': {
     'target_arch%': 'x64', # configure with --dest-cpu
     'target_os%': 'none',  # configure with --tizen
+    'revision%': 'N/A',  # configure if available
     'build_host%': '<(OS)',
     'asan%': '0',
   },

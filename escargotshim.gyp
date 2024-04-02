@@ -89,6 +89,7 @@
       'direct_dependent_settings': {
         'defines': [
           'LWNODE',
+          'LWNODE_REVISION="<(revision)"',
         ],
         'include_dirs': [
           'src/api/utils/logger',

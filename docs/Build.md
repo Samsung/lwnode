@@ -77,9 +77,31 @@ $ gbs -c .github/gbs.conf build -A arm7l --include-all --incremental
 Use option with `--define '<option_key> <option_value>'`.
 
 For example, If you want to build to static type,
-```sh 
+```sh
 $ gbs -c .github/gbs.conf build -A arm7l --include-all --incremental --define 'lib_type static'
 ```
 
 Options list:
 `lib_type` : shared(default)|static
+
+#### Building a package with a revision string
+
+By default, lwnode binary contains revision information based on a git commit
+id. This requires `git` in your build environment, but it is not available in
+GBS. In this case, you can manually set revision information using the following
+option.
+
+```console
+$ gbs ... --define 'revision $(git rev-parse --short HEAD)'
+```
+
+The following also indicates whether the git repository is modifed or not.
+```console
+$ gbs ... --define 'revision $(git rev-parse --short HEAD)$(git diff --quiet --exit-code || echo +)'
+```
+
+The revision information can also be found in `process.config`, as shown below.
+
+```console
+$ lwnode -e 'console.log(process.config.variables.lwnode_revision)'
+```
