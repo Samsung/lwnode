@@ -96,7 +96,7 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
     initLoggerOutput(true, appid_);
 
     LWNODE_DEV_LOG(parsed_bundle);
-    LWNODE_DEV_LOG("appid: ", appid_);
+    LWNODE_DEV_LOG("appid:", appid_);
 
     char* path = app_get_resource_path();
     if (uv_chdir(path) != 0) {
@@ -107,11 +107,13 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
     free(path);
 
     assert(!appid_.empty());
-    return isEventReceiverRunning();
+  } else {
+    initLoggerOutput(false);
+    assert(appid_.empty());
   }
 
-  initLoggerOutput(false);
-  assert(appid_.empty());
+  LWNODE_DEV_LOG("revision:", LWNODE_REVISION);
+
   return isEventReceiverRunning();
 }
 #endif
