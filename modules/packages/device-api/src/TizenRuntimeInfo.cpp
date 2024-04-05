@@ -89,7 +89,7 @@ const std::string TizenRuntimeInfo::privileges() {
 
   std::stringstream stream;
   for (auto& privilege : privileges) {
-    stream << privilege.first << ", ";
+    stream << privilege.first << ",";
   }
 
   privileges_ = stream.str();
