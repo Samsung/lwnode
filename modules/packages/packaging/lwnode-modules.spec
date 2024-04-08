@@ -40,6 +40,19 @@ BuildRequires: pkgconfig(tpk-manifest-handlers)
 %define target_modules_path %{target_lwnode_path}/node_modules
 %define local_modules_path modules/packages
 
+%ifarch armv7l armv7hl
+%define tizen_arch arm
+%endif
+%ifarch aarch64
+%define tizen_arch arm64
+%endif
+%ifarch i686
+%define tizen_arch x32
+%endif
+%ifarch x86_64
+%define tizen_arch x64
+%endif
+
 %description
 lwnode modules
 
@@ -62,7 +75,7 @@ rpmbuild --version
 echo "Build Modules:" %{modules_list}
 echo $CFLAGS
 
-./tools/build-modules.sh %{?modules_list} --os=tizen --clean-after
+./tools/build-modules.sh %{?modules_list} --os=tizen --arch=%{tizen_arch} --clean-after
 
 ##############################################
 ## Install
@@ -72,7 +85,7 @@ echo $CFLAGS
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{target_modules_path}
 
-cp -rf out/modules/tizen/* %{buildroot}%{target_modules_path}
+cp -rf out/modules/tizen/%{tizen_arch}/* %{buildroot}%{target_modules_path}
 
 %clean
 rm -fr ./*.list

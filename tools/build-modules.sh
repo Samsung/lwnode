@@ -14,6 +14,7 @@
 # limitations under the License.
 
 TARGET_OS="linux"
+TARGET_ARCH = "arm"
 
 PROJECT_ROOT_PATH=$PWD
 PACKAGES_ROOT_PATH=$PROJECT_ROOT_PATH/modules/packages
@@ -42,8 +43,9 @@ usage() {
   echo "
    options:
     --os)       target os (linux/tizen)
+    --arch)     target arch for only tizen (arm/x32/x64)
     "
-  echo "example) build-modules.sh hello-world,tizen-device-api --os=tizen
+  echo "example) build-modules.sh hello-world,tizen-device-api --os=tizen --arch=arm
        "
 }
 
@@ -68,9 +70,13 @@ check_build_result() {
 }
 
 build_module() {
-  fancy_echo "build [$1]"
+  fancy_echo "build [$1]\n"
 
-  local out_path=$BUILD_OUT_ROOT_PATH/$TARGET_OS/$1
+  local out_path=$BUILD_OUT_ROOT_PATH/$TARGET_OS
+  if [[ "$TARGET_OS" = "tizen" ]] ; then
+    out_path=$out_path/$TARGET_ARCH
+  fi
+  out_path=$out_path/$1
   local module_path=$PACKAGES_ROOT_PATH/$1
   local definitions="-DBUILDING_NODE_EXTENSION;-DLWNODE"
   mkdir -p $out_path
@@ -106,6 +112,9 @@ while [[ $# -gt 0 ]]; do
   --os=*)
     TARGET_OS="${1#*=}"
     ;;
+  --arch=*)
+    TARGET_ARCH="${1#*=}"
+    ;;
   --clean-after)
     CLEAN_AFTER=true
     ;;
@@ -119,4 +128,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 fancy_echo "target os: $TARGET_OS"
+if [[ "$TARGET_OS" = "tizen" ]] ; then
+  fancy_echo "target arch: $TARGET_ARCH"
+fi
 find_and_build_modules $MODULES_LIST
