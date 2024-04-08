@@ -140,6 +140,8 @@ def main(opts):
   # 3. prepare gyp arguments
   target_os = ('tizen' if opts.tizen else 'linux')
   gen_build_dir = os.path.join(ROOT_DIR, 'out', target_os)
+  if opts.tizen:
+    gen_build_dir = os.path.join(gen_build_dir, opts.arch)
   gyp_args += ['--depth=.']
   gyp_args += ['--generator-output=' + gen_build_dir]
   gyp_args += ['-Goutput_dir=' + gen_build_dir]
@@ -253,6 +255,14 @@ def setupCLIOptions(parser):
       dest='debug',
       default=False,
       help='Debug build (%default)',
+  )
+
+  lwnode_optgroup.add_option(
+      '--arch',
+      dest='arch',
+      choices=['arm', 'x32', 'x64'],
+      default='x64',
+      help='Target architecture (%default)',
   )
 
   lwnode_optgroup.add_option(
