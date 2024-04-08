@@ -70,6 +70,7 @@ BuildRequires: libasan
 %{!?target: %define target lwnode}
 %{!?lib_type: %define lib_type shared} # <shared|static>
 %{!?static_escargot: %define static_escargot 0}
+%{!?debug: %define debug 0}
 
 %description
 Lightweight Node.js is a memory efficient Node.js implementation,
@@ -108,36 +109,43 @@ rpmbuild --version
 echo "Build Target:" %{target}
 echo $CFLAGS
 
-%if "%{target}" == "lwnode"
-  %define target_src out/tizen/Release
-  %define target_lib %{target_src}/lib
-
-  %if 0%{?asan} == 1
-    %define asan_config --nopt --enable-asan
-  %endif
-
-  %if "%{lib_type}" == "shared"
-    %define lib_type_config --nopt --shared
-  %endif
-
-  %if 0%{?static_escargot} == 1
-    %define jsengine_config --escargot-lib-type static_lib
-  %endif
-
-  %if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
-    %define external_libs_config --nopt --shared-zlib --nopt --shared-cares
-  %else
-    %define external_libs_config --nopt --shared-zlib --nopt --shared-cares \\\
-                        --nopt --shared-openssl --nopt --shared-nghttp2
-  %endif
-
-  # building lwnode executable
-  ./configure.py --tizen --verbose --revision='%{?revision}' \
-              --nopt --dest-cpu='%{tizen_arch}' \
-              %{?lib_type_config} %{?asan_config} \
-              %{?external_libs_config} %{?jsengine_config}
-  ninja -C %{target_src} %{target}
+%if 0%{?debug} == 1
+  %define target_src out/tizen/%{tizen_arch}/Debug
+  %define debug_config --debug --escargot-debugger
+%else
+  %define target_src out/tizen/%{tizen_arch}/Release
 %endif
+
+%define target_lib %{target_src}/lib
+
+%if 0%{?asan} == 1
+  %define asan_config --nopt --enable-asan
+%endif
+
+%if "%{lib_type}" == "shared"
+  %define lib_type_config --nopt --shared
+%endif
+
+%if 0%{?static_escargot} == 1
+  %define jsengine_config --escargot-lib-type static_lib
+%endif
+
+%if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
+  %define external_libs_config --nopt --shared-zlib --nopt --shared-cares
+%else
+  %define external_libs_config --nopt --shared-zlib --nopt --shared-cares \\\
+                      --nopt --shared-openssl --nopt --shared-nghttp2
+%endif
+
+# building lwnode executable
+./configure.py --tizen --verbose \
+            --nopt --dest-cpu='%{tizen_arch}' \
+            --arch='%{tizen_arch}' \
+            %{?lib_type_config} %{?asan_config} \
+            %{?external_libs_config} %{?jsengine_config} \
+            %{?debug_config}
+ninja -C %{target_src} %{target}
+
 
 ##############################################
 ## Install
@@ -150,21 +158,20 @@ mkdir -p %{buildroot}%{_libdir}
 
 rm -f %{target_lib}/*.tmp %{target_lib}/*.TOC
 
-%if "%{target}" == "lwnode"
-  %if 0%{?static_escargot} == 0
-    strip -v -g %{target_src}/gen/escargot/libescargot.so
-    cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
-  %endif
-  %if "%{lib_type}" == "shared"
-    strip -v -g %{target_lib}/liblwnode.so*
-    cp %{target_lib}/liblwnode.so* %{buildroot}%{_libdir}
-  %endif
-  %if %{?debug_symbols:0}%{!?debug_symbols:1}
-    strip -v -g %{target_src}/%{target}
-  %endif
-  cp %{target_src}/%{target} %{buildroot}%{_bindir}
-  cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
+%if 0%{?static_escargot} == 0
+  strip -v -g %{target_src}/gen/escargot/libescargot.so
+  cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
 %endif
+%if "%{lib_type}" == "shared"
+  strip -v -g %{target_lib}/liblwnode.so*
+  cp %{target_lib}/liblwnode.so* %{buildroot}%{_libdir}
+%endif
+%if %{?debug_symbols:0}%{!?debug_symbols:1}
+  strip -v -g %{target_src}/%{target}
+%endif
+cp %{target_src}/%{target} %{buildroot}%{_bindir}
+cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
+
 
 %clean
 rm -fr ./*.list
@@ -183,14 +190,13 @@ rm -fr ./*.manifest
 %files
 %manifest packaging/%{name}.manifest
 %defattr(-,root,root,-)
-%if "%{target}" == "lwnode"
-  %if 0%{?static_escargot} == 0
-    %{_libdir}/libescargot.so
-  %endif
-  %if "%{lib_type}" == "shared"
-    %{_libdir}/liblwnode.so*
-  %endif
-  %{_bindir}/%{target}.dat
-  %{_bindir}/%{target}
+%if 0%{?static_escargot} == 0
+  %{_libdir}/libescargot.so
 %endif
+%if "%{lib_type}" == "shared"
+  %{_libdir}/liblwnode.so*
+%endif
+%{_bindir}/%{target}.dat
+%{_bindir}/%{target}
+
 %license LICENSE LICENSE.Apache-2.0 LICENSE.NodeJS LICENSE.MIT LICENSE.BSD-2-Clause LICENSE.BSD-3-Clause LICENSE.BOEHM-GC LICENSE.ICU LICENSE.LGPL-2.1+ LICENSE.Zlib
