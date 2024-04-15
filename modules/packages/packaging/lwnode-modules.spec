@@ -24,11 +24,14 @@ BuildRequires: cmake
 BuildRequires: make
 BuildRequires: ninja
 BuildRequires: boost-devel
+BuildRequires: curl
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(pkgmgr-info)
 BuildRequires: pkgconfig(manifest-parser)
 BuildRequires: pkgconfig(tpk-manifest-handlers)
+BuildRequires: pkgconfig(libevdev)
+BuildRequires: pkgconfig(systemd)
 
 ##############################################
 # Packages for profiles

@@ -10,10 +10,13 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
-
+#include "lwnode/lwnode.h"
+#include "TizenInputDeviceManager.h"
 // #include "runtime_variable_provider.h"
 // #include "picojson.h"
 #include "TizenDeviceAPILoaderForEscargot.h"
+
+using namespace DeviceAPI;
 
 namespace wrt {
 namespace xwalk {
@@ -177,6 +180,44 @@ void ExtensionManager::RegisterExtensionsByMetadata(
       if (it != runtime_variableMap_.end()) {
         strncpy(value, it->second.c_str(), value_len);
       }
+    }
+
+    std::string ExtensionManager::HandleRuntimeSyncMessage(
+        Escargot::ContextRef* contextRef,
+        const std::string& type,
+        const std::string& value) {
+      if (!LWNode::Utils::IsRunningIsolate(contextRef)) {
+        return "error";
+      }
+
+      if (type == "tizen://api/inputdevice/registerKey") {
+        if (!TizenInputDeviceManager::getInstance()->registerKey(contextRef,
+                                                                 value)) {
+          return "error";
+        }
+      } else if (type == "tizen://api/inputdevice/unregisterKey") {
+        if (!TizenInputDeviceManager::getInstance()->unregisterKey(contextRef,
+                                                                   value)) {
+          return "error";
+        }
+      } else if (type == "tizen://api/inputdevice/registerKeyBatch") {
+        if (!TizenInputDeviceManager::getInstance()->registerKeyBatch(
+                contextRef, value)) {
+          return "error";
+        }
+      } else if (type == "tizen://api/inputdevice/unregisterKeyBatch") {
+        if (!TizenInputDeviceManager::getInstance()->unregisterKeyBatch(
+                contextRef, value)) {
+          return "error";
+        }
+
+      } else {
+        DEVICEAPI_LOG_ERROR("NOT IMPLEMENTED: HandleRuntimeSyncMessage(%s)",
+                            type.c_str());
+        return "error";
+      }
+
+      return "success";
     }
 
 } // namespace xwalk

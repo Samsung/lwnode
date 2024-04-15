@@ -301,6 +301,8 @@ IsolateWrap::IsolateWrap() {
 
   RegisterExtension(std::make_unique<ExternalizeStringExtension>());
   RegisterExtension(std::make_unique<ExternalizeGcExtension>());
+
+  state_ = State::Active;
 }
 
 IsolateWrap::~IsolateWrap() {
@@ -320,6 +322,8 @@ void IsolateWrap::Dispose() {
 
   global_handles()->dispose();
   RegisteredExtension::unregisterAll();
+
+  state_ = State::Disposed;
 
   LWNODE_CALL_TRACE_GC_END();
 }

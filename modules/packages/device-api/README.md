@@ -15,3 +15,10 @@ Support tizen device api.
 
  let adapter = tizen.bluetooth.getDefaultAdapter();
  ```
+
+## Requirements
+
+### tvinputdevice
+ * When using tvinputdevice api in tpk package, you should add the following privilege to `tizen-manifest.xml`.
+   * `http://tizen.org/privilege/tv.inputdevice`
+   * `http://developer.samsung.com/privilege/inputdevice`

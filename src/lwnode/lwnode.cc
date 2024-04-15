@@ -302,6 +302,20 @@ std::string Utils::trimLastNewLineIfNeeded(std::string&& str) {
   return std::move(str);
 }
 
+bool Utils::CompileRun(Escargot::ContextRef* context,
+                       const char* source,
+                       bool isModule) {
+  Evaluator::EvaluatorResult result =
+      EvalResultHelper::compileRun(context, source, isModule);
+
+  return result.isSuccessful();
+}
+
+bool Utils::IsRunningIsolate(Escargot::ContextRef* context) {
+  ContextWrap* contextWrap = ContextWrap::fromEscargot(context);
+  return contextWrap->GetIsolate()->getState() == IsolateWrap::State::Active;
+}
+
 SystemInfo::SystemInfo() {
 #ifdef HOST_TIZEN
   add("tizen");
