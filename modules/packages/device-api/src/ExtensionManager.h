@@ -13,6 +13,10 @@
 #include "XW_Extension_SyncMessage.h"
 #include "Extension.h"
 
+namespace Escargot {
+  class ContextRef;
+}
+
 namespace wrt {
 namespace xwalk {
 
@@ -39,7 +43,11 @@ namespace xwalk {
         void AddRuntimeVariable(const std::string& key, const std::string& value);
         void GetRuntimeVariable(const char* key, char* value, size_t value_len) override;
 
-    private:
+        std::string HandleRuntimeSyncMessage(Escargot::ContextRef* contextRef,
+                                             const std::string& type,
+                                             const std::string& value);
+
+       private:
         ExtensionManager();
         virtual ~ExtensionManager();
 

@@ -72,6 +72,12 @@ class LWNODE_EXPORT Utils {
   static v8::Local<v8::Value> NewLocal(v8::Isolate* isolate,
                                        Escargot::ValueRef* ptr);
 
+  static bool CompileRun(Escargot::ContextRef* context,
+                         const char* source,
+                         bool isModule = false);
+
+  static bool IsRunningIsolate(Escargot::ContextRef* context);
+
   static std::string trimLastNewLineIfNeeded(std::string&& str);
 };
 

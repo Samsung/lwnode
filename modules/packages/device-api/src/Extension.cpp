@@ -7,6 +7,7 @@
 #include <dlfcn.h>
 
 #include "TizenDeviceAPIBase.h"
+#include "TizenInputDeviceManager.h"
 #include "ExtensionAdapter.h"
 #include "EscargotPublic.h"
 #include "TizenDeviceAPILoaderForEscargot.h"
@@ -91,6 +92,10 @@ bool Extension::Initialize() {
     dlclose(handle_);
     handle_ = NULL;
     return false;
+  }
+
+  if (name_ == "tizen.tvinputdevice") {
+    DeviceAPI::TizenInputDeviceManager::getInstance()->start();
   }
 
   initialized_ = true;

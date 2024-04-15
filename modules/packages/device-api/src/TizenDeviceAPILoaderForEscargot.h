@@ -60,7 +60,8 @@ class ESPostListener;
   F(tvaudiocontrol)                 \
   F(preference)                     \
   F(power)                          \
-  F(time)
+  F(time)                           \
+  F(tvinputdevice)
 
 #define SUPPORTED_TIZEN_ENTRYPOINTS(F) \
   F(ApplicationControl)                \

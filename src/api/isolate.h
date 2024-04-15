@@ -157,6 +157,8 @@ struct BackingStoreComparator {
 
 class IsolateWrap final : public v8::internal::Isolate {
  public:
+  enum class State { None, Active, Disposed };
+
   ~IsolateWrap();
 
   const std::string PRIVATE_VALUES = "__private_values__";
@@ -275,6 +277,8 @@ class IsolateWrap final : public v8::internal::Isolate {
     v8::MicrotasksScope::PerformCheckpoint(toV8(this));
   }
 
+  State getState() { return state_; }
+
  private:
   IsolateWrap();
 
@@ -306,6 +310,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   ThreadManager* threadManager_ = nullptr;
 
   v8::PromiseRejectCallback promise_reject_callback_{nullptr};
+
+  State state_ = State::None;
 };
 
 }  // namespace EscargotShim
