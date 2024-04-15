@@ -7,9 +7,10 @@
 #include <dlfcn.h>
 #include "ExtensionAdapter.h"
 #include "ExtensionManager.h"
-
+#include "TizenInputDeviceManager.h"
 
 using namespace Escargot;
+using namespace wrt::xwalk;
 
 namespace DeviceAPI {
 
@@ -498,11 +499,38 @@ ObjectRef* ExtensionManagerInstance::createExtensionObject(
             m_strings->sendRuntimeSyncMessage,
             [](ExecutionStateRef* state, ValueRef* thisValue, size_t argc,
                ValueRef** argv, bool isNewExpression) -> ValueRef* {
-                DEVICEAPI_LOG_ERROR(
-                    "extension.sendRuntimeSyncMessage UNIMPLEMENTED");
                 printArguments(state->context(), argc, argv);
-                DEVICEAPI_ASSERT_SHOULD_NOT_BE_HERE();
-                return ValueRef::createUndefined();
+
+                ExtensionManagerInstance* extensionManagerInstance =
+                    get(state->context());
+                ExtensionInstance* extensionInstance =
+                    extensionManagerInstance
+                        ->getExtensionInstanceFromCallingContext(
+                            state->context(), thisValue);
+
+                if (!extensionInstance || argc < 1) {
+                  return ValueRef::createUndefined();
+                }
+
+                ValueRef* typeValue = argv[0];
+                if (!typeValue->isString()) {
+                  return ValueRef::createUndefined();
+                }
+
+                std::string dataString;
+                if (argc > 1) {
+                  dataString = argv[1]->isString()
+                                   ? argv[1]->asString()->toStdUTF8String()
+                                   : std::string();
+                }
+
+                std::string reply =
+                    ExtensionManager::GetInstance()->HandleRuntimeSyncMessage(
+                        state->context(),
+                        typeValue->asString()->toStdUTF8String(),
+                        dataString);
+
+                return StringRef::createFromUTF8(reply.data(), reply.length());
             },
             0, true, true));
 
