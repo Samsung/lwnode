@@ -96,7 +96,6 @@ void GmainLoopInit(GmainLoopNodeBindings* self) {
   ((SourceData*)uvsource)->node_bindings = self;
 
   g_source_attach(uvsource, gcontext);
-  g_source_unref(uvsource);
 }
 
 void GmainLoopStart() {
@@ -111,6 +110,7 @@ void GmainLoopStart() {
 void GmainLoopExit() {
   if (uvsource) {
     g_source_destroy(uvsource);
+    g_source_unref(uvsource);
   }
   if (gmainLoop) {
     g_main_loop_unref(gmainLoop);
