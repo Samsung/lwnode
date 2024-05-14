@@ -47,6 +47,7 @@
       'escargot_configs': [
         '-DESCARGOT_SMALL_CONFIG=1',
         '-DESCARGOT_USE_CUSTOM_LOGGING=ON',
+        '-DESCARGOT_USE_EXTENDED_API=ON',
         '-DESCARGOT_ARCH=<(target_arch)',
         '-DESCARGOT_HOST=<(build_host)',
         '-DESCARGOT_MODE=<(escargot_build_mode)',

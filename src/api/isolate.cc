@@ -576,7 +576,7 @@ SymbolRef* IsolateWrap::createApiSymbol(StringRef* name) {
   auto newSymbol = SymbolRef::create(name);
   bool found = false;
   for (size_t i = 0; i < apiSymbols_.size(); i++) {
-    if (apiSymbols_[i]->description()->equals(name)) {
+    if (apiSymbols_[i]->descriptionString()->equals(name)) {
       apiSymbols_[i] = newSymbol;
       found = true;
       break;
@@ -596,7 +596,7 @@ SymbolRef* IsolateWrap::getApiSymbol(StringRef* name) {
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
   for (auto apiSymbols : apiSymbols_) {
-    if (apiSymbols->description()->equals(name)) {
+    if (apiSymbols->descriptionString()->equals(name)) {
       return apiSymbols;
     }
   }
@@ -609,7 +609,7 @@ SymbolRef* IsolateWrap::createApiPrivateSymbol(StringRef* name) {
   auto newSymbol = SymbolRef::create(name);
   bool found = false;
   for (size_t i = 0; i < apiPrivateSymbols_.size(); i++) {
-    if (apiPrivateSymbols_[i]->description()->equals(name)) {
+    if (apiPrivateSymbols_[i]->descriptionString()->equals(name)) {
       apiPrivateSymbols_[i] = newSymbol;
       found = true;
       break;
@@ -630,7 +630,7 @@ SymbolRef* IsolateWrap::getApiPrivateSymbol(StringRef* name) {
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
   for (auto apiPrivateSymbol : apiPrivateSymbols_) {
-    if (apiPrivateSymbol->description()->equals(name)) {
+    if (apiPrivateSymbol->descriptionString()->equals(name)) {
       return apiPrivateSymbol;
     }
   }

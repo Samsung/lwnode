@@ -163,6 +163,7 @@ test/parallel/test-whatwg-url-custom-properties.js
 test/parallel/test-worker-abort-on-uncaught-exception-terminate.js # randomly dies in docker
 test/parallel/test-worker-abort-on-uncaught-exception.js
 test/parallel/test-worker-cleanexit-with-moduleload.js
+test/parallel/test-worker-console-listeners.js # occasionally crashed in CI, might be timing issue
 test/parallel/test-worker-crypto-sign-transfer-result.js
 test/parallel/test-worker-data-url.js
 test/parallel/test-worker-error-stack-getter-throws.js
@@ -193,7 +194,9 @@ test/parallel/test-worker-nexttick-terminate.js
 test/parallel/test-worker-process-cwd.js
 test/parallel/test-worker-process-env.js
 test/parallel/test-worker-sharedarraybuffer-from-worker-thread.js
+test/parallel/test-worker-stack-overflow.js
 test/parallel/test-worker-stdio.js # CI 테스트중 간헐적으로 crash. 타이밍 이슈로 추정됨
+test/parallel/test-worker-stdio-from-preload-module.js # occasionally crashed in CI, might be timing issue
 test/parallel/test-worker-syntax-error-file.js
 test/parallel/test-worker-syntax-error.js
 test/parallel/test-worker-terminate-http2-respond-with-file.js

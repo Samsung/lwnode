@@ -345,7 +345,10 @@ EvalResult ObjectRefHelper::setPrototype(ContextRef* context,
       [](ExecutionStateRef* state,
          ObjectRef* object,
          ValueRef* prototype) -> ValueRef* {
-        return ValueRef::create(object->setPrototype(state, prototype));
+        // call ObjectRef::setObjectPrototype instead of ObjectRef::setPrototype
+        // here because ImmutablePrototypeObject blocks __proto__ property
+        // setting
+        return ValueRef::create(object->setObjectPrototype(state, prototype));
       },
       object,
       prototype);

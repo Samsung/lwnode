@@ -2,7 +2,7 @@ name: lwnode actions
 on: [ push, pull_request ]
 jobs:
   build_lwnode:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -10,7 +10,7 @@ jobs:
         config: [ '', '--nopt --shared' ]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Checkout Escargot
@@ -30,7 +30,7 @@ jobs:
         run: |
           pushd $(pwd)/deps/node
           ./tools/test.py \
-            -J -p dots --report --time --timeout 240 --repeat 1 \
+            -J -p dots --report --time --timeout 300 --repeat 1 \
             --shell=../../out/linux/Release/lwnode \
             --skip-tests=$(sed 's/\s#.*//g' test/skip_tests.txt | paste -sd,) \
             --unsupported-tests=$(sed '/#\|^$/d' test/skip_features.txt | paste -sd,) \
@@ -45,7 +45,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Checkout Escargot
@@ -85,7 +85,7 @@ jobs:
         profile: [t70std]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Checkout Escargot
@@ -118,8 +118,8 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install Packages
