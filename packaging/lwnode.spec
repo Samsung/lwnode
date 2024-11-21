@@ -69,7 +69,7 @@ BuildRequires: libasan
 # Initialize the variables
 %{!?target: %define target lwnode}
 %{!?lib_type: %define lib_type shared} # <shared|static>
-%{!?static_escargot: %define static_escargot 0}
+%{!?static_escargot: %define static_escargot 1}
 %{!?debug: %define debug 0}
 
 %description

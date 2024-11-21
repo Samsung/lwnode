@@ -387,18 +387,11 @@
         [ 'lwnode=="true"', {
           'cflags': ['-Wno-write-strings'],
           'sources': [
-            'src/node_main_lw.cc',
-            'src/lwnode/aul-event-receiver.cc'
+            'src/node_main_lw.cc'
           ],
         }, {
           'sources': [
             'src/node_main.cc'
-          ],
-        }],
-        ['target_os=="tizen"', {
-          'dependencies': [
-            '<(lwnode_jsengine_path)/deps/tizen.gyp:dlog',
-            '<(lwnode_jsengine_path)/deps/tizen.gyp:appcommon',
           ],
         }],
         # /@lwnode
@@ -799,7 +792,17 @@
             '<(lwnode_jsengine_path)/escargotshim.gyp:escargotshim',
             '<(lwnode_jsengine_path)/deps/node-bindings/node_bindings.gyp:node_bindings',
           ],
+          'sources': [
+            'src/lwnode/aul-event-receiver.cc',
+            'src/lwnode/lwnode-public.cc',
+          ],
           'conditions': [
+            ['target_os=="tizen"', {
+              'dependencies': [
+                '<(lwnode_jsengine_path)/deps/tizen.gyp:dlog',
+                '<(lwnode_jsengine_path)/deps/tizen.gyp:appcommon',
+              ],
+            }],
             ['external_builtins=="true"', {
               'variables': {
                 'archive_filename%': '<(node_core_target_name).dat'

@@ -101,14 +101,6 @@ bool AULEventReceiver::start(int argc, char* argv[]) {
     LWNODE_DEV_LOG(parsed_bundle);
     LWNODE_DEV_LOG("appid:", appid_);
 
-    char* path = app_get_resource_path();
-    if (uv_chdir(path) != 0) {
-      LWNODE_DEV_LOGF("ERROR: Failed to change directory. (%d)", -errno);
-      free(path);
-      exit(-errno);
-    }
-    free(path);
-
     assert(!appid_.empty());
   } else {
     initLoggerOutput(false);

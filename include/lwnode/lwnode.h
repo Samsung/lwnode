@@ -21,15 +21,12 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include "lwnode-public.h"
 
 namespace Escargot {
 class ContextRef;
 class ValueRef;
 }  // namespace Escargot
-
-#ifndef LWNODE_EXPORT
-#define LWNODE_EXPORT __attribute__((visibility("default")))
-#endif
 
 namespace LWNode {
 
