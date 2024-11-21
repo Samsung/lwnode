@@ -60,7 +60,7 @@
       'libraries': [
         '-lpthread',
         '<@(escargot_libs)',
-        '-Wl,-rpath,\$$ORIGIN/<(output_dir)',
+        '-Wl,-rpath,\$$ORIGIN/../<(output_dir)',
         '-Wl,-rpath,../lib',
         '-Wl,-rpath,\$$ORIGIN',
       ],

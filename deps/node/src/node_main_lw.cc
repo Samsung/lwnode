@@ -15,8 +15,7 @@
  */
 
 #include <cstdio>
-#include "lwnode.h"
-#include "lwnode/aul-event-receiver.h"
+#include "lwnode/lwnode-public.h"
 #include "node.h"
 
 // UNIX
@@ -72,13 +71,15 @@ int main(int argc, char* argv[]) {
   setvbuf(stdout, nullptr, _IONBF, 0);
   setvbuf(stderr, nullptr, _IONBF, 0);
 
-  if (AULEventReceiver::getInstance()->start(argc, argv)) {
-    LWNode::SystemInfo::getInstance()->add("aul");
+  if (lwnode::ParseAULEvent(argc, argv)) {
+    if (!lwnode::InitScriptRootPath()) {
+      exit(-errno);
+    }
 
     char* args[] = {"", "index.js", nullptr};
-    return node::Start(2, args);
+    return lwnode::Start(2, args);
   }
 
   // started by command line
-  return node::Start(argc, argv);
+  return lwnode::Start(argc, argv);
 }
