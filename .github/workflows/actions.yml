@@ -107,7 +107,7 @@ jobs:
         run: |
           gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --define 'lib_type shared'
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: tizen_std_${{ matrix.profile }}
           path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
