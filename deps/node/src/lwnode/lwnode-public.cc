@@ -56,8 +56,25 @@ bool InitScriptRootPath(const std::string path) {
   return true;
 }
 
+void SetDlogID(const std::string& tag) {
+#if defined(HOST_TIZEN) && !defined(LWNODE_TIZEN_AUL)
+  if (!tag.empty()) {
+    LogKind::user()->tag = tag;
+  }
+
+  LogOption::setDefaultOutputInstantiator([]() {
+    static thread_local std::shared_ptr<Logger::Output> s_loggerOutput;
+    if (s_loggerOutput == nullptr) {
+      s_loggerOutput =
+          std::static_pointer_cast<Logger::Output>(std::make_shared<DlogOut>());
+    }
+    return s_loggerOutput;
+  });
+#endif
+}
+
 int Start(int argc, char** argv) {
   return node::Start(argc, argv);
 }
 
-}  // namespace LWNode
+}  // namespace lwnode
