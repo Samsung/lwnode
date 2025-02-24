@@ -130,3 +130,29 @@ jobs:
       - name: Lint CC
         run: |
           tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
+
+  embedtest:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Checkout Escargot
+        run: |
+          pushd deps/escargot
+          git submodule update --init third_party
+          popd
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build gcc-multilib g++-multilib sed
+      - name: Build liblwnode and embedtest
+        run: |
+          tools/build-embedtest.sh
+      - name: Run embedtest
+        run: |
+          out/linux/Release/embedtest.x
