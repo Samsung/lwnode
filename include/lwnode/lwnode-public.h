@@ -16,11 +16,16 @@
 
 #pragma once
 
+#include <future>  // std::promise
+#include <memory>
 #include <string>
+#include "message-port.h"
 
 #ifndef LWNODE_EXPORT
 #define LWNODE_EXPORT __attribute__((visibility("default")))
 #endif
+
+class Port;
 
 namespace lwnode {
 
@@ -31,6 +36,8 @@ LWNODE_EXPORT bool ParseAULEvent(int argc, char** argv);
 // default on Tizen AUL mode. Be sure to call this function before lwnode::Start
 // function.
 LWNODE_EXPORT bool InitScriptRootPath(const std::string path = "");
+
+LWNODE_EXPORT int Start(int argc, char** argv);
 
 // Sets the dlog tag id for debugging. This is only used on Tizen when not in
 // AUL mode.
@@ -44,10 +51,15 @@ class LWNODE_EXPORT Runtime {
   // Initializes the runtime and returns true if it early termination and sets
   // the exit code to the second return value. Otherwise, it returns false
   // and you need call Run() to run the runtime.
-  std::pair<bool, int> Init(int argc, char** argv);
+  std::pair<bool, int> Init(int argc,
+                            char** argv,
+                            std::promise<void>&& promise);
 
-  // Runs the runtime and returns the exit code. The runtime must be initialized.
+  // Runs the runtime and returns the exit code. The runtime must be
+  // initialized.
   int Run();
+
+  std::shared_ptr<Port> GetPort();
 
  private:
   class Internal;

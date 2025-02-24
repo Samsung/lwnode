@@ -24,6 +24,12 @@
 #include <cstdio>
 #include <memory>
 
+#ifdef LWNODE
+#include "lwnode.h"
+#include <nd-vm-message-channel.h>
+#include <uv-loop-holder.h>
+#endif
+
 namespace node {
 
 using errors::TryCatchScope;
@@ -352,6 +358,13 @@ Environment::Environment(IsolateData* isolate_data,
     set_abort_on_uncaught_exception(false);
   }
 
+#if defined(LWNODE)
+  message_channel_ = new MessageChannel();
+  loop_holder_ = new LoopHolderUV(isolate_data->event_loop());
+  LWNode::InitMessageChannel(
+      context, message_channel_, loop_holder_, isolate_data->event_loop());
+#endif
+
 #if HAVE_INSPECTOR
   // We can only create the inspector agent after having cloned the options.
   inspector_agent_ = std::make_unique<inspector::Agent>(this);
@@ -479,6 +492,15 @@ Environment::~Environment() {
   }
 
   CHECK_EQ(base_object_count_, 0);
+
+#if defined(LWNODE)
+  // @lwnode
+  delete message_channel_;
+  message_channel_ = nullptr;
+
+  delete loop_holder_;
+  loop_holder_ = nullptr;
+#endif
 }
 
 void Environment::InitializeLibuv() {
@@ -1078,6 +1100,16 @@ void Environment::MemoryInfo(MemoryTracker* tracker) const {
 void Environment::RunWeakRefCleanup() {
   isolate()->ClearKeptObjects();
 }
+
+#if defined(LWNODE)
+std::shared_ptr<Port> Environment::GetPort() {
+  return message_channel_->port1();
+}
+
+MessageChannel* Environment::message_channel() {
+  return message_channel_;
+}
+#endif
 
 // Not really any better place than env.cc at this moment.
 void BaseObject::DeleteMe(void* data) {

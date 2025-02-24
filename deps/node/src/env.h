@@ -50,6 +50,12 @@
 #include <unordered_set>
 #include <vector>
 
+// @lwnode
+class MessageChannel;
+class Port;
+class LoopHolderUV;
+// @lwnode
+
 namespace node {
 
 namespace contextify {
@@ -1395,6 +1401,17 @@ class Environment : public MemoryRetainer {
   // a given pointer.
   std::unordered_map<char*, std::unique_ptr<v8::BackingStore>>
       released_allocated_buffers_;
+
+#if defined(LWNODE)
+  // Port
+ public:
+  std::shared_ptr<Port> GetPort();
+  MessageChannel* message_channel();
+
+ private:
+  MessageChannel* message_channel_;
+  LoopHolderUV* loop_holder_;
+#endif
 };
 
 }  // namespace node

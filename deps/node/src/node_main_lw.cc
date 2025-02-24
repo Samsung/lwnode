@@ -73,17 +73,20 @@ int main(int argc, char* argv[]) {
 
   lwnode::Runtime runtime;
   std::pair<bool, int> init_result; // early_return, exit_code
+  // FIXME: Fix Runtime::Init() call to ensure environment initialization
+  // before running the loop, Runtime::Run(). This workaround passes a
+  // promise directly to know when that is.
+  std::promise<void> promise;
 
   if (lwnode::ParseAULEvent(argc, argv)) {
     if (!lwnode::InitScriptRootPath()) {
       exit(-errno);
     }
-
     char* args[] = {"", "index.js", nullptr};
-    init_result = runtime.Init(2, args);
+    init_result = runtime.Init(2, args, std::move(promise));
   } else {
     // started by command line
-    init_result = runtime.Init(argc, argv);
+    init_result = runtime.Init(argc, argv, std::move(promise));
   }
 
   if (init_result.first) {

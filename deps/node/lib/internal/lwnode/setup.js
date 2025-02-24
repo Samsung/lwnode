@@ -15,6 +15,7 @@
  */
 
 const { MemWatcher, MemDiff } = require("internal/lwnode/memory");
+const { setupMessagePort } = require("internal/lwnode/message-port");
 
 const useEscargot = process.config.variables.javascript_engine == "escargot";
 const isDebugBuild =
@@ -31,7 +32,7 @@ function wrapLWNodeMethods(binding) {
     }
   }
 
-  return {
+  const object = {
     _print: (...args) => {
       binding.logger.apply(null, args);
     },
@@ -95,6 +96,10 @@ function wrapLWNodeMethods(binding) {
       }
     },
   };
+
+  setupMessagePort(object, binding);
+
+  return object;
 }
 
 module.exports = {

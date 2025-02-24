@@ -14,6 +14,7 @@
       '-Wno-unused-variable',
       '-Wno-unused-function',
       '-Wno-unused-but-set-variable',
+      '-Wno-unused-parameter',
       '-fPIC',
       '-ggdb', # all builds include debug symbols, which will be stripped before packaging
       '-fdata-sections',     # for gc-sections

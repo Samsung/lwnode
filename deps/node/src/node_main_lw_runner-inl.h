@@ -15,6 +15,7 @@
  */
 
 #pragma once
+#include <future>
 #include "node_bindings.h"
 #include "node_internals.h"
 #include "node_main_instance.h"
@@ -121,12 +122,17 @@ class LWNodeMainRunner {
         nodeMainInstance.CreateMainEnvironment(&exit_code);
 
     CHECK_NOT_NULL(env_);
+
+    environment_ = env_.get();
+
     Context::Scope context_scope(env_->context());
 
     if (exit_code == 0) {
       LoadEnvironment(env_.get());
 
       env_->set_trace_sync_io(env_->options()->trace_sync_io);
+
+      promise_.set_value();
 
       {
         SealHandleScope seal(isolate_);
@@ -175,8 +181,19 @@ class LWNodeMainRunner {
     return exit_code;
   }
 
+  std::shared_ptr<Port> GetPort() {
+    CHECK_NOT_NULL(environment_);
+    return environment_->GetPort();
+  }
+
+  void SetInitPromise(std::promise<void> promise) {
+    promise_ = std::move(promise);
+  }
+
  private:
   std::unique_ptr<node::ArrayBufferAllocator> array_buffer_allocator_;
+  Environment* environment_ = nullptr;
+  std::promise<void> promise_;
 };
 
 }  // namespace LWNode

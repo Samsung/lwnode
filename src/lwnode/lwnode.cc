@@ -17,6 +17,8 @@
 #include "lwnode/lwnode.h"
 #include <EscargotPublic.h>
 #include <malloc.h>  // for malloc_trim
+#include <nd-vm-message-channel.h>
+#include <uv-loop-holder.h>
 #include <codecvt>
 #include <fstream>
 #include "api.h"
@@ -32,6 +34,8 @@
 using namespace v8;
 using namespace EscargotShim;
 using namespace std::literals;
+
+ObjectRef* ModuleMessagePortInit(ContextRef* context, ObjectRef* target);
 
 namespace LWNode {
 
@@ -212,6 +216,42 @@ static ValueRef* hasSystemInfo(ExecutionStateRef* state,
   return ValueRef::create(SystemInfo::getInstance()->has(info));
 }
 
+static ValueRef* Ref(ExecutionStateRef* state,
+                     ValueRef* this_value,
+                     size_t argc,
+                     ValueRef** argv,
+                     bool isConstructCall) {
+  ContextWrap* lwContext = ContextWrap::fromEscargot(state->context());
+  LoopHolderUV* loop_holder = reinterpret_cast<LoopHolderUV*>(
+      lwContext->GetAlignedPointerFromEmbedderData(kLoopHolder));
+  loop_holder->Ref();
+  return ValueRef::create(loop_holder->ref_count());
+}
+
+static ValueRef* Unref(ExecutionStateRef* state,
+                       ValueRef* this_value,
+                       size_t argc,
+                       ValueRef** argv,
+                       bool isConstructCall) {
+  ContextWrap* lwContext = ContextWrap::fromEscargot(state->context());
+  LoopHolderUV* loop_holder = reinterpret_cast<LoopHolderUV*>(
+      lwContext->GetAlignedPointerFromEmbedderData(kLoopHolder));
+  loop_holder->Unref();
+  return ValueRef::create(loop_holder->ref_count());
+}
+
+void InitMessageChannel(Local<Context> context,
+                        MessageChannel* channel,
+                        LoopHolderUV* loop_holder,
+                        uv_loop_t* loop) {
+  auto lwContext = CVAL(*context)->context();
+  auto esContext = lwContext->get();
+  channel->Init(esContext, loop);
+
+  lwContext->SetAlignedPointerInEmbedderData(kMessageChannel, channel);
+  lwContext->SetAlignedPointerInEmbedderData(kLoopHolder, loop_holder);
+}
+
 void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
   auto esTarget = CVAL(*target)->value()->asObject();
@@ -234,6 +274,10 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
 #endif
   SetMethod(esContext, esTarget, "getGCMemoryStats", getGCMemoryStats);
   SetMethod(esContext, esTarget, "hasSystemInfo", hasSystemInfo);
+
+  SetMethod(esContext, esTarget, "ref", Ref);
+  SetMethod(esContext, esTarget, "unref", Unref);
+  ModuleMessagePortInit(esContext, esTarget);
 }
 
 void IdleGC(v8::Isolate* isolate) {

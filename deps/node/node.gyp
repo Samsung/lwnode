@@ -153,6 +153,7 @@
       'lib/internal/linkedlist.js',
       'lib/internal/lwnode/setup.js',
       'lib/internal/lwnode/memory.js',
+      'lib/internal/lwnode/message-port.js',
       'lib/internal/main/check_syntax.js',
       'lib/internal/main/eval_string.js',
       'lib/internal/main/eval_stdin.js',

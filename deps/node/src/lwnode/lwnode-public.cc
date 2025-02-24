@@ -65,12 +65,19 @@ Runtime::~Runtime() {
   delete internal_;
 }
 
-std::pair<bool, int> Runtime::Init(int argc, char** argv) {
+std::pair<bool, int> Runtime::Init(int argc,
+                                   char** argv,
+                                   std::promise<void>&& promise) {
+  internal_->runner_.SetInitPromise(std::move(promise));
   return internal_->Init(argc, argv);
 }
 
 int Runtime::Run() {
   return internal_->Run();
+}
+
+std::shared_ptr<Port> Runtime::GetPort() {
+  return internal_->runner_.GetPort();
 }
 
 bool ParseAULEvent(int argc, char** argv) {
@@ -120,6 +127,10 @@ void SetDlogID(const std::string& tag) {
     return s_loggerOutput;
   });
 #endif
+}
+
+int Start(int argc, char** argv) {
+  return node::Start(argc, argv);
 }
 
 }  // namespace lwnode

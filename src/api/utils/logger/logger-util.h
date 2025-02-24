@@ -23,8 +23,10 @@
 
 #define __FUNCTION_NAME__ getPrettyFunctionName(__PRETTY_FUNCTION__)
 
+#ifndef __CODE_LOCATION__
 #define __CODE_LOCATION__                                                      \
   createCodeLocation(__PRETTY_FUNCTION__, __FILE_NAME__, __LINE__).c_str()
+#endif
 
 std::string createCodeLocation(const char* functionName,
                                const char* filename,

@@ -16,6 +16,7 @@
       'type': '<(library)',
       'dependencies': [
         'escargot.gyp:escargot',
+        'message-port.gyp:nd-message-port',
       ],
       'include_dirs': [
         'src',
@@ -74,6 +75,9 @@
         'src/lwnode/lwnode.cc',
         'src/lwnode/lwnode-loader.cc',
         'src/lwnode/lwnode-gc-strategy.cc',
+        'src/lwnode/nd-mod-base.cc',
+        'src/lwnode/nd-mod-message-port.cc',
+        'src/lwnode/nd-vm-message-channel.cc',
       ],
       'defines': ['V8_PROMISE_INTERNAL_FIELD_COUNT=1',
         'LWNODE_ENABLE_EXPERIMENTAL_SERIALIZATION=1',

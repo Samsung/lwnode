@@ -28,10 +28,27 @@ class ContextRef;
 class ValueRef;
 }  // namespace Escargot
 
+class MessageChannel;
+class Port;
+class LoopHolderUV;
+
+using uv_loop_t = struct uv_loop_s;
+
 namespace LWNode {
+
+enum ContextEmbedderIndex {
+  // Others are listed in deps/node/src/node_context_data.h.
+  kMessageChannel = 90,
+  kLoopHolder = 91,
+};
 
 void InitializeProcessMethods(v8::Local<v8::Object> target,
                               v8::Local<v8::Context> context);
+
+void InitMessageChannel(v8::Local<v8::Context> context,
+                        MessageChannel* channel,
+                        LoopHolderUV* loop_holder,
+                        uv_loop_t* loop);
 
 void IdleGC(v8::Isolate* isolate = nullptr);
 void initDebugger();
