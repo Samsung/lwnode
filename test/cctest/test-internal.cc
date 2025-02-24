@@ -329,9 +329,10 @@ TEST(internal_Escargot_ShadowObject) {
                          ObjectRef::NativeDataAccessorPropertyGetter getter,
                          ObjectRef::NativeDataAccessorPropertySetter setter)
         : ObjectRef::NativeDataAccessorPropertyData(
-              isWritable, isEnumerable, isConfigurable, getter, setter){};
+              isWritable, isEnumerable, isConfigurable, getter, setter) {};
 
     void* operator new(size_t size) { return GC_MALLOC(size); }
+    void operator delete(void* ptr) { GC_FREE(ptr); }
   };
 
   auto accessorPropData =
@@ -652,9 +653,23 @@ static void mixinProtoMethod(FunctionTemplateRef* ft) {
     // v8::ObjectTemplate::PrototypeTemplate()->SetAccessor
     bool isActsLikeJSGetterSetter = true;
 
+    struct AccessorPropertyData
+        : public ObjectRef::NativeDataAccessorPropertyData {
+      AccessorPropertyData(bool isWritable,
+                           bool isEnumerable,
+                           bool isConfigurable,
+                           ObjectRef::NativeDataAccessorPropertyGetter getter,
+                           ObjectRef::NativeDataAccessorPropertySetter setter)
+          : ObjectRef::NativeDataAccessorPropertyData(
+                isWritable, isEnumerable, isConfigurable, getter, setter) {};
+
+      void* operator new(size_t size) { return GC_MALLOC(size); }
+      void operator delete(void* ptr) { GC_FREE(ptr); }
+    };
+
     esPrototypeTemplate->setNativeDataAccessorProperty(
         StringRef::createFromUTF8("onread"),
-        new ObjectRef::NativeDataAccessorPropertyData(
+        new AccessorPropertyData(
             true,
             true,
             true,

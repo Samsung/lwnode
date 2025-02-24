@@ -41,13 +41,16 @@ jobs:
         timeout-minutes: 60
 
   cctest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
         with:
           submodules: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Checkout Escargot
         run: |
           pushd deps/escargot
