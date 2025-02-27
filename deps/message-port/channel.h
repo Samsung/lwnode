@@ -17,6 +17,7 @@
 #pragma once
 
 #include <future>
+#include <memory>
 
 #ifndef EXPORT_API
 #define EXPORT_API __attribute__((visibility("default")))
@@ -36,6 +37,8 @@ struct EXPORT_API Channel {
   static Channel New(std::shared_future<uv_loop_t*> loop,
                      const char* origin = nullptr);
   static void DrainPendingMessages(uv_loop_t* loop);
+  // This deletes messages if any exists in the pending queue.
+  static void DeletePendingMessages();
 
   void Reset();
 };

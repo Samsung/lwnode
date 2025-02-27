@@ -52,6 +52,7 @@ class EXPORT_API Port {
   using OnMessageCallback = std::function<void(const MessageEvent*)>;
   enum Result {
     NoError = 0,
+    MessageEventQueued,
     NoSink,
     NoOnMessage,
     InvalidMessageEvent,

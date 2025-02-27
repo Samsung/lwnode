@@ -102,7 +102,8 @@ Port::Result Port::PostMessage(std::shared_ptr<MessageEvent> event) {
   }
 
   // Check if the sink has a receiver.
-  if (sink->internal_->callback == nullptr) {
+  if (internal_->loop != nullptr && sink->internal_->callback == nullptr) {
+    // TODO: Enqueue events if the number of the events in queues is acceptable.
     TRACE(MSGPORT, "sink has no callback.");
     return Result::NoOnMessage;
   }
@@ -134,21 +135,24 @@ Port::Result Port::PostMessage(std::shared_ptr<MessageEvent> event) {
     }
   }
 
-  // Sends a task immediately if the loop handle is valid. If the loop handle is
-  // nullptr, the task is enqueued to the pending queue and will be executed
-  // later when a valid loop handle is provided.
-  AsyncUV::Send(internal_->loop,
-                [event = event, sink_weak = internal_->sink](uv_async_t*) {
-                  // event: shared_ptr, sink_weak: weak_ptr
-                  auto sink = sink_weak.lock();
-                  if (sink && sink->internal_->callback) {
-                    // Since sink is locked, event->target() is always valid
-                    // inside the callback.
-                    sink->internal_->callback(event.get());
-                  } else {
-                    TRACE(MSGPORT, "sink port released, or no callback");
-                  }
-                });
+  auto task = [event = event, sink_weak = internal_->sink](uv_async_t*) {
+    // event: shared_ptr, sink_weak: weak_ptr
+    auto sink = sink_weak.lock();
+    if (sink && sink->internal_->callback) {
+      // Since sink is locked, event->target() is always valid
+      // inside the callback.
+      sink->internal_->callback(event.get());
+    } else {
+      TRACE(MSGPORT, "sink port released, or no callback");
+    }
+  };
+
+  if (internal_->loop == nullptr) {
+    AsyncUV::EnqueueTask(std::move(task));
+    return Result::MessageEventQueued;
+  }
+
+  AsyncUV::Send(internal_->loop, std::move(task));
   return Result::NoError;
 }
 
@@ -189,6 +193,10 @@ Channel Channel::New(std::shared_future<uv_loop_t*> loop, const char* origin) {
 
 void Channel::DrainPendingMessages(uv_loop_t* loop) {
   AsyncUV::DrainPendingTasks(loop);
+}
+
+void Channel::DeletePendingMessages() {
+  AsyncUV::DeletePendingTasks();
 }
 
 void Channel::Reset() {

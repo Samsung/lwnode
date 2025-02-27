@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <future>
 #include <memory>
 
 namespace Escargot {
@@ -26,25 +27,22 @@ class FunctionObjectRef;
 class Port;
 using uv_loop_t = struct uv_loop_s;
 
-class MessageChannel {
+class MainMessagePort {
  public:
-  MessageChannel();
-  ~MessageChannel();
+  MainMessagePort(std::shared_ptr<Port> port,
+                  std::promise<uv_loop_t*>&& promise);
+  ~MainMessagePort();
 
   void Init(Escargot::ContextRef* context, uv_loop_t* loop);
-  void Start();
 
-  std::shared_ptr<Port> port1() { return port1_; }
-  std::shared_ptr<Port> port2() { return port2_; }
+  std::shared_ptr<Port> port() { return port_; }
   Escargot::ContextRef* context() { return context_; }
 
   void SetMessageEventClass(Escargot::FunctionObjectRef* klass);
   Escargot::FunctionObjectRef* MessageEventClass();
 
  private:
-  // In runtime perspective, port1 is a sink.
-  std::shared_ptr<Port> port1_;
-  std::shared_ptr<Port> port2_;
+  std::shared_ptr<Port> port_;
   Escargot::ContextRef* context_;
   uv_loop_t* uv_loop_;
 

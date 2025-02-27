@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nd-vm-message-channel.h"
+#include "nd-vm-main-message-port.h"
 #include <async-uv.h>
 #include <channel.h>
 #include <future>
@@ -22,35 +22,33 @@
 
 using namespace Escargot;
 
-struct MessageChannel::Internal {
+struct MainMessagePort::Internal {
   std::promise<uv_loop_t*> uv_promise_;
-
   PersistentHolder<FunctionObjectRef> message_event_class;
 };
 
-MessageChannel::MessageChannel() {
+MainMessagePort::MainMessagePort(std::shared_ptr<Port> port,
+                                 std::promise<uv_loop_t*>&& promise) {
   internal_ = std::make_unique<Internal>();
+  internal_->uv_promise_ = std::move(promise);
+  port_ = port;
 }
 
-MessageChannel::~MessageChannel() {}
+MainMessagePort::~MainMessagePort() {
+  Channel::DeletePendingMessages();
+}
 
-void MessageChannel::SetMessageEventClass(FunctionObjectRef* klass) {
+void MainMessagePort::SetMessageEventClass(FunctionObjectRef* klass) {
   internal_->message_event_class.reset(klass);
 }
 
-Escargot::FunctionObjectRef* MessageChannel::MessageEventClass() {
+Escargot::FunctionObjectRef* MainMessagePort::MessageEventClass() {
   return internal_->message_event_class.value();
 }
 
-void MessageChannel::Init(ContextRef* context, uv_loop_t* loop) {
-  auto channel = Channel::New(internal_->uv_promise_.get_future(), "embedder");
-  port1_ = channel.port1;
-  port2_ = channel.port2;
+void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
   context_ = context;
   uv_loop_ = loop;
-}
-
-void MessageChannel::Start() {
   internal_->uv_promise_.set_value(uv_loop_);
   Channel::DrainPendingMessages(uv_loop_);
 }

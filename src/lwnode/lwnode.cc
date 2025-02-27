@@ -17,7 +17,7 @@
 #include "lwnode/lwnode.h"
 #include <EscargotPublic.h>
 #include <malloc.h>  // for malloc_trim
-#include <nd-vm-message-channel.h>
+#include <nd-vm-main-message-port.h>
 #include <uv-loop-holder.h>
 #include <codecvt>
 #include <fstream>
@@ -240,15 +240,15 @@ static ValueRef* Unref(ExecutionStateRef* state,
   return ValueRef::create(loop_holder->ref_count());
 }
 
-void InitMessageChannel(Local<Context> context,
-                        MessageChannel* channel,
-                        LoopHolderUV* loop_holder,
-                        uv_loop_t* loop) {
+void InitMainMessagePort(Local<Context> context,
+                         MainMessagePort* main_port,
+                         LoopHolderUV* loop_holder,
+                         uv_loop_t* loop) {
   auto lwContext = CVAL(*context)->context();
   auto esContext = lwContext->get();
-  channel->Init(esContext, loop);
+  main_port->Init(esContext, loop);
 
-  lwContext->SetAlignedPointerInEmbedderData(kMessageChannel, channel);
+  lwContext->SetAlignedPointerInEmbedderData(kMainMessagePort, main_port);
   lwContext->SetAlignedPointerInEmbedderData(kLoopHolder, loop_holder);
 }
 

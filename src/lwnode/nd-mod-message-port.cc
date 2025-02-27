@@ -22,7 +22,7 @@
 #include "nd-debug.h"
 #include "nd-logger.h"
 #include "nd-mod-base.h"
-#include "nd-vm-message-channel.h"
+#include "nd-vm-main-message-port.h"
 
 using namespace Escargot;
 
@@ -31,10 +31,10 @@ using namespace Escargot;
 #if !defined(LWNODE)
 #include "nd-vm.h"
 
-using MessageChannelType = std::shared_ptr<MessageChannel>;
+using MainMessagePortType = std::shared_ptr<MainMessagePort>;
 
-static MessageChannelType GetMessageChannel(ContextRef* context) {
-  return VM::Get(context)->message_channel().lock();
+static MainMessagePortType GetMainMessagePort(ContextRef* context) {
+  return VM::Get(context)->main_message_port().lock();
 }
 #else
 #include "api/context.h"
@@ -42,15 +42,15 @@ static MessageChannelType GetMessageChannel(ContextRef* context) {
 #include "lwnode.h"
 #include "v8.h"
 
-using MessageChannelType = MessageChannel*;
+using MainMessagePortType = MainMessagePort*;
 
-static MessageChannelType GetMessageChannel(ContextRef* context) {
+static MainMessagePortType GetMainMessagePort(ContextRef* context) {
   EscargotShim::ContextWrap* lwContext =
       EscargotShim::ContextWrap::fromEscargot(context);
-  void* channel =
-      lwContext->GetAlignedPointerFromEmbedderData(LWNode::kMessageChannel);
-  CHECK_NOT_NULL(channel);
-  return reinterpret_cast<MessageChannel*>(channel);
+  void* port =
+      lwContext->GetAlignedPointerFromEmbedderData(LWNode::kMainMessagePort);
+  CHECK_NOT_NULL(port);
+  return reinterpret_cast<MainMessagePort*>(port);
 }
 #endif
 
@@ -60,8 +60,8 @@ static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
   GlobalObjectRef* global = context->globalObject();
 
   // Get MessageEvent
-  MessageChannelType message_channel = GetMessageChannel(state->context());
-  FunctionObjectRef* klass = message_channel->MessageEventClass();
+  MainMessagePortType main_port = GetMainMessagePort(state->context());
+  FunctionObjectRef* klass = main_port->MessageEventClass();
   if (klass == nullptr) {
 #if !defined(LWNODE)
     ValueRef* value = global->get(state, OneByteString("MessageEvent"));
@@ -72,7 +72,7 @@ static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
 #endif
     CHECK(value->isFunctionObject());
     klass = value->asFunctionObject();
-    message_channel->SetMessageEventClass(klass);
+    main_port->SetMessageEventClass(klass);
   }
 
   // Create a new MessageEvent
@@ -124,15 +124,8 @@ class MessagePortWrap : public BaseObject {
     auto self = GetExtraData<MessagePortWrap>(this_value);
 
     CHECK(argv[0]->isFunctionObject());
-    bool maybe_first_time = self->onmessage_->isUndefinedOrNull();
     TRACE(MSGPORT_JS, "onmessage is registered");
     self->onmessage_ = argv[0]->asFunctionObject();
-
-    if (maybe_first_time) {
-      if (auto message_channel = GetMessageChannel(state->context())) {
-        message_channel->Start();
-      }
-    }
     return ValueRef::createUndefined();
   }
 
@@ -229,12 +222,12 @@ static ObjectRef* Init(ContextRef* context, ObjectRef* target) {
   ExecResult result =
       Eval::execute(context, [&target](ExecutionStateRef* state) {
         // MainMessagePort (port2)
-        std::shared_ptr<Port> port2 =
-            GetMessageChannel(state->context())->port2();
+        std::shared_ptr<Port> port =
+            GetMainMessagePort(state->context())->port();
         SetProperty(state,
                     target,
                     "MainMessagePort",
-                    MessagePortWrap::Instantiate(state, std::move(port2)));
+                    MessagePortWrap::Instantiate(state, std::move(port)));
 
         return target;
       });

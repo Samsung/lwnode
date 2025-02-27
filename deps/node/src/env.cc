@@ -26,7 +26,7 @@
 
 #ifdef LWNODE
 #include "lwnode.h"
-#include <nd-vm-message-channel.h>
+#include <nd-vm-main-message-port.h>
 #include <uv-loop-holder.h>
 #endif
 
@@ -359,10 +359,12 @@ Environment::Environment(IsolateData* isolate_data,
   }
 
 #if defined(LWNODE)
-  message_channel_ = new MessageChannel();
+  channel_ = Channel::New(uv_promise_.get_future(), "embedder");
+  main_message_port_ =
+      new MainMessagePort(channel_.port2, std::move(uv_promise_));
   loop_holder_ = new LoopHolderUV(isolate_data->event_loop());
-  LWNode::InitMessageChannel(
-      context, message_channel_, loop_holder_, isolate_data->event_loop());
+  LWNode::InitMainMessagePort(
+      context, main_message_port_, loop_holder_, isolate_data->event_loop());
 #endif
 
 #if HAVE_INSPECTOR
@@ -495,8 +497,8 @@ Environment::~Environment() {
 
 #if defined(LWNODE)
   // @lwnode
-  delete message_channel_;
-  message_channel_ = nullptr;
+  delete main_message_port_;
+  main_message_port_ = nullptr;
 
   delete loop_holder_;
   loop_holder_ = nullptr;
@@ -1103,11 +1105,11 @@ void Environment::RunWeakRefCleanup() {
 
 #if defined(LWNODE)
 std::shared_ptr<Port> Environment::GetPort() {
-  return message_channel_->port1();
+  return channel_.port1;
 }
 
-MessageChannel* Environment::message_channel() {
-  return message_channel_;
+MainMessagePort* Environment::main_message_port() {
+  return main_message_port_;
 }
 #endif
 
