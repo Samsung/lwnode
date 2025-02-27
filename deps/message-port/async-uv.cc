@@ -45,22 +45,22 @@ AsyncUV::~AsyncUV() {
   });
 }
 
-void AsyncUV::Send(uv_loop_t* loop, Task task) {
+bool AsyncUV::Send(uv_loop_t* loop, Task task) {
   if (loop == nullptr) {
-    EnqueueTask(task);
-    return;
+    return false;
   }
-  (new AsyncUV(loop, task))->Send();
+  return (new AsyncUV(loop, task))->Send();
 }
 
-void AsyncUV::EnqueueTask(Task task) {
+size_t AsyncUV::EnqueueTask(Task task) {
   std::lock_guard<std::mutex> lock(queue_mutex_);
   queue_.push(task);
+  return queue_.size();
 }
 
 bool AsyncUV::DrainPendingTasks(uv_loop_t* loop) {
   std::lock_guard<std::mutex> lock(queue_mutex_);
-  TRACE(MSGPORT, "drain pending queue", queue_.size());
+  TRACE(MSGPORT, "drain pending tasks", queue_.size());
 
   if (loop == nullptr) {
     return false;
@@ -71,6 +71,20 @@ bool AsyncUV::DrainPendingTasks(uv_loop_t* loop) {
     queue_.pop();
   }
   return true;
+}
+
+void AsyncUV::DeletePendingTasks() {
+  std::lock_guard<std::mutex> lock(queue_mutex_);
+  TRACE(MSGPORT, "delete pending tasks", queue_.size());
+  if (!queue_.empty()) {
+    std::queue<Task> empty;
+    std::swap(queue_, empty);
+  }
+}
+
+bool AsyncUV::IsPendingTasksEmpty() {
+  std::lock_guard<std::mutex> lock(queue_mutex_);
+  return queue_.empty();
 }
 
 void AsyncUV::Init(uv_loop_t* loop, Task task) {
@@ -88,9 +102,10 @@ void AsyncUV::Init(uv_loop_t* loop, Task task) {
   TRACE_ADD(ASYNC_UV, uv_h_);
 }
 
-void AsyncUV::Send() {
+bool AsyncUV::Send() {
   if (!uv_h_) {
-    return;
+    return false;
   }
   uv_async_send(uv_h_);
+  return true;
 }

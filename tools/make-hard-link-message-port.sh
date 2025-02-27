@@ -49,11 +49,11 @@ files_and_targets=(
   "${ND_ROOT}/src/nd-mod-base.h ${LWNODE_ROOT}/src/lwnode/"
   "${ND_ROOT}/src/nd-mod-base.cc ${LWNODE_ROOT}/src/lwnode/"
   "${ND_ROOT}/src/nd-mod-message-port.cc ${LWNODE_ROOT}/src/lwnode/"
-  "${ND_ROOT}/src/nd-vm-message-channel.cc ${LWNODE_ROOT}/src/lwnode/"
+  "${ND_ROOT}/src/nd-vm-main-message-port.cc ${LWNODE_ROOT}/src/lwnode/"
 
   # ${LWNODE_ROOT}/include/lwnode/
   "${ND_ROOT}/deps/message-port/message-port.h ${LWNODE_ROOT}/include/lwnode/"
-  "${ND_ROOT}/src/nd-vm-message-channel.h ${LWNODE_ROOT}/include/lwnode/"
+  "${ND_ROOT}/src/nd-vm-main-message-port.h ${LWNODE_ROOT}/include/lwnode/"
   "${ND_ROOT}/src/uv-loop-holder.h ${LWNODE_ROOT}/include/lwnode/"
 )
 
@@ -64,9 +64,10 @@ for entry in "${dirs_and_targets[@]}"; do
   if [ "$dry_run" = true ]; then
     echo "[DRY RUN] create a hard link : $dir -> $target"
   else
-    if ! [ -d "$target" ]; then
-      cp -alv "$dir" "$target"
+    if [ -d "$target" ]; then
+      rm -rfv "$target"
     fi
+    cp -alv "$dir" "$target"
   fi
 done
 

@@ -33,15 +33,17 @@ class EXPORT_API AsyncUV {
 
   // If loop is nullptr, the task is enqueued to the pending queue.
   // When a valid loop is provided later, all pending tasks will be executed.
-  static void Send(uv_loop_t* loop, Task task);
+  static bool Send(uv_loop_t* loop, Task task);
   static bool DrainPendingTasks(uv_loop_t* loop);
-  static void EnqueueTask(Task task);
+  static size_t EnqueueTask(Task task);
+  static void DeletePendingTasks();
+  static bool IsPendingTasksEmpty();
 
   AsyncUV(uv_loop_t* loop = nullptr, Task task = nullptr);
   ~AsyncUV();
 
   void Init(uv_loop_t* loop, Task task);
-  void Send();
+  bool Send();
 
  private:
   uv_async_t* uv_h_;

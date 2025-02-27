@@ -51,9 +51,12 @@
 #include <vector>
 
 // @lwnode
-class MessageChannel;
+#include <future>
+#include <channel.h>
+class MainMessagePort;
 class Port;
 class LoopHolderUV;
+struct Channel;
 // @lwnode
 
 namespace node {
@@ -1406,11 +1409,13 @@ class Environment : public MemoryRetainer {
   // Port
  public:
   std::shared_ptr<Port> GetPort();
-  MessageChannel* message_channel();
+  MainMessagePort* main_message_port();
 
  private:
-  MessageChannel* message_channel_;
-  LoopHolderUV* loop_holder_;
+  std::promise<uv_loop_t*> uv_promise_;
+  Channel channel_;
+  MainMessagePort* main_message_port_ = nullptr;
+  LoopHolderUV* loop_holder_ = nullptr;
 #endif
 };
 
