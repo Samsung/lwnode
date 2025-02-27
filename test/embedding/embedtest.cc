@@ -28,7 +28,7 @@ std::string getTimestamp() {
 }
 
 TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
-  auto runtime = new lwnode::Runtime();
+  auto runtime = std::make_shared<lwnode::Runtime>();
 
   std::promise<void> promise;
   std::future<void> init_future = promise.get_future();
@@ -44,6 +44,7 @@ TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
       [&](std::promise<void>&& promise) mutable {
         runtime->Init(COUNT_OF(args), args, std::move(promise));
         runtime->Run();
+        runtime->Free();
       },
       std::move(promise));
 

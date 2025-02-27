@@ -9,9 +9,7 @@
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
 
 int main(int argc, char* argv[]) {
-  // FIXME: Fix to ensure the runtime is deleted without crashing.
-  // auto runtime = std::make_shared<lwnode::Runtime>();
-  auto runtime = new lwnode::Runtime();
+  auto runtime = std::make_shared<lwnode::Runtime>();
 
   std::promise<void> promise;
   std::future<void> init_future = promise.get_future();
@@ -26,6 +24,7 @@ int main(int argc, char* argv[]) {
         // promise directly to know when that is.
         runtime->Init(COUNT_OF(args), args, std::move(promise));
         runtime->Run();
+        runtime->Free();
       },
       std::move(promise));
 

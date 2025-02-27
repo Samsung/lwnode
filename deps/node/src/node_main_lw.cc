@@ -90,8 +90,12 @@ int main(int argc, char* argv[]) {
   }
 
   if (init_result.first) {
+    runtime.Free();
     return init_result.second;
   }
 
-  return runtime.Run();
+  int result = runtime.Run();
+  runtime.Free();
+
+  return result;
 }

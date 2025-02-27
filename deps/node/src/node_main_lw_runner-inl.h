@@ -103,7 +103,7 @@ class LoopStrategy : public MainLoopStrategy {
 
 class LWNodeMainRunner {
  public:
-  ~LWNodeMainRunner() { v8::V8::ShutdownPlatform(); }
+  ~LWNodeMainRunner() {}
 
   int Run(node::NodeMainInstance& nodeMainInstance) {
     // To release array buffer allocator after node is finished,
@@ -178,6 +178,9 @@ class LWNodeMainRunner {
 #if defined(LEAK_SANITIZER)
     __lsan_do_leak_check();
 #endif
+
+    v8::V8::ShutdownPlatform();
+
     return exit_code;
   }
 

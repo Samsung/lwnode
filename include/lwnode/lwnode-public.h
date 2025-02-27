@@ -59,6 +59,8 @@ class LWNODE_EXPORT Runtime {
   // initialized.
   int Run();
 
+  void Free();
+
   std::shared_ptr<Port> GetPort();
 
  private:

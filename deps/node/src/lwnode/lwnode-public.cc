@@ -31,12 +31,6 @@ class Runtime::Internal {
   friend Runtime;
 
  public:
-  ~Internal() {
-    if (is_initialized && instance_) {
-      DisposeNode(instance_);
-    }
-  }
-
   std::pair<bool, int> Init(int argc, char** argv) {
     is_initialized = true;
     return InitializeNode(argc, argv, &instance_);
@@ -48,7 +42,12 @@ class Runtime::Internal {
     }
 
     return runner_.Run(*instance_);
-    ;
+  }
+
+  void Free() {
+    if (is_initialized && instance_) {
+      DisposeNode(instance_);
+    }
   }
 
  private:
@@ -70,6 +69,10 @@ std::pair<bool, int> Runtime::Init(int argc,
                                    std::promise<void>&& promise) {
   internal_->runner_.SetInitPromise(std::move(promise));
   return internal_->Init(argc, argv);
+}
+
+void Runtime::Free() {
+  return internal_->Free();
 }
 
 int Runtime::Run() {
