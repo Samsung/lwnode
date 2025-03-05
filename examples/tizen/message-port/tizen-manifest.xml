@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="8.0" package="lwnode-example-messageport" version="1.0.0">
+    <profile name="tv-samsung" />
+    <service-application appid="lwnode-example-messageport" exec="lwnode-example-messageport" type="c++app" multiple="false" taskmanage="false" nodisplay="true" on-boot="false">
+        <icon>service.png</icon>
+        <label>Lightweight Example</label>
+	</service-application>
+    <privileges>
+        <!-- <privilege>http://tizen.org/privilege/application.info</privilege> -->
+    </privileges>
+</manifest>

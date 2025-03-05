@@ -1,0 +1,6 @@
+out
+lib/
+bin/
+include/
+packaging/*.p12
+.git
