@@ -42,9 +42,7 @@ TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
 
   std::thread worker = std::thread(
       [&](std::promise<void>&& promise) mutable {
-        runtime->Init(COUNT_OF(args), args, std::move(promise));
-        runtime->Run();
-        runtime->Free();
+        runtime->Start(COUNT_OF(args), args, std::move(promise));
       },
       std::move(promise));
 

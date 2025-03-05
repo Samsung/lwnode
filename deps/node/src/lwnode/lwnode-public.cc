@@ -64,19 +64,19 @@ Runtime::~Runtime() {
   delete internal_;
 }
 
-std::pair<bool, int> Runtime::Init(int argc,
-                                   char** argv,
-                                   std::promise<void>&& promise) {
+int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   internal_->runner_.SetInitPromise(std::move(promise));
-  return internal_->Init(argc, argv);
-}
+  std::pair<bool, int> init_result = internal_->Init(argc, argv);
 
-void Runtime::Free() {
-  return internal_->Free();
-}
+  if (init_result.first) {
+    internal_->Free();
+    return init_result.second;
+  }
 
-int Runtime::Run() {
-  return internal_->Run();
+  int result = internal_->Run();
+  internal_->Free();
+
+  return result;
 }
 
 std::shared_ptr<Port> Runtime::GetPort() {

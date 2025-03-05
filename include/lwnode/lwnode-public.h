@@ -31,16 +31,20 @@ namespace lwnode {
 
 LWNODE_EXPORT bool ParseAULEvent(int argc, char** argv);
 
-// Sets the path of the root directory of the JavaScript. If you do
-// not put the path argument, the root path is the app's resource path by
-// default on Tizen AUL mode. Be sure to call this function before lwnode::Start
-// function.
+/**
+ * Sets the path of the root directory of the JavaScript. If you do
+ * not put the path argument, the root path is the app's resource path by
+ * default on Tizen AUL mode. Be sure to call this function before lwnode::Start
+ * function. 
+ **/
 LWNODE_EXPORT bool InitScriptRootPath(const std::string path = "");
 
 LWNODE_EXPORT int Start(int argc, char** argv);
 
-// Sets the dlog tag id for debugging. This is only used on Tizen when not in
-// AUL mode.
+/**
+ * Sets the dlog tag id for debugging. This is only used on Tizen when not in
+ * AUL mode. 
+ **/
 LWNODE_EXPORT void SetDlogID(const std::string& appId);
 
 class LWNODE_EXPORT Runtime {
@@ -48,18 +52,18 @@ class LWNODE_EXPORT Runtime {
   Runtime();
   ~Runtime();
 
-  // Initializes the runtime and returns true if it early termination and sets
-  // the exit code to the second return value. Otherwise, it returns false
-  // and you need call Run() to run the runtime.
-  std::pair<bool, int> Init(int argc,
-                            char** argv,
-                            std::promise<void>&& promise);
-
-  // Runs the runtime and returns the exit code. The runtime must be
-  // initialized.
-  int Run();
-
-  void Free();
+  /**
+  * Start the runtime and returns the exit code. It initializes the runtime
+  * and runs it. When the runtime is initialized, the promise object is set.
+  * 
+  * @param argc - Argument count.
+  * @param argv - Argument vector. The element should be the starting file
+  * name of the application.
+  * @param promise - Promise object. It will be set when the runtime
+  * initialization is complete.
+  * @return Returns the exit code of the runtime.
+  **/
+  int Start(int argc, char** argv, std::promise<void>&& promise);
 
   std::shared_ptr<Port> GetPort();
 
