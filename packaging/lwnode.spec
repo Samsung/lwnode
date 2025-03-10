@@ -136,6 +136,13 @@ echo $CFLAGS
 %endif
 
 # building lwnode executable
+
+CFLAGS+=" -fno-lto "
+CXXFLAGS+=" -fno-lto "
+LDFLAGS+=" -fno-lto "
+
+./tools/envinfo.sh
+
 ./configure.py --tizen --verbose \
             --nopt --dest-cpu='%{tizen_arch}' \
             --arch='%{tizen_arch}' \
