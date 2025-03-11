@@ -35,8 +35,6 @@ BuildRequires: pkgconfig(capi-system-system-settings)
 BuildRequires: pkgconfig(icu-i18n)
 BuildRequires: pkgconfig(icu-uc)
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: nghttp2-devel
-BuildRequires: pkgconfig(libcares)
 
 %if (0%{?tizen_version_major} >= 6)
 BuildRequires: pkgconfig(openssl1.1)
@@ -129,10 +127,9 @@ echo $CFLAGS
 %endif
 
 %if (0%{?tizen_version_major} == 4) && (0%{?tizen_version_minor} == 0)
-  %define external_libs_config --nopt --shared-zlib --nopt --shared-cares
+  %define external_libs_config --nopt --shared-zlib
 %else
-  %define external_libs_config --nopt --shared-zlib --nopt --shared-cares \\\
-                      --nopt --shared-openssl --nopt --shared-nghttp2
+  %define external_libs_config --nopt --shared-zlib --nopt --shared-openssl
 %endif
 
 # building lwnode executable
