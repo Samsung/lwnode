@@ -161,12 +161,12 @@ mkdir -p %{buildroot}%{_libdir}
 rm -f %{target_lib}/*.tmp %{target_lib}/*.TOC
 
 %if 0%{?static_escargot} == 0
-  strip -v -g %{target_src}/gen/escargot/libescargot.so
   cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
+  strip -v -g %{target_src}/gen/escargot/libescargot.so
 %endif
 %if "%{lib_type}" == "shared"
-  strip -v -g %{target_lib}/liblwnode.so*
   cp %{target_lib}/liblwnode.so* %{buildroot}%{_libdir}
+  strip -v -g %{target_lib}/liblwnode.so*
 %endif
 %if %{?debug_symbols:0}%{!?debug_symbols:1}
   strip -v -g %{target_src}/%{target}
