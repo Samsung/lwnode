@@ -14,7 +14,7 @@
 # limitations under the License.
 
 TARGET_OS="linux"
-TARGET_ARCH = "arm"
+TARGET_ARCH="arm"
 
 PROJECT_ROOT_PATH=$PWD
 PACKAGES_ROOT_PATH=$PROJECT_ROOT_PATH/modules/packages
