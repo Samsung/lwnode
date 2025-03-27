@@ -28,6 +28,7 @@
 #include "api/utils/misc.h"
 #include "api/utils/smaps.h"
 #include "base.h"
+#include "lwnode-public.h"
 #include "lwnode/lwnode-gc-strategy.h"
 #include "lwnode/lwnode-loader.h"
 
@@ -240,6 +241,32 @@ static ValueRef* Unref(ExecutionStateRef* state,
   return ValueRef::create(loop_holder->ref_count());
 }
 
+static ValueRef* Binding(ExecutionStateRef* state,
+                         ValueRef* this_value,
+                         size_t argc,
+                         ValueRef** argv,
+                         bool isConstructCall) {
+  std::string message;
+  if (argc > 0 && argv[0]->isString()) {
+    message = argv[0]->asString()->toStdUTF8String();
+  }
+
+  ContextWrap* lwContext = ContextWrap::fromEscargot(state->context());
+  lwnode::Runtime::BindingCallback callback =
+      reinterpret_cast<lwnode::Runtime::BindingCallback>(
+          lwContext->GetAlignedPointerFromEmbedderData(kBindingCallback));
+
+  void* data =
+      lwContext->GetAlignedPointerFromEmbedderData(kBindingCallbackData);
+
+  std::string response;
+  if (callback) {
+    response = callback(message, data);
+  }
+
+  return StringRef::createFromUTF8(response.c_str(), response.length());
+}
+
 void InitMainMessagePort(Local<Context> context,
                          MainMessagePort* main_port,
                          LoopHolderUV* loop_holder,
@@ -277,6 +304,9 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
 
   SetMethod(esContext, esTarget, "ref", Ref);
   SetMethod(esContext, esTarget, "unref", Unref);
+
+  SetMethod(esContext, esTarget, "binding", Binding);
+
   ModuleMessagePortInit(esContext, esTarget);
 }
 

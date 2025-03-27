@@ -22,10 +22,16 @@
 #include "node.h"
 #include "node_main_lw_runner-inl.h"
 #include "trace.h"
+#include "v8.h"
 
 using namespace node;
 
 namespace lwnode {
+
+struct Runtime::Configuration::Internal {
+  Runtime::BindingCallback binding_callback{nullptr};
+  void* binding_callback_data{nullptr};
+};
 
 class Runtime::Internal {
   friend Runtime;
@@ -33,6 +39,17 @@ class Runtime::Internal {
  public:
   std::pair<bool, int> Init(int argc, char** argv) {
     is_initialized = true;
+
+    // Set binding callback to isolate context embedder data.
+    runner_.SetOnCreatedContextCallback([this](v8::Local<v8::Context> context) {
+      context->SetAlignedPointerInEmbedderData(
+          LWNode::ContextEmbedderIndex::kBindingCallback,
+          reinterpret_cast<void*>(config_.internal_->binding_callback));
+      context->SetAlignedPointerInEmbedderData(
+          LWNode::ContextEmbedderIndex::kBindingCallbackData,
+          config_.internal_->binding_callback_data);
+    });
+
     return InitializeNode(argc, argv, &instance_);
   }
 
@@ -53,11 +70,18 @@ class Runtime::Internal {
  private:
   NodeMainInstance* instance_{nullptr};
   LWNode::LWNodeMainRunner runner_;
+  Runtime::Configuration config_;
   bool is_initialized{false};
 };
 
-Runtime::Runtime() {
-  internal_ = new Internal();
+/**************************************************************************
+ * Runtime class
+ **************************************************************************/
+
+Runtime::Runtime() : internal_(new Internal()) {}
+
+Runtime::Runtime(Configuration&& config) : Runtime() {
+  internal_->config_ = std::move(config);
 }
 
 Runtime::~Runtime() {
@@ -82,6 +106,35 @@ int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
 std::shared_ptr<Port> Runtime::GetPort() {
   return internal_->runner_.GetPort();
 }
+
+/**************************************************************************
+ * Runtime::Configuration class
+ **************************************************************************/
+
+Runtime::Configuration::Configuration()
+    : internal_(new Runtime::Configuration::Internal()) {}
+
+Runtime::Configuration::~Configuration() {
+  delete internal_;
+}
+
+Runtime::Configuration& Runtime::Configuration::operator=(
+    Configuration&& other) {
+  delete internal_;
+  internal_ = other.internal_;
+  other.internal_ = nullptr;
+  return *this;
+}
+
+void Runtime::Configuration::SetBindingCallback(
+    Runtime::BindingCallback callback, void* user_data) {
+  internal_->binding_callback = callback;
+  internal_->binding_callback_data = user_data;
+}
+
+/**************************************************************************
+ * Static functions
+ **************************************************************************/
 
 bool ParseAULEvent(int argc, char** argv) {
   bool result = AULEventReceiver::getInstance()->start(argc, argv);

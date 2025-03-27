@@ -15,3 +15,4 @@ endif()
 
 add_executable(embedtest.x embedtest.cc)
 add_executable(example.x example.cc)
+add_executable(binding.x binding.cc)

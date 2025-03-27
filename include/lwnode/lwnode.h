@@ -40,6 +40,8 @@ enum ContextEmbedderIndex {
   // Others are listed in deps/node/src/node_context_data.h.
   kMainMessagePort = 90,
   kLoopHolder = 91,
+  kBindingCallback = 92,
+  kBindingCallbackData = 93,
 };
 
 void InitializeProcessMethods(v8::Local<v8::Object> target,

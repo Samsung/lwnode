@@ -35,7 +35,7 @@ LWNODE_EXPORT bool ParseAULEvent(int argc, char** argv);
  * Sets the path of the root directory of the JavaScript. If you do
  * not put the path argument, the root path is the app's resource path by
  * default on Tizen AUL mode. Be sure to call this function before lwnode::Start
- * function. 
+ * function.
  **/
 LWNODE_EXPORT bool InitScriptRootPath(const std::string path = "");
 
@@ -43,26 +43,48 @@ LWNODE_EXPORT int Start(int argc, char** argv);
 
 /**
  * Sets the dlog tag id for debugging. This is only used on Tizen when not in
- * AUL mode. 
+ * AUL mode.
  **/
 LWNODE_EXPORT void SetDlogID(const std::string& appId);
 
 class LWNODE_EXPORT Runtime {
  public:
+  using BindingCallback = std::string (*)(const std::string&, void* user_data);
+
+  class Configuration {
+   public:
+    friend Runtime;
+    Configuration();
+    ~Configuration();
+
+    Configuration(Configuration&) = delete;
+    Configuration(Configuration&&) = delete;
+    Configuration& operator=(const Configuration& t) = delete;
+    Configuration& operator=(Configuration&&);
+
+    void SetBindingCallback(BindingCallback callback, void* user_data);
+
+   private:
+    struct Internal;
+    Internal* internal_ = nullptr;
+  };
+
   Runtime();
+  Runtime(Configuration&& config);
+
   ~Runtime();
 
   /**
-  * Start the runtime and returns the exit code. It initializes the runtime
-  * and runs it. When the runtime is initialized, the promise object is set.
-  * 
-  * @param argc - Argument count.
-  * @param argv - Argument vector. The element should be the starting file
-  * name of the application.
-  * @param promise - Promise object. It will be set when the runtime
-  * initialization is complete.
-  * @return Returns the exit code of the runtime.
-  **/
+   * Start the runtime and returns the exit code. It initializes the runtime
+   * and runs it. When the runtime is initialized, the promise object is set.
+   *
+   * @param argc - Argument count.
+   * @param argv - Argument vector. The element should be the starting file
+   * name of the application.
+   * @param promise - Promise object. It will be set when the runtime
+   * initialization is complete.
+   * @return Returns the exit code of the runtime.
+   **/
   int Start(int argc, char** argv, std::promise<void>&& promise);
 
   std::shared_ptr<Port> GetPort();
