@@ -17,7 +17,6 @@
 #include <async-uv.h>
 #include <channel.h>
 #include <message-port.h>
-#include <optional>
 #include "es-helper.h"
 #include "nd-debug.h"
 #include "nd-logger.h"
