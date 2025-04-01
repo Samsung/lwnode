@@ -188,6 +188,14 @@ class LWNodeMainRunner {
     return exit_code;
   }
 
+  void Stop() {
+    CHECK_NOT_NULL(environment_);
+    if (environment_->is_stopping()) {
+      return;
+    }
+    environment_->ExitEnv();
+  }
+
   std::shared_ptr<Port> GetPort() {
     CHECK_NOT_NULL(environment_);
     return environment_->GetPort();

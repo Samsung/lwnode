@@ -88,6 +88,12 @@ class LWNODE_EXPORT Runtime {
    **/
   int Start(int argc, char** argv, std::promise<void>&& promise);
 
+  /**
+   * Stop the runtime. You can use this function to stop the runtime from another
+   * thread.
+   **/
+  void Stop();
+
   std::shared_ptr<Port> GetPort();
 
  private:

@@ -63,6 +63,14 @@ class Runtime::Internal {
     return runner_.Run(*instance_);
   }
 
+  void Stop() {
+    if (instance_ == nullptr) {
+      return;
+    }
+
+    runner_.Stop();
+  }
+
   void Free() {
     if (is_initialized && instance_) {
       DisposeNode(instance_);
@@ -103,6 +111,10 @@ int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   internal_->Free();
 
   return result;
+}
+
+void Runtime::Stop() {
+  internal_->runner_.Stop();
 }
 
 std::shared_ptr<Port> Runtime::GetPort() {
