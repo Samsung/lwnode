@@ -54,6 +54,7 @@
         '-DESCARGOT_THREADING=<(escargot_threading)',
         '-DESCARGOT_ASAN=<(asan)',
         '-DESCARGOT_DEBUGGER=<(escargot_debugger)',
+        '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
       ],
     },
     'all_dependent_settings': {

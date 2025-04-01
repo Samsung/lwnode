@@ -49,7 +49,8 @@ LWNODE_EXPORT void SetDlogID(const std::string& appId);
 
 class LWNODE_EXPORT Runtime {
  public:
-  using BindingCallback = std::string (*)(const std::string&, void* user_data);
+  using SendMessageSyncCallback = std::string (*)(const std::string&,
+                                                  void* user_data);
 
   class Configuration {
    public:
@@ -62,7 +63,7 @@ class LWNODE_EXPORT Runtime {
     Configuration& operator=(const Configuration& t) = delete;
     Configuration& operator=(Configuration&&);
 
-    void SetBindingCallback(BindingCallback callback, void* user_data);
+    void OnSendMessageSync(SendMessageSyncCallback callback, void* user_data);
 
    private:
     struct Internal;

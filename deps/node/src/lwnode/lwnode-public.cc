@@ -29,8 +29,8 @@ using namespace node;
 namespace lwnode {
 
 struct Runtime::Configuration::Internal {
-  Runtime::BindingCallback binding_callback{nullptr};
-  void* binding_callback_data{nullptr};
+  Runtime::SendMessageSyncCallback send_message_sync_callback{nullptr};
+  void* send_message_sync_callback_data{nullptr};
 };
 
 class Runtime::Internal {
@@ -40,15 +40,17 @@ class Runtime::Internal {
   std::pair<bool, int> Init(int argc, char** argv) {
     is_initialized = true;
 
-    // Set binding callback to isolate context embedder data.
-    runner_.SetOnCreatedContextCallback([this](v8::Local<v8::Context> context) {
-      context->SetAlignedPointerInEmbedderData(
-          LWNode::ContextEmbedderIndex::kBindingCallback,
-          reinterpret_cast<void*>(config_.internal_->binding_callback));
-      context->SetAlignedPointerInEmbedderData(
-          LWNode::ContextEmbedderIndex::kBindingCallbackData,
-          config_.internal_->binding_callback_data);
-    });
+    // Set sendMessageSync callback to isolate context embedder data.
+    runner_.SetOnMainEnvCreationCallback(
+        [this](v8::Local<v8::Context> context) {
+          context->SetAlignedPointerInEmbedderData(
+              LWNode::ContextEmbedderIndex::kSendMessageSyncCallback,
+              reinterpret_cast<void*>(
+                  config_.internal_->send_message_sync_callback));
+          context->SetAlignedPointerInEmbedderData(
+              LWNode::ContextEmbedderIndex::kSendMessageSyncCallbackData,
+              config_.internal_->send_message_sync_callback_data);
+        });
 
     return InitializeNode(argc, argv, &instance_);
   }
@@ -126,10 +128,10 @@ Runtime::Configuration& Runtime::Configuration::operator=(
   return *this;
 }
 
-void Runtime::Configuration::SetBindingCallback(
-    Runtime::BindingCallback callback, void* user_data) {
-  internal_->binding_callback = callback;
-  internal_->binding_callback_data = user_data;
+void Runtime::Configuration::OnSendMessageSync(
+    Runtime::SendMessageSyncCallback callback, void* user_data) {
+  internal_->send_message_sync_callback = callback;
+  internal_->send_message_sync_callback_data = user_data;
 }
 
 /**************************************************************************

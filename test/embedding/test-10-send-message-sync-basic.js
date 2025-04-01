@@ -1,25 +1,22 @@
 const lwnode = process.lwnode;
 const port = process.lwnode.port;
 
-lwnode.ref();
-
 port.onmessage = (event) => {
     console.log(`${event.data}`);
     if (event.data == "ping") {
         port.postMessage("pong");
-        lwnode.unref();
     }
 };
 
 function printMessage() {
     console.log("printMessage called--------------------------------------------");
-    const name = lwnode.binding('name');
+    const name = lwnode.sendMessageSync('name');
     console.log(`Hello, ${name}!`);
 
-    const age = lwnode.binding('age');
+    const age = lwnode.sendMessageSync('age');
     console.log(`I am ${age} years old.`);
 
-    const gender = lwnode.binding('gender');
+    const gender = lwnode.sendMessageSync('gender');
     console.log(`My gender is ${gender}.`);
 }
 

@@ -1,10 +1,10 @@
+#include <lwnode-public.h>
+#include <message-port.h>
 #include <filesystem>
 #include <future>
 #include <iostream>
-#include <thread>
 #include <memory>
-#include <lwnode-public.h>
-#include <message-port.h>
+#include <thread>
 
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
 
@@ -27,16 +27,13 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<Info> info = std::make_shared<Info>("John", "30", "male");
 
   lwnode::Runtime::Configuration configuration;
-  configuration.SetBindingCallback(
+  configuration.OnSendMessageSync(
       [](const std::string& message, void* user_data) -> std::string {
         Info* info = static_cast<Info*>(user_data);
-        
-        if (message == "name")
-          return info->GetName();
-        if (message == "age")
-          return info->GetAge();
-        if (message == "gender")
-          return info->GetGender();
+
+        if (message == "name") return info->GetName();
+        if (message == "age") return info->GetAge();
+        if (message == "gender") return info->GetGender();
 
         return "";
       },
@@ -46,7 +43,7 @@ int main(int argc, char* argv[]) {
 
   std::promise<void> promise;
   std::future<void> init_future = promise.get_future();
-  const char* script = "test/embedding/test-10-binding-basic.js";
+  const char* script = "test/embedding/test-10-send-message-sync-basic.js";
   std::string path = (std::filesystem::current_path() / script).string();
   char* args[] = {const_cast<char*>(""), const_cast<char*>(path.c_str())};
 
