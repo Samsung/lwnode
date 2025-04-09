@@ -6,6 +6,16 @@ These flags and variables are for LWNode.js core development usage only. Do not 
 
 ### Flags
 
+#### `--dlog=<DLOG Tag>`
+
+If the `--dlog` flag is specified on Tizen, LWNode prints logs via `DLOG` when
+running from an embedder or the terminal. `DLOG_TAG` must be given, and is used
+as the output TAG for loggers like `console.log()`.
+
+```shell
+--dlog=JS_APP
+```
+
 #### `--internal-log`
 
 If the `--internal-log` flag is specified or the `LWNODE_INTERNAL_LOG` environment variable is set to 1, LWNode will print internal logs in release build.

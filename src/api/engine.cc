@@ -373,6 +373,29 @@ void Engine::initialize() {
     registerGCEventListeners();
   }
 
+#if defined(HOST_TIZEN)
+  if (EscargotShim::Global::flags()->isOn(
+          EscargotShim::Flag::Type::DlogOutput)) {
+    Flag* flag = EscargotShim::Global::flags()->getFlag(
+        EscargotShim::Flag::Type::DlogOutput);
+
+    std::string user_tag = flag->getValue();
+    if (!user_tag.empty()) {
+      LogKind::user()->tag = user_tag;
+    }
+
+    LogOption::setDefaultOutputInstantiator([]() {
+      static thread_local std::shared_ptr<Logger::Output> s_loggerOutput;
+      if (s_loggerOutput == nullptr) {
+        s_loggerOutput = std::static_pointer_cast<Logger::Output>(
+            std::make_shared<DlogOut>());
+      }
+      return s_loggerOutput;
+    });
+    LWNODE_DEV_LOG("DEV_LOG: OK");
+  }
+#endif
+
   mainThreadId_ = std::this_thread::get_id();
 }
 

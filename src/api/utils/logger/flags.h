@@ -49,6 +49,7 @@ class Flag {
     InternalLog,
     LWNodeOther,
     DebugServer,
+    DlogOutput,
   };
 
   Flag(const std::string& name, Type type, bool useAsPrefix = false)
@@ -61,6 +62,7 @@ class Flag {
 
   virtual void addValue(const std::string& value){};
   virtual bool hasValue(const std::string& value) { return false; }
+  virtual std::string getValue() { return ""; }
 
   virtual void addNegativeValue(const std::string& value) {}
   virtual bool hasNegativeValue(const std::string& value) { return false; }
@@ -83,6 +85,14 @@ class FlagWithValues : public Flag {
 
   virtual bool hasValue(const std::string& value) override {
     return values_.find(value) != values_.end();
+  }
+
+  virtual std::string getValue() override {
+    if (!values_.empty()) {
+      auto iter = values_.begin();
+      return *iter;
+    }
+    return "";
   }
 
  private:
@@ -131,12 +141,12 @@ class LWNODE_EXPORT Flags {
   std::set<Flag*, FlagComparator> get() { return flags_; };
   void set(std::set<Flag*, FlagComparator> flags) { flags_ = flags; }
 
+  Flag* getFlag(Flag::Type type);
+
  private:
   void initFlags();
   Flag* findFlagObject(const std::string& name);
   Flag* findFlagObject(Flag::Type type);
-
-  Flag* getFlag(Flag::Type type);
 
   template <class T>
   void addFlag(const char* name, Flag::Type type, bool useAsPrefix = false) {

@@ -46,6 +46,7 @@ void Flags::initFlags() {
   addFlag<FlagWithNegativeValues>("--trace-call=", Flag::Type::TraceCall, true);
   addFlag<Flag>("--internal-log", Flag::Type::InternalLog);
   addFlag<Flag>("--start-debug-server", Flag::Type::DebugServer);
+  addFlag<FlagWithValues>("--dlog=", Flag::Type::DlogOutput, true);
 }
 
 bool Flag::isPrefixOf(const std::string& name) {
@@ -92,7 +93,8 @@ void Flags::add(const std::string& userOption) {
   add(flag);
 
   if (flag->type() == Flag::Type::TraceCall ||
-      flag->type() == Flag::Type::UnhandledRejections) {
+      flag->type() == Flag::Type::UnhandledRejections ||
+      flag->type() == Flag::Type::DlogOutput) {
     std::string optionValues = userOption.substr(userOption.find_first_of('=') +
                                                  1);  // +1 for skipping '='
     auto tokens = strSplit(optionValues, ',');
