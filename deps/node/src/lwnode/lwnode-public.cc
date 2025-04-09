@@ -37,8 +37,22 @@ class Runtime::Internal {
   friend Runtime;
 
  public:
+  enum class State {
+    kNotInitialized,
+    kInitialized,
+    kRunning,
+    kStopped,
+    kReleased
+  };
+
   std::pair<bool, int> Init(int argc, char** argv) {
-    is_initialized = true;
+    if (state_ != State::kNotInitialized) {
+      LWNODE_DEV_LOG("[Runtime::Init] already initialized");
+      return std::make_pair(false, -1);
+    }
+
+    LWNODE_DEV_LOG("[Runtime::Init]");
+    state_ = State::kInitialized;
 
     // Set sendMessageSync callback to isolate context embedder data.
     runner_.SetOnMainEnvCreationCallback(
@@ -56,39 +70,64 @@ class Runtime::Internal {
   }
 
   int Run() {
-    if (instance_ == nullptr) {
+    if (state_ != State::kInitialized) {
+      LWNODE_DEV_LOG("[Runtime::Run] not initialized");
       return -1;
     }
 
-    return runner_.Run(*instance_);
+    CHECK_NOT_NULL(instance_);
+    LWNODE_DEV_LOG("[Runtime::Run]");
+    state_ = State::kRunning;
+
+    int result = runner_.Run(*instance_);
+
+    state_ = State::kStopped;
+
+    return result;
   }
 
   void Stop() {
-    if (instance_ == nullptr) {
+    if (state_ != State::kRunning) {
+      LWNODE_DEV_LOG("[Runtime::Stop] already stopped");
       return;
     }
+
+    CHECK_NOT_NULL(instance_);
+    LWNODE_DEV_LOG("[Runtime::Stop]");
+    state_ = State::kStopped;
 
     runner_.Stop();
   }
 
   void Free() {
-    if (is_initialized && instance_) {
+    if (state_ != State::kStopped && state_ != State::kInitialized) {
+      LWNODE_DEV_LOG("[Runtime::Free] not stopped");
+      return;
+    }
+
+    state_ = State::kReleased;
+    if (instance_) {
+      LWNODE_DEV_LOG("[Runtime::Free]");
       DisposeNode(instance_);
     }
+
+    instance_ = nullptr;
   }
 
  private:
   NodeMainInstance* instance_{nullptr};
   LWNode::LWNodeMainRunner runner_;
   Runtime::Configuration config_;
-  bool is_initialized{false};
+  State state_{State::kNotInitialized};
 };
 
 /**************************************************************************
  * Runtime class
  **************************************************************************/
 
-Runtime::Runtime() : internal_(new Internal()) {}
+Runtime::Runtime() : internal_(new Internal()) {
+  LWNODE_DEV_LOG("[Runtime::Runtime]");
+}
 
 Runtime::Runtime(Configuration&& config) : Runtime() {
   internal_->config_ = std::move(config);
@@ -96,6 +135,7 @@ Runtime::Runtime(Configuration&& config) : Runtime() {
 
 Runtime::~Runtime() {
   delete internal_;
+  LWNODE_DEV_LOG("[Runtime::~Runtime]");
 }
 
 int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {

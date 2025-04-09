@@ -22,7 +22,11 @@
 
 // loggers using LWNodeLogger which supports dlog
 #define LWNODE_USER_LOG(...) LWNodeLogger(LogKind::user()).log(__VA_ARGS__)
+#if defined(HOST_TIZEN)
 #define LWNODE_DEV_LOG(...) LWNodeLogger(LogKind::lwnode()).log(__VA_ARGS__)
+#else
+#define LWNODE_DEV_LOG(...)
+#endif
 #define LWNODE_DEV_LOGF(fmt, ...)                                              \
   LWNodeLogger(LogKind::lwnode()).print(fmt, ##__VA_ARGS__)
 

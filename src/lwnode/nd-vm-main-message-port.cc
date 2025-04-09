@@ -18,6 +18,7 @@
 #include <async-uv.h>
 #include <channel.h>
 #include <future>
+#include "api/utils/logger/logger.h"
 #include "es-helper.h"
 
 using namespace Escargot;
@@ -35,6 +36,7 @@ MainMessagePort::MainMessagePort(std::shared_ptr<Port> port,
 }
 
 MainMessagePort::~MainMessagePort() {
+  LWNODE_DEV_LOG("[MainMessagePort::~MainMessagePort]");
   Channel::DeletePendingMessages();
 }
 
@@ -47,8 +49,16 @@ Escargot::FunctionObjectRef* MainMessagePort::MessageEventClass() {
 }
 
 void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
+  LWNODE_DEV_LOG("[MainMessagePort::Init]");
+
   context_ = context;
   uv_loop_ = loop;
-  internal_->uv_promise_.set_value(uv_loop_);
+
+  try {
+    internal_->uv_promise_.set_value(uv_loop_);
+  } catch (const std::exception& e) {
+    LWNODE_DEV_LOG("[MainMessagePort::Init] promise error:", e.what());
+  }
+
   Channel::DrainPendingMessages(uv_loop_);
 }

@@ -103,9 +103,13 @@ class LoopStrategy : public MainLoopStrategy {
 
 class LWNodeMainRunner {
  public:
-  ~LWNodeMainRunner() {}
+  ~LWNodeMainRunner() {
+    LWNODE_DEV_LOG("[LWNodeMainRunner::~LWNodeMainRunner]");
+  }
 
   int Run(node::NodeMainInstance& nodeMainInstance) {
+    LWNODE_DEV_LOG("[LWNodeMainRunner::Run]");
+
     // To release array buffer allocator after node is finished,
     // this runner should has it.
     array_buffer_allocator_ =
@@ -120,6 +124,7 @@ class LWNodeMainRunner {
     int exit_code = 0;
     DeleteFnPtr<Environment, FreeEnvironment> env_ =
         nodeMainInstance.CreateMainEnvironment(&exit_code);
+    LWNODE_DEV_LOG("[LWNodeMainRunner::Run] create main environment");
 
     CHECK_NOT_NULL(env_);
 
@@ -133,10 +138,15 @@ class LWNodeMainRunner {
 
     if (exit_code == 0) {
       LoadEnvironment(env_.get());
+      LWNODE_DEV_LOG("[LWNodeMainRunner::Run] load environment");
 
       env_->set_trace_sync_io(env_->options()->trace_sync_io);
 
-      promise_.set_value();
+      try {
+        promise_.set_value();
+      } catch (const std::exception& e) {
+        LWNODE_DEV_LOG("[LWNodeMainRunner::Run] promise error:", e.what());
+      }
 
       {
         SealHandleScope seal(isolate_);
@@ -146,8 +156,10 @@ class LWNodeMainRunner {
         // Run main loop
         std::unique_ptr<MainLoopStrategy> mainLoop;
         if (GmainLoopNodeBindings::isEnabled()) {
+          LWNODE_DEV_LOG("[LWNodeMainRunner::Run] use gmain loop");
           mainLoop = std::make_unique<GmainLoopStrategy>();
         } else {
+          LWNODE_DEV_LOG("[LWNodeMainRunner::Run] use standard loop");
           mainLoop = std::make_unique<LoopStrategy>();
         }
 
@@ -189,6 +201,7 @@ class LWNodeMainRunner {
   }
 
   void Stop() {
+    LWNODE_DEV_LOG("[LWNodeMainRunner::Stop]");
     CHECK_NOT_NULL(environment_);
     if (environment_->is_stopping()) {
       return;
