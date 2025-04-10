@@ -19,8 +19,17 @@
 #include <uv.h>
 #include <chrono>
 #include <future>
+#include <mutex>
+
 #include "async-uv.h"
 #include "channel.h"
+
+#if __cplusplus >= 201703L
+#include <optional>
+#define Optional std::optional
+#else
+#include "utils/optional.h"
+#endif
 
 // MessageEvent::Internal
 // -----------------------------------------------------------------------------
@@ -64,6 +73,38 @@ const std::weak_ptr<Port>& MessageEvent::target() const {
   return internal_->target;
 }
 
+// MessageEventSync::Internal
+// -----------------------------------------------------------------------------
+struct MessageEventSync::Internal {
+  Internal() {}
+  ~Internal() { TRACE(MSGEVENT, "~MessageEventSync::Internal"); }
+
+  Optional<std::string> result;
+  std::promise<std::string> promise;
+};
+
+std::shared_ptr<MessageEventSync> MessageEventSync::New(
+    const std::string& data) {
+  return std::shared_ptr<MessageEventSync>(new MessageEventSync(data));
+}
+
+MessageEventSync::MessageEventSync(const std::string& data)
+    : MessageEvent(data), internal_sync_(std::make_unique<Internal>()) {}
+
+MessageEventSync::~MessageEventSync() {
+  TRACE(MSGEVENT, "~MessageEventSync");
+}
+
+void MessageEventSync::SetResult(const std::string& result) const {
+  internal_sync_->result = result;
+}
+
+const std::string MessageEventSync::result() const {
+  auto result = internal_sync_->result;
+
+  return result.has_value() ? result.value() : std::string();
+}
+
 // Port::Internal
 // -----------------------------------------------------------------------------
 
@@ -83,6 +124,7 @@ struct Port::Internal {
   std::weak_ptr<Port> sink;
   std::shared_ptr<Port> sink_holder;
   OnMessageCallback callback;
+  std::mutex callback_mutex;
 };
 
 Port::Port() : internal_(std::make_unique<Internal>()) {}
@@ -90,22 +132,26 @@ Port::Port() : internal_(std::make_unique<Internal>()) {}
 Port::~Port() {}
 
 void Port::OnMessage(const OnMessageCallback& callback) {
+  std::unique_lock<std::mutex> lock(internal_->callback_mutex);
   internal_->callback = std::move(callback);
 }
 
-Port::Result Port::PostMessage(std::shared_ptr<MessageEvent> event) {
+Port::Result Port::PostMessageAsync(std::shared_ptr<MessageEvent> event) {
   // Check if the sink is valid.
   std::shared_ptr<Port> sink = internal_->sink.lock();
   if (sink == nullptr) {
     TRACE(MSGPORT, "sink port released.");
-    return Result::NoSink;
+    return Error::NoSink;
   }
 
   // Check if the sink has a receiver.
-  if (internal_->loop != nullptr && sink->internal_->callback == nullptr) {
-    // TODO: Enqueue events if the number of the events in queues is acceptable.
-    TRACE(MSGPORT, "sink has no callback.");
-    return Result::NoOnMessage;
+  if (internal_->loop) {
+    std::unique_lock<std::mutex> lock(sink->internal_->callback_mutex);
+    if (sink->internal_->callback == nullptr) {
+      // TODO: Consider enqueuing events in this case.
+      TRACE(MSGPORT, "sink has no callback.");
+      return Error::NoOnMessage;
+    }
   }
 
   // Set target and origin field of the given event.
@@ -116,44 +162,102 @@ Port::Result Port::PostMessage(std::shared_ptr<MessageEvent> event) {
 
   // It's not allowed to use MessageEvents to be sent to different sinks.
   if (event->internal_->target.lock() != internal_->sink.lock()) {
-    return Result::InvalidMessageEvent;
+    return Error::InvalidMessageEvent;
   }
 
   // Get a valid loop handle if invalid.
   if (internal_->loop == nullptr) {
     if (!internal_->future.valid()) {
-      return Result::InvalidPortLoop;
+      return Error::InvalidPortLoop;
     }
     if (internal_->future.wait_for(std::chrono::milliseconds(1)) ==
         std::future_status::ready) {
       auto loop = internal_->future.get();
       if (loop == nullptr) {
-        return Result::InvalidPortLoop;
+        return Error::InvalidPortLoop;
       }
       internal_->loop = loop;
       AsyncUV::DrainPendingTasks(internal_->loop);
     }
   }
 
-  auto task = [event = event, sink_weak = internal_->sink](uv_async_t*) {
+  auto task = [event = event,
+               self = internal_.get(),
+               sink_weak = internal_->sink](uv_async_t*) {
     // event: shared_ptr, sink_weak: weak_ptr
     auto sink = sink_weak.lock();
-    if (sink && sink->internal_->callback) {
-      // Since sink is locked, event->target() is always valid
-      // inside the callback.
-      sink->internal_->callback(event.get());
+    if (sink) {
+      std::unique_lock<std::mutex> lock(sink->internal_->callback_mutex);
+      if (sink->internal_->callback) {
+        // Since sink is locked, event->target() is always valid
+        // inside the callback.
+        try {
+          sink->internal_->callback(event.get());
+        } catch (...) {
+          TRACE(MSGPORT, "user callback error");
+          return;
+        }
+      }
     } else {
       TRACE(MSGPORT, "sink port released, or no callback");
+    }
+
+    if (event->IsSync()) {
+      auto sync_event = static_cast<MessageEventSync*>(event.get());
+
+      try {
+        // If the user sets the result before in onmessage callback, set the
+        // promise value. Otherwise, The promise will be unresolved forever.
+        if (sync_event->internal_sync_->result.has_value()) {
+          sync_event->internal_sync_->promise.set_value(sync_event->result());
+        }
+      } catch (const std::exception& e) {
+        TRACE(MSGPORT, "promise error:", e.what());
+        return;
+      }
     }
   };
 
   if (internal_->loop == nullptr) {
     AsyncUV::EnqueueTask(std::move(task));
-    return Result::MessageEventQueued;
+    return Error::MessageEventQueued;
   }
 
   AsyncUV::Send(internal_->loop, std::move(task));
-  return Result::NoError;
+  return Error::NoError;
+}
+
+Port::Result Port::PostMessage(std::shared_ptr<MessageEvent> event) {
+  return PostMessageAsync(event);
+}
+
+Port::Result Port::PostMessage(std::shared_ptr<MessageEventSync> event,
+                               int timeout_ms) {
+  // TODO: If this function is called from the same thread as lwnode, it can
+  // cause a deadlock. It should be called from another thread.
+  std::future<std::string> future;
+  try {
+    future = event->internal_sync_->promise.get_future();
+  } catch (...) {
+    TRACE(MSGPORT, "invalid promise");
+    return Error::InvalidMessageEvent;
+  }
+
+  auto result = PostMessageAsync(event);
+  if (result) {
+    return result.error();
+  }
+
+  if (timeout_ms > 0) {
+    auto status = future.wait_for(std::chrono::milliseconds(timeout_ms));
+    if (status == std::future_status::timeout) {
+      TRACE(MSGPORT, "PostMessageSync timeout");
+      return Error::Timeout;
+    }
+  } else {
+    future.wait();
+  }
+  return future.get();
 }
 
 void Port::Unref() {

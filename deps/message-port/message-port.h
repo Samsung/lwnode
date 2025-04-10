@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "expected.h"
+
 #ifndef EXPORT_API
 #define EXPORT_API __attribute__((visibility("default")))
 #endif
@@ -37,9 +39,11 @@ class EXPORT_API MessageEvent {
   const std::vector<std::weak_ptr<Port>> ports() const;
   const std::weak_ptr<Port>& target() const;
 
-  ~MessageEvent();
+  virtual bool IsSync() { return false; }
 
- private:
+  virtual ~MessageEvent();
+
+ protected:
   MessageEvent(const std::string& data);
 
   struct Internal;
@@ -47,19 +51,42 @@ class EXPORT_API MessageEvent {
   friend class Port;
 };
 
+class EXPORT_API MessageEventSync final : public MessageEvent {
+ public:
+  static std::shared_ptr<MessageEventSync> New(const std::string& data);
+  ~MessageEventSync();
+
+  bool IsSync() override { return true; }
+
+  const std::string result() const;
+  void SetResult(const std::string& result) const;
+
+ private:
+  MessageEventSync(const std::string& data);
+
+  struct Internal;
+  std::unique_ptr<Internal> internal_sync_;
+  friend class Port;
+};
+
 class EXPORT_API Port {
  public:
   using OnMessageCallback = std::function<void(const MessageEvent*)>;
-  enum Result {
+  enum Error {
     NoError = 0,
     MessageEventQueued,
     NoSink,
     NoOnMessage,
     InvalidMessageEvent,
     InvalidPortLoop,
+    Timeout,
   };
+  using Result = Expected<std::string, Error>;
 
   Result PostMessage(std::shared_ptr<MessageEvent> event);
+  Result PostMessage(std::shared_ptr<MessageEventSync> event,
+                     int timeout_ms = -1);
+
   void OnMessage(const OnMessageCallback& callback);
   void Unref();
 
@@ -67,6 +94,8 @@ class EXPORT_API Port {
 
  private:
   Port();
+
+  Result PostMessageAsync(std::shared_ptr<MessageEvent> event);
 
   struct Internal;
   std::unique_ptr<Internal> internal_;

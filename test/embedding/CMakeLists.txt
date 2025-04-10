@@ -21,5 +21,6 @@ add_compile_options(-std=c++17)
 
 add_executable(embedtest.x embedtest.cc)
 add_executable(example.x example.cc)
+add_executable(message-port-sync.x message-port-sync.cc)
 add_executable(send-message-sync.x send-message-sync.cc)
 add_executable(runtime-stop.x runtime-stop.cc)

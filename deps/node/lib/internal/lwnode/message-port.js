@@ -50,6 +50,9 @@ class MessageEvent extends Event {
   get ports() {
     return this.#options.ports;
   }
+  setResult(data) {
+    return this.#options.setResult(data);
+  }
 }
 
 function setupMessagePort(target, binding) {

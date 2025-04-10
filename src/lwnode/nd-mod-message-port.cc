@@ -76,9 +76,37 @@ static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
 
   // Create a new MessageEvent
   auto option = ObjectRef::create(state);
+  option->setExtraData((void*)(event));
   // TODO: Use atomic string
   option->set(state, OneByteString("data"), OneByteString(event->data()));
   option->set(state, OneByteString("origin"), OneByteString(event->origin()));
+
+  SetMethod(state,
+            option,
+            "setResult",
+            [](ExecutionStateRef* state,
+               ValueRef* this_value,
+               size_t argc,
+               ValueRef** argv,
+               bool is_construct) -> ValueRef* {
+              if (argc < 1 || !argv[0]->isString()) {
+                state->throwException(TypeErrorObjectRef::create(
+                    state, OneByteString("Invalid argument")));
+              }
+
+              auto event = GetExtraData<MessageEvent>(this_value);
+              if (!event->IsSync()) {
+                state->throwException(ErrorObjectRef::create(
+                    state,
+                    ErrorObjectRef::Code::None,
+                    OneByteString("only support MessageEventSync")));
+              }
+
+              reinterpret_cast<MessageEventSync*>(event)->SetResult(
+                  argv[0]->asString()->toStdUTF8String());
+
+              return ValueRef::createUndefined();
+            });
 
   ValueRef* argv[] = {OneByteString("message"), option};
   return klass->construct(state, COUNT_OF(argv), argv)->asObject();

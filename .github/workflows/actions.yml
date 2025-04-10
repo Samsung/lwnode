@@ -159,3 +159,6 @@ jobs:
       - name: Run embedtest
         run: |
           out/linux/Release/embedtest.x
+      - name: Run message-port sync test
+        run: |
+          out/linux/Release/message-port-sync.x
