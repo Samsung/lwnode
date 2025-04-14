@@ -39,8 +39,9 @@
         '-Wno-maybe-uninitialized',
       ],
       'include_dirs': [
-        '<(source_dir)'
-        '/../node/deps/uv/include'
+        '<(source_dir)',
+        '<(source_dir)/../node/deps/uv/include',
+        '<(source_dir)/../../src',
       ],
       'sources': [
         '<(source_dir)/message-port.cc',

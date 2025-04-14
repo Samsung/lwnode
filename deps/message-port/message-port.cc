@@ -31,6 +31,8 @@
 #include "utils/optional.h"
 #endif
 
+#include "api/utils/logger/logger.h"
+
 // MessageEvent::Internal
 // -----------------------------------------------------------------------------
 
@@ -79,7 +81,6 @@ struct MessageEventSync::Internal {
   Internal() {}
   ~Internal() { TRACE(MSGEVENT, "~MessageEventSync::Internal"); }
 
-  Optional<std::string> result;
   std::promise<std::string> promise;
 };
 
@@ -96,13 +97,14 @@ MessageEventSync::~MessageEventSync() {
 }
 
 void MessageEventSync::SetResult(const std::string& result) const {
-  internal_sync_->result = result;
-}
-
-const std::string MessageEventSync::result() const {
-  auto result = internal_sync_->result;
-
-  return result.has_value() ? result.value() : std::string();
+  try {
+    // If the user sets the result before in onmessage callback, set the
+    // promise value. Otherwise, The promise will be unresolved forever.
+    internal_sync_->promise.set_value(result);
+  } catch (const std::exception& e) {
+    LWNODE_DEV_LOG("[MessageEventSync::SetResult] promise error:", e.what());
+    return;
+  }
 }
 
 // Port::Internal
@@ -200,21 +202,6 @@ Port::Result Port::PostMessageAsync(std::shared_ptr<MessageEvent> event) {
       }
     } else {
       TRACE(MSGPORT, "sink port released, or no callback");
-    }
-
-    if (event->IsSync()) {
-      auto sync_event = static_cast<MessageEventSync*>(event.get());
-
-      try {
-        // If the user sets the result before in onmessage callback, set the
-        // promise value. Otherwise, The promise will be unresolved forever.
-        if (sync_event->internal_sync_->result.has_value()) {
-          sync_event->internal_sync_->promise.set_value(sync_event->result());
-        }
-      } catch (const std::exception& e) {
-        TRACE(MSGPORT, "promise error:", e.what());
-        return;
-      }
     }
   };
 

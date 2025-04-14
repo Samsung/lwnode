@@ -58,7 +58,6 @@ class EXPORT_API MessageEventSync final : public MessageEvent {
 
   bool IsSync() override { return true; }
 
-  const std::string result() const;
   void SetResult(const std::string& result) const;
 
  private:

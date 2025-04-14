@@ -3,12 +3,22 @@ const port = process.lwnode.port;
 
 lwnode.ref();
 
+
 let count = 0;
 
-port.onmessage = (event) => {
+function test() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(`sync test: ${count++}`);
+      }, 1000);
+  });
+}
+  
+port.onmessage = async (event) => {
   console.log(`js: ${event.data}`);
   if (event.data == "sync") {
-    event.setResult(`sync test: ${count++}`);
+    let data = await test();
+    event.setResult(data);
   } else if (event.data == "exit") {
     port.postMessage("exit javascript");
     lwnode.unref();
