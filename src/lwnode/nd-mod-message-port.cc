@@ -76,37 +76,49 @@ static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
 
   // Create a new MessageEvent
   auto option = ObjectRef::create(state);
-  option->setExtraData((void*)(event));
+
+  struct MessageEventExtraData : public gc_cleanup {
+    std::shared_ptr<MessageEventSync::HandleData> handle;
+  };
+
+  if (event->IsSync()) {
+    auto* data = new MessageEventExtraData();
+    auto* event_sync =
+        reinterpret_cast<MessageEventSync*>(const_cast<MessageEvent*>(event));
+    data->handle = event_sync->handle_data();
+    option->setExtraData(data);
+  }
+
   // TODO: Use atomic string
   option->set(state, OneByteString("data"), OneByteString(event->data()));
   option->set(state, OneByteString("origin"), OneByteString(event->origin()));
 
-  SetMethod(state,
-            option,
-            "setResult",
-            [](ExecutionStateRef* state,
-               ValueRef* this_value,
-               size_t argc,
-               ValueRef** argv,
-               bool is_construct) -> ValueRef* {
-              if (argc < 1 || !argv[0]->isString()) {
-                state->throwException(TypeErrorObjectRef::create(
-                    state, OneByteString("Invalid argument")));
-              }
+  SetMethod(
+      state,
+      option,
+      "setResult",
+      [](ExecutionStateRef* state,
+         ValueRef* this_value,
+         size_t argc,
+         ValueRef** argv,
+         bool is_construct) -> ValueRef* {
+        if (argc < 1 || !argv[0]->isString()) {
+          state->throwException(TypeErrorObjectRef::create(
+              state, OneByteString("Invalid argument")));
+        }
 
-              auto event = GetExtraData<MessageEvent>(this_value);
-              if (!event->IsSync()) {
-                state->throwException(ErrorObjectRef::create(
-                    state,
-                    ErrorObjectRef::Code::None,
-                    OneByteString("only support MessageEventSync")));
-              }
+        if (!this_value->asObject()->extraData()) {
+          state->throwException(ErrorObjectRef::create(
+              state,
+              ErrorObjectRef::Code::None,
+              OneByteString("only support MessageEventSync")));
+        }
 
-              reinterpret_cast<MessageEventSync*>(event)->SetResult(
-                  argv[0]->asString()->toStdUTF8String());
+        auto* data = GetExtraData<MessageEventExtraData>(this_value);
+        data->handle->promise.set_value(argv[0]->asString()->toStdUTF8String());
 
-              return ValueRef::createUndefined();
-            });
+        return ValueRef::createUndefined();
+      });
 
   ValueRef* argv[] = {OneByteString("message"), option};
   return klass->construct(state, COUNT_OF(argv), argv)->asObject();

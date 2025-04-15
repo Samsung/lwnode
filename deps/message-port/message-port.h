@@ -17,6 +17,7 @@
 #pragma once
 
 #include <functional>
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
@@ -39,7 +40,7 @@ class EXPORT_API MessageEvent {
   const std::vector<std::weak_ptr<Port>> ports() const;
   const std::weak_ptr<Port>& target() const;
 
-  virtual bool IsSync() { return false; }
+  virtual bool IsSync() const { return false; }
 
   virtual ~MessageEvent();
 
@@ -56,15 +57,20 @@ class EXPORT_API MessageEventSync final : public MessageEvent {
   static std::shared_ptr<MessageEventSync> New(const std::string& data);
   ~MessageEventSync();
 
-  bool IsSync() override { return true; }
+  struct HandleData {
+    HandleData();
+    ~HandleData();
+    std::promise<std::string> promise;
+  };
 
-  void SetResult(const std::string& result) const;
+  bool IsSync() const override { return true; }
+
+  std::shared_ptr<HandleData> handle_data() const { return handle_data_; }
 
  private:
   MessageEventSync(const std::string& data);
 
-  struct Internal;
-  std::unique_ptr<Internal> internal_sync_;
+  std::shared_ptr<HandleData> handle_data_;
   friend class Port;
 };
 

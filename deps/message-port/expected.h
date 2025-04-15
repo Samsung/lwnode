@@ -56,7 +56,9 @@ class Expected {
   Expected(T&& v) : value_(std::move(v)), has_value_(true) {}
   Expected(const E& e) : error_(e), has_value_(false) {}
   Expected(E&& e) : error_(std::move(e)), has_value_(false) {}
-  ~Expected() { has_value_ ? value_.~T() : error_.~E(); }
+  ~Expected() {
+    if (!has_value_) error_.~E();
+  }
 
   bool valid() const { return has_value_; }
   T& value() { return value_; }

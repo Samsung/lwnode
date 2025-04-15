@@ -75,14 +75,14 @@ const std::weak_ptr<Port>& MessageEvent::target() const {
   return internal_->target;
 }
 
-// MessageEventSync::Internal
+// MessageEventSync
 // -----------------------------------------------------------------------------
-struct MessageEventSync::Internal {
-  Internal() {}
-  ~Internal() { TRACE(MSGEVENT, "~MessageEventSync::Internal"); }
 
-  std::promise<std::string> promise;
-};
+MessageEventSync::HandleData::HandleData() {}
+
+MessageEventSync::HandleData::~HandleData() {
+  TRACE(MSGEVENT, "MessageEventSync::HandleData::~HandleData");
+}
 
 std::shared_ptr<MessageEventSync> MessageEventSync::New(
     const std::string& data) {
@@ -90,22 +90,12 @@ std::shared_ptr<MessageEventSync> MessageEventSync::New(
 }
 
 MessageEventSync::MessageEventSync(const std::string& data)
-    : MessageEvent(data), internal_sync_(std::make_unique<Internal>()) {}
+    : MessageEvent(data), handle_data_(std::make_shared<HandleData>()) {}
 
 MessageEventSync::~MessageEventSync() {
   TRACE(MSGEVENT, "~MessageEventSync");
 }
 
-void MessageEventSync::SetResult(const std::string& result) const {
-  try {
-    // If the user sets the result before in onmessage callback, set the
-    // promise value. Otherwise, The promise will be unresolved forever.
-    internal_sync_->promise.set_value(result);
-  } catch (const std::exception& e) {
-    LWNODE_DEV_LOG("[MessageEventSync::SetResult] promise error:", e.what());
-    return;
-  }
-}
 
 // Port::Internal
 // -----------------------------------------------------------------------------
@@ -224,7 +214,7 @@ Port::Result Port::PostMessage(std::shared_ptr<MessageEventSync> event,
   // cause a deadlock. It should be called from another thread.
   std::future<std::string> future;
   try {
-    future = event->internal_sync_->promise.get_future();
+    future = event->handle_data_->promise.get_future();
   } catch (...) {
     TRACE(MSGPORT, "invalid promise");
     return Error::InvalidMessageEvent;

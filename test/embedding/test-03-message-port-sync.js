@@ -6,11 +6,11 @@ lwnode.ref();
 
 let count = 0;
 
-function test() {
+function test(timeout = 1000) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      resolve(`sync test: ${count++}`);
-      }, 1000);
+      resolve(`test: ${count++} abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz`);
+      }, timeout);
   });
 }
   
@@ -19,10 +19,16 @@ port.onmessage = async (event) => {
   if (event.data == "sync") {
     let data = await test();
     event.setResult(data);
+  } else if (event.data == "async") {
+    port.postMessage("async result from js");
+  } else if (event.data == "delay-timeout") {
+    let data = await test(5000); // long delay.
+    event.setResult(data);
+  } else if (event.data == "sync-timeout") {
+    // Do not intentionally set the result value to test the timeout.
   } else if (event.data == "exit") {
     port.postMessage("exit javascript");
     lwnode.unref();
-  } else if (event.data == "sync-timeout") {
-    // Do not intentionally set the result value to test the timeout.
   }
 };
+

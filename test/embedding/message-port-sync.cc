@@ -10,6 +10,23 @@
 
 #define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
 
+void log(const std::string& message) {
+  std::cout << "\033[33m" << message << "\033[0m" << std::endl;
+}
+
+std::string CallMethod(Port* port, const std::string& function) {
+  try {
+    auto result = port->PostMessage(MessageEventSync::New(function), 3000);
+    assert(result);
+    std::string message = result.value_or("error");
+    return message;
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << '\n';
+    assert(false);
+  }
+  return "";
+}
+
 int main(int argc, char* argv[]) {
   auto runtime = std::make_shared<lwnode::Runtime>();
 
@@ -21,9 +38,6 @@ int main(int argc, char* argv[]) {
 
   std::thread worker = std::thread(
       [&](std::promise<void>&& promise) mutable {
-        // FIXME: Fix Runtime::Init() call to ensure environment initialization
-        // before running the loop, Runtime::Run(). This workaround passes a
-        // promise directly to know when that is.
         runtime->Start(COUNT_OF(args), args, std::move(promise));
       },
       std::move(promise));
@@ -35,22 +49,46 @@ int main(int argc, char* argv[]) {
     std::cout << event->data() << std::endl;
   });
 
+  // async test on other thread
+  std::thread worker2 = std::thread([&]() mutable {
+    for (int i = 0; i < 3; i++) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::cout << "post message(async)" << std::endl;
+      auto result = port2->PostMessage(MessageEvent::New("async"));
+      assert(result);
+    }
+  });
+
   // sync post message test
+  log("sync post message test - 1");
   {
     for (int i = 0; i < 5; i++) {
-      auto result = port2->PostMessage(MessageEventSync::New("sync"));
-      if (result)
-        std::cout << "result(" << i << "): " << *result << std::endl;
-      else
-        std::cout << "result(" << i << "): error(" << result.error() << ")"
-                  << std::endl;
+      auto result = CallMethod(port2.get(), "sync");
+      std::cout << "result(" << i << "): " << result << std::endl;
     }
+  }
 
+  // simple case test
+  log("sync post message test - 2");
+  {
     auto result = port2->PostMessage(MessageEventSync::New("sync"));
+    assert(result);
+    if (result)
+      std::cout << "result: " << *result << std::endl;
+    else
+      std::cout << "result: error(" << result.error() << ")" << std::endl;
+  }
+
+  // simple case test
+  log("sync post message test - 3");
+  {
+    auto result = port2->PostMessage(MessageEventSync::New("sync"));
+    assert(result);
     std::cout << "result(5): " << result.value_or("error") << std::endl;
   }
 
   // use same message event instance test
+  log("use same message event instance test");
   {
     auto event = MessageEventSync::New("sync");
 
@@ -61,10 +99,12 @@ int main(int argc, char* argv[]) {
     result = port2->PostMessage(event);
     assert(!result);
     assert(result.error() == Port::Error::InvalidMessageEvent);
-    std::cout << "result: " << result.value_or("invalid message error") << std::endl;
+    std::cout << "result: " << result.value_or("invalid message error")
+              << std::endl;
   }
 
   // timeout test
+  log("timeout test");
   {
     auto result =
         port2->PostMessage(MessageEventSync::New("sync-timeout"), 2000);
@@ -75,7 +115,21 @@ int main(int argc, char* argv[]) {
     std::cout << "result: " << result.value_or("timeout error") << std::endl;
   }
 
-  // async post message test
+  // timeout test (delayed response)
+  log("timeout test (delayed response)");
+  {
+    auto result =
+        port2->PostMessage(MessageEventSync::New("delay-timeout"), 1000);
+
+    assert(!result);
+    assert(result.error() == Port::Error::Timeout);
+
+    std::cout << "result: " << result.value_or("timeout error") << std::endl;
+  }
+
+  worker2.join();
+
+  // exit test
   {
     port2->PostMessage(MessageEvent::New("exit"));
   }
