@@ -64,7 +64,7 @@ BuildRequires: libasan
 %{!?target: %define target lwnode}
 %{!?lib_type: %define lib_type shared} # <shared|static>
 %{!?static_escargot: %define static_escargot 0}
-%{!?debug: %define debug 0}
+%{!?debug: %define debug 1}
 
 %description
 Lightweight Node.js is a memory efficient Node.js implementation,
@@ -103,14 +103,6 @@ rpmbuild --version
 echo "Build Target:" %{target}
 echo $CFLAGS
 
-%if 0%{?debug} == 1
-  %define target_src out/tizen/%{tizen_arch}/Debug
-  %define debug_config --debug --escargot-debugger
-%else
-  %define target_src out/tizen/%{tizen_arch}/Release
-%endif
-
-%define target_lib %{target_src}/lib
 
 %if 0%{?asan} == 1
   %define asan_config --nopt --enable-asan
@@ -140,12 +132,28 @@ LDFLAGS+=" -fno-lto "
 
 ./tools/envinfo.sh
 
+# build for Debug
+%if 0%{?debug} == 1
+%define target_src out/tizen/%{tizen_arch}/Debug
+
 ./configure.py --tizen --verbose \
             --nopt --dest-cpu='%{tizen_arch}' \
             --arch='%{tizen_arch}' \
             %{?lib_type_config} %{?asan_config} \
             %{?external_libs_config} %{?jsengine_config} \
-            %{?debug_config}
+            --debug --escargot-debugger
+ninja -C %{target_src} %{target}
+%undefine target_src
+%endif
+
+# build for Release
+%define target_src out/tizen/%{tizen_arch}/Release
+
+./configure.py --tizen --verbose \
+            --nopt --dest-cpu='%{tizen_arch}' \
+            --arch='%{tizen_arch}' \
+            %{?lib_type_config} %{?asan_config} \
+            %{?external_libs_config} %{?jsengine_config}
 ninja -C %{target_src} %{target}
 
 
@@ -158,16 +166,18 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
 
+%define target_lib %{target_src}/lib
+
 rm -f %{target_lib}/*.tmp %{target_lib}/*.TOC
 
 %if 0%{?static_escargot} == 0
   cp %{target_src}/gen/escargot/libescargot.so %{buildroot}%{_libdir}
-  strip -v -g %{target_src}/gen/escargot/libescargot.so
 %endif
 %if "%{lib_type}" == "shared"
   cp %{target_lib}/liblwnode.so* %{buildroot}%{_libdir}
-  strip -v -g %{target_lib}/liblwnode.so*
 %endif
+find out/tizen -name "*.so" -type f -exec strip -v -g {} +
+
 %if %{?debug_symbols:0}%{!?debug_symbols:1}
   strip -v -g %{target_src}/%{target}
 %endif
