@@ -103,7 +103,18 @@ function wrapLWNodeMethods(binding) {
       if (binding.sendMessageSync) {
         return binding.sendMessageSync(message);
       }
-    }
+    },
+    getModuleList: () => {
+      if (process.moduleLoadList === undefined) {
+        return [];
+      }
+
+      return process.moduleLoadList
+        .filter(item => item.includes('NativeModule') && !item.includes('internal/'))
+        .map(item => {
+          return item.replace('NativeModule ', '');
+        });
+    },
   };
 
   setupMessagePort(object, binding);
