@@ -30,11 +30,15 @@ class BaseObject : public gc {
   static Escargot::ObjectRef* CreateWrapper(Escargot::ValueRef* this_value,
                                             Args&&... args) {
     new (GC) T(this_value->asObject(), std::forward<Args>(args)...);
-    Escargot::Memory::gcRegisterFinalizer(this_value, [](void* self) {
-      auto object = reinterpret_cast<Escargot::ObjectRef*>(self);
-      // Although T is GC-allocated, delete it to explicitly call destructors.
-      delete reinterpret_cast<T*>(object->extraData());
-    });
+    Escargot::Memory::gcRegisterFinalizer(
+        this_value,
+        [](void* self, void* data) {
+          auto object = reinterpret_cast<Escargot::ObjectRef*>(self);
+          // Although T is GC-allocated, delete it to explicitly call
+          // destructors.
+          delete reinterpret_cast<T*>(object->extraData());
+        },
+        nullptr);
     return this_value->asObject();
   }
 };

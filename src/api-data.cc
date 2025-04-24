@@ -2314,14 +2314,14 @@ void String::ExternalStringResourceBase::operator delete(void* ptr) {
 
 Local<Value> Symbol::Description() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esDescription = CVAL(this)->value()->asSymbol()->description();
-  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription.get());
+  auto esDescription = CVAL(this)->value()->asSymbol()->descriptionString();
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription);
 }
 
 Local<Value> Private::Name() const {
   auto lwIsolate = IsolateWrap::GetCurrent();
-  auto esDescription = CVAL(this)->value()->asSymbol()->description();
-  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription.get());
+  auto esDescription = CVAL(this)->value()->asSymbol()->descriptionString();
+  return Utils::NewLocal<String>(lwIsolate->toV8(), esDescription);
 }
 
 template <typename T, typename F>

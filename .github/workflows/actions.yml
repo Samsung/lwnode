@@ -69,7 +69,7 @@ jobs:
           export GYP=deps/node/tools/gyp/gyp
           $GYP ./test/cctest.gyp --depth=. -f ninja \
             --generator-output=$OUT_PATH -Dasan=$ASAN -Descargot_build_mode=debug \
-            -Descargot_lib_type=static_lib -Dtarget_arch=$ARCH -Dtarget_os=linux \
+            -Descargot_lib_type=shared_lib -Dtarget_arch=$ARCH -Dtarget_os=linux \
             -Denable_experimental=true -Descargot_threading=1 \
             -Descargot_debugger=0
           ninja -C $OUT_PATH/out/Debug cctest
@@ -85,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [t80std]
+        profile: [t90std]
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
@@ -115,7 +115,7 @@ jobs:
           name: tizen_std_${{ matrix.profile }}
           path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
       fail-fast: false

@@ -41,13 +41,11 @@
       'output_dir': '<(SHARED_INTERMEDIATE_DIR)/escargot',
       'escargot_libs': [
         '<(output_dir)/libescargot<(lib_ext)',
-        '<(output_dir)/third_party/GCutil/libgc-lib.a',
-        '<(output_dir)/third_party/runtime_icu_binder/libruntime-icu-binder-static.a',
-        '<(output_dir)/liblibbf.a',
       ],
       'escargot_configs': [
         '-DESCARGOT_SMALL_CONFIG=1',
         '-DESCARGOT_USE_CUSTOM_LOGGING=ON',
+        '-DESCARGOT_USE_EXTENDED_API=ON',
         '-DESCARGOT_ARCH=<(target_arch)',
         '-DESCARGOT_HOST=<(build_host)',
         '-DESCARGOT_MODE=<(escargot_build_mode)',
@@ -73,12 +71,14 @@
         '-Wl,-rpath,\$$ORIGIN/../<(output_dir)',
         '-Wl,-rpath,../lib',
         '-Wl,-rpath,\$$ORIGIN',
+        '-Wl,-rpath,\$$ORIGIN/gen/escargot',
       ],
       'cflags': [ '-pthread' ],
       'ldflags': [ '-pthread' ],
       'include_dirs': [
         '<(escargot_dir)/third_party/GCutil',
         '<(escargot_dir)/third_party/GCutil/bdwgc/include',
+        '<(escargot_dir)/third_party/GCutil/bdwgc/include/gc',
       ],
       'configurations': {
         'Debug': {
