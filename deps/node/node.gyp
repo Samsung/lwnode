@@ -832,7 +832,7 @@
                   'process_outputs_as_sources': 1,
                   'action': [
                     'zip',
-                    '-0', # no compression
+                    '-6', # compress better
                     '<(PRODUCT_DIR)/<(archive_filename)',
                     '<@(_inputs)',
                   ],

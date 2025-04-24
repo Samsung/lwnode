@@ -126,8 +126,8 @@ echo $CFLAGS
 
 # building lwnode executable
 
-CFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=1024"
-CXXFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=1024"
+CFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=7680 "
+CXXFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=7680 "
 LDFLAGS+=" -fno-lto "
 
 ./tools/envinfo.sh

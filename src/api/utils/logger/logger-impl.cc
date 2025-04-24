@@ -172,3 +172,19 @@ void StdOut::flush(std::stringstream& stream,
 
 // --- Option ---
 OutputInstantiator LogOption::s_outputInstantiator_;
+
+double measurePerformance() {
+  static std::chrono::high_resolution_clock::time_point previous;
+  auto now = std::chrono::high_resolution_clock::now();
+
+  if (previous ==
+      std::chrono::time_point<std::chrono::high_resolution_clock>()) {
+    previous = now;
+    return 0;
+  } else {
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - previous);
+    previous = now;
+    return duration.count();
+  }
+}

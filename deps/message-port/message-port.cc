@@ -31,8 +31,6 @@
 #include "utils/optional.h"
 #endif
 
-#include "api/utils/logger/logger.h"
-
 // MessageEvent::Internal
 // -----------------------------------------------------------------------------
 

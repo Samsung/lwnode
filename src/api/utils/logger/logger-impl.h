@@ -182,3 +182,5 @@ class LWNODE_EXPORT LogOption {
  private:
   static OutputInstantiator s_outputInstantiator_;
 };
+
+double measurePerformance();

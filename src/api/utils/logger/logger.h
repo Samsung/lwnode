@@ -30,6 +30,22 @@
 #define LWNODE_DEV_LOGF(fmt, ...)                                              \
   LWNodeLogger(LogKind::lwnode()).print(fmt, ##__VA_ARGS__)
 
+#if defined(HOST_TIZEN)
+#include <dlog.h>
+
+#define LWNODE_PERF_LOG(...)                                                   \
+  dlog_print(DLOG_INFO,                                                        \
+             "LWNODE",                                                         \
+             "[%.0lf] %s\n",                                                   \
+             measurePerformance(),                                             \
+             ##__VA_ARGS__);
+#elif !defined(NDEBUG)
+#define LWNODE_PERF_LOG(...)                                                   \
+  fprintf(stdout, "[%.0lf] %s\n", measurePerformance(), ##__VA_ARGS__);
+#else
+#define LWNODE_PERF_LOG(...)
+#endif
+
 // loggers (release)
 #define LWNODE_LOG(tag) Logger(LogTYPED(LogTYPED::Type::tag))
 #define LWNODE_LOGF(tag, fmt, ...) LWNODE_LOG(tag).print(fmt, ##__VA_ARGS__)

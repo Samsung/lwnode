@@ -139,6 +139,8 @@ Runtime::~Runtime() {
 }
 
 int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
+  LWNODE_PERF_LOG("[Runtime::Start]");
+
   internal_->runner_.SetInitPromise(std::move(promise));
   std::pair<bool, int> init_result = internal_->Init(argc, argv);
 

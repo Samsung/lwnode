@@ -143,6 +143,7 @@ class LWNodeMainRunner {
       env_->set_trace_sync_io(env_->options()->trace_sync_io);
 
       try {
+        LWNODE_PERF_LOG("[LWNodeMainRunner::Run] loaded script");
         promise_.set_value();
       } catch (const std::exception& e) {
         LWNODE_DEV_LOG("[LWNodeMainRunner::Run] promise error:", e.what());
