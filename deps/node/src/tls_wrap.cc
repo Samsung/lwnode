@@ -1010,6 +1010,8 @@ void TLSWrap::DestroySSL(const FunctionCallbackInfo<Value>& args) {
   if (wrap->stream_ != nullptr)
     wrap->stream_->RemoveStreamListener(wrap);
   Debug(wrap, "DestroySSL() finished");
+
+  delete wrap;
 }
 
 

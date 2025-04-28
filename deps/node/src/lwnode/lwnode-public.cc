@@ -17,6 +17,7 @@
 #include <uv.h>
 
 #include "lwnode-public.h"
+#include "lwnode-version.h"
 #include "lwnode.h"
 #include "lwnode/aul-event-receiver.h"
 #include "node.h"
@@ -140,6 +141,7 @@ Runtime::~Runtime() {
 
 int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   LWNODE_PERF_LOG("[Runtime::Start]");
+  LWNODE_DEV_LOG("[Runtime] version:", LWNODE_VERSION_TAG);
 
   internal_->runner_.SetInitPromise(std::move(promise));
   std::pair<bool, int> init_result = internal_->Init(argc, argv);
