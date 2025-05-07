@@ -73,3 +73,30 @@ TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
 
   EXPECT_EQ(count1, 10);
 }
+
+TEST0(Embedtest, Restart) {
+  int count = 0;
+  for (int i = 0; i < 3; i++) {
+    auto runtime = std::make_shared<lwnode::Runtime>();
+
+    std::promise<void> promise;
+    std::future<void> init_future = promise.get_future();
+    const char* script = "test/embedding/test-21-runtime-hello.js";
+    std::string path = (std::filesystem::current_path() / script).string();
+
+    char* args[] = {const_cast<char*>(""), const_cast<char*>(path.c_str())};
+
+    std::thread worker = std::thread(
+        [&](std::promise<void>&& promise) mutable {
+          std::cout << ++count << " Start " << std::endl;
+          runtime->Start(COUNT_OF(args), args, std::move(promise));
+          std::cout << count << " /Start " << std::endl;
+        },
+        std::move(promise));
+
+    init_future.wait();
+    worker.join();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  EXPECT_EQ(count, 3);
+}

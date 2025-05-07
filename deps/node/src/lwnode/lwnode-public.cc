@@ -48,11 +48,11 @@ class Runtime::Internal {
 
   std::pair<bool, int> Init(int argc, char** argv) {
     if (state_ != State::kNotInitialized) {
-      LWNODE_DEV_LOG("[Runtime::Init] already initialized");
+      LWNODE_DEV_LOG("[Runtime::Internal::Init] already initialized");
       return std::make_pair(false, -1);
     }
 
-    LWNODE_DEV_LOG("[Runtime::Init]");
+    LWNODE_DEV_LOG("[Runtime::Internal::Init]");
     state_ = State::kInitialized;
 
     // Set sendMessageSync callback to isolate context embedder data.
@@ -72,12 +72,12 @@ class Runtime::Internal {
 
   int Run() {
     if (state_ != State::kInitialized) {
-      LWNODE_DEV_LOG("[Runtime::Run] not initialized");
+      LWNODE_DEV_LOG("[Runtime::Internal::Run] not initialized");
       return -1;
     }
 
     CHECK_NOT_NULL(instance_);
-    LWNODE_DEV_LOG("[Runtime::Run]");
+    LWNODE_DEV_LOG("[Runtime::Internal::Run]");
     state_ = State::kRunning;
 
     int result = runner_.Run(*instance_);
@@ -89,12 +89,12 @@ class Runtime::Internal {
 
   void Stop() {
     if (state_ != State::kRunning) {
-      LWNODE_DEV_LOG("[Runtime::Stop] already stopped");
+      LWNODE_DEV_LOG("[Runtime::Internal::Stop] already stopped");
       return;
     }
 
     CHECK_NOT_NULL(instance_);
-    LWNODE_DEV_LOG("[Runtime::Stop]");
+    LWNODE_DEV_LOG("[Runtime::Internal::Stop]");
     state_ = State::kStopped;
 
     runner_.Stop();
@@ -102,13 +102,13 @@ class Runtime::Internal {
 
   void Free() {
     if (state_ != State::kStopped && state_ != State::kInitialized) {
-      LWNODE_DEV_LOG("[Runtime::Free] not stopped");
+      LWNODE_DEV_LOG("[Runtime::Internal::Free] not stopped");
       return;
     }
 
     state_ = State::kReleased;
     if (instance_) {
-      LWNODE_DEV_LOG("[Runtime::Free]");
+      LWNODE_DEV_LOG("[Runtime::Internal::Free]");
       DisposeNode(instance_);
     }
 

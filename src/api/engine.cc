@@ -40,6 +40,7 @@ Platform* Platform::GetInstance() {
 void Platform::Dispose() {
   LWNODE_CALL_TRACE_GC_START();
   // s_platform is freed in Escargot::PlatformBridge
+  s_platform = nullptr;
   LWNODE_CALL_TRACE_GC_END();
 }
 
