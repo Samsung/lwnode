@@ -15,7 +15,9 @@
  */
 
 #include "lwnode-gc-strategy.h"
+#include <uv.h>
 #include <thread>
+
 #include "lwnode.h"
 
 namespace LWNode {
@@ -45,6 +47,7 @@ void DelayedGC::handle(v8::Isolate* isolate) {
 
   if (state_ == DelayedGCState::TIMER_END) {
     std::thread([&]() {
+      uv_thread_setname("node:ScheduleGC");
       state_ = DelayedGCState::TIMER_START;
       lastCheckedTime_ = getCurrentTime();
 

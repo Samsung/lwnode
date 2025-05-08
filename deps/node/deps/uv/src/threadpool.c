@@ -55,6 +55,7 @@ static void uv__cancelled(struct uv__work* w) {
  * never holds the global mutex and the loop-local mutex at the same time.
  */
 static void worker(void* arg) {
+  uv_thread_setname("node:uv");
   struct uv__work* w;
   QUEUE* q;
   int is_slow_work;

@@ -27,7 +27,7 @@ struct PlatformWorkerData {
 static void PlatformWorkerThread(void* data) {
   std::unique_ptr<PlatformWorkerData>
       worker_data(static_cast<PlatformWorkerData*>(data));
-
+  uv_thread_setname("node:V8Worker");
   TaskQueue<Task>* pending_worker_tasks = worker_data->task_queue;
   TRACE_EVENT_METADATA1("__metadata", "thread_name", "name",
                         "PlatformWorkerThread");
@@ -54,6 +54,7 @@ class WorkerThreadsTaskRunner::DelayedTaskScheduler {
 
   std::unique_ptr<uv_thread_t> Start() {
     auto start_thread = [](void* data) {
+      uv_thread_setname("node:DelayTask");
       static_cast<DelayedTaskScheduler*>(data)->Run();
     };
     std::unique_ptr<uv_thread_t> t { new uv_thread_t() };

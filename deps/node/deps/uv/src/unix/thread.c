@@ -278,6 +278,11 @@ int uv_thread_equal(const uv_thread_t* t1, const uv_thread_t* t2) {
   return pthread_equal(*t1, *t2);
 }
 
+int uv_thread_setname(const char* name) {
+  if (name == NULL)
+    return UV_EINVAL;
+  return uv__thread_setname(name);
+}
 
 int uv_mutex_init(uv_mutex_t* mutex) {
 #if defined(NDEBUG) || !defined(PTHREAD_MUTEX_ERRORCHECK)
@@ -839,4 +844,11 @@ void* uv_key_get(uv_key_t* key) {
 void uv_key_set(uv_key_t* key, void* value) {
   if (pthread_setspecific(*key, value))
     abort();
+}
+
+int uv__thread_setname(const char* name) {
+  char namebuf[UV_PTHREAD_MAX_NAMELEN_NP];
+  strncpy(namebuf, name, sizeof(namebuf) - 1);
+  namebuf[sizeof(namebuf) - 1] = '\0';
+  return UV__ERR(pthread_setname_np(pthread_self(), namebuf));
 }

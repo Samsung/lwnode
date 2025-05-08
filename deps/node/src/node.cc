@@ -1051,6 +1051,7 @@ InitializationResult InitializeOncePerProcess(int argc, char** argv) {
   V8::SetEntropySource(crypto::EntropySource);
 #endif  // HAVE_OPENSSL
 
+  uv_thread_setname("node:Main"); // @lwnode
   per_process::v8_platform.Initialize(
       per_process::cli_options->v8_thread_pool_size);
   V8::Initialize();

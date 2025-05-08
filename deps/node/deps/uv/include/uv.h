@@ -1763,6 +1763,7 @@ UV_EXTERN int uv_thread_create_ex(uv_thread_t* tid,
                                   void* arg);
 UV_EXTERN uv_thread_t uv_thread_self(void);
 UV_EXTERN int uv_thread_join(uv_thread_t *tid);
+UV_EXTERN int uv_thread_setname(const char* name);
 UV_EXTERN int uv_thread_equal(const uv_thread_t* t1, const uv_thread_t* t2);
 
 /* The presence of these unions force similar struct layout. */
