@@ -18,7 +18,7 @@
 
 #include "logger.h"
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) || defined(DEV)
 
 // LWNODE_CALL_TRACE with ID
 #define LWNODE_CALL_TRACE_ID_LOG(id, ...)                                      \

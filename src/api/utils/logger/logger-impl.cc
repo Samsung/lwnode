@@ -74,10 +74,8 @@ void LogTYPED::printHeader(std::stringstream& stream) {
 }
 
 LogINTERNAL::LogINTERNAL(Type type) : LogTYPED(type) {
-#if defined(NDEBUG)
   isEnabled_ = EscargotShim::Global::flags()->isOn(
       EscargotShim::Flag::Type::InternalLog);
-#endif
 }
 
 LogTRACE::LogTRACE(std::string id,

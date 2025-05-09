@@ -119,26 +119,7 @@ void PrintF(const unsigned priority,
 
 std::string GetPrettyFunctionName(const std::string fullname,
                                   std::string prefixPattern) {
-  std::stringstream ss;
-  if (!prefixPattern.empty()) {
-    ss << "(?:" << prefixPattern << ")|";
-  }
-  ss << R"((?::\()|([\w:~]+)\()";
-
-  try {
-    std::smatch match;
-    const std::regex re(ss.str());
-
-    std::stringstream result;
-    std::string suffix = fullname;
-    while (std::regex_search(suffix, match, re)) {
-      result << match[1];
-      suffix = match.suffix();
-    }
-    return result.str();
-  } catch (std::regex_error& e) {
-    return "";
-  }
+  return fullname;
 }
 
 std::string CreateCodeLocation(const char* functionName,

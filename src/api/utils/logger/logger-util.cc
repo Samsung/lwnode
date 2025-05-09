@@ -24,17 +24,7 @@
 #include "api/global.h"
 
 std::string getPrettyFunctionName(const std::string fullname) {
-  try {
-    std::smatch match;
-    const std::regex re(R"(([\w\:~]+)\()");
-
-    if (std::regex_search(fullname, match, re) && match.size() > 1) {
-      return match.str(1);
-    }
-    return "";
-  } catch (std::regex_error& e) {
-    return "";
-  }
+  return fullname;
 }
 
 std::string createCodeLocation(const char* functionName,

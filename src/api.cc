@@ -172,6 +172,13 @@ void V8::SetFlagsFromCommandLine(int* argc, char** argv, bool remove_flags) {
     }
   }
 
+  // LWNODE_TRACE_CALL
+  const char* trace_env = std::getenv("LWNODE_TRACE_CALL");
+  if (trace_env) {
+    std::string trace_arg = "--trace-call=";
+    EscargotShim::Global::flags()->add(trace_arg + std::string(trace_env));
+  }
+
   if (remove_flags) {
     EscargotShim::Global::flags()->shrinkArgumentList(argc, argv);
   }
