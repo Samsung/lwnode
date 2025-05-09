@@ -402,6 +402,14 @@ void PerIsolatePlatformData::DecreaseHandleCount() {
 
 NodePlatform::NodePlatform(int thread_pool_size,
                            v8::TracingController* tracing_controller) {
+  // @lwnode
+  if (thread_pool_size == 0) {
+    // note: on the latest Node.js, if thread_pool_size is set to 0 then Node.js
+    // will choose an appropriate size of the thread pool based on an estimate
+    // of the amount of parallelism. However, On lwnode, this just means none.
+    return;
+  }
+
   if (tracing_controller != nullptr) {
     tracing_controller_ = tracing_controller;
   } else {
