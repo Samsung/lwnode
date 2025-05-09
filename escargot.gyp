@@ -51,7 +51,7 @@
         '-DESCARGOT_HOST=<(build_host)',
         '-DESCARGOT_MODE=<(escargot_build_mode)',
         '-DESCARGOT_OUTPUT=<(escargot_lib_type)',
-        '-DESCARGOT_THREADING=<(escargot_threading)',
+        '-DESCARGOT_THREADING=OFF',
         '-DESCARGOT_ASAN=<(asan)',
         '-DESCARGOT_DEBUGGER=<(escargot_debugger)',
         '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
@@ -87,11 +87,11 @@
         '<(escargot_dir)/third_party/GCutil',
         '<(escargot_dir)/third_party/GCutil/bdwgc/include',
       ],
-      'conditions': [
-        ['escargot_threading==1', {
-          'defines':['ESCARGOT_THREADING']
-        }],
-      ],
+      # 'conditions': [
+      #   ['escargot_threading==1', {
+      #     'defines':['ESCARGOT_THREADING']
+      #   }],
+      # ],
     },
     'actions': [
       {
