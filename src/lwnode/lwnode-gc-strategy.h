@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <uv.h>
 #include <v8.h>
 #include <atomic>
 #include <chrono>
@@ -27,25 +28,27 @@ typedef std::chrono::duration<long double, std::ratio<1, 1000>> MilliSecondTick;
 
 class GCStrategyInterface {
  public:
+  virtual ~GCStrategyInterface() = default;
   virtual bool canScheduleGC() = 0;
   virtual void handle(v8::Isolate* isolate) = 0;
 };
 
-class DelayedGC : public GCStrategyInterface {
+static constexpr unsigned DEFAULT_DELAYED_GC_TIMEOUT{1500};
+static constexpr unsigned DEFAULT_PERIODIC_GC_DURATION{5000};
+
+enum class DelayedGCState {
+  TIMER_START = 0,
+  TASK_SCHEDULED,
+  TIMER_END,
+};
+
+class DelayedGCOnThread : public GCStrategyInterface {
   /*
     @note Delayed GC Strategy:
     Garbage collection will be conducted :
       - (a) `delayedGCTimeout`ms after this function is last called
       - (b) every `periodicGCduration_`ms when the timer is running
   */
-
-  enum class DelayedGCState {
-    TIMER_START = 0,
-    TASK_SCHEDULED,
-    TIMER_END,
-  };
-  static constexpr unsigned DEFAULT_DELAYED_GC_TIMEOUT{1500};
-  static constexpr unsigned DEFAULT_PERIODIC_GC_DURATION{5000};
 
  public:
   bool canScheduleGC() override;
@@ -63,6 +66,20 @@ class EveryTickGC : public GCStrategyInterface {
  public:
   bool canScheduleGC() override { return true; };
   void handle(v8::Isolate* isolate) override;
+};
+
+class DelayedGC : public GCStrategyInterface {
+ public:
+  DelayedGC();
+  ~DelayedGC();
+  bool canScheduleGC() override { return true; };
+  void handle(v8::Isolate* isolate) override;
+
+ private:
+  DelayedGCState state_{DelayedGCState::TIMER_END};
+  uv_timer_t gc_timer_;
+  uv_loop_t* loop_{nullptr};
+  v8::Isolate* isolate_{nullptr};
 };
 
 }  // namespace LWNode

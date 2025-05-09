@@ -40,6 +40,8 @@ ObjectRef* ModuleMessagePortInit(ContextRef* context, ObjectRef* target);
 
 namespace LWNode {
 
+static MessageLoop* s_message_loop;
+
 static void SetMethod(ContextRef* context,
                       ObjectRef* target,
                       std::string name,
@@ -330,6 +332,7 @@ void initDebugger() {
 class MessageLoop::Internal {
  public:
   Internal() { gcStrategy_ = std::make_unique<DelayedGC>(); }
+  ~Internal() = default;
   void handleGC(v8::Isolate* isolate) { gcStrategy_->handle(isolate); }
 
  private:
@@ -341,8 +344,15 @@ MessageLoop::MessageLoop() {
 }
 
 MessageLoop* MessageLoop::GetInstance() {
-  static MessageLoop instance_;
-  return &instance_;
+  if (s_message_loop == nullptr) {
+    s_message_loop = new MessageLoop();
+  }
+  return s_message_loop;
+}
+
+void MessageLoop::dispose() {
+  delete s_message_loop;
+  s_message_loop = nullptr;
 }
 
 void MessageLoop::setWakeupMainloopOnceHandler(PlatformHandler handler) {

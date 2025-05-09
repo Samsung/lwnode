@@ -1111,6 +1111,8 @@ std::pair<bool, int> InitializeNode(int argc, char** argv, NodeMainInstance** ma
 void DisposeNode(NodeMainInstance* main_instance) {
   delete main_instance;
 
+  LWNode::MessageLoop::GetInstance()->dispose();
+
   TearDownOncePerProcess();
 }
 #endif

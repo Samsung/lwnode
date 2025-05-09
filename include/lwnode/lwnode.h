@@ -71,6 +71,7 @@ class MessageLoop {
 
   void wakeupMainloopOnce();
   void setWakeupMainloopOnceHandler(PlatformHandler handler);
+  void dispose();
 
  private:
   MessageLoop();

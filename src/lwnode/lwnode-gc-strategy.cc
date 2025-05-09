@@ -26,7 +26,7 @@ static TimePoint getCurrentTime() {
   return std::chrono::system_clock::now();
 }
 
-bool DelayedGC::canScheduleGC() {
+bool DelayedGCOnThread::canScheduleGC() {
   // condition (a)
   if (isLastCallChecked_ == true) {
     return true;
@@ -42,7 +42,7 @@ bool DelayedGC::canScheduleGC() {
   return false;
 }
 
-void DelayedGC::handle(v8::Isolate* isolate) {
+void DelayedGCOnThread::handle(v8::Isolate* isolate) {
   isLastCallChecked_ = false;
 
   if (state_ == DelayedGCState::TIMER_END) {
@@ -65,6 +65,39 @@ void DelayedGC::handle(v8::Isolate* isolate) {
       } while (isLastCallChecked_ == false);
     }).detach();
 
+  } else if (state_ == DelayedGCState::TASK_SCHEDULED) {
+    IdleGC(isolate);
+    state_ = DelayedGCState::TIMER_END;
+  }
+}
+
+DelayedGC::DelayedGC() {
+  uv_timer_init(uv_default_loop(), &gc_timer_);
+  gc_timer_.data = this;
+  uv_unref((uv_handle_t*)&gc_timer_);
+}
+
+DelayedGC::~DelayedGC() {
+  uv_timer_stop(&gc_timer_);
+}
+
+void DelayedGC::handle(v8::Isolate* isolate) {
+  DelayedGCState current_state = state_;
+
+  if (current_state == DelayedGCState::TIMER_END) {
+    state_ = DelayedGCState::TIMER_START;
+    isolate_ = isolate;
+
+    uv_timer_start(
+        &gc_timer_,
+        // timer handler
+        [](uv_timer_t* timer) {
+          DelayedGC* self = static_cast<DelayedGC*>(timer->data);
+          self->state_ = DelayedGCState::TASK_SCHEDULED;
+        },
+        // end of timer handler
+        DEFAULT_PERIODIC_GC_DURATION,
+        0);
   } else if (state_ == DelayedGCState::TASK_SCHEDULED) {
     IdleGC(isolate);
     state_ = DelayedGCState::TIMER_END;
