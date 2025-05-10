@@ -368,6 +368,8 @@ MaybeLocal<Promise> FileHandle::ClosePromise() {
       } else {
         close->Resolve();
       }
+
+      delete close->file_handle(); // @lwnode
     }};
     int ret = req->Dispatch(uv_fs_close, fd_, AfterClose);
     if (ret < 0) {

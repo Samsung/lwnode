@@ -75,16 +75,16 @@ const kCloseResolve = Symbol('kCloseResolve');
 const kCloseReject = Symbol('kCloseReject');
 
 const { kUsePromises } = binding;
-const {
-  JSTransferable, kDeserialize, kTransfer, kTransferList
-} = require('internal/worker/js_transferable');
+// const {
+//   JSTransferable, kDeserialize, kTransfer, kTransferList
+// } = require('internal/worker/js_transferable');
 
 const getDirectoryEntriesPromise = promisify(getDirents);
 const validateRmOptionsPromise = promisify(validateRmOptions);
 
-class FileHandle extends JSTransferable {
+class FileHandle { // extends JSTransferable @lwnode
   constructor(filehandle) {
-    super();
+    // super(); // @lwnode
     this[kHandle] = filehandle;
     this[kFd] = filehandle ? filehandle.fd : -1;
 
@@ -185,32 +185,33 @@ class FileHandle extends JSTransferable {
     return this[kClosePromise];
   }
 
-  [kTransfer]() {
-    if (this[kClosePromise] || this[kRefs] > 1) {
-      const DOMException = internalBinding('messaging').DOMException;
-      throw new DOMException('Cannot transfer FileHandle while in use',
-                             'DataCloneError');
-    }
+  // @lwnode
+  // [kTransfer]() {
+  //   if (this[kClosePromise] || this[kRefs] > 1) {
+  //     const DOMException = internalBinding('messaging').DOMException;
+  //     throw new DOMException('Cannot transfer FileHandle while in use',
+  //                            'DataCloneError');
+  //   }
 
-    const handle = this[kHandle];
-    this[kFd] = -1;
-    this[kHandle] = null;
-    this[kRefs] = 0;
+  //   const handle = this[kHandle];
+  //   this[kFd] = -1;
+  //   this[kHandle] = null;
+  //   this[kRefs] = 0;
 
-    return {
-      data: { handle },
-      deserializeInfo: 'internal/fs/promises:FileHandle'
-    };
-  }
+  //   return {
+  //     data: { handle },
+  //     deserializeInfo: 'internal/fs/promises:FileHandle'
+  //   };
+  // }
 
-  [kTransferList]() {
-    return [ this[kHandle] ];
-  }
+  // [kTransferList]() {
+  //   return [ this[kHandle] ];
+  // }
 
-  [kDeserialize]({ handle }) {
-    this[kHandle] = handle;
-    this[kFd] = handle.fd;
-  }
+  // [kDeserialize]({ handle }) {
+  //   this[kHandle] = handle;
+  //   this[kFd] = handle.fd;
+  // }
 }
 
 async function fsCall(fn, handle, ...args) {
