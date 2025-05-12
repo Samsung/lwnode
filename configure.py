@@ -225,7 +225,7 @@ def setupCLIOptions(parser):
       '--without-escargot-threading',
       action='store_true',
       dest='without_escargot_threading',
-      default=False,
+      default=True,
       help='Disable Escargot threading (%default)',
   )
 
