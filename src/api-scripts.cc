@@ -291,7 +291,8 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
     esResourceName = VAL(*source->resource_name)->value()->asString();
   }
 
-  ContextRef* esPureContext = ContextRef::create(lwIsolate->vmInstance());
+  PersistentRefHolder<Escargot::ContextRef> esPureContext =
+      ContextRef::create(lwIsolate->vmInstance());
   ScriptParserRef* parser = esPureContext->scriptParser();
   ScriptParserRef::InitializeScriptResult result = parser->initializeScript(
       esSource, esResourceName, source->GetResourceOptions().IsModule());
@@ -303,6 +304,8 @@ MaybeLocal<UnboundScript> ScriptCompiler::CompileUnboundInternal(
 
     lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
     lwIsolate->ReportPendingMessages();
+
+    esPureContext.release();
     return MaybeLocal<UnboundScript>();
   }
 
@@ -418,12 +421,15 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
   // note: expand API_HANDLE_EXCEPTION and add the resource name
   if (!result.isSuccessful()) {
     Evaluator::EvaluatorResult r;
-    ContextRef* esPureContext = ContextRef::create(lwIsolate->vmInstance());
+    PersistentRefHolder<Escargot::ContextRef> esPureContext =
+        ContextRef::create(lwIsolate->vmInstance());
     r.error = ExceptionHelper::createErrorObject(
         esPureContext, result.parseErrorCode, result.parseErrorMessage);
 
     lwIsolate->SetPendingExceptionAndMessage(r.error.get(), r.stackTrace);
     lwIsolate->ReportPendingMessages();
+
+    esPureContext.release();
     return MaybeLocal<Function>();
   }
 

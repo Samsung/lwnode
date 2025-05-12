@@ -24,7 +24,7 @@
 
 namespace EscargotShim {
 
-class ThreadManager : public gc {
+class ThreadManager {
  public:
   void Lock();
   void Unlock();

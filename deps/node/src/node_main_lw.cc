@@ -72,7 +72,6 @@ int main(int argc, char* argv[]) {
   setvbuf(stderr, nullptr, _IONBF, 0);
 
   lwnode::Runtime runtime;
-  std::pair<bool, int> init_result;  // early_return, exit_code
 
   // FIXME: Fix Runtime::Init() call to ensure environment initialization
   // before running the loop, Runtime::Run(). This workaround passes a

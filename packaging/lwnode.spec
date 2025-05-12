@@ -126,8 +126,8 @@ echo $CFLAGS
 
 # building lwnode executable
 
-CFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=7680 "
-CXXFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=7680 "
+CFLAGS+=" -g -fno-lto -DMAX_HEAP_SECTS=7680 "
+CXXFLAGS+=" -g -fno-lto -DMAX_HEAP_SECTS=7680 "
 LDFLAGS+=" -fno-lto "
 
 ./tools/envinfo.sh
@@ -141,7 +141,7 @@ LDFLAGS+=" -fno-lto "
             --arch='%{tizen_arch}' \
             %{?lib_type_config} %{?asan_config} \
             %{?external_libs_config} %{?jsengine_config} \
-            --debug --escargot-debugger
+            --debug
 ninja -C %{target_src} %{target}
 %undefine target_src
 %endif

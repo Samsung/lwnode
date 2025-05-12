@@ -278,7 +278,7 @@ IsolateWrap::IsolateWrap() {
       SymbolRef::create(StringRef::createFromUTF8(PRIVATE_VALUES.data(),
                                                   PRIVATE_VALUES.length())));
 
-  threadManager_ = new ThreadManager();
+  thread_manager_ = new ThreadManager();
 
   // NOTE: check lock_gc_release(); is needed (and where)
   // lock_gc_release();
@@ -307,6 +307,10 @@ IsolateWrap::IsolateWrap() {
 
 IsolateWrap::~IsolateWrap() {
   LWNODE_CALL_TRACE_ID(ISOWRAP, "free: %p", this);
+  vmInstance_.release();
+
+  s_currentIsolate = nullptr;
+  s_previousIsolate = nullptr;
 }
 
 IsolateWrap* IsolateWrap::New() {
@@ -320,7 +324,15 @@ void IsolateWrap::Dispose() {
   // NOTE: check unlock_gc_release(); is needed (and where)
   // unlock_gc_release();
 
+
+  privateValuesSymbol_.release();
   global_handles()->dispose();
+
+  delete thread_manager_;
+  thread_manager_ = nullptr;  
+
+  ReleaseContexts();
+
   RegisteredExtension::unregisterAll();
 
   state_ = State::Disposed;
@@ -855,6 +867,17 @@ void IsolateWrap::ReportPromiseReject(
   if (promise_reject_callback_ && !promise->hasRejectHandlers()) {
     promise_reject_callback_(v8Message);
   }
+}
+
+void IsolateWrap::AddContextClenupHook(ContextWrap* context) {
+  contexts_.push_back(context);
+}
+
+void IsolateWrap::ReleaseContexts() {
+  for (const auto& context : contexts_) {
+    context->Dispose();
+  }
+  contexts_.clear();
 }
 
 }  // namespace EscargotShim

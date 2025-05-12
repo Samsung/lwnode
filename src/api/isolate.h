@@ -271,7 +271,7 @@ class IsolateWrap final : public v8::internal::Isolate {
                            Escargot::ValueRef* value,
                            Escargot::VMInstanceRef::PromiseRejectEvent event);
 
-  ThreadManager* thread_manager() { return threadManager_; }
+  ThreadManager* thread_manager() { return thread_manager_; }
 
   void PerformMicrotaskCheckpoint() {
     v8::MicrotasksScope::PerformCheckpoint(toV8(this));
@@ -279,11 +279,15 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   State getState() { return state_; }
 
+  void AddContextClenupHook(ContextWrap* context);
+  void ReleaseContexts();
+
  private:
   IsolateWrap();
 
   void InitializeGlobalSlots();
 
+  GCVector<ContextWrap*> contexts_;
   GCVector<GCManagedObject*> eternals_;
   GCMap<BackingStoreRef*, int, BackingStoreComparator> backingStoreCounter_;
 
@@ -302,12 +306,12 @@ class IsolateWrap final : public v8::internal::Isolate {
   v8::ArrayBuffer::Allocator* array_buffer_allocator_ = nullptr;
   std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
 
-  VMInstanceRef* vmInstance_ = nullptr;
+  PersistentRefHolder<VMInstanceRef> vmInstance_;
 
   PersistentRefHolder<IsolateWrap> release_lock_;
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize]{};
 
-  ThreadManager* threadManager_ = nullptr;
+  ThreadManager* thread_manager_ = nullptr;
 
   v8::PromiseRejectCallback promise_reject_callback_{nullptr};
 

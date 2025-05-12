@@ -1,7 +1,7 @@
 #include <memory>
 
-#include "node_main_instance.h"
 #include "node_internals.h"
+#include "node_main_instance.h"
 #include "node_options-inl.h"
 #include "node_v8_platform-inl.h"
 #include "util-inl.h"
@@ -92,17 +92,17 @@ NodeMainInstance::NodeMainInstance(
 }
 
 void NodeMainInstance::Dispose() {
-  CHECK(!owns_isolate_);
-  platform_->DrainTasks(isolate_);
-}
-
-NodeMainInstance::~NodeMainInstance() {
   if (!owns_isolate_) {
     return;
   }
+
+  platform_->DrainTasks(isolate_);
+
   platform_->UnregisterIsolate(isolate_);
   isolate_->Dispose();
 }
+
+NodeMainInstance::~NodeMainInstance() {}
 
 int NodeMainInstance::Run() {
   Locker locker(isolate_);
@@ -158,8 +158,7 @@ int NodeMainInstance::Run() {
   struct sigaction act;
   memset(&act, 0, sizeof(act));
   for (unsigned nr = 1; nr < kMaxSignal; nr += 1) {
-    if (nr == SIGKILL || nr == SIGSTOP || nr == SIGPROF)
-      continue;
+    if (nr == SIGKILL || nr == SIGSTOP || nr == SIGPROF) continue;
     act.sa_handler = (nr == SIGPIPE) ? SIG_IGN : SIG_DFL;
     CHECK_EQ(0, sigaction(nr, &act, nullptr));
   }
@@ -197,12 +196,12 @@ NodeMainInstance::CreateMainEnvironment(int* exit_code) {
   CHECK(!context.IsEmpty());
   Context::Scope context_scope(context);
 
-  DeleteFnPtr<Environment, FreeEnvironment> env { CreateEnvironment(
-      isolate_data_.get(),
-      context,
-      args_,
-      exec_args_,
-      EnvironmentFlags::kDefaultFlags) };
+  DeleteFnPtr<Environment, FreeEnvironment> env{
+      CreateEnvironment(isolate_data_.get(),
+                        context,
+                        args_,
+                        exec_args_,
+                        EnvironmentFlags::kDefaultFlags)};
 
   if (*exit_code != 0) {
     return env;
