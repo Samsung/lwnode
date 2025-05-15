@@ -142,6 +142,11 @@ Runtime::~Runtime() {
 int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   LWNODE_PERF_LOG("[Runtime::Start]");
   LWNODE_DEV_LOG("[Runtime] version:", LWNODE_VERSION_TAG);
+#if defined(NDEBUG)
+  LWNODE_DEV_LOG("[Runtime] release mode");
+#else
+  LWNODE_DEV_LOG("[Runtime] debug mode");
+#endif
 
   internal_->runner_.SetInitPromise(std::move(promise));
   std::pair<bool, int> init_result = internal_->Init(argc, argv);

@@ -64,7 +64,7 @@ BuildRequires: libasan
 %{!?target: %define target lwnode}
 %{!?lib_type: %define lib_type shared} # <shared|static>
 %{!?static_escargot: %define static_escargot 0}
-%{!?debug: %define debug 1}
+%{!?debug: %define debug 0}
 
 %description
 Lightweight Node.js is a memory efficient Node.js implementation,
@@ -126,8 +126,8 @@ echo $CFLAGS
 
 # building lwnode executable
 
-CFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=7680 "
-CXXFLAGS+=" -fno-lto -DMAX_HEAP_SECTS=7680 "
+CFLAGS+=" -g3 -fno-lto -DMAX_HEAP_SECTS=7680 "
+CXXFLAGS+=" -g3 -fno-lto -DMAX_HEAP_SECTS=7680 "
 LDFLAGS+=" -fno-lto "
 
 ./tools/envinfo.sh
@@ -156,6 +156,41 @@ ninja -C %{target_src} %{target}
             %{?external_libs_config} %{?jsengine_config}
 ninja -C %{target_src} %{target}
 
+rm -f %{target_lib}/*.tmp %{target_lib}/*.TOC
+
+%define dist_dir out/tizen/%{tizen_arch}/dist
+%define dist_release_dir %{dist_dir}/Release
+%define dist_debug_dir %{dist_dir}/Debug
+
+mkdir -p %{dist_release_dir}
+mkdir -p %{dist_debug_dir}
+
+# copy binaries and libraries to dist directory
+cp -f %{target_src}/%{target} %{dist_release_dir}
+cp -f %{target_src}/%{target}.dat %{dist_release_dir}
+
+cp -f %{target_src}/%{target} %{dist_debug_dir}
+cp -f %{target_src}/%{target}.dat %{dist_debug_dir}
+
+%if "%{lib_type}" == "shared"
+cp -f %{target_src}/lib/liblwnode.so* %{dist_release_dir}
+cp -f %{target_src}/lib/liblwnode.so* %{dist_debug_dir}
+%endif
+
+%if 0%{?static_escargot} == 0
+  cp %{target_src}/gen/escargot/libescargot.so %{dist_release_dir}
+  cp %{target_src}/gen/escargot/libescargot.so %{dist_debug_dir}
+%endif
+
+find %{dist_dir} -name "*.TOC" -type f -exec rm -f {} +
+
+# strip release binaries and libraries
+find %{dist_release_dir} -name "*.so" -type f -exec strip -v --strip-all {} +
+strip -v --strip-all %{dist_release_dir}/%{target}
+
+# strip debug binaries and libraries
+find %{dist_debug_dir} -name "*.so" -type f -exec strip -v -g {} +
+strip -v -g %{dist_debug_dir}/%{target}
 
 ##############################################
 ## Install
@@ -176,11 +211,7 @@ rm -f %{target_lib}/*.tmp %{target_lib}/*.TOC
 %if "%{lib_type}" == "shared"
   cp %{target_lib}/liblwnode.so* %{buildroot}%{_libdir}
 %endif
-find out/tizen -name "*.so" -type f -exec strip -v -g {} +
 
-%if %{?debug_symbols:0}%{!?debug_symbols:1}
-  strip -v -g %{target_src}/%{target}
-%endif
 cp %{target_src}/%{target} %{buildroot}%{_bindir}
 cp %{target_src}/%{target}.dat %{buildroot}%{_bindir}
 

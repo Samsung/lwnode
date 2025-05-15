@@ -36,12 +36,12 @@
 #define LWNODE_PERF_LOG(...)                                                   \
   dlog_print(DLOG_INFO,                                                        \
              "LWNODE",                                                         \
-             "[%.0lf] %s\n",                                                   \
+             "[%.0lfms] %s\n",                                                 \
              measurePerformance(),                                             \
              ##__VA_ARGS__);
 #elif !defined(NDEBUG)
 #define LWNODE_PERF_LOG(...)                                                   \
-  fprintf(stdout, "[%.0lf] %s\n", measurePerformance(), ##__VA_ARGS__);
+  fprintf(stdout, "[%.0lfms] %s\n", measurePerformance(), ##__VA_ARGS__);
 #else
 #define LWNODE_PERF_LOG(...)
 #endif
