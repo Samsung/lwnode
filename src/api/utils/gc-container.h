@@ -46,6 +46,11 @@ class GCContainer : public gc {
       buffer_ = nullptr;
       size_ = 0;
     }
+
+    Escargot::Memory::gcRegisterFinalizer(this, [](void* self) {
+      auto container = static_cast<GCContainer<T>*>(self);
+      container->~GCContainer();
+    });
   }
 
   GCContainer(GCContainer<T>&& other) {
@@ -53,6 +58,11 @@ class GCContainer : public gc {
     buffer_ = other.buffer_;
     other.buffer_ = nullptr;
     other.size_ = 0;
+
+    Escargot::Memory::gcRegisterFinalizer(this, [](void* self) {
+      auto container = static_cast<GCContainer<T>*>(self);
+      container->~GCContainer();
+    });
   }
 
   GCContainer(const GCContainer<T>& other) = delete;
