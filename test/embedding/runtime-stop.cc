@@ -1,13 +1,16 @@
+#include <chrono>
 #include <filesystem>
 #include <future>
 #include <iostream>
 #include <thread>
-#include <chrono>
 
 #include <lwnode-public.h>
 #include <message-port.h>
 
-#define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
+template <typename T, size_t N>
+constexpr size_t COUNT_OF(T (&)[N]) noexcept {
+  return N;
+}
 
 int main(int argc, char* argv[]) {
   auto runtime = std::make_shared<lwnode::Runtime>();

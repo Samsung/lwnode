@@ -6,7 +6,10 @@
 #include <memory>
 #include <thread>
 
-#define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
+template <typename T, size_t N>
+constexpr size_t COUNT_OF(T (&)[N]) noexcept {
+  return N;
+}
 
 class Info {
  public:

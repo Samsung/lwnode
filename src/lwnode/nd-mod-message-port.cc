@@ -25,7 +25,10 @@
 
 using namespace Escargot;
 
-#define COUNT_OF(array) (sizeof(array) / sizeof((array)[0]))
+template <typename T, size_t N>
+constexpr size_t COUNT_OF(T (&)[N]) noexcept {
+  return N;
+}
 
 #if !defined(LWNODE)
 #include "nd-vm.h"
