@@ -409,8 +409,10 @@ void Engine::dispose() {
   gcHeap_.release();
   GC_invoke_finalizers();
 
-  Globals::finalize();
   disposeExternalStrings();
+
+  MemoryUtil::gcFull();
+  Globals::finalize();
   LWNODE_CALL_TRACE_GC_END();
 }
 
