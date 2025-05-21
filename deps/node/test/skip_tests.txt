@@ -214,3 +214,5 @@ test/parallel/test-repl-syntax-error-stack.js # timeout error occurs when debugg
 test/parallel/test-promises-unhandled-rejections.js # crash error occurs when debugger feature has been updated
 test/parallel/test-worker-message-port-transfer-fake-js-transferable.js # disable fs message port transfer
 test/parallel/test-worker-message-port-transfer-fake-js-transferable-internal.js # disable fs message port transfer
+test/parallel/test-domain-throw-error-then-throw-from-uncaught-exception-handler.js # 에러 발생 시 프로세스 바로 종료하지 않음으로 변경
+test/parallel/test-domain-top-level-error-handler-throw.js # 에러 발생 시 프로세스 바로 종료하지 않음으로 변경

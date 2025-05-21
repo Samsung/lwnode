@@ -130,6 +130,9 @@ class LWNodeMainRunner {
 
     environment_ = env_.get();
 
+    SetProcessExitHandler(
+        environment_, [&](node::Environment* env_, int exit_code) { Stop(); });
+
     Context::Scope context_scope(env_->context());
 
     if (on_main_env_creation_callback_) {
