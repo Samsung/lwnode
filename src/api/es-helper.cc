@@ -984,6 +984,7 @@ ErrorObjectRef* ExceptionHelper::createErrorObject(ContextRef* context,
          ErrorObjectRef::Code code,
          StringRef* errorMessage) -> ValueRef* {
         auto errorObject = ErrorObjectRef::create(state, code, errorMessage);
+        errorObject->removeFromHiddenClassChain();
         ExceptionHelper::addStackPropertyCallback(state, errorObject);
         return errorObject;
       },

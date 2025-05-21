@@ -79,6 +79,7 @@ static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
 
   // Create a new MessageEvent
   auto option = ObjectRef::create(state);
+  option->removeFromHiddenClassChain();
 
   struct MessageEventExtraData : public gc_cleanup {
     std::shared_ptr<MessageEventSync::HandleData> handle;

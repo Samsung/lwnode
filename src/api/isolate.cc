@@ -93,6 +93,9 @@ Escargot::ValueRef* Isolate::pending_exception() {
 void Isolate::set_pending_exception(Escargot::ValueRef* exception_obj) {
   LWNODE_CALL_TRACE_ID(TRYCATCH);
   LWNODE_CHECK_NOT_NULL(exception_obj);
+  if (exception_obj->isObject()) {
+    exception_obj->asObject()->removeFromHiddenClassChain();
+  }
   pending_exception_ = exception_obj;
 }
 

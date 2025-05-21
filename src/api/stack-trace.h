@@ -55,8 +55,7 @@ class StackTrace {
     ValueRef* stackValue_ = nullptr;
   };
 
-  StackTrace(ExecutionStateRef* state, ObjectRef* error)
-      : state_(state), error_(error) {}
+  StackTrace(ExecutionStateRef* state, ObjectRef* error);
 
   static bool checkFilter(ValueRef* filter,
                           const Evaluator::StackTraceData& traceData);
