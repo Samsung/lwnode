@@ -25,7 +25,8 @@ int main(int argc, char* argv[]) {
         // FIXME: Fix Runtime::Init() call to ensure environment initialization
         // before running the loop, Runtime::Run(). This workaround passes a
         // promise directly to know when that is.
-        runtime->Start(COUNT_OF(args), args, std::move(promise));
+        auto result = runtime->Start(COUNT_OF(args), args, std::move(promise));
+        std::cout << "result: " << result << std::endl;
       },
       std::move(promise));
 
