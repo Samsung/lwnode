@@ -38,6 +38,11 @@ class PrepareStackTraceScope {
   IsolateWrap* isolate_;
 };
 
+StackTrace::StackTrace(ExecutionStateRef* state, ObjectRef* error)
+    : state_(state), error_(error) {
+  error_->removeFromHiddenClassChain();
+}
+
 bool StackTrace::getStackTraceLimit(ExecutionStateRef* state,
                                     double& stackTraceLimit) {
   auto errorObject = state->context()->globalObject()->get(
@@ -159,7 +164,9 @@ ValueRef* StackTrace::captureStackTraceCallback(ExecutionStateRef* state,
   // FIXME: it seems there are some cases where we need to freeze the
   // stack string here. Investigate further
   StackTrace stackTrace(state, exceptionObject);
-  stackTrace.addStackProperty(ArrayObjectRef::create(state, stackTraceVector));
+  auto arrayObject = ArrayObjectRef::create(state, stackTraceVector);
+  arrayObject->removeFromHiddenClassChain();
+  stackTrace.addStackProperty(arrayObject);
 
   return ValueRef::createUndefined();
 }
@@ -182,7 +189,9 @@ ValueRef* StackTrace::createCaptureStackTrace(
       true,
       false);
 
-  return FunctionObjectRef::create(state, info);
+  auto captureStackTrace = FunctionObjectRef::create(state, info);
+  captureStackTrace->removeFromHiddenClassChain();
+  return captureStackTrace;
 }
 
 ValueRef* StackTrace::createPrepareStackTrace(
@@ -194,7 +203,9 @@ ValueRef* StackTrace::createPrepareStackTrace(
       true,
       false);
 
-  return FunctionObjectRef::create(state, info);
+  auto prepareStackTrace = FunctionObjectRef::create(state, info);
+  prepareStackTrace->removeFromHiddenClassChain();
+  return prepareStackTrace;
 }
 
 ValueRef* StackTrace::prepareStackTraceCallback(ExecutionStateRef* state,
@@ -277,7 +288,9 @@ ArrayObjectRef* StackTrace::genCallSites(
         callSite->instantiate(state_->context(), stackTraceData[i]));
   }
 
-  return ArrayObjectRef::create(state_, stackTraceVector);
+  auto stackTrace = ArrayObjectRef::create(state_, stackTraceVector);
+  stackTrace->removeFromHiddenClassChain();
+  return stackTrace;
 }
 
 CallSite::CallSite(ContextRef* context) : context_(context) {
@@ -410,7 +423,7 @@ void CallSite::setCallSitePrototype(
       [](ExecutionStateRef* state,
          const std::string* name,
          Escargot::FunctionObjectRef::NativeFunctionPointer fn) -> ValueRef* {
-        return FunctionObjectRef::create(
+        auto callSite = FunctionObjectRef::create(
             state,
             FunctionObjectRef::NativeFunctionInfo(
                 AtomicStringRef::create(
@@ -419,6 +432,8 @@ void CallSite::setCallSitePrototype(
                 0,
                 true,
                 false));
+        callSite->removeFromHiddenClassChain();
+        return callSite;
       },
       &name,
       fn);

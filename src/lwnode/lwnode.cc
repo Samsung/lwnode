@@ -172,6 +172,7 @@ static ValueRef* getGCMemoryStats(ExecutionStateRef* state,
                                   bool isConstructCall) {
   auto context = state->context();
   auto object = ObjectRefHelper::create(context);
+  object->removeFromHiddenClassChain();
 
   // GC_heapsize - GC_unmapped_bytes
   ObjectRefHelper::setProperty(context,
