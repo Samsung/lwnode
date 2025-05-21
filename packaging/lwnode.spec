@@ -185,12 +185,22 @@ cp -f %{target_src}/lib/liblwnode.so* %{dist_debug_dir}
 find %{dist_dir} -name "*.TOC" -type f -exec rm -f {} +
 
 # strip release binaries and libraries
-find %{dist_release_dir} -name "*.so" -type f -exec strip -v --strip-all {} +
-strip -v --strip-all %{dist_release_dir}/%{target}
+find %{dist_release_dir} -name "*.so" -type f -print0 | while IFS= read -r -d $'\0' so_file; do
+  debug_file="${so_file}.debug"
+
+  objcopy --only-keep-debug "$so_file" "$debug_file"
+  objcopy --add-gnu-debuglink="$debug_file" "$so_file"
+  strip -v --strip-all "$so_file"
+done
 
 # strip debug binaries and libraries
-find %{dist_debug_dir} -name "*.so" -type f -exec strip -v -g {} +
-strip -v -g %{dist_debug_dir}/%{target}
+find %{dist_debug_dir} -name "*.so" -type f -print0 | while IFS= read -r -d $'\0' so_file; do
+  debug_file="${so_file}.debug"
+
+  objcopy --only-keep-debug "$so_file" "$debug_file"
+  objcopy --add-gnu-debuglink="$debug_file" "$so_file"
+  strip -v --strip-debug "$so_file"
+done
 
 ##############################################
 ## Install

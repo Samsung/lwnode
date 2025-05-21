@@ -76,27 +76,70 @@ build_module() {
   if [[ "$TARGET_OS" = "tizen" ]] ; then
     out_path=$out_path/$TARGET_ARCH
   fi
-  out_path=$out_path/$1
+  local dist_path=$out_path/dist
+
+  out_path=$out_path/build/$1
   local module_path=$PACKAGES_ROOT_PATH/$1
   local definitions="-DBUILDING_NODE_EXTENSION;-DLWNODE"
   mkdir -p $out_path
 
   cmake $module_path -B$out_path -H$module_path \
-    -DPROJECT_ROOT_PATH=$PROJECT_ROOT_PATH      \
-    -DLWNODE_INCLUDES=$LWNODE_INCLUDES_PATH     \
-    -DLWNODE_DEFINITIONS=$definitions           \
+    -DPROJECT_ROOT_PATH=$PROJECT_ROOT_PATH \
+    -DLWNODE_INCLUDES=$LWNODE_INCLUDES_PATH \
+    -DLWNODE_DEFINITIONS=$definitions \
     -G Ninja
   check_build_result $1
   ninja -C $out_path
   check_build_result $1
 
-  if [ "$CLEAN_AFTER" = true ] ; then
+  if [ "$CLEAN_AFTER" = true ]; then
     echo 'clean cmake files'
     find $out_path -type f ! -name '*.node' -delete
     rm -rf $out_path/CMakeFiles
   fi
 
+  local release_dist_path=$dist_path/Release/$1
+  local debug_dist_path=$dist_path/Debug/$1
+
+  mkdir -p $release_dist_path
+  mkdir -p $debug_dist_path
+
+  cp -f $out_path/*.node $release_dist_path/
+  cp -f $out_path/*.node $debug_dist_path/
   cp -f $module_path/*.js $out_path/
+  cp -f $module_path/*.js $release_dist_path/
+  cp -f $module_path/*.js $debug_dist_path/
+}
+
+strip_modules() {
+  fancy_echo "strip modules"
+
+  local dist_path=$BUILD_OUT_ROOT_PATH/$TARGET_OS
+  if [[ "$TARGET_OS" = "tizen" ]] ; then
+    dist_path=$dist_path/$TARGET_ARCH
+  fi
+  dist_path=$dist_path/dist
+
+  local release_dist_path=$dist_path/Release
+  local debug_dist_path=$dist_path/Debug
+
+  # strip release binaries and libraries
+  find $release_dist_path -name "*.node" -type f -print0 | while IFS= read -r -d $'\0' so_file; do
+    debug_file="${so_file}.debug"
+
+    objcopy --only-keep-debug "$so_file" "$debug_file"
+    objcopy --add-gnu-debuglink="$debug_file" "$so_file"
+    strip -v --strip-all "$so_file"
+  done
+
+  # strip debug binaries and libraries
+  find $debug_dist_path -name "*.node" -type f -print0 | while IFS= read -r -d $'\0' so_file; do
+    debug_file="${so_file}.debug"
+
+    objcopy --only-keep-debug "$so_file" "$debug_file"
+    objcopy --add-gnu-debuglink="$debug_file" "$so_file"
+    strip -v --strip-debug "$so_file"
+  done
 }
 
 if [[ -z $1 ]] || [[ $1 == -* ]]; then
@@ -128,7 +171,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 fancy_echo "target os: $TARGET_OS"
-if [[ "$TARGET_OS" = "tizen" ]] ; then
+if [[ "$TARGET_OS" = "tizen" ]]; then
   fancy_echo "target arch: $TARGET_ARCH"
 fi
 find_and_build_modules $MODULES_LIST
+strip_modules
+fancy_echo "done"
+
