@@ -88,7 +88,7 @@ echo $CFLAGS
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{target_modules_path}
 
-cp -rf out/modules/tizen/%{tizen_arch}/* %{buildroot}%{target_modules_path}
+cp -rf out/modules/tizen/%{tizen_arch}/build/* %{buildroot}%{target_modules_path}
 
 %clean
 rm -fr ./*.list
