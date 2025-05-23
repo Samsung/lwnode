@@ -77,8 +77,8 @@ class DelayedGC : public GCStrategyInterface {
 
  private:
   DelayedGCState state_{DelayedGCState::TIMER_END};
+  int periodicGCduration_;
   uv_timer_t gc_timer_;
-  uv_loop_t* loop_{nullptr};
   v8::Isolate* isolate_{nullptr};
 };
 

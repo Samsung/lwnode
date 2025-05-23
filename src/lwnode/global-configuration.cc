@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
- #pragma once
+#include "global-configuration.h"
 
- #define LWNODE_VERSION_MAJOR 1
- #define LWNODE_VERSION_MINOR 0
- #define LWNODE_VERSION_PATCH 5
- #define LWNODE_VERSION_TAG "v1.0.5"
+namespace LWNode {
+
+GlobalConfiguration& GlobalConfiguration::GetInstance() {
+  static GlobalConfiguration instance;
+  return instance;
+}
+
+}  // namespace LWNode

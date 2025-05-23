@@ -16,6 +16,7 @@
 
 #include <uv.h>
 
+#include "global-configuration.h"
 #include "lwnode-public.h"
 #include "lwnode-version.h"
 #include "lwnode.h"
@@ -193,6 +194,25 @@ void Runtime::Configuration::OnSendMessageSync(
     Runtime::SendMessageSyncCallback callback, void* user_data) {
   internal_->send_message_sync_callback = callback;
   internal_->send_message_sync_callback_data = user_data;
+}
+
+bool Runtime::Configuration::Set(const std::string& key,
+                                 const std::string& value) {
+  return false;
+}
+
+bool Runtime::Configuration::Set(const std::string& key, int value) {
+  if (key == "gc_interval") {
+    LWNODE_DEV_LOGF("[Runtime::Configuration::Set] GC interval set to %dms",
+                   value);
+    LWNode::GlobalConfiguration::GetInstance().set_gc_interval(value);
+    return true;
+  }
+  return false;
+}
+
+bool Runtime::Configuration::Set(const std::string& key, bool value) {
+  return false;
 }
 
 /**************************************************************************

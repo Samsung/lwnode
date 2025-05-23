@@ -18,6 +18,7 @@
 #include <uv.h>
 #include <thread>
 
+#include "global-configuration.h"
 #include "lwnode.h"
 
 namespace LWNode {
@@ -72,6 +73,10 @@ void DelayedGCOnThread::handle(v8::Isolate* isolate) {
 }
 
 DelayedGC::DelayedGC() {
+  int gc_interval = GlobalConfiguration::GetInstance().gc_interval();
+  periodicGCduration_ =
+      gc_interval > 0 ? gc_interval : DEFAULT_PERIODIC_GC_DURATION;
+
   uv_timer_init(uv_default_loop(), &gc_timer_);
   gc_timer_.data = this;
   uv_unref((uv_handle_t*)&gc_timer_);
@@ -96,7 +101,7 @@ void DelayedGC::handle(v8::Isolate* isolate) {
           self->state_ = DelayedGCState::TASK_SCHEDULED;
         },
         // end of timer handler
-        DEFAULT_PERIODIC_GC_DURATION,
+        periodicGCduration_,
         0);
   } else if (state_ == DelayedGCState::TASK_SCHEDULED) {
     IdleGC(isolate);

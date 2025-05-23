@@ -65,6 +65,10 @@ class LWNODE_EXPORT Runtime {
 
     void OnSendMessageSync(SendMessageSyncCallback callback, void* user_data);
 
+    bool Set(const std::string& key, const std::string& value);
+    bool Set(const std::string& key, int value);
+    bool Set(const std::string& key, bool value);
+
    private:
     struct Internal;
     Internal* internal_ = nullptr;
