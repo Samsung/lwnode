@@ -75,6 +75,7 @@
         'src/lwnode/lwnode.cc',
         'src/lwnode/lwnode-loader.cc',
         'src/lwnode/lwnode-gc-strategy.cc',
+        'src/lwnode/global-configuration.cc',
         'src/lwnode/nd-mod-base.cc',
         'src/lwnode/nd-mod-message-port.cc',
         'src/lwnode/nd-vm-main-message-port.cc',
@@ -98,6 +99,7 @@
         'include_dirs': [
           'src/api/utils/logger',
           'src/api/utils',
+          'src/lwnode',
           'include/lwnode',
           'include',
           '.',

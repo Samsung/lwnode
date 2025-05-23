@@ -12,7 +12,11 @@ constexpr size_t COUNT_OF(T (&)[N]) noexcept {
 }
 
 int main(int argc, char* argv[]) {
-  auto runtime = std::make_shared<lwnode::Runtime>();
+  lwnode::Runtime::Configuration configuration;
+  if (!configuration.Set("gc_interval", 10000)) {
+    std::cerr << "Failed to set gc_interval" << std::endl;
+  }
+  auto runtime = std::make_shared<lwnode::Runtime>(std::move(configuration));
 
   std::promise<void> promise;
   std::future<void> init_future = promise.get_future();
