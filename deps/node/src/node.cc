@@ -833,7 +833,9 @@ int InitializeNodeWithArgs(std::vector<std::string>* argv,
   // Make sure InitializeNodeWithArgs() is called only once.
   // CHECK(!init_called.exchange(true)); @lwnode
   if (node_is_initialized) {
-    return 0;
+    per_process::node_start_time = uv_hrtime();
+    per_process::cli_options->cmdline = *argv;
+    return ProcessGlobalArgs(argv, exec_argv, errors, kDisallowedInEnvironment);
   }
 
   // Initialize node_start_time to get relative uptime.
