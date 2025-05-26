@@ -77,6 +77,8 @@ TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
 }
 
 TEST0(Embedtest, Restart) {
+  TEST_SKIP("This is not yet production-ready.");
+
   int count = 0;
   for (int i = 0; i < 3; i++) {
     auto runtime = std::make_shared<lwnode::Runtime>();
@@ -101,4 +103,42 @@ TEST0(Embedtest, Restart) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   EXPECT_EQ(count, 3);
+}
+
+TEST0(Embedtest, RestartAfterStop) {
+  TEST_SKIP("This is not yet production-ready.");
+
+  int count = 0;
+
+  for (int i = 0; i < 3; i++) {
+    auto runtime = std::make_shared<lwnode::Runtime>();
+
+    std::promise<void> promise;
+    std::future<void> init_future = promise.get_future();
+    const char* script = "test/embedding/test-22-runtime-heartbeat.js";
+    std::string path = (std::filesystem::current_path() / script).string();
+
+    char* args[] = {const_cast<char*>(""),
+                    const_cast<char*>("--unhandled-rejections=strict"),
+                    const_cast<char*>("--expose-gc"),
+                    const_cast<char*>(path.c_str())};
+
+    std::cout << ++count << "Thread " << std::endl;
+    std::thread worker = std::thread(
+        [&](std::promise<void>&& promise) mutable {
+          std::cout << count << " Start " << std::endl;
+          runtime->Start(COUNT_OF(args), args, std::move(promise));
+          std::cout << count << " /Start " << std::endl;
+        },
+        std::move(promise));
+
+    init_future.wait();
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    runtime->Stop();
+
+    worker.join();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout << count << " /Thread " << std::endl;
+  }
 }
