@@ -67,6 +67,10 @@
       ],
       'cflags': [ '-pthread' ],
       'ldflags': [ '-pthread' ],
+      'include_dirs': [
+        '<(escargot_dir)/third_party/GCutil',
+        '<(escargot_dir)/third_party/GCutil/bdwgc/include',
+      ],
       'configurations': {
         'Debug': {
           'defines': [
@@ -84,8 +88,6 @@
       ],
       'include_dirs': [
         '<(escargot_dir)/src/api',
-        '<(escargot_dir)/third_party/GCutil',
-        '<(escargot_dir)/third_party/GCutil/bdwgc/include',
       ],
       'conditions': [
         ['escargot_threading==1', {

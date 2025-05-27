@@ -16,10 +16,12 @@
 
 #pragma once
 
+#include <GCUtil.h>
 #include <v8.h>
 #include <functional>
 #include <memory>
 #include <string>
+#include "gc-descriptor.h"
 
 namespace Escargot {
 class ValueRef;
@@ -64,7 +66,7 @@ class SourceReader : public SourceReaderInterface {
 
 class Loader {
  public:
-  class ReloadableSourceData {
+  class ReloadableSourceData : public gc {
    public:
     void* preloadedData{nullptr};
 
@@ -84,6 +86,10 @@ class Loader {
 
     static ReloadableSourceData* create(const FileData fileData,
                                         SourceReaderInterface* sourceReader);
+
+    BEGIN_IMPLEMENT_TYPED_GC_NEW(ReloadableSourceData);
+    SET_GC_POINTER(ReloadableSourceData, path_);
+    END_IMPLEMENT_TYPED_GC_NEW();
 
    private:
     char* path_{nullptr};
