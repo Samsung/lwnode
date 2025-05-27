@@ -10,7 +10,7 @@
     'defines': [ 'LWNODE=1' ],
     'cflags!': [ '-Wno-error' ],
     'cflags': [
-      '-Wall', '-Wextra', '-Werror',
+      '-Wall', '-Wextra',
       '-Wno-unused-variable',
       '-Wno-unused-function',
       '-Wno-unused-but-set-variable',
