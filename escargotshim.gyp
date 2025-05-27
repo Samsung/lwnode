@@ -90,6 +90,8 @@
         '-Wno-unused-result',
         '-fexceptions',
         '-fvisibility=hidden',
+        '-Wno-invalid-offsetof',
+        '-Wno-mismatched-new-delete',
       ],
       'direct_dependent_settings': {
         'defines': [
@@ -105,7 +107,11 @@
           '.',
         ],
         'cflags_cc!': ['-fno-exceptions'],
-        'cflags_cc': ['-fexceptions'],
+        'cflags_cc': [
+          '-fexceptions',
+          '-Wno-invalid-offsetof',
+          '-Wno-mismatched-new-delete',
+        ],
         'conditions': [
           ['library == "shared_library"', {
             'defines': ['USING_V8_SHARED'],

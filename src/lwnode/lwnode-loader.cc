@@ -230,11 +230,10 @@ FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
 Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(
     const FileData fileData, SourceReaderInterface* sourceReader) {
   // NOTE: data and data->path should be managed by gc
-  auto data = new (Memory::gcMalloc(sizeof(ReloadableSourceData)))
-      ReloadableSourceData();
+  auto data = new ReloadableSourceData();
 
   auto& sourcePath = fileData.filePath;
-  data->path_ = (char*)Memory::gcMallocAtomic(sourcePath.size() + 1);
+  data->path_ = (char*)Memory::gcMalloc(sourcePath.size() + 1);
   std::copy(sourcePath.begin(), sourcePath.end(), data->path_);
   data->path_[sourcePath.size()] = '\0';
 
@@ -274,6 +273,53 @@ ValueRef* Loader::CreateReloadableSourceFromFile(ExecutionStateRef* state,
   return CVAL(*source)->value()->asString();
 }
 
+static void* DefaultLoadCallback(void* userData) {
+  auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
+
+  LWNODE_CHECK_NOT_NULL(data);
+
+  LWNODE_CALL_TRACE_ID(LOADER,
+                       "  Load: %d (%d) %p %s (+%.2f kB)",
+                       ++s_stat.loaded,
+                       s_stat.reloaded,
+                       data->preloadedData,
+                       data->path(),
+                       (float)data->preloadedDataLength() / 1024);
+
+  if (data->preloadedData) {
+    auto buffer = data->preloadedData;
+    data->preloadedData = nullptr;
+    return buffer;  // move memory ownership to js engine
+  }
+  s_stat.reloaded++;
+
+  FileData fileData =
+      data->sourceReader()->read(data->path(), data->encoding());
+
+  LWNODE_CHECK_NOT_NULL(fileData.buffer);
+  return fileData.buffer;
+}
+
+void DefaultUnloadCallback(void* preloadedData, void* userData) {
+  auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
+
+  LWNODE_CHECK_NOT_NULL(data);
+
+  LWNODE_CALL_TRACE_ID(LOADER,
+                       "Unload: %d (%d) %p %s (-%.2f kB)",
+                       --s_stat.loaded,
+                       s_stat.reloaded,
+                       preloadedData,
+                       data->path(),
+                       (float)data->preloadedDataLength() / 1024);
+
+  if (data->preloadedData) {
+    freeStringBuffer(data->preloadedData);
+    data->preloadedData = nullptr;
+  }
+  freeStringBuffer(preloadedData);
+}
+
 MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
                                                ReloadableSourceData* data,
                                                LoadCallback loadCallback,
@@ -287,48 +333,8 @@ MaybeLocal<String> Loader::NewReloadableString(Isolate* isolate,
   } else {
     if (loadCallback == nullptr && unloadCallback == nullptr) {
       // set default load/unload callbacks
-      loadCallback = [](void* userData) -> void* {
-        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
-
-        LWNODE_CALL_TRACE_ID(LOADER,
-                             "  Load: %d (%d) %p %s (+%.2f kB)",
-                             ++s_stat.loaded,
-                             s_stat.reloaded,
-                             data->preloadedData,
-                             data->path(),
-                             (float)data->preloadedDataLength() / 1024);
-
-        if (data->preloadedData) {
-          auto buffer = data->preloadedData;
-          data->preloadedData = nullptr;
-          return buffer;  // move memory ownership to js engine
-        }
-        s_stat.reloaded++;
-
-        FileData fileData =
-            data->sourceReader()->read(data->path(), data->encoding());
-
-        LWNODE_CHECK_NOT_NULL(fileData.buffer);
-        return fileData.buffer;
-      };
-
-      unloadCallback = [](void* preloadedData, void* userData) -> void {
-        auto data = reinterpret_cast<Loader::ReloadableSourceData*>(userData);
-
-        LWNODE_CALL_TRACE_ID(LOADER,
-                             "Unload: %d (%d) %p %s (-%.2f kB)",
-                             --s_stat.loaded,
-                             s_stat.reloaded,
-                             preloadedData,
-                             data->path(),
-                             (float)data->preloadedDataLength() / 1024);
-
-        if (data->preloadedData) {
-          freeStringBuffer(data->preloadedData);
-          data->preloadedData = nullptr;
-        }
-        freeStringBuffer(preloadedData);
-      };
+      loadCallback = DefaultLoadCallback;
+      unloadCallback = DefaultUnloadCallback;
     }
 
     Escargot::StringRef* reloadableString =
