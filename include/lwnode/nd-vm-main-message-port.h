@@ -43,8 +43,8 @@ class MainMessagePort {
 
  private:
   std::shared_ptr<Port> port_;
-  Escargot::ContextRef* context_;
-  uv_loop_t* uv_loop_;
+  Escargot::ContextRef* context_{nullptr};
+  uv_loop_t* uv_loop_{nullptr};
 
   struct Internal;
   std::unique_ptr<Internal> internal_;

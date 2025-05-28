@@ -212,6 +212,9 @@ FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
 
   size_t bufferSize = (size_t)pos;
   uint8_t* buffer = (uint8_t*)allocateStringBuffer(bufferSize + 1);
+  if (!buffer) {
+    return FileData();
+  }
   buffer[bufferSize] = '\0';
 
   std::unique_ptr<void, std::function<void(void*)>> bufferHolder(
