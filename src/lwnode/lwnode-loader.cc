@@ -78,21 +78,15 @@ bool convertUTF8ToUTF16le(char** buffer,
   return true;
 }
 
-class FileScope {
- public:
-  FileScope(const char* path, const char* mode) {
-    file_ = std::fopen(path, mode);
-  }
-  ~FileScope() {
-    if (file_) {
-      std::fclose(file_);
-    }
-  }
-  std::FILE* file() { return file_; }
+FileScope::FileScope(const char* path, const char* mode) {
+  file_ = std::fopen(path, mode);
+}
 
- private:
-  std::FILE* file_{nullptr};
-};
+FileScope::~FileScope() {
+  if (file_) {
+    std::fclose(file_);
+  }
+}
 
 static void tryConvertUTF8ToLatin1(
     std::basic_string<uint8_t, std::char_traits<uint8_t>>& latin1String,
@@ -196,9 +190,13 @@ SourceReader* SourceReader::getInstance() {
 }
 
 FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
-  FileScope fileScope(filename.c_str(), "rb");
+  FileScope* fileScope = getFileScope(filename);
 
-  std::FILE* file = fileScope.file();
+  if (fileScope == nullptr) {
+    return FileData();
+  }
+
+  std::FILE* file = fileScope->file();
 
   if (file == nullptr) {
     return FileData();
@@ -228,6 +226,23 @@ FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
 
   return Loader::createFileDataForReloadableString(
       filename, std::move(bufferHolder), bufferSize, encodingHint);
+}
+
+FileScope* SourceReader::getFileScope(const std::string& filename) {
+  auto iter = file_scopes_.find(filename);
+  if (iter == file_scopes_.end()) {
+    FileScope* file_scope = new FileScope(filename.c_str(), "rb");
+    file_scopes_[filename] = file_scope;
+    return file_scope;
+  }
+  return iter->second;
+}
+
+void SourceReader::dispose() {
+  for (auto& file_scope : file_scopes_) {
+    delete file_scope.second;
+  }
+  file_scopes_.clear();
 }
 
 Loader::ReloadableSourceData* Loader::ReloadableSourceData::create(

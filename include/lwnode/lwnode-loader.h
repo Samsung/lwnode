@@ -21,6 +21,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
+
 #include "gc-descriptor.h"
 
 namespace Escargot {
@@ -55,13 +57,28 @@ class SourceReaderInterface {
   virtual FileData read(std::string filename, const Encoding encodingHint) = 0;
 };
 
+class FileScope {
+ public:
+  FileScope(const char* path, const char* mode);
+  ~FileScope();
+  std::FILE* file() { return file_; }
+
+ private:
+  std::FILE* file_{nullptr};
+};
+
 class SourceReader : public SourceReaderInterface {
  public:
   static SourceReader* getInstance();
   FileData read(std::string filename, const Encoding encodingHint) override;
 
+  FileScope* getFileScope(const std::string& filename);
+
+  void dispose();
+
  private:
   SourceReader() = default;
+  std::unordered_map<std::string, FileScope*> file_scopes_;
 };
 
 class Loader {

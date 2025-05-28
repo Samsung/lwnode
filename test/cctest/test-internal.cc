@@ -1055,9 +1055,8 @@ TEST(ReloadableString16) {
                 .ToLocalChecked())
       .Check();
 
-  std::string filename = "./tmp.test-reloadable-string.js";
-
   {
+    std::string filename = "./tmp.test-reloadable-string1.js";
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
 
@@ -1095,6 +1094,7 @@ TEST(ReloadableString16) {
   }
 
   {
+    std::string filename = "./tmp.test-reloadable-string2.js";
     g_reload_count = 0;
     const bool isOneByteString = false;
     ReloadableContentScope scope(filename, isOneByteString);
