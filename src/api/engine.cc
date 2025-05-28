@@ -21,6 +21,7 @@
 
 #include "api/global.h"
 #include "handle.h"
+#include "lwnode/lwnode-loader.h"
 #include "utils/misc.h"
 #include "utils/string-util.h"
 
@@ -410,6 +411,8 @@ void Engine::dispose() {
   GC_invoke_finalizers();
 
   disposeExternalStrings();
+
+  LWNode::SourceReader::getInstance()->dispose();
 
   MemoryUtil::gcFull();
   Globals::finalize();
