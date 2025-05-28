@@ -21,6 +21,7 @@
 #include <fstream>
 #include <locale>
 #include <string>
+#include <unordered_map>
 #include "api.h"
 #include "api/context.h"
 #include "api/es-helper.h"
@@ -78,12 +79,62 @@ bool convertUTF8ToUTF16le(char** buffer,
   return true;
 }
 
+class FileHandles {
+ public:
+  FileHandles() = default;
+  ~FileHandles() {
+    for (auto const& pair : handles_) {
+      std::FILE* file_ptr = pair.second;
+      if (file_ptr) {
+        std::fclose(file_ptr);
+      }
+    }
+    handles_.clear();
+  }
+
+  FileHandles(const FileHandles&) = delete;
+  FileHandles(FileHandles&& other) noexcept
+      : handles_(std::move(other.handles_)) {}
+  FileHandles& operator=(const FileHandles&) = delete;
+  FileHandles& operator=(FileHandles&& other) = delete;
+
+  bool set(const std::string& path, std::FILE* file) {
+    handles_[path] = file;
+    return true;
+  }
+
+  std::FILE* get(const std::string& path) const {
+    auto it = handles_.find(path);
+    if (it != handles_.end()) {
+      return it->second;
+    }
+    return nullptr;
+  }
+
+ private:
+  std::unordered_map<std::string, std::FILE*> handles_;
+};
+
 class FileScope {
  public:
-  FileScope(const char* path, const char* mode) {
+  FileScope(const char* path, const char* mode, FileHandles* handles) {
+    if (handles) {
+      handles_ = handles;
+      std::FILE* file = handles->get(path);
+      if (file) {
+        file_ = file;
+        return;
+      }
+      file_ = std::fopen(path, mode);
+      handles->set(path, file_);
+      return;
+    }
     file_ = std::fopen(path, mode);
   }
   ~FileScope() {
+    if (handles_) {
+      return;
+    }
     if (file_) {
       std::fclose(file_);
     }
@@ -92,6 +143,7 @@ class FileScope {
 
  private:
   std::FILE* file_{nullptr};
+  FileHandles* handles_{nullptr};
 };
 
 static void tryConvertUTF8ToLatin1(
@@ -196,7 +248,9 @@ SourceReader* SourceReader::getInstance() {
 }
 
 FileData SourceReader::read(std::string filename, const Encoding encodingHint) {
-  FileScope fileScope(filename.c_str(), "rb");
+  thread_local static FileHandles s_holder;
+
+  FileScope fileScope(filename.c_str(), "rb", &s_holder);
 
   std::FILE* file = fileScope.file();
 
