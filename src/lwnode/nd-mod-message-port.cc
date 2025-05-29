@@ -222,6 +222,12 @@ class MessagePortWrap : public BaseObject {
         return;
       }
 
+#if defined(LWNODE)
+      if (LWNode::CanCallIntoJs() == false) {
+        return;
+      }
+#endif
+
       ExecResult result =
           Eval::execute(context, [this, event](ExecutionStateRef* state) {
             ObjectRef* event_object = InstantiateMessageEvent(state, event);

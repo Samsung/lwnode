@@ -52,6 +52,9 @@ void InitMainMessagePort(v8::Local<v8::Context> context,
                          LoopHolderUV* loop_holder,
                          uv_loop_t* loop);
 
+bool CanCallIntoJs();
+void SetCanCallIntoJS(bool can_call_into_js);
+
 void IdleGC(v8::Isolate* isolate = nullptr);
 void initDebugger();
 bool dumpSelfMemorySnapshot();
