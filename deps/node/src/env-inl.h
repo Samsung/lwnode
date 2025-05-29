@@ -790,6 +790,8 @@ inline bool Environment::can_call_into_js() const {
 }
 
 inline void Environment::set_can_call_into_js(bool can_call_into_js) {
+  // @lwnode
+  LWNode::SetCanCallIntoJS(can_call_into_js);
   can_call_into_js_ = can_call_into_js;
 }
 

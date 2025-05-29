@@ -142,3 +142,38 @@ TEST0(Embedtest, RestartAfterStop) {
     std::cout << count << " /Thread " << std::endl;
   }
 }
+
+TEST(Embedtest, MessagePortErrorAfterRegisterOnMessage, 5000) {
+  auto runtime = std::make_shared<lwnode::Runtime>();
+
+  std::promise<void> promise;
+  std::future<void> init_future = promise.get_future();
+  const char* script = "test/embedding/test-04-message-port-error.js";
+  std::string path = (std::filesystem::current_path() / script).string();
+
+  const bool post_first = true;
+  char* args[] = {const_cast<char*>(""),
+                  const_cast<char*>(path.c_str()),
+                  const_cast<char*>(std::to_string(post_first).c_str())};
+
+  std::thread worker = std::thread(
+      [&](std::promise<void>&& promise) mutable {
+        runtime->Start(COUNT_OF(args), args, std::move(promise));
+      },
+      std::move(promise));
+
+  init_future.wait();
+
+  int count1 = 0;
+
+  auto port2 = runtime->GetPort();
+
+  port2->OnMessage([&](const MessageEvent* event) {
+    std::cout << event->data() << std::endl;
+    count1++;
+  });
+  port2->PostMessage(MessageEvent::New("ping"));
+
+  // This test should not exit due to timeout
+  worker.join();
+}

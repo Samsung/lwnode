@@ -283,6 +283,17 @@ void InitMainMessagePort(Local<Context> context,
   lwContext->SetAlignedPointerInEmbedderData(kLoopHolder, loop_holder);
 }
 
+// FIXME: Move to a better place (e.g. context or isolate)
+thread_local static bool s_can_call_into_js{true};
+
+bool CanCallIntoJs() {
+  return s_can_call_into_js;
+}
+
+void SetCanCallIntoJS(bool can_call_into_js) {
+  s_can_call_into_js = can_call_into_js;
+}
+
 void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
   auto esContext = CVAL(*context)->context()->get();
   auto esTarget = CVAL(*target)->value()->asObject();
