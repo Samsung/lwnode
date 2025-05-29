@@ -136,6 +136,7 @@ class LWNodeMainRunner {
           if (env_->is_stopping()) {
             return;
           }
+          env_->set_can_call_into_js(false);
           env_->set_stopping(true);
           uv_stop(env_->event_loop());
         });
@@ -220,6 +221,7 @@ class LWNodeMainRunner {
     if (environment_->is_stopping()) {
       return;
     }
+    environment_->set_can_call_into_js(false);
     environment_->set_stopping(true);
 
     uv_async_init(uv_default_loop(), &stop_task_, [](uv_async_t* handle) {
