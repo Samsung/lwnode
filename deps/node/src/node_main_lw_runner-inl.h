@@ -131,7 +131,14 @@ class LWNodeMainRunner {
     environment_ = env_.get();
 
     SetProcessExitHandler(
-        environment_, [&](node::Environment* env_, int exit_code) { Stop(); });
+        environment_, [&](node::Environment* env_, int exit_code) {
+          LWNODE_DEV_LOG("[LWNodeMainRunner::Run] process exit handler");
+          if (env_->is_stopping()) {
+            return;
+          }
+          env_->set_stopping(true);
+          uv_stop(env_->event_loop());
+        });
 
     Context::Scope context_scope(env_->context());
 
@@ -206,11 +213,21 @@ class LWNodeMainRunner {
 
   void Stop() {
     LWNODE_DEV_LOG("[LWNodeMainRunner::Stop]");
-    CHECK_NOT_NULL(environment_);
+    if (!environment_) {
+      LWNODE_DEV_LOG("[LWNodeMainRunner::Stop] no environment");
+      return;
+    }
     if (environment_->is_stopping()) {
       return;
     }
-    environment_->ExitEnv();
+    environment_->set_stopping(true);
+
+    uv_async_init(uv_default_loop(), &stop_task_, [](uv_async_t* handle) {
+      LWNODE_DEV_LOG("[LWNodeMainRunner::Stop] async task");
+      uv_stop(uv_default_loop());
+    });
+
+    uv_async_send(&stop_task_);
   }
 
   std::shared_ptr<Port> GetPort() {
@@ -233,6 +250,7 @@ class LWNodeMainRunner {
   std::promise<void> promise_;
   std::function<void(v8::Local<v8::Context>)> on_main_env_creation_callback_{
       nullptr};
+  uv_async_t stop_task_;
 };
 
 }  // namespace LWNode

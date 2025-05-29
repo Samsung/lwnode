@@ -89,6 +89,8 @@ class Runtime::Internal {
   }
 
   void Stop() {
+    std::unique_lock<std::mutex> lock(stop_mutex_);
+
     if (state_ != State::kRunning) {
       LWNODE_DEV_LOG("[Runtime::Internal::Stop] already stopped");
       return;
@@ -120,7 +122,8 @@ class Runtime::Internal {
   NodeMainInstance* instance_{nullptr};
   LWNode::LWNodeMainRunner runner_;
   Runtime::Configuration config_;
-  State state_{State::kNotInitialized};
+  std::atomic<State> state_{State::kNotInitialized};
+  std::mutex stop_mutex_;
 };
 
 /**************************************************************************
@@ -204,7 +207,7 @@ bool Runtime::Configuration::Set(const std::string& key,
 bool Runtime::Configuration::Set(const std::string& key, int value) {
   if (key == "gc_interval") {
     LWNODE_DEV_LOGF("[Runtime::Configuration::Set] GC interval set to %dms",
-                   value);
+                    value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_interval(value);
     return true;
   }
