@@ -17,6 +17,6 @@
  #pragma once
 
  #define LWNODE_VERSION_MAJOR 1
- #define LWNODE_VERSION_MINOR 0
+ #define LWNODE_VERSION_MINOR 1
  #define LWNODE_VERSION_PATCH 9
- #define LWNODE_VERSION_TAG "v1.0.9"
+ #define LWNODE_VERSION_TAG "v1.1.9"

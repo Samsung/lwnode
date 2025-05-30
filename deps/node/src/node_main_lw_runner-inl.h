@@ -103,6 +103,8 @@ class LoopStrategy : public MainLoopStrategy {
 
 class LWNodeMainRunner {
  public:
+  LWNodeMainRunner() { ChannelHolder::instance.reset(); }
+
   ~LWNodeMainRunner() {
     LWNODE_DEV_LOG("[LWNodeMainRunner::~LWNodeMainRunner]");
   }
@@ -233,7 +235,17 @@ class LWNodeMainRunner {
   }
 
   std::shared_ptr<Port> GetPort() {
-    CHECK_NOT_NULL(environment_);
+    if (environment_ == nullptr) {
+      if (ChannelHolder::instance == nullptr) {
+        ChannelHolder::instance = std::make_unique<ChannelHolder>();
+        ChannelHolder::instance->Init();
+      }
+      return ChannelHolder::instance->GetPort();
+    } else {
+      if (ChannelHolder::instance) {
+        ChannelHolder::instance.reset();
+      }
+    }
     return environment_->GetPort();
   }
 
