@@ -1419,6 +1419,19 @@ class Environment : public MemoryRetainer {
 #endif
 };
 
+class ChannelHolder {
+ public:
+  ChannelHolder() = default;
+  void Init();
+  std::shared_ptr<Port> GetPort();
+  static std::unique_ptr<node::ChannelHolder> instance;
+
+ private:
+  std::promise<uv_loop_t*> uv_promise_;
+  Channel channel_;
+  friend class Environment;
+};
+
 }  // namespace node
 
 #endif  // defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS

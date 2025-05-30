@@ -311,6 +311,16 @@ std::string GetExecPath(const std::vector<std::string>& argv) {
   return exec_path;
 }
 
+std::unique_ptr<node::ChannelHolder> ChannelHolder::instance;
+
+void ChannelHolder::Init() {
+  channel_ = Channel::New(uv_promise_.get_future(), "embedder");
+}
+
+std::shared_ptr<Port> ChannelHolder::GetPort() {
+  return channel_.port1;
+}
+
 Environment::Environment(IsolateData* isolate_data,
                          Local<Context> context,
                          const std::vector<std::string>& args,
@@ -359,7 +369,15 @@ Environment::Environment(IsolateData* isolate_data,
   }
 
 #if defined(LWNODE)
-  channel_ = Channel::New(uv_promise_.get_future(), "embedder");
+  if (ChannelHolder::instance != nullptr) {
+    // channel.port1 is already being used.
+    channel_ = ChannelHolder::instance->channel_;
+    uv_promise_ = std::move(ChannelHolder::instance->uv_promise_);
+    ChannelHolder::instance.reset();
+  } else {
+    channel_ = Channel::New(uv_promise_.get_future(), "embedder");
+  }
+
   main_message_port_ =
       new MainMessagePort(channel_.port2, std::move(uv_promise_));
   loop_holder_ = new LoopHolderUV(isolate_data->event_loop());
