@@ -105,6 +105,10 @@ static std::string GetErrorSource(Isolate* isolate,
                             sourceline.c_str());
   CHECK_GT(buf.size(), 0);
 
+  // @lwnode
+  start = std::min(start, (int)sourceline.length());
+  end = std::min(end, (int)sourceline.length());
+
   constexpr int kUnderlineBufsize = 1020;
   char underline_buf[kUnderlineBufsize + 4];
   int off = 0;

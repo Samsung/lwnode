@@ -76,6 +76,50 @@ TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
   EXPECT_EQ(count1, 10);
 }
 
+TEST0(Embedtest, MessagePort2_Post_JS_First) {
+  int count1 = 0;
+
+  auto runtime = std::make_shared<lwnode::Runtime>();
+
+  // 1. Set OnMessage before starting the runtime
+  auto port2 = runtime->GetPort();
+  port2->OnMessage([&](const MessageEvent* event) {
+    count1++;
+    if (event->data() == "ping") {
+      auto extra = std::to_string(count1);
+      std::cout << getTimestamp() << " NS pong " + extra << std::endl;
+      port2->PostMessage(MessageEvent::New("pong " + extra));
+    } else {
+      std::cout << getTimestamp() << " NS ping" << std::endl;
+      port2->PostMessage(MessageEvent::New("ping"));
+    }
+  });
+
+  // 2. Start the runtime
+  std::promise<void> promise;
+  std::future<void> init_future = promise.get_future();
+  const char* script = "test/embedding/test-05-message-port-first.js";
+  std::string path = (std::filesystem::current_path() / script).string();
+
+  const bool post_first = true;
+  char* args[] = {const_cast<char*>(""),
+                  const_cast<char*>(path.c_str()),
+                  const_cast<char*>(std::to_string(post_first).c_str())};
+
+  std::thread worker = std::thread(
+      [&](std::promise<void>&& promise) mutable {
+        runtime->Start(COUNT_OF(args), args, std::move(promise));
+      },
+      std::move(promise));
+
+  // 3. Wait for the entry script to run
+  init_future.wait();
+
+  worker.join();
+
+  EXPECT_EQ(count1, 1);
+}
+
 TEST0(Embedtest, Restart) {
   TEST_SKIP("This is not yet production-ready.");
 
