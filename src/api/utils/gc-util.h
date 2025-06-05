@@ -23,6 +23,7 @@
 #include <GCUtil.h>
 #include "compiler.h"
 #include "gc-container.h"
+#include "gc-descriptor.h"
 #include "sf-vector.h"
 
 #include <string>

@@ -43,6 +43,10 @@ class HandleScopeWrap : public gc {
   Type type() const { return type_; }
   v8Scope_t* v8Scope() const { return v8scope_; }
 
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(HandleScopeWrap);
+  SET_GC_POINTER(HandleScopeWrap, handles_);
+  END_IMPLEMENT_TYPED_GC_NEW();
+
  private:
   HandleScopeWrap(HandleScopeWrap::Type type);
   void add(HandleWrap* value);

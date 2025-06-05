@@ -35,6 +35,9 @@ class ArrayBufferAllocatorDecorator : public v8::ArrayBuffer::Allocator,
   }
   void printState();
 
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(ArrayBufferAllocatorDecorator);
+  END_IMPLEMENT_TYPED_GC_NEW();
+
  private:
   size_t currentMemorySize_ = 0;
   size_t peakMemorySize_ = 0;

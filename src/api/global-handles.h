@@ -39,6 +39,9 @@ class GlobalHandles : public gc {
 
   virtual size_t handles_count() const = 0;
 
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(GlobalHandles);
+  END_IMPLEMENT_TYPED_GC_NEW();
+
  private:
   Isolate* const isolate_ = nullptr;
 };
@@ -106,6 +109,11 @@ class GlobalHandles final : public v8::internal::GlobalHandles {
   void clearWeakValues();
   GcObjectInfo* findGcObjectInfo(ValueWrap* value);
   void removeGcObjectInfo(ValueWrap* lwValue);
+
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(GlobalHandles, v8::internal::GlobalHandles);
+  SET_GC_MAP_OR_SET(GlobalHandles, persistentValues_);
+  SET_GC_POINTER(GlobalHandles, isolate_);
+  END_IMPLEMENT_TYPED_GC_NEW();
 
  private:
   GCUnorderedMap<ValueWrap*, size_t> persistentValues_;
