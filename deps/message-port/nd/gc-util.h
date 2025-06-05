@@ -28,6 +28,8 @@ class ValueRef;
 class ObjectRef;
 }  // namespace Escargot
 
+namespace nd {
+
 // typedef of GC-aware vector
 template <typename T,
           bool isEraseStrategyStrict = false,
@@ -113,7 +115,7 @@ class MemoryUtil {
 
   static void GcSetWarningListener(OnGCWarnEventListener callback);
   static void GcPrintGCMemoryUsage(void* data);
-  static void GcFull();
+  static void GcFull(bool includeStack = true);
   static void GcInvokeFinalizers();
   static void Gc();
 
@@ -141,3 +143,5 @@ class MemoryUtil {
                           std::function<bool(uint, double)> filter = nullptr);
   static GCTracer tracer;
 };
+
+}  // namespace nd
