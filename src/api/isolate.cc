@@ -283,8 +283,9 @@ IsolateWrap::IsolateWrap() {
 
   threadManager_ = new ThreadManager();
 
-  // NOTE: check lock_gc_release(); is needed (and where)
-  // lock_gc_release();
+  // The following ensures this instance is retained using PersistentHolder.
+  lock_gc_release();
+
   Memory::gcRegisterFinalizer(this, [](void* self) {
     reinterpret_cast<IsolateWrap*>(self)->~IsolateWrap();
   });
@@ -320,8 +321,8 @@ IsolateWrap* IsolateWrap::New() {
 void IsolateWrap::Dispose() {
   LWNODE_CALL_TRACE_ID(ISOWRAP);
   LWNODE_CALL_TRACE_GC_START();
-  // NOTE: check unlock_gc_release(); is needed (and where)
-  // unlock_gc_release();
+
+  unlock_gc_release();
 
   global_handles()->dispose();
   RegisteredExtension::unregisterAll();
@@ -394,6 +395,7 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     // Do Nothing
     LWNODE_CALL_TRACE_GC_START();
     // NOTE: Calls when vmInstance() is terminated. This happens before GC runs
+    LWNODE_DEV_LOG("[OnVMInstanceDelete]");
     LWNODE_CALL_TRACE_GC_END();
   });
 
