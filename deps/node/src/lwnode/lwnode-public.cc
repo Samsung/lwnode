@@ -145,7 +145,7 @@ Runtime::~Runtime() {
 
 int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   LWNODE_PERF_LOG("[Runtime::Start]");
-  LWNODE_DEV_LOG("[Runtime] version:", LWNODE_VERSION_TAG);
+  LWNODE_DEV_LOG("[Runtime] version: %s", LWNODE_VERSION_TAG);
 #if defined(NDEBUG)
   LWNODE_DEV_LOG("[Runtime] release mode");
 #else

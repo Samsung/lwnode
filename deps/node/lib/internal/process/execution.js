@@ -148,7 +148,11 @@ function createOnGlobalUncaughtException() {
         }
       } catch {}  // Ignore the exception. Diagnostic reporting is unavailable.
     }
-
+    // @lwnode
+    process._rawDebug('js:uncaughtException or unhandledRejection detected.');
+    if (process.lwnode.hasSystemInfo('tizen')) {
+      console.warn(`Warning: It is not safe to resume normal operation after 'uncaughtException' or 'unhandledRejection'. (https://nodejs.org/api/process.html#warning-using-uncaughtexception-correctly)`);
+    }
     const type = fromPromise ? 'unhandledRejection' : 'uncaughtException';
     process.emit('uncaughtExceptionMonitor', er, type);
     if (exceptionHandlerState.captureFn !== null) {

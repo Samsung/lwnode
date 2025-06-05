@@ -103,6 +103,10 @@ bool dumpSelfMemorySnapshot() {
   return dumpMemorySnapshot(createDumpFilePath(), smaps);
 }
 
+void rawDebug(std::string message) {
+  LWNODE_DEV_LOG("%s", message.c_str());
+}
+
 static ValueRef* PssUsage(ExecutionStateRef* state,
                           ValueRef* thisValue,
                           size_t argc,
@@ -332,6 +336,7 @@ void IdleGC(v8::Isolate* isolate) {
   }
   Escargot::Memory::gc();
   malloc_trim(0);
+  LWNODE_DEV_LOG("[GC] heap %zu", Escargot::Memory::heapSize());
 }
 
 void initDebugger() {

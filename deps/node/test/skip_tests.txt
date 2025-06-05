@@ -64,6 +64,7 @@ test/parallel/test-process-env-allowed-flags-are-documented.js
 test/parallel/test-process-env-symbols.js
 test/parallel/test-process-env-tz.js
 test/parallel/test-process-env.js
+test/parallel/test-process-raw-debug.js # rawDebug 는 js 로그로 사용
 test/parallel/test-process-versions.js
 test/parallel/test-promise-reject-callback-exception.js
 test/parallel/test-promise-swallowed-event.js

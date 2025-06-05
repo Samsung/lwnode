@@ -1065,8 +1065,11 @@ Module.prototype._compile = function(content, filename) {
     result = inspectorWrapper(compiledWrapper, thisValue, exports,
                               require, module, filename, dirname);
   } else {
+    // @lwnode
+    process._rawDebug('+js:compiledWrapper.call', filename);
     result = compiledWrapper.call(thisValue, exports, require, module,
                                   filename, dirname);
+    process._rawDebug('-js:compiledWrapper.call', filename);
   }
   hasLoadedAnyUserCJSModule = true;
   if (requireDepth === 0) statCache = null;
