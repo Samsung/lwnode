@@ -58,6 +58,7 @@ void SetCanCallIntoJS(bool can_call_into_js);
 void IdleGC(v8::Isolate* isolate = nullptr);
 void initDebugger();
 bool dumpSelfMemorySnapshot();
+void rawDebug(std::string message);
 
 class MessageLoop {
   using WakeupMainloopHandler = std::function<void()>;

@@ -32,6 +32,8 @@ function loadNativeModule(filename, request) {
   const mod = NativeModule.map.get(filename);
   if (mod) {
     debug('load native module %s', request);
+    // @lwnode
+    process._rawDebug('=js:load native module', request);
     mod.compileForPublicLoader();
     return mod;
   }

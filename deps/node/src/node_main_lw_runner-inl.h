@@ -121,10 +121,11 @@ class LWNodeMainRunner {
     Isolate::Scope isolate_scope(isolate_);
     HandleScope handle_scope(isolate_);
 
+    LWNODE_DEV_LOG("[LWNodeMainRunner::Run] create main environment");
     int exit_code = 0;
     DeleteFnPtr<Environment, FreeEnvironment> env_ =
         nodeMainInstance.CreateMainEnvironment(&exit_code);
-    LWNODE_DEV_LOG("[LWNodeMainRunner::Run] create main environment");
+    LWNODE_DEV_LOG("[LWNodeMainRunner::Run] /create main environment");
 
     CHECK_NOT_NULL(env_);
 
@@ -148,16 +149,20 @@ class LWNodeMainRunner {
     }
 
     if (exit_code == 0) {
-      LoadEnvironment(env_.get());
       LWNODE_DEV_LOG("[LWNodeMainRunner::Run] load environment");
+      LoadEnvironment(env_.get());
+      LWNODE_DEV_LOG("[LWNodeMainRunner::Run] /load environment");
 
       env_->set_trace_sync_io(env_->options()->trace_sync_io);
 
       try {
         LWNODE_PERF_LOG("[LWNodeMainRunner::Run] loaded script");
+        LWNODE_DEV_LOG("[LWNodeMainRunner::Run] set runtime ready");
         promise_.set_value();
       } catch (const std::exception& e) {
-        LWNODE_DEV_LOG("[LWNodeMainRunner::Run] promise error:", e.what());
+        LWNODE_DEV_LOG("[LWNodeMainRunner::Run] promise error: %s", e.what());
+        v8::V8::ShutdownPlatform();
+        return 1;
       }
 
       {

@@ -221,8 +221,12 @@ void RawDebug(const FunctionCallbackInfo<Value>& args) {
   CHECK(args.Length() == 1 && args[0]->IsString() &&
         "must be called with a single string");
   Utf8Value message(args.GetIsolate(), args[0]);
-  FPrintF(stderr, "%s\n", message);
-  fflush(stderr);
+#if defined(HOST_TIZEN) || defined(DEV)
+  LWNode::rawDebug(message.ToString());
+#else
+  // FPrintF(stderr, "%s\n", message);
+  // fflush(stderr);
+#endif
 }
 
 static void Umask(const FunctionCallbackInfo<Value>& args) {

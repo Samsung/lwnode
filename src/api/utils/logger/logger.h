@@ -20,13 +20,21 @@
 #include "logger-impl.h"
 #include "logger-util.h"
 
+#if defined(HOST_TIZEN)
+#include <dlog.h>
+#endif
+
 // loggers using LWNodeLogger which supports dlog
 #define LWNODE_USER_LOG(...) LWNodeLogger(LogKind::user()).log(__VA_ARGS__)
+
 #if defined(HOST_TIZEN)
-#define LWNODE_DEV_LOG(...) LWNodeLogger(LogKind::lwnode()).log(__VA_ARGS__)
+#define LWNODE_DEV_LOG(...) dlog_print(DLOG_INFO, "LWNODE", __VA_ARGS__);
+#elif defined(DEV)
+#define LWNODE_DEV_LOG(fmt, ...) printf(fmt "\n", ##__VA_ARGS__);
 #else
-#define LWNODE_DEV_LOG(...)
+#define LWNODE_DEV_LOG(fmt, ...)
 #endif
+
 #define LWNODE_DEV_LOGF(fmt, ...)                                              \
   LWNodeLogger(LogKind::lwnode()).print(fmt, ##__VA_ARGS__)
 
@@ -36,7 +44,7 @@
 #define LWNODE_PERF_LOG(...)                                                   \
   dlog_print(DLOG_INFO,                                                        \
              "LWNODE",                                                         \
-             "[%.0lfms] %s\n",                                                 \
+             "[%.0lfms] %s",                                                   \
              measurePerformance(),                                             \
              ##__VA_ARGS__);
 #elif !defined(NDEBUG)

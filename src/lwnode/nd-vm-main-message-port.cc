@@ -57,7 +57,7 @@ void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
   try {
     internal_->uv_promise_.set_value(uv_loop_);
   } catch (const std::exception& e) {
-    LWNODE_DEV_LOG("[MainMessagePort::Init] promise error:", e.what());
+    LWNODE_DEV_LOG("[MainMessagePort::Init] promise error: %s", e.what());
   }
 
   Channel::DrainPendingMessages(uv_loop_);
