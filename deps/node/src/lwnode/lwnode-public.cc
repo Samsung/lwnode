@@ -26,6 +26,12 @@
 #include "trace.h"
 #include "v8.h"
 
+namespace node {
+namespace native_module {
+extern bool initializeLWNodeBuiltinFile();
+}
+}  // namespace node
+
 using namespace node;
 
 namespace lwnode {
@@ -47,10 +53,29 @@ class Runtime::Internal {
     kReleased
   };
 
+  enum ExitCode {
+    kSuccess = 0,
+    kFailure = 1,
+    kNoBuiltinFile = 100,
+  };
+
+  Internal() {
+    LWNODE_DEV_LOG("[Runtime::Internal::Internal] new");
+
+    // Ensure that builtin file is loaded before initializing node.
+    native_module::initializeLWNodeBuiltinFile();
+  }
+
   std::pair<bool, int> Init(int argc, char** argv) {
     if (state_ != State::kNotInitialized) {
       LWNODE_DEV_LOG("[Runtime::Internal::Init] already initialized");
-      return std::make_pair(false, -1);
+      return std::make_pair(true, ExitCode::kFailure);
+    }
+
+    if (!native_module::initializeLWNodeBuiltinFile()) {
+      LWNODE_DEV_LOG(
+          "[Runtime::Internal::Init] failed to initialize builtin file");
+      return std::make_pair(true, ExitCode::kNoBuiltinFile);
     }
 
     LWNODE_DEV_LOG("[Runtime::Internal::Init]");

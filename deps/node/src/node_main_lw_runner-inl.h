@@ -214,6 +214,7 @@ class LWNodeMainRunner {
 
     v8::V8::ShutdownPlatform();
 
+    environment_ = nullptr;
     return exit_code;
   }
 
