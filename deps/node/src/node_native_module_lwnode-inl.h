@@ -86,6 +86,30 @@ std::string getSelfProcPath() {
   return std::string(path);
 }
 
+static std::string getExternalBuiltinsPath() {
+  static std::string s_externalBuiltinsPath;
+  if (s_externalBuiltinsPath.empty()) {
+    std::string executablePath = getSelfProcPath();
+    executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
+    s_externalBuiltinsPath = executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
+  }
+  return s_externalBuiltinsPath;
+}
+
+bool initializeLWNodeBuiltinFile() {
+#ifdef LWNODE_EXTERNAL_BUILTINS_FILENAME
+  std::string externalBuiltinsPath = getExternalBuiltinsPath();
+
+  if (s_archiveFileScope.isFileOpened() == false) {
+    s_archiveFileScope.open(externalBuiltinsPath.c_str());
+  }
+
+  return s_archiveFileScope.isFileOpened();
+#else
+  return true;
+#endif
+}
+
 void setError(ReaderError error) {
   s_lastError = error;
   ERROR_AND_ABORT(s_lastError);
@@ -197,16 +221,8 @@ FileData readFileFromArchive(std::string filename,
   size_t bufferSize = 0;
   char* buffer = nullptr;
 
-  static std::string s_externalBuiltinsPath;
-
-  if (s_externalBuiltinsPath.empty()) {
-    std::string executablePath = getSelfProcPath();
-    executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
-    s_externalBuiltinsPath = executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
-  }
-
   if (readFileFromArchive(
-          s_externalBuiltinsPath, filename, &buffer, &bufferSize) == false) {
+          getExternalBuiltinsPath(), filename, &buffer, &bufferSize) == false) {
     setError(ReaderError::READ_FILE_FROMARCHIVE);
     return FileData();
   }
