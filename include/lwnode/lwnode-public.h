@@ -65,7 +65,7 @@ class LWNODE_EXPORT Runtime {
 
     void OnSendMessageSync(SendMessageSyncCallback callback, void* user_data);
 
-    bool Set(const std::string& key, const std::string& value);
+    bool Set(const std::string& key, const char* value);
     bool Set(const std::string& key, int value);
     bool Set(const std::string& key, bool value);
 
@@ -93,8 +93,8 @@ class LWNODE_EXPORT Runtime {
   int Start(int argc, char** argv, std::promise<void>&& promise);
 
   /**
-   * Stop the runtime. You can use this function to stop the runtime from another
-   * thread.
+   * Stop the runtime. You can use this function to stop the runtime from
+   * another thread.
    **/
   void Stop();
 
