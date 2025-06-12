@@ -62,8 +62,8 @@ class Runtime::Internal {
   Internal() {
     LWNODE_DEV_LOG("[Runtime::Internal::Internal] new");
 
-    // Ensure that builtin file is loaded before initializing node.
-    native_module::initializeLWNodeBuiltinFile();
+    init_future_ = init_promise_.get_future();
+    runner_.SetInitPromise(std::move(init_promise_));
   }
 
   std::pair<bool, int> Init(int argc, char** argv) {
@@ -149,6 +149,8 @@ class Runtime::Internal {
   Runtime::Configuration config_;
   std::atomic<State> state_{State::kNotInitialized};
   std::mutex stop_mutex_;
+  std::promise<void> init_promise_;
+  std::future<void> init_future_;
 };
 
 /**************************************************************************
@@ -168,7 +170,7 @@ Runtime::~Runtime() {
   LWNODE_DEV_LOG("[Runtime::~Runtime]");
 }
 
-int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
+int Runtime::Start(int argc, char** argv) {
   LWNODE_PERF_LOG("[Runtime::Start]");
   LWNODE_DEV_LOG("[Runtime] version: %s", LWNODE_VERSION_TAG);
 #if defined(NDEBUG)
@@ -177,7 +179,6 @@ int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   LWNODE_DEV_LOG("[Runtime] debug mode");
 #endif
 
-  internal_->runner_.SetInitPromise(std::move(promise));
   std::pair<bool, int> init_result = internal_->Init(argc, argv);
 
   if (init_result.first) {
@@ -197,6 +198,14 @@ void Runtime::Stop() {
 
 std::shared_ptr<Port> Runtime::GetPort() {
   return internal_->runner_.GetPort();
+}
+
+std::future_status Runtime::WaitForReady(int64_t ms) {
+  if (ms < 0) {
+    internal_->init_future_.wait();
+    return std::future_status::ready;
+  }
+  return internal_->init_future_.wait_for(std::chrono::milliseconds(ms));
 }
 
 /**************************************************************************

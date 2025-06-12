@@ -95,11 +95,10 @@ class EXPORT_API Port {
   void OnMessage(const OnMessageCallback& callback);
   void Unref();
 
+  Port();
   ~Port();
 
  private:
-  Port();
-
   Result PostMessageAsync(std::shared_ptr<MessageEvent> event);
 
   struct Internal;

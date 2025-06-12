@@ -44,22 +44,19 @@ int main(int argc, char* argv[]) {
 
   auto runtime = std::make_shared<lwnode::Runtime>(std::move(configuration));
 
-  std::promise<void> promise;
-  std::future<void> init_future = promise.get_future();
   const char* script = "test/embedding/test-10-send-message-sync-basic.js";
   std::string path = (std::filesystem::current_path() / script).string();
   char* args[] = {const_cast<char*>(""), const_cast<char*>(path.c_str())};
 
   std::thread worker = std::thread(
-      [&](std::promise<void>&& promise) mutable {
+      [&]() mutable {
         // FIXME: Fix Runtime::Init() call to ensure environment initialization
         // before running the loop, Runtime::Run(). This workaround passes a
         // promise directly to know when that is.
-        runtime->Start(COUNT_OF(args), args, std::move(promise));
-      },
-      std::move(promise));
+        runtime->Start(COUNT_OF(args), args);
+      });
 
-  init_future.wait();
+  runtime->WaitForReady();
 
   int count1 = 0;
   auto port2 = runtime->GetPort();

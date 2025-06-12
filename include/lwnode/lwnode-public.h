@@ -86,19 +86,35 @@ class LWNODE_EXPORT Runtime {
    * @param argc - Argument count.
    * @param argv - Argument vector. The element should be the starting file
    * name of the application.
-   * @param promise - Promise object. It will be set when the runtime
-   * initialization is complete.
    * @return Returns the exit code of the runtime.
    **/
-  int Start(int argc, char** argv, std::promise<void>&& promise);
+  int Start(int argc, char** argv);
 
   /**
-   * Stop the runtime. You can use this function to stop the runtime from another
-   * thread.
+   * Stop the runtime. You can use this function to stop the runtime from
+   * another thread.
    **/
   void Stop();
 
+  /**
+   * Get the message port instance.
+   *
+   * @return Returns the shared pointer of the message port instance. If the
+   * runtime is not ready, it returns the unavailable port instance. Otherwise,
+   * it returns the shared pointer of the available message port instance.
+   *
+   **/
   std::shared_ptr<Port> GetPort();
+
+  /**
+   * Wait until the runtime is ready.
+   *
+   * @param ms - Timeout in milliseconds. If it is negative, it waits
+   * indefinitely.
+   * @return Returns the status of the future object. If it is ready, the
+   * runtime is ready.
+   **/
+  std::future_status WaitForReady(int64_t ms = -1);
 
  private:
   class Internal;

@@ -239,7 +239,9 @@ class LWNodeMainRunner {
   }
 
   std::shared_ptr<Port> GetPort() {
-    CHECK_NOT_NULL(environment_);
+    if (!environment_) {
+      return std::make_shared<Port>();
+    }
     return environment_->GetPort();
   }
 
