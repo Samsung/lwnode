@@ -33,19 +33,14 @@ std::string CallMethod(Port* port, const std::string& function) {
 int main(int argc, char* argv[]) {
   auto runtime = std::make_shared<lwnode::Runtime>();
 
-  std::promise<void> promise;
-  std::future<void> init_future = promise.get_future();
   const char* script = "test/embedding/test-03-message-port-sync.js";
   std::string path = (std::filesystem::current_path() / script).string();
   char* args[] = {const_cast<char*>(""), const_cast<char*>(path.c_str())};
 
-  std::thread worker = std::thread(
-      [&](std::promise<void>&& promise) mutable {
-        runtime->Start(COUNT_OF(args), args, std::move(promise));
-      },
-      std::move(promise));
+  std::thread worker =
+      std::thread([&]() mutable { runtime->Start(COUNT_OF(args), args); });
 
-  init_future.wait();
+  runtime->WaitForReady();
 
   auto port2 = runtime->GetPort();
   port2->OnMessage([&](const MessageEvent* event) {

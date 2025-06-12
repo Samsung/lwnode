@@ -1,6 +1,8 @@
 const lwnode = process.lwnode;
 const port = process.lwnode.port;
 
+console.log("start");
+
 lwnode.ref();
 
 port.onmessage = (event) => {

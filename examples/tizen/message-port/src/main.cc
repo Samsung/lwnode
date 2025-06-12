@@ -11,9 +11,6 @@ int main(int argc, char* argv[]) {
   dlog_print(
       DLOG_INFO, APP_LOG_TAG, "[Native] message-port example app started...");
 
-  std::promise<void> promise;
-  std::future<void> init_future = promise.get_future();
-
   auto runtime = std::make_shared<lwnode::Runtime>();
 
   std::thread t([&]() {
@@ -36,13 +33,13 @@ int main(int argc, char* argv[]) {
         const_cast<char*>(""), const_cast<char*>("index.js"), nullptr};
 
     dlog_print(DLOG_INFO, APP_LOG_TAG, "[Native] runtime.Start() called...");
-    runtime->Start(2, args, std::move(promise));
+    runtime->Start(2, args);
 
     dlog_print(DLOG_INFO, APP_LOG_TAG, "[Native] end thread");
   });
 
   // Wait until the js script is initialized to get the port.
-  init_future.wait();
+  runtime->WaitForReady();
 
   std::shared_ptr<Port> port = runtime->GetPort();
 

@@ -32,8 +32,6 @@ std::string getTimestamp() {
 TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
   auto runtime = std::make_shared<lwnode::Runtime>();
 
-  std::promise<void> promise;
-  std::future<void> init_future = promise.get_future();
   const char* script = "test/embedding/test-02-message-port-many.js";
   std::string path = (std::filesystem::current_path() / script).string();
 
@@ -42,13 +40,10 @@ TEST0(Embedtest, MessagePort2_Post_Many_JS_First) {
                   const_cast<char*>(path.c_str()),
                   const_cast<char*>(std::to_string(post_first).c_str())};
 
-  std::thread worker = std::thread(
-      [&](std::promise<void>&& promise) mutable {
-        runtime->Start(COUNT_OF(args), args, std::move(promise));
-      },
-      std::move(promise));
+  std::thread worker =
+      std::thread([&]() mutable { runtime->Start(COUNT_OF(args), args); });
 
-  init_future.wait();
+  runtime->WaitForReady();
 
   int count1 = 0;
 
@@ -83,22 +78,18 @@ TEST0(Embedtest, Restart) {
   for (int i = 0; i < 3; i++) {
     auto runtime = std::make_shared<lwnode::Runtime>();
 
-    std::promise<void> promise;
-    std::future<void> init_future = promise.get_future();
     const char* script = "test/embedding/test-21-runtime-hello.js";
     std::string path = (std::filesystem::current_path() / script).string();
 
     char* args[] = {const_cast<char*>(""), const_cast<char*>(path.c_str())};
 
-    std::thread worker = std::thread(
-        [&](std::promise<void>&& promise) mutable {
-          std::cout << ++count << " Start " << std::endl;
-          runtime->Start(COUNT_OF(args), args, std::move(promise));
-          std::cout << count << " /Start " << std::endl;
-        },
-        std::move(promise));
+    std::thread worker = std::thread([&]() mutable {
+      std::cout << ++count << " Start " << std::endl;
+      runtime->Start(COUNT_OF(args), args);
+      std::cout << count << " /Start " << std::endl;
+    });
 
-    init_future.wait();
+    runtime->WaitForReady();
     worker.join();
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
@@ -113,8 +104,6 @@ TEST0(Embedtest, RestartAfterStop) {
   for (int i = 0; i < 3; i++) {
     auto runtime = std::make_shared<lwnode::Runtime>();
 
-    std::promise<void> promise;
-    std::future<void> init_future = promise.get_future();
     const char* script = "test/embedding/test-22-runtime-heartbeat.js";
     std::string path = (std::filesystem::current_path() / script).string();
 
@@ -124,15 +113,13 @@ TEST0(Embedtest, RestartAfterStop) {
                     const_cast<char*>(path.c_str())};
 
     std::cout << ++count << "Thread " << std::endl;
-    std::thread worker = std::thread(
-        [&](std::promise<void>&& promise) mutable {
-          std::cout << count << " Start " << std::endl;
-          runtime->Start(COUNT_OF(args), args, std::move(promise));
-          std::cout << count << " /Start " << std::endl;
-        },
-        std::move(promise));
+    std::thread worker = std::thread([&]() mutable {
+      std::cout << count << " Start " << std::endl;
+      runtime->Start(COUNT_OF(args), args);
+      std::cout << count << " /Start " << std::endl;
+    });
 
-    init_future.wait();
+    runtime->WaitForReady();
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
     runtime->Stop();
@@ -146,8 +133,6 @@ TEST0(Embedtest, RestartAfterStop) {
 TEST(Embedtest, MessagePortErrorAfterRegisterOnMessage, 5000) {
   auto runtime = std::make_shared<lwnode::Runtime>();
 
-  std::promise<void> promise;
-  std::future<void> init_future = promise.get_future();
   const char* script = "test/embedding/test-04-message-port-error.js";
   std::string path = (std::filesystem::current_path() / script).string();
 
@@ -156,13 +141,10 @@ TEST(Embedtest, MessagePortErrorAfterRegisterOnMessage, 5000) {
                   const_cast<char*>(path.c_str()),
                   const_cast<char*>(std::to_string(post_first).c_str())};
 
-  std::thread worker = std::thread(
-      [&](std::promise<void>&& promise) mutable {
-        runtime->Start(COUNT_OF(args), args, std::move(promise));
-      },
-      std::move(promise));
+  std::thread worker =
+      std::thread([&]() mutable { runtime->Start(COUNT_OF(args), args); });
 
-  init_future.wait();
+  runtime->WaitForReady();
 
   int count1 = 0;
 
