@@ -27,6 +27,23 @@
 
 using namespace LWNode;
 
+std::string getSelfProcPath() {
+  char path[PATH_MAX + 1];
+  ssize_t length = readlink("/proc/self/exe", path, PATH_MAX);
+  if (length < 0) {
+    ERROR_AND_ABORT("readlink fails");
+  }
+  path[length] = '\0';
+  return std::string(path);
+}
+
+std::string getExternalBuiltinsPath() {
+  std::string executablePath = getSelfProcPath();
+  executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
+
+  return executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
+}
+
 namespace node {
 namespace native_module {
 using v8::Isolate;
@@ -76,29 +93,14 @@ static thread_local std::map<std::string, UnzFileCachedInfo>
     s_unzFileInfoDictionary;
 static thread_local ReaderError s_lastError = ReaderError::NO_ERROR;
 
-std::string getSelfProcPath() {
-  char path[PATH_MAX + 1];
-  ssize_t length = readlink("/proc/self/exe", path, PATH_MAX);
-  if (length < 0) {
-    ERROR_AND_ABORT("readlink fails");
-  }
-  path[length] = '\0';
-  return std::string(path);
-}
-
-static std::string getExternalBuiltinsPath() {
-  static std::string s_externalBuiltinsPath;
-  if (s_externalBuiltinsPath.empty()) {
-    std::string executablePath = getSelfProcPath();
-    executablePath = executablePath.substr(0, executablePath.rfind('/') + 1);
-    s_externalBuiltinsPath = executablePath + LWNODE_EXTERNAL_BUILTINS_FILENAME;
-  }
-  return s_externalBuiltinsPath;
-}
-
-bool initializeLWNodeBuiltinFile() {
+bool initializeLWNodeBuiltinFile(const std::string path = "") {
 #ifdef LWNODE_EXTERNAL_BUILTINS_FILENAME
-  std::string externalBuiltinsPath = getExternalBuiltinsPath();
+
+  std::string externalBuiltinsPath = path;
+
+  if (path.empty()) {
+    externalBuiltinsPath = getExternalBuiltinsPath();
+  }
 
   if (s_archiveFileScope.isFileOpened() == false) {
     s_archiveFileScope.open(externalBuiltinsPath.c_str());

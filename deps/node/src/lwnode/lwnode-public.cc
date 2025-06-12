@@ -28,7 +28,7 @@
 
 namespace node {
 namespace native_module {
-extern bool initializeLWNodeBuiltinFile();
+extern bool initializeLWNodeBuiltinFile(const std::string path = "");
 }
 }  // namespace node
 
@@ -39,6 +39,7 @@ namespace lwnode {
 struct Runtime::Configuration::Internal {
   Runtime::SendMessageSyncCallback send_message_sync_callback{nullptr};
   void* send_message_sync_callback_data{nullptr};
+  std::string lwnode_data_path;
 };
 
 class Runtime::Internal {
@@ -59,12 +60,7 @@ class Runtime::Internal {
     kNoBuiltinFile = 100,
   };
 
-  Internal() {
-    LWNODE_DEV_LOG("[Runtime::Internal::Internal] new");
-
-    // Ensure that builtin file is loaded before initializing node.
-    native_module::initializeLWNodeBuiltinFile();
-  }
+  Internal() { LWNODE_DEV_LOG("[Runtime::Internal::Internal] new"); }
 
   std::pair<bool, int> Init(int argc, char** argv) {
     if (state_ != State::kNotInitialized) {
@@ -72,7 +68,8 @@ class Runtime::Internal {
       return std::make_pair(true, ExitCode::kFailure);
     }
 
-    if (!native_module::initializeLWNodeBuiltinFile()) {
+    if (!native_module::initializeLWNodeBuiltinFile(
+            config_.internal_->lwnode_data_path)) {
       LWNODE_DEV_LOG(
           "[Runtime::Internal::Init] failed to initialize builtin file");
       return std::make_pair(true, ExitCode::kNoBuiltinFile);
@@ -224,8 +221,15 @@ void Runtime::Configuration::OnSendMessageSync(
   internal_->send_message_sync_callback_data = user_data;
 }
 
-bool Runtime::Configuration::Set(const std::string& key,
-                                 const std::string& value) {
+bool Runtime::Configuration::Set(const std::string& key, const char* value) {
+  std::string value_string = value ? value : "";
+
+  if (key == "lwnode_data_path") {
+    LWNODE_DEV_LOGF("[Runtime::Configuration::Set] data path set to %s",
+                    value_string.c_str());
+    internal_->lwnode_data_path = value_string;
+    return true;
+  }
   return false;
 }
 
