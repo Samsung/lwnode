@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <future>
 #include <iostream>
 #include <thread>
@@ -176,4 +177,168 @@ TEST(Embedtest, MessagePortErrorAfterRegisterOnMessage, 5000) {
 
   // This test should not exit due to timeout
   worker.join();
+}
+
+class OnScopeLeave {
+ public:
+  // clang-format off
+    using Function = std::function<void()>;
+    OnScopeLeave(const OnScopeLeave& other) = delete;
+    OnScopeLeave& operator=(const OnScopeLeave& other) = delete;
+    explicit OnScopeLeave(Function&& function) : function_(std::move(function)) {}
+    OnScopeLeave(OnScopeLeave&& other) : function_(std::move(other.function_)) { other.function_ = nullptr; }
+    ~OnScopeLeave() { if (function_) function_(); }
+    static WARN_UNUSED_RESULT OnScopeLeave create(Function&& function) { return OnScopeLeave(std::move(function)); }
+  // clang-format on
+ private:
+  Function function_;
+};
+
+static std::filesystem::path getOldPath(
+    const std::filesystem::path& original_path) {
+  std::filesystem::path old_path;
+  if (original_path.has_extension()) {
+    old_path =
+        original_path.parent_path() / (original_path.stem().string() + "_old" +
+                                       original_path.extension().string());
+  } else {
+    old_path = original_path.parent_path() /
+               (original_path.filename().string() + "_old");
+  }
+  return old_path;
+}
+
+static void RenameToOld(const std::string& file_path) {
+  std::filesystem::path original_path(file_path);
+  std::filesystem::path old_path = getOldPath(original_path);
+
+  try {
+    if (std::filesystem::exists(original_path)) {
+      std::filesystem::rename(original_path, old_path);
+      std::cout << "Renamed '" << original_path << "' to '" << old_path << "'"
+                << std::endl;
+    }
+  } catch (const std::filesystem::filesystem_error& e) {
+    std::cerr << "Error renaming to old: " << e.what() << std::endl;
+  }
+}
+
+static void RenameToOriginal(const std::string& file_path) {
+  std::filesystem::path original_path(file_path);
+  std::filesystem::path old_path = getOldPath(original_path);
+
+  try {
+    if (std::filesystem::exists(old_path)) {
+      std::filesystem::rename(old_path, original_path);
+      std::cout << "Reverted '" << old_path << "' to '" << original_path << "'"
+                << std::endl;
+    }
+  } catch (const std::filesystem::filesystem_error& e) {
+    std::cerr << "Error reverting to original: " << e.what() << std::endl;
+  }
+}
+
+TEST0(Embedtest, Rename_Test) {
+  std::filesystem::path temp_dir = std::filesystem::temp_directory_path();
+  std::filesystem::path original_temp_file_path =
+      temp_dir / "embedtest_rename_test_file.tmp";
+  std::filesystem::path old_temp_file_path =
+      getOldPath(original_temp_file_path);
+
+  auto _ = OnScopeLeave::create([&]() {
+    std::error_code ec;
+    std::filesystem::remove(original_temp_file_path, ec);
+    std::filesystem::remove(old_temp_file_path, ec);
+  });
+
+  // 2. Setup
+  std::error_code ec;
+  std::filesystem::remove(original_temp_file_path, ec);
+  std::filesystem::remove(old_temp_file_path, ec);
+  {
+    std::ofstream outfile(original_temp_file_path);
+  }
+  ASSERT_EQ(std::filesystem::exists(original_temp_file_path), true);
+
+  // 3. Test RenameToOld
+  RenameToOld(original_temp_file_path.string());
+  ASSERT_EQ(!std::filesystem::exists(original_temp_file_path), true);
+  ASSERT_EQ(std::filesystem::exists(old_temp_file_path), true);
+
+  // 4. Test RenameToOriginal
+  RenameToOriginal(original_temp_file_path.string());
+  ASSERT_EQ(std::filesystem::exists(original_temp_file_path), true);
+  ASSERT_EQ(!std::filesystem::exists(old_temp_file_path), true);
+}
+
+extern std::string getExternalBuiltinsPath();
+
+TEST0(Embedtest, StartWithNoResource) {
+  const char* script = "test/embedding/test-22-runtime-heartbeat.js";
+  std::string path = (std::filesystem::current_path() / script).string();
+
+  char* args[] = {const_cast<char*>(""),
+                  const_cast<char*>("--unhandled-rejections=strict"),
+                  const_cast<char*>("--expose-gc"),
+                  const_cast<char*>(path.c_str())};
+
+  std::string builtin_path = getExternalBuiltinsPath();
+
+  // 0. Setup
+  auto _ = OnScopeLeave::create([&]() { RenameToOriginal(builtin_path); });
+  RenameToOriginal(builtin_path);
+
+  // 1. Simulate no lwnode.dat
+  RenameToOld(builtin_path);
+
+  {
+    auto runtime = std::make_shared<lwnode::Runtime>();
+
+    std::promise<void> promise;
+    std::future<void> init_future = promise.get_future();
+
+    int result = -1;
+
+    std::thread worker = std::thread(
+        [&](std::promise<void>&& promise) mutable {
+          result = runtime->Start(COUNT_OF(args), args, std::move(promise));
+        },
+        std::move(promise));
+
+    init_future.wait_for(std::chrono::seconds(2));
+
+    ASSERT(result == 100);
+
+    worker.join();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout << "" << std::endl;
+  }
+
+  // 2. Simulate reverting lwnode.dat.
+  RenameToOriginal(builtin_path);
+
+  {
+    auto runtime = std::make_shared<lwnode::Runtime>();
+
+    std::promise<void> promise;
+    std::future<void> init_future = promise.get_future();
+
+    int result = 0;
+
+    std::thread worker = std::thread(
+        [&](std::promise<void>&& promise) mutable {
+          result = runtime->Start(COUNT_OF(args), args, std::move(promise));
+        },
+        std::move(promise));
+
+    init_future.wait();
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    runtime->Stop();
+
+    worker.join();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    EXPECT(result == 0);
+  }
 }
