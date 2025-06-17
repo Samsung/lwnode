@@ -51,7 +51,7 @@ enum LOG_PRIORITY {
 
 // TRACE -----------------------------------------------------------------------
 
-#if !defined(NDEBUG) || defined(DEV)
+#if defined(DEV)
 #define ENABLE_TRACE
 #endif
 

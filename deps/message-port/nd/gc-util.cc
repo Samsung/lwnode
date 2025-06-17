@@ -23,9 +23,6 @@
 #define CLR_MAGENTA "\033[0;35m"
 #define TRACE_GC_START(fmt, ...) TRACEF0(GC, "GC" fmt, ##__VA_ARGS__)
 #define TRACE_GC_END(fmt, ...) TRACEF0(GC, "/GC" fmt, ##__VA_ARGS__)
-#ifdef ENABLE_TRACE
-#define ENABLE_TRACE_GC
-#endif
 
 using namespace Escargot;
 
@@ -35,7 +32,9 @@ using namespace Escargot;
 
 // --- GCTracer ---
 
+#ifdef ENABLE_TRACE_GC
 GCTracer MemoryUtil::tracer;
+#endif
 
 #define GC_DEREF_OFFSET 1
 #define TO_FAKEPTR(gcPtr) ((void*)((size_t)gcPtr + GC_DEREF_OFFSET))
