@@ -16,6 +16,10 @@ int main(int argc, char* argv[]) {
   if (!configuration.Set("gc_interval", 10000)) {
     std::cerr << "Failed to set gc_interval" << std::endl;
   }
+  if (!configuration.Set("gc_free_space_divisor", 10)) {
+    std::cerr << "Failed to set gc_free_space_divisor" << std::endl;
+  }
+
   auto runtime = std::make_shared<lwnode::Runtime>(std::move(configuration));
 
   std::promise<void> promise;

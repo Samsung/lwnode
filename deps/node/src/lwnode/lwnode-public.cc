@@ -239,6 +239,11 @@ bool Runtime::Configuration::Set(const std::string& key, int value) {
                     value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_interval(value);
     return true;
+  } else if (key == "gc_free_space_divisor") {
+    LWNODE_DEV_LOGF(
+        "[Runtime::Configuration::Set] GC free space divisor set to %d", value);
+    LWNode::GlobalConfiguration::GetInstance().set_gc_free_space_divisor(value);
+    return true;
   }
   return false;
 }
