@@ -21,6 +21,7 @@
 
 #include "api/global.h"
 #include "handle.h"
+#include "lwnode/global-configuration.h"
 #include "lwnode/lwnode-loader.h"
 #include "utils/misc.h"
 #include "utils/string-util.h"
@@ -351,7 +352,7 @@ bool Engine::Dispose() {
   return true;
 }
 
-#define GC_FREE_SPACE_DIVISOR 4
+#define DEFAULT_GC_FREE_SPACE_DIVISOR 4
 
 void Engine::initialize() {
 #ifndef NDEBUG
@@ -367,7 +368,13 @@ void Engine::initialize() {
 #endif
 
   Globals::initialize(Platform::GetInstance());
-  Memory::setGCFrequency(GC_FREE_SPACE_DIVISOR);
+  int gcFreeSpaceDivisor =
+      LWNode::GlobalConfiguration::GetInstance().gc_free_space_divisor();
+  if (gcFreeSpaceDivisor < 0) {
+    gcFreeSpaceDivisor = DEFAULT_GC_FREE_SPACE_DIVISOR;
+  }
+
+  Memory::setGCFrequency(gcFreeSpaceDivisor);
   gcHeap_.reset(GCHeap::create());
 
   if (Global::flags()->isOn(Flag::Type::TraceGC)) {

@@ -31,11 +31,17 @@ class GlobalConfiguration {
   void set_gc_interval(int interval) { gc_interval_ = interval; }
   int gc_interval() { return gc_interval_; }
 
+  void set_gc_free_space_divisor(int divisor) {
+    gc_free_space_divisor_ = divisor;
+  }
+  int gc_free_space_divisor() { return gc_free_space_divisor_; }
+
  private:
   GlobalConfiguration() = default;
   ~GlobalConfiguration() = default;
 
   int gc_interval_ = -1;  // TODO: change optional type
+  int gc_free_space_divisor_ = -1;
 };
 
 }  // namespace LWNode
