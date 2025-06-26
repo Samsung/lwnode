@@ -89,8 +89,6 @@ enum class ReaderError {
 };
 
 static thread_local ArchiveFileScope s_archiveFileScope;
-static thread_local std::map<std::string, UnzFileCachedInfo>
-    s_unzFileInfoDictionary;
 static thread_local ReaderError s_lastError = ReaderError::NO_ERROR;
 
 bool initializeLWNodeBuiltinFile(const std::string path = "") {
@@ -157,63 +155,34 @@ bool readFileFromArchive(const std::string& archiveFilename,
   const unzFile file = s_archiveFileScope.file();
   CHECK_NOT_NULL(file);
 
-  // 1.1 check if the cache on this filename exists
-  const auto& it = s_unzFileInfoDictionary.find(filename);
-  if (it != s_unzFileInfoDictionary.end()) {
-    UnzFileCachedInfo cache = it->second;
-
-    // 1.2 move the file position using the cached info and read the data
-    unzGoToFilePos(file, &cache.position);
-    return readCurrentFileFromArchive(
-        file, cache.uncompressedSize, buffer, fileSize);
-  }
-
-  // 2. read the data by searching the file position from the first one.
-  if (unzGoToFirstFile(file) < 0) {
-    setError(ReaderError::UNZ_OPEN_CURRENTFILE);
+  int result = unzLocateFile(file, filename.c_str(), 0);
+  if (result != UNZ_OK) {
+    setError(ReaderError::READ_CURRENTFILE_FROMARCHIVE);
     return false;
   }
 
-  bool isFileFound = false;
-  do {
-    unz_file_info fileInfo;
-    char currentFileName[PATH_MAX];
+  unz_file_info fileInfo;
+  char currentFileName[PATH_MAX];
 
-    if (unzGetCurrentFileInfo(file,
-                              &fileInfo,
-                              currentFileName,
-                              sizeof(currentFileName),
-                              nullptr,
-                              0,
-                              nullptr,
-                              0) < 0) {
-      setError(ReaderError::UNZ_GET_CURRENTFILEINFO);
-      return false;
-    }
+  if (unzGetCurrentFileInfo(file,
+                            &fileInfo,
+                            currentFileName,
+                            sizeof(currentFileName),
+                            nullptr,
+                            0,
+                            nullptr,
+                            0) < 0) {
+    setError(ReaderError::UNZ_GET_CURRENTFILEINFO);
+    return false;
+  }
 
-    if (filename.compare(currentFileName) == 0) {
-      isFileFound = true;
+  if (readCurrentFileFromArchive(
+          file, fileInfo.uncompressed_size, buffer, fileSize) == false) {
+    setError(ReaderError::READ_CURRENTFILE_FROMARCHIVE);
+    return false;
+  }
 
-      // 2.1 read the data from the current file poistion
-      if (readCurrentFileFromArchive(
-              file, fileInfo.uncompressed_size, buffer, fileSize) == false) {
-        setError(ReaderError::READ_CURRENTFILE_FROMARCHIVE);
-        return false;
-      }
-
-      // 2.2 create the cache for this file and register it to the dictionary
-      UnzFileCachedInfo cache;
-      auto result = unzGetFilePos(file, &cache.position);
-      CHECK(result == UNZ_OK);
-      cache.uncompressedSize = fileInfo.uncompressed_size;
-
-      s_unzFileInfoDictionary[filename] = cache;
-      break;
-    }
-
-  } while (unzGoToNextFile(file) != UNZ_END_OF_LIST_OF_FILE);
-
-  return isFileFound;
+  return true;
 }
 
 FileData readFileFromArchive(std::string filename,
