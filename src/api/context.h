@@ -61,13 +61,22 @@ class ContextWrap : public ValueWrap {
 
   void initDebugger();
 
- private:
-  EmbedderDataMap* embedder_data_{nullptr};
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(ContextWrap, ValueWrap);
+  SET_GC_POINTER(ContextWrap, embedder_data_);
+  SET_GC_POINTER(ContextWrap, isolate_);
+  SET_GC_POINTER(ContextWrap, context_);
+  SET_GC_POINTER(ContextWrap, bindingObject_);
+  SET_GC_POINTER(ContextWrap, security_token_);
+  SET_GC_POINTER(ContextWrap, callSite_);
+  END_IMPLEMENT_TYPED_GC_NEW();
 
+ private:
   ContextWrap(IsolateWrap* isolate,
               v8::ExtensionConfiguration* extensionConfiguration);
   void setEmbedderData(int index, void* value);
   void* getEmbedderData(int index);
+
+  EmbedderDataMap* embedder_data_{nullptr};
 
   IsolateWrap* isolate_ = nullptr;
   Escargot::ContextRef* context_ = nullptr;

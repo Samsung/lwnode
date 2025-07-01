@@ -19,6 +19,8 @@
 #include "nd-debug.h"
 #include "nd-logger.h"
 
+namespace nd {
+
 #define CLR_YELLOW "\033[0;33m"
 #define CLR_MAGENTA "\033[0;35m"
 #define TRACE_GC_START(fmt, ...) TRACEF0(GC, "GC" fmt, ##__VA_ARGS__)
@@ -252,18 +254,25 @@ void MemoryUtil::PrintEveryReachableGCObjects() {
 #endif
 }
 
-void MemoryUtil::GcFull() {
+void MemoryUtil::GcFull(bool includeStack) {
   TRACE_GC_START();
   LOG_HANDLER("[FULL GC]");
-  GC_register_mark_stack_func([]() {
-    // do nothing for skip stack
-    // assume there is no gc-object on stack
-  });
+
+  if (includeStack) {
+    GC_register_mark_stack_func([]() {
+      // do nothing for skip stack
+      // assume there is no gc-object on stack
+    });
+  }
 
   GC_gcollect();
   GC_gcollect();
   GC_gcollect_and_unmap();
-  GC_register_mark_stack_func(nullptr);
+
+  if (includeStack) {
+    GC_register_mark_stack_func(nullptr);
+  }
+
   GC_gcollect();
   TRACE_GC_END();
 }
@@ -335,3 +344,5 @@ void MemoryUtil::GcRegisterFinalizer(
     void* gcPtr, GCAllocatedMemoryFinalizerWithData callback, void* data) {
   REGISTER_FINALIZER(gcPtr, callback, data);
 }
+
+}  // namespace nd

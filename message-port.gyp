@@ -20,6 +20,7 @@
         '<(source_dir)/nd/es-helper.cc',
         '<(source_dir)/nd/nd-debug.cc',
         '<(source_dir)/nd/nd-logger.cc',
+        '<(source_dir)/nd/gc-util.cc',
       ],
       'all_dependent_settings': {
         'include_dirs': [

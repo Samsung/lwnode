@@ -19,8 +19,8 @@
 
 #define _TYPED_GC_NEW_ARG1(Class)                                              \
   void* operator new(size_t size) {                                            \
-    static bool typeInited = false;                                            \
-    static GC_descr descr;                                                     \
+    thread_local static bool typeInited = false;                               \
+    thread_local static GC_descr descr;                                        \
     if (!typeInited) {                                                         \
       GC_word desc[GC_BITMAP_SIZE(Class)] = {0};                               \
       Class::fillGCDescriptor(desc);                                           \
@@ -57,7 +57,7 @@ inline void markHashTable(GC_word* desc, size_t base) {
 #endif
 }
 
-#define SET_GC_COLLECTION(Class, name)                                         \
+#define SET_GC_MAP_OR_SET(Class, name)                                         \
   markHashTable(desc, GC_WORD_OFFSET(Class, name));
 
 #define END_IMPLEMENT_TYPED_GC_NEW() }

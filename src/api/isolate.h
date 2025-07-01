@@ -109,6 +109,13 @@ class Isolate : public gc {
 
   EscargotShim::GlobalHandles* global_handles() { return global_handles_; }
 
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(Isolate);
+  SET_GC_POINTER(Isolate, scheduled_exception_);
+  SET_GC_POINTER(Isolate, global_handles_);
+  SET_GC_POINTER(Isolate, pending_exception_);
+  SET_GC_POINTER(Isolate, pending_message_obj_);
+  END_IMPLEMENT_TYPED_GC_NEW();
+
  protected:
   void set_pending_exception(Escargot::ValueRef* exception_obj);
   void set_pending_message_obj(Escargot::ValueRef* message_obj);
@@ -197,8 +204,6 @@ class IsolateWrap final : public v8::internal::Isolate {
     return arrayBufferDecorator_->array_buffer_allocator();
   }
 
-  ArrayBufferAllocatorDecorator* arrayBufferDecorator_ = nullptr;
-
   static IsolateWrap* GetCurrent();
 
   // HandleScope & Handle
@@ -278,6 +283,19 @@ class IsolateWrap final : public v8::internal::Isolate {
   }
 
   State getState() { return state_; }
+
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(IsolateWrap, v8::internal::Isolate);
+  SET_GC_POINTER(IsolateWrap, arrayBufferDecorator_);
+  SET_GC_POINTER(IsolateWrap, eternals_);
+  SET_GC_MAP_OR_SET(IsolateWrap, backingStoreCounter_);
+  SET_GC_POINTER(IsolateWrap, handleScopes_);
+  SET_GC_POINTER(IsolateWrap, contextScopes_);
+  SET_GC_POINTER(IsolateWrap, apiSymbols_);
+  SET_GC_POINTER(IsolateWrap, apiPrivateSymbols_);
+  SET_GC_POINTER(IsolateWrap, threadManager_);
+  END_IMPLEMENT_TYPED_GC_NEW();
+
+  ArrayBufferAllocatorDecorator* arrayBufferDecorator_ = nullptr;
 
  private:
   IsolateWrap();

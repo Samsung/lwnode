@@ -62,6 +62,10 @@ class HandleWrap : public gc {
   std::string getHandleInfoString() const;
   static HandleWrap* as(void* address);
 
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(HandleWrap);
+  SET_GC_POINTER(HandleWrap, val_);
+  END_IMPLEMENT_TYPED_GC_NEW();
+
  protected:
   HandleWrap() = default;
   void copy(HandleWrap* that, Location location);
@@ -129,6 +133,10 @@ class PersistentWrap : public ValueWrap {
   static PersistentWrap* as(void* address);
   std::string getPersistentInfoString();
   void invokeFinalizer();
+
+  BEGIN_IMPLEMENT_TYPED_GC_NEW(PersistentWrap, ValueWrap);
+  SET_GC_POINTER(PersistentWrap, holder_);
+  END_IMPLEMENT_TYPED_GC_NEW();
 
  private:
   PersistentWrap(ValueWrap* ptr);
