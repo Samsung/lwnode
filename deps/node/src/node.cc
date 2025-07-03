@@ -176,10 +176,12 @@ MaybeLocal<Value> ExecuteBootstrapper(Environment* env,
     return MaybeLocal<Value>();
   }
 
+  LWNODE_DEV_LOG("[ExecuteBootstrapper]: call %s", id);
   MaybeLocal<Value> result = fn->Call(env->context(),
                                       Undefined(env->isolate()),
                                       arguments->size(),
                                       arguments->data());
+  LWNODE_DEV_LOG("[ExecuteBootstrapper]: /call %s", id);
 
   // If there was an error during bootstrap, it must be unrecoverable
   // (e.g. max call stack exceeded). Clear the stack so that the
@@ -286,6 +288,8 @@ void Environment::InitializeDiagnostics() {
 }
 
 MaybeLocal<Value> Environment::BootstrapInternalLoaders() {
+  LWNODE_DEV_LOG("[Environment::BootstrapInternalLoaders] start");
+
   EscapableHandleScope scope(isolate_);
 
   // Create binding loaders
@@ -323,6 +327,7 @@ MaybeLocal<Value> Environment::BootstrapInternalLoaders() {
   CHECK(require->IsFunction());
   set_native_module_require(require.As<Function>());
 
+  LWNODE_DEV_LOG("[Environment::BootstrapInternalLoaders] end");
   return scope.Escape(loader_exports);
 }
 
@@ -385,6 +390,8 @@ MaybeLocal<Value> Environment::BootstrapNode() {
 }
 
 MaybeLocal<Value> Environment::RunBootstrapping() {
+  LWNODE_DEV_LOG("[Environment::RunBootstrapping] start");
+
   EscapableHandleScope scope(isolate_);
 
   CHECK(!has_run_bootstrapping_code());
@@ -407,6 +414,7 @@ MaybeLocal<Value> Environment::RunBootstrapping() {
 
   set_has_run_bootstrapping_code(true);
 
+  LWNODE_DEV_LOG("[Environment::RunBootstrapping] end");
   return scope.Escape(result);
 }
 
@@ -981,6 +989,7 @@ void Init(int* argc,
 InitializationResult InitializeOncePerProcess(int argc, char** argv) {
   // Initialized the enabled list for Debug() calls with system
   // environment variables.
+  LWNODE_DEV_LOG("[InitializeOncePerProcess] start");
   per_process::enabled_debug_list.Parse(nullptr);
 
   atexit(ResetStdio);
@@ -1059,6 +1068,8 @@ InitializationResult InitializeOncePerProcess(int argc, char** argv) {
   V8::Initialize();
   performance::performance_v8_start = PERFORMANCE_NOW();
   per_process::v8_initialized = true;
+
+  LWNODE_DEV_LOG("[InitializeOncePerProcess] end");
   return result;
 }
 

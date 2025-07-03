@@ -65,6 +65,8 @@ NodeMainInstance::NodeMainInstance(
       platform_(platform),
       isolate_data_(nullptr),
       owns_isolate_(true) {
+  LWNODE_DEV_LOG("[NodeMainInstance::NodeMainInstance] start");   
+     
   params->array_buffer_allocator = array_buffer_allocator_.get();
   isolate_ = Isolate::Allocate();
   CHECK_NOT_NULL(isolate_);
@@ -89,6 +91,8 @@ NodeMainInstance::NodeMainInstance(
     // complete.
     SetIsolateErrorHandlers(isolate_, s);
   }
+
+  LWNODE_DEV_LOG("[NodeMainInstance::NodeMainInstance] end");  
 }
 
 void NodeMainInstance::Dispose() {
