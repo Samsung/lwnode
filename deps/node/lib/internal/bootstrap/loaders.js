@@ -282,8 +282,10 @@ class NativeModule {
       const requireFn = this.id.startsWith('internal/deps/') ?
         requireWithFallbackInDeps : nativeModuleRequire;
 
+      process._rawDebug(`+js: compileForInternalLoader: ${this.id}`);
       const fn = compileFunction(id);
       fn(this.exports, requireFn, this, process, internalBinding, primordials);
+      process._rawDebug(`-js: compileForInternalLoader: ${this.id}`);
 
       this.loaded = true;
     } finally {

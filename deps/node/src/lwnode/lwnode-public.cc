@@ -225,7 +225,7 @@ bool Runtime::Configuration::Set(const std::string& key, const char* value) {
   std::string value_string = value ? value : "";
 
   if (key == "lwnode_data_path") {
-    LWNODE_DEV_LOGF("[Runtime::Configuration::Set] data path set to %s",
+    LWNODE_DEV_LOG("[Runtime::Configuration::Set] data path set to %s",
                     value_string.c_str());
     internal_->lwnode_data_path = value_string;
     return true;
@@ -235,12 +235,12 @@ bool Runtime::Configuration::Set(const std::string& key, const char* value) {
 
 bool Runtime::Configuration::Set(const std::string& key, int value) {
   if (key == "gc_interval") {
-    LWNODE_DEV_LOGF("[Runtime::Configuration::Set] GC interval set to %dms",
+    LWNODE_DEV_LOG("[Runtime::Configuration::Set] GC interval set to %dms",
                     value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_interval(value);
     return true;
   } else if (key == "gc_free_space_divisor") {
-    LWNODE_DEV_LOGF(
+    LWNODE_DEV_LOG(
         "[Runtime::Configuration::Set] GC free space divisor set to %d", value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_free_space_divisor(value);
     return true;
@@ -280,7 +280,7 @@ bool InitScriptRootPath(const std::string path) {
   result = uv_chdir(path.c_str());
 
   if (result != 0) {
-    LWNODE_DEV_LOGF("ERROR: Failed to change directory. (%d)\n", -errno);
+    LWNODE_DEV_LOG("ERROR: Failed to change directory. (%d)\n", -errno);
 
     return false;
   }

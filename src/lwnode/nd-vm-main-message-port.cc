@@ -49,7 +49,7 @@ Escargot::FunctionObjectRef* MainMessagePort::MessageEventClass() {
 }
 
 void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
-  LWNODE_DEV_LOG("[MainMessagePort::Init]");
+  LWNODE_DEV_LOG("[MainMessagePort::Init] start");
 
   context_ = context;
   uv_loop_ = loop;
@@ -61,4 +61,5 @@ void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
   }
 
   Channel::DrainPendingMessages(uv_loop_);
+  LWNODE_DEV_LOG("[MainMessagePort::Init] end");
 }
