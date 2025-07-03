@@ -69,7 +69,7 @@ void GlobalHandles::create(ValueWrap* lwValue) {
   if (iter == persistentValues_.end()) {
     persistentValues_.emplace(lwValue, 1);
   } else {
-    ++iter->second;
+    ++iter.value();
     // TODO:
     LWNODE_CALL_TRACE_ID(GLOBALHANDLES,
                          "Persistent value was created multiple times: %p",
@@ -80,10 +80,10 @@ void GlobalHandles::create(ValueWrap* lwValue) {
 bool GlobalHandles::destroy(ValueWrap* lwValue) {
   auto iter = persistentValues_.find(lwValue);
   if (iter != persistentValues_.end()) {
-    if (iter->second == 1) {
+    if (iter.value() == 1) {
       persistentValues_.erase(iter);
     } else {
-      --iter->second;
+      --iter.value();
     }
     return true;
   }

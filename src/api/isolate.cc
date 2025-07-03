@@ -557,7 +557,7 @@ void IsolateWrap::addEternal(GCManagedObject* value) {
 void IsolateWrap::addBackingStore(BackingStoreRef* value) {
   auto itr = backingStoreCounter_.find(value);
   if (itr != backingStoreCounter_.end()) {
-    ++itr->second;
+    ++itr.value();
   } else {
     backingStoreCounter_.insert(std::make_pair(value, 1));
   }
@@ -569,7 +569,7 @@ void IsolateWrap::removeBackingStore(BackingStoreRef* value) {
     if (itr->second == 1) {
       backingStoreCounter_.erase(itr);
     } else {
-      --itr->second;
+      --itr.value();
     }
   } else {
     LWNODE_CHECK_MSG(false, "increment/decrement count do not match");

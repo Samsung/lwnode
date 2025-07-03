@@ -19,6 +19,7 @@
         'message-port.gyp:nd-message-port',
       ],
       'include_dirs': [
+        'deps/robin_map/include',
         'src',
         'include',
         'include/lwnode',
@@ -99,6 +100,7 @@
           'LWNODE_REVISION="<(revision)"',
         ],
         'include_dirs': [
+          'deps/robin_map/include',
           'src/api/utils/logger',
           'src/api/utils',
           'src/lwnode',
