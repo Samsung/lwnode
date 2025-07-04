@@ -58,6 +58,7 @@ static MainMessagePortType GetMainMessagePort(ContextRef* context) {
 
 static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
                                           const MessageEvent* event) {
+  TRACE(MSGPORT_JS, "InstantiateMessageEvent");
   ContextRef* context = state->context();
   GlobalObjectRef* global = context->globalObject();
 
@@ -86,6 +87,7 @@ static ObjectRef* InstantiateMessageEvent(ExecutionStateRef* state,
   };
 
   if (event->IsSync()) {
+    TRACE(MSGPORT_JS, "create sync message data");
     auto* data = new MessageEventExtraData();
     auto* event_sync =
         reinterpret_cast<MessageEventSync*>(const_cast<MessageEvent*>(event));
@@ -246,13 +248,15 @@ class MessagePortWrap : public BaseObject {
             v8::HandleScope handle_scope(lwIsolate->toV8());
 
             TryCatchScope scope(state->context(), false);
+            TRACE(MSGPORT_JS, "JS CallFunction");
             maybe = CallFunction(state->context(),
                                  ValueRef::createUndefined(),
                                  onmessage_->asFunctionObject(),
                                  COUNT_OF(argv),
                                  argv);
-
+            TRACE(MSGPORT_JS, "/JS CallFunction");
             if (scope.HasCaught()) {
+              TRACE(MSGPORT_JS, "Caught exception");
               lwIsolate->ScheduleThrow(scope.exception());
             }
 #endif

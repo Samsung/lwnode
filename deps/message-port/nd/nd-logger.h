@@ -51,7 +51,7 @@ enum LOG_PRIORITY {
 
 // TRACE -----------------------------------------------------------------------
 
-#if defined(DEV)
+#if defined(HOST_TIZEN) || defined(DEV)
 #define ENABLE_TRACE
 #endif
 
