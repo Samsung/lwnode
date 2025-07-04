@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config: [ '', '--nopt --shared' ]
+        config: [ '--nopt --shared' ]
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
@@ -85,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [t70std]
+        profile: [t80std]
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
