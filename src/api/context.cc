@@ -68,6 +68,12 @@ ContextWrap::ContextWrap(IsolateWrap* isolate,
   EscargotShim::Global::initGlobalObject(this);
 
   RegisteredExtension::applyAll(context_);
+
+  isolate->AddContext(this);
+}
+
+void ContextWrap::Dispose() {
+  context_.release();
 }
 
 void ContextWrap::initDebugger() {

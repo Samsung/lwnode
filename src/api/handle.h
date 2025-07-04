@@ -31,26 +31,26 @@ class GCHeap;
 class HandleWrap : public gc {
  public:
   enum Type : uint8_t {
-    NotPresent = 0,
+    NotPresent = 1,
     JsValue = 101,
-    Context,
-    ObjectTemplate,
-    FunctionTemplate,
-    Script,
-    Module,
-    EndOfType,
+    Context = 103,
+    ObjectTemplate = 105,
+    FunctionTemplate = 107,
+    Script = 109,
+    Module = 111,
+    EndOfType = 127,
   };
 
   enum Location : uint8_t {
-    Local = 0,
-    Strong,
-    Weak,
-    NearDeath,
+    Local = 1,
+    Strong = 3,
+    Weak = 5,
+    NearDeath = 7,
   };
 
   enum ValueType : uint8_t {
-    None,
-    ExternalString,
+    None = 1,
+    ExternalString = 3,
   };
 
   uint8_t type() const;

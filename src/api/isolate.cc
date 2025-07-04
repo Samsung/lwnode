@@ -327,6 +327,10 @@ void IsolateWrap::Dispose() {
   global_handles()->dispose();
   RegisteredExtension::unregisterAll();
 
+  ReleaseContexts();
+
+  vmInstance_.release();
+
   state_ = State::Disposed;
 
   LWNODE_CALL_TRACE_GC_END();
@@ -860,6 +864,18 @@ void IsolateWrap::ReportPromiseReject(
   if (promise_reject_callback_ && !promise->hasRejectHandlers()) {
     promise_reject_callback_(v8Message);
   }
+}
+
+void IsolateWrap::AddContext(ContextWrap* context) {
+  // Hold a reference of the context always until it's disposed by IsolateWrap
+  contexts_.push_back(context);
+}
+
+void IsolateWrap::ReleaseContexts() {
+  for (const auto& context : contexts_) {
+    context->Dispose();
+  }
+  contexts_.clear();
 }
 
 }  // namespace EscargotShim

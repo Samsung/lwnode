@@ -34,6 +34,8 @@ class ContextWrap : public ValueWrap {
   static ContextWrap* fromEscargot(Escargot::ContextRef* context);
   static ContextWrap* fromV8(v8::Context* context);
 
+  void Dispose();
+
   void Enter();
   void Exit();
   IsolateWrap* GetIsolate();
@@ -70,7 +72,7 @@ class ContextWrap : public ValueWrap {
   void* getEmbedderData(int index);
 
   IsolateWrap* isolate_ = nullptr;
-  Escargot::ContextRef* context_ = nullptr;
+  Escargot::PersistentRefHolder<Escargot::ContextRef> context_;
   Escargot::ObjectRef* bindingObject_ = nullptr;
   Escargot::ValueRef* security_token_ = nullptr;
 

@@ -126,6 +126,8 @@ class LWNodeMainRunner {
     DeleteFnPtr<Environment, FreeEnvironment> env_ =
         nodeMainInstance.CreateMainEnvironment(&exit_code);
     LWNODE_DEV_LOG("[LWNodeMainRunner::Run] /create main environment");
+    
+    Context::Scope context_scope(env_->context());
 
     CHECK_NOT_NULL(env_);
 
@@ -141,8 +143,6 @@ class LWNodeMainRunner {
           env_->set_stopping(true);
           uv_stop(env_->event_loop());
         });
-
-    Context::Scope context_scope(env_->context());
 
     if (on_main_env_creation_callback_) {
       on_main_env_creation_callback_(env_->context());
