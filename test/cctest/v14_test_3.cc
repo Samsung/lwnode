@@ -818,7 +818,6 @@ THREADED_TEST(OneByteStringTest) {
   }
 }
 
-/*
 THREADED_TEST(SharedArrayBufferCustom) {
   LocalContext context;
   v8::Isolate* isolate = context->GetIsolate();
@@ -865,7 +864,6 @@ THREADED_TEST(SharedArrayBufferCustom) {
     CHECK(called);
   }
 }
-*/
 
 THREADED_TEST(InheritanceCustom) {
   LocalContext env;

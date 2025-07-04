@@ -117,18 +117,18 @@ void GCHeap::acquire(void* address, Kind kind, void* data) {
 
   auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
   if (iter != persistents_.end()) {
-    if (kind == STRONG) iter.value().strong++;
-    if (kind == WEAK) iter.value().weak++;
+    if (kind == STRONG) iter->second.strong++;
+    if (kind == WEAK) iter->second.weak++;
   } else {
     auto iter = weakPhantoms_.find(GC_WRAP_WEAK_POINTER(address));
     if (iter != weakPhantoms_.end()) {
-      AddressInfo info = iter.value();
+      AddressInfo info = iter->second;
 
       LWNODE_CHECK(info.strong == 0);
       LWNODE_CHECK(info.weak != 0);
 
-      if (kind == STRONG) iter.value().strong++;
-      if (kind == WEAK) iter.value().weak++;
+      if (kind == STRONG) iter->second.strong++;
+      if (kind == WEAK) iter->second.weak++;
 
       persistents_.emplace(GC_WRAP_PERSISTENT_POINTER(address), info);
       weakPhantoms_.erase(iter);
@@ -149,16 +149,16 @@ void GCHeap::release(void* address, Kind kind) {
 
   auto iter = persistents_.find(GC_WRAP_PERSISTENT_POINTER(address));
   if (iter != persistents_.end()) {
-    if (kind == STRONG) iter.value().strong--;
-    if (kind == WEAK) iter.value().weak--;
+    if (kind == STRONG) iter->second.strong--;
+    if (kind == WEAK) iter->second.weak--;
 
-    iter.value().strong = std::max(iter.value().strong, 0);
-    iter.value().weak = std::max(iter.value().weak, 0);
+    iter->second.strong = std::max(iter->second.strong, 0);
+    iter->second.weak = std::max(iter->second.weak, 0);
 
     // progress handling weak phantoms
-    if (iter.value().strong == 0) {
-      if (iter.value().weak > 0) {
-        weakPhantoms_.emplace(GC_WRAP_WEAK_POINTER(address), iter.value());
+    if (iter->second.strong == 0) {
+      if (iter->second.weak > 0) {
+        weakPhantoms_.emplace(GC_WRAP_WEAK_POINTER(address), iter->second);
       }
       persistents_.erase(iter);
     }
@@ -182,10 +182,9 @@ void GCHeap::postGarbageCollectionProcessing() {
   // 1. move weaks to process post task.
   GCVector<HeapSegment> weaks;
   weaks.reserve(weakPhantoms_.size());
-  for (auto it = weakPhantoms_.begin(); it != weakPhantoms_.end(); it++) {
-    weaks.push_back({it.key(), it.value()});
+  for (const HeapSegment& it : weakPhantoms_) {
+    weaks.push_back(it);
   }
-
   weakPhantoms_.clear();
 
   // 2. invoke finalizers
