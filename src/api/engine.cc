@@ -353,7 +353,7 @@ bool Engine::Dispose() {
   return true;
 }
 
-#define DEFAULT_GC_FREE_SPACE_DIVISOR 4
+#define DEFAULT_GC_FREE_SPACE_DIVISOR 24
 
 void Engine::initialize() {
 #ifndef NDEBUG

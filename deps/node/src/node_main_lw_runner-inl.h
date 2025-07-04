@@ -153,6 +153,8 @@ class LWNodeMainRunner {
       LoadEnvironment(env_.get());
       LWNODE_DEV_LOG("[LWNodeMainRunner::Run] /load environment");
 
+      IdleGC(isolate_);
+
       env_->set_trace_sync_io(env_->options()->trace_sync_io);
 
       try {
