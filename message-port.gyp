@@ -27,6 +27,13 @@
           '<(source_dir)/nd/utils',
         ],
       },
+      'conditions': [
+        ['target_os=="tizen"', {
+          'dependencies': [
+            'deps/tizen.gyp:dlog',
+          ],
+        }],
+      ],
     },
     {
       'target_name': 'nd-message-port',

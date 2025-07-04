@@ -94,7 +94,6 @@ MessageEventSync::~MessageEventSync() {
   TRACE(MSGEVENT, "~MessageEventSync");
 }
 
-
 // Port::Internal
 // -----------------------------------------------------------------------------
 
@@ -152,18 +151,21 @@ Port::Result Port::PostMessageAsync(std::shared_ptr<MessageEvent> event) {
 
   // It's not allowed to use MessageEvents to be sent to different sinks.
   if (event->internal_->target.lock() != internal_->sink.lock()) {
+    TRACE(MSGPORT, "invalid target");
     return Error::InvalidMessageEvent;
   }
 
   // Get a valid loop handle if invalid.
   if (internal_->loop == nullptr) {
     if (!internal_->future.valid()) {
+      TRACE(MSGPORT, "invalid loop future");
       return Error::InvalidPortLoop;
     }
     if (internal_->future.wait_for(std::chrono::milliseconds(1)) ==
         std::future_status::ready) {
       auto loop = internal_->future.get();
       if (loop == nullptr) {
+        TRACE(MSGPORT, "invalid loop handle");
         return Error::InvalidPortLoop;
       }
       internal_->loop = loop;
@@ -182,7 +184,9 @@ Port::Result Port::PostMessageAsync(std::shared_ptr<MessageEvent> event) {
         // Since sink is locked, event->target() is always valid
         // inside the callback.
         try {
+          TRACE(MSGPORT, "call user callback");
           sink->internal_->callback(event.get());
+          TRACE(MSGPORT, "/call user callback");
         } catch (...) {
           TRACE(MSGPORT, "user callback error");
           return;
@@ -194,11 +198,14 @@ Port::Result Port::PostMessageAsync(std::shared_ptr<MessageEvent> event) {
   };
 
   if (internal_->loop == nullptr) {
+    TRACE(MSGPORT, "invalid loop handle, enqueue task instead");
     AsyncUV::EnqueueTask(std::move(task));
     return Error::MessageEventQueued;
   }
 
+  TRACE(MSGPORT, "async uv send");
   AsyncUV::Send(internal_->loop, std::move(task));
+  TRACE(MSGPORT, "/async uv send");
   return Error::NoError;
 }
 
@@ -208,6 +215,7 @@ Port::Result Port::PostMessage(std::shared_ptr<MessageEvent> event) {
 
 Port::Result Port::PostMessage(std::shared_ptr<MessageEventSync> event,
                                int timeout_ms) {
+  TRACE(MSGPORT, "post message sync");
   // TODO: If this function is called from the same thread as lwnode, it can
   // cause a deadlock. It should be called from another thread.
   std::future<std::string> future;
@@ -230,7 +238,9 @@ Port::Result Port::PostMessage(std::shared_ptr<MessageEventSync> event,
       return Error::Timeout;
     }
   } else {
+    TRACE(MSGPORT, "wait PostMessageSync");
     future.wait();
+    TRACE(MSGPORT, "/wait PostMessageSync");
   }
   return future.get();
 }

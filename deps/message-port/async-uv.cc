@@ -47,22 +47,26 @@ AsyncUV::~AsyncUV() {
 
 bool AsyncUV::Send(uv_loop_t* loop, Task task) {
   if (loop == nullptr) {
+    TRACE(MSGPORT, "invalid loop");
     return false;
   }
   return (new AsyncUV(loop, task))->Send();
 }
 
 size_t AsyncUV::EnqueueTask(Task task) {
+  TRACE(MSGPORT, "EnqueueTask");
   std::lock_guard<std::mutex> lock(queue_mutex_);
   queue_.push(task);
   return queue_.size();
 }
 
 bool AsyncUV::DrainPendingTasks(uv_loop_t* loop) {
+  TRACE(MSGPORT, "DrainPendingTasks");
   std::lock_guard<std::mutex> lock(queue_mutex_);
   TRACE(MSGPORT, "drain pending tasks", queue_.size());
 
   if (loop == nullptr) {
+    TRACE(MSGPORT, "invalid loop");
     return false;
   }
 
@@ -70,10 +74,12 @@ bool AsyncUV::DrainPendingTasks(uv_loop_t* loop) {
     AsyncUV::Send(loop, queue_.front());
     queue_.pop();
   }
+  TRACE(MSGPORT, "/drain pending tasks");
   return true;
 }
 
 void AsyncUV::DeletePendingTasks() {
+  TRACE(MSGPORT, "DeletePendingTasks");
   std::lock_guard<std::mutex> lock(queue_mutex_);
   TRACE(MSGPORT, "delete pending tasks", queue_.size());
   if (!queue_.empty()) {
@@ -83,6 +89,7 @@ void AsyncUV::DeletePendingTasks() {
 }
 
 bool AsyncUV::IsPendingTasksEmpty() {
+  TRACE(MSGPORT, "IsPendingTasksEmpty");
   std::lock_guard<std::mutex> lock(queue_mutex_);
   return queue_.empty();
 }
@@ -95,7 +102,9 @@ void AsyncUV::Init(uv_loop_t* loop, Task task) {
   uv_async_init(loop, uv_h_, [](uv_async_t* handle) {
     auto event = static_cast<AsyncUV*>(handle->data);
     if (event->task_) {
+      TRACE(MSGPORT, "run task");
       event->task_(handle);
+      TRACE(MSGPORT, "/run task");
     }
     delete event;
   });

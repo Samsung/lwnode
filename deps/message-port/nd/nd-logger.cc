@@ -86,10 +86,18 @@ static void writeHeader(std::ostream& ss,
 }
 #endif  // ENABLE_TRACE
 
+#if defined(HOST_TIZEN)
+#include <dlog.h>
+#endif
+
 void LogOutput(const unsigned priority,
                const char* id,
                const std::string& message,
                bool newline) {
+#if defined(HOST_TIZEN)
+  dlog_print(DLOG_INFO, "LWNODE", "[MessagePort] %s", message.c_str());
+  return;
+#else
 #if defined(ENABLE_TRACE)
   if (id && *id) {
     // Format for TRACE
@@ -104,6 +112,7 @@ void LogOutput(const unsigned priority,
 #endif  // ENABLE_TRACE
 
   std::cout << message << (newline ? "\n" : "");
+#endif // defined(HOST_TIZEN)
 }
 
 void PrintF(const unsigned priority,
@@ -133,6 +142,10 @@ std::string CreateCodeLocation(const char* functionName,
 }
 
 bool IsTraceEnabled(const char* key) {
+#if defined(HOST_TIZEN)
+  return true;
+#endif
+  
   static std::map<std::string, bool> trace_map;
   static bool is_trace_map_initialized = false;
   static bool allow_all = false;
