@@ -39,9 +39,11 @@ class FunctionCallbackInfoWrap : public v8::FunctionCallbackInfo<v8::Value> {
 
   HandleWrap** toWrapperArgs(ValueRef* thisValue, int argc, ValueRef** argv);
 
+  HandleWrap** createImplicitArgs();
+
  private:
   HandleWrap** m_args;
-  HandleWrap* m_implicitArgs[T::kArgsLength];
+  HandleWrap** m_implicitArgs;
 };
 
 template <typename T>
@@ -54,10 +56,14 @@ class PropertyCallbackInfoWrap : public v8::PropertyCallbackInfo<T> {
                            ValueRef* thisValue,
                            ValueWrap* data);
 
+  ~PropertyCallbackInfoWrap();
+
+  HandleWrap** createImplicitArgs();
+
   bool hasReturnValue();
 
  private:
-  HandleWrap* m_implicitArgs[F::kArgsLength];
+  HandleWrap** m_implicitArgs;
 };
 
 }  // namespace EscargotShim

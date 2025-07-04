@@ -273,6 +273,9 @@ class IsolateWrap final : public v8::internal::Isolate {
 
   State getState() { return state_; }
 
+  void AddContext(ContextWrap* context);
+  void ReleaseContexts();
+
  private:
   IsolateWrap();
 
@@ -288,6 +291,8 @@ class IsolateWrap final : public v8::internal::Isolate {
   GCVector<SymbolRef*> apiSymbols_;
   GCVector<SymbolRef*> apiPrivateSymbols_;
 
+  GCVector<ContextWrap*> contexts_;
+
   // Isolate Scope
   static THREAD_LOCAL IsolateWrap* s_currentIsolate;
   static THREAD_LOCAL IsolateWrap* s_previousIsolate;
@@ -296,7 +301,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   v8::ArrayBuffer::Allocator* array_buffer_allocator_ = nullptr;
   std::shared_ptr<v8::ArrayBuffer::Allocator> array_buffer_allocator_shared_;
 
-  VMInstanceRef* vmInstance_ = nullptr;
+  PersistentRefHolder<VMInstanceRef> vmInstance_;
 
   PersistentRefHolder<IsolateWrap> release_lock_;
   ValueWrap* globalSlot_[internal::Internals::kRootIndexSize]{};

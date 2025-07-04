@@ -30,11 +30,11 @@ typedef void v8Scope_t;
 class HandleScopeWrap : public gc {
  public:
   enum Type : uint8_t {
-    None = 0,
-    Normal,
-    Escapable,
-    Sealed,
-    Internal,
+    None = 1,
+    Normal = 3,
+    Escapable = 5,
+    Sealed = 7,
+    Internal = 9,
   };
 
   HandleScopeWrap(v8::HandleScope* scope, HandleScopeWrap::Type type);

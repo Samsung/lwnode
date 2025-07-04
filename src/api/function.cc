@@ -33,7 +33,7 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
     int argc,
     ValueRef** argv)
     : v8::FunctionCallbackInfo<v8::Value>(
-          ToAddress(m_implicitArgs),
+          ToAddress(createImplicitArgs()),
           ToAddress(toWrapperArgs(thisValue, argc, argv)),
           argc) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
@@ -47,6 +47,13 @@ FunctionCallbackInfoWrap::FunctionCallbackInfoWrap(
   m_implicitArgs[T::kNewTargetIndex] =
       newTarget.hasValue() ? ValueWrap::createValue(newTarget.get())
                            : lwIsolate->undefined_value();
+}
+
+HandleWrap** FunctionCallbackInfoWrap::createImplicitArgs() {
+  m_implicitArgs =
+      reinterpret_cast<HandleWrap**>(Escargot::Memory::gcMallocUncollectable(
+          sizeof(HandleWrap*) * (T::kArgsLength)));
+  return m_implicitArgs;
 }
 
 HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
@@ -92,6 +99,11 @@ HandleWrap** FunctionCallbackInfoWrap::toWrapperArgs(ValueRef* thisValue,
 FunctionCallbackInfoWrap::~FunctionCallbackInfoWrap() {
   if (m_args) {
     Escargot::Memory::gcFree(m_args);
+    m_args = nullptr;
+  }
+  if (m_implicitArgs) {
+    Escargot::Memory::gcFree(m_implicitArgs);
+    m_implicitArgs = nullptr;
   }
 }
 
@@ -108,8 +120,9 @@ PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
                                                       ValueRef* thisValue,
                                                       ValueWrap* data)
     : v8::PropertyCallbackInfo<T>(
-          reinterpret_cast<v8::internal::Address*>(m_implicitArgs)) {
+          reinterpret_cast<v8::internal::Address*>(createImplicitArgs())) {
   auto lwIsolate = IsolateWrap::fromV8(isolate);
+
   // m_implicitArgs[F::kShouldThrowOnErrorIndex]; // TODO
   m_implicitArgs[F::kHolderIndex] = ValueWrap::createValue(holder);
   m_implicitArgs[F::kIsolateIndex] = reinterpret_cast<HandleWrap*>(isolate);
@@ -117,6 +130,22 @@ PropertyCallbackInfoWrap<T>::PropertyCallbackInfoWrap(v8::Isolate* isolate,
   m_implicitArgs[F::kReturnValueIndex] = lwIsolate->defaultReturnValue();
   m_implicitArgs[F::kDataIndex] = data;
   m_implicitArgs[F::kThisIndex] = ValueWrap::createValue(thisValue);
+}
+
+template <typename T>
+PropertyCallbackInfoWrap<T>::~PropertyCallbackInfoWrap() {
+  if (m_implicitArgs) {
+    Escargot::Memory::gcFree(m_implicitArgs);
+    m_implicitArgs = nullptr;
+  }
+}
+
+template <typename T>
+HandleWrap** PropertyCallbackInfoWrap<T>::createImplicitArgs() {
+  m_implicitArgs =
+      reinterpret_cast<HandleWrap**>(Escargot::Memory::gcMallocUncollectable(
+          sizeof(HandleWrap*) * (F::kArgsLength)));
+  return m_implicitArgs;
 }
 
 template <typename T>
