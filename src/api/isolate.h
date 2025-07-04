@@ -149,6 +149,12 @@ class ContextWrap;
 
 typedef gc GCManagedObject;
 
+struct BackingStoreComparator {
+  bool operator()(const BackingStoreRef* a, const BackingStoreRef* b) const {
+    return a < b;
+  }
+};
+
 class IsolateWrap final : public v8::internal::Isolate {
  public:
   enum class State { None, Active, Disposed };
@@ -282,7 +288,7 @@ class IsolateWrap final : public v8::internal::Isolate {
   void InitializeGlobalSlots();
 
   GCVector<GCManagedObject*> eternals_;
-  GCUnorderedMap<BackingStoreRef*, int> backingStoreCounter_;
+  GCMap<BackingStoreRef*, int, BackingStoreComparator> backingStoreCounter_;
 
   GCVector<HandleScopeWrap*> handleScopes_;
   GCVector<ContextWrap*> contextScopes_;
