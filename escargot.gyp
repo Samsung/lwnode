@@ -10,6 +10,7 @@
     "escargot_lib_type%": 'shared_lib', # static_lib | shared_lib
     'escargot_threading%': '<(escargot_threading)',
     'escargot_debugger%': '<(escargot_debugger)',
+    'asan_configs%': [],
     'conditions': [
       ['escargot_lib_type=="shared_lib"', {
         'lib_ext': '.so'
@@ -55,9 +56,15 @@
         '-DESCARGOT_ASAN=<(asan)',
         '-DESCARGOT_DEBUGGER=<(escargot_debugger)',
         '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
-        '-DCMAKE_C_FLAGS=-DALWAYS_SMALL_CLEAR_STACK',
-        '-DCMAKE_CXX_FLAGS=-DALWAYS_SMALL_CLEAR_STACK',
       ],
+      'conditions': [
+        ['asan == 1', {
+          'asan_configs': [
+            '-DCMAKE_C_FLAGS=-DALWAYS_SMALL_CLEAR_STACK',
+            '-DCMAKE_CXX_FLAGS=-DALWAYS_SMALL_CLEAR_STACK',
+          ]} ,
+        ],
+      ]
     },
     'all_dependent_settings': {
       'libraries': [
@@ -102,7 +109,7 @@
         'action_name': 'print configs',
         'inputs':  [],
         'outputs': ['<(SHARED_INTERMEDIATE_DIR)'],
-        'action': ['printf', '%s\\n', '<@(escargot_configs)'],
+        'action': ['printf', '%s\\n', '<@(escargot_configs)', '<@(asan_configs)'],
       },
       {
         'action_name': 'config escargot',
@@ -112,6 +119,7 @@
           'cmake', '<(escargot_dir)', '-B<(output_dir)',
           '-GNinja',
           '<@(escargot_configs)',
+          '<@(asan_configs)',
         ],
       },
       {
