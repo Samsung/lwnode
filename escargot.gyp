@@ -55,8 +55,6 @@
         '-DESCARGOT_ASAN=<(asan)',
         '-DESCARGOT_DEBUGGER=<(escargot_debugger)',
         '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
-        '-DCMAKE_C_FLAGS=-DALWAYS_SMALL_CLEAR_STACK',
-        '-DCMAKE_CXX_FLAGS=-DALWAYS_SMALL_CLEAR_STACK',
       ],
     },
     'all_dependent_settings': {
