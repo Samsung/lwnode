@@ -269,7 +269,7 @@ def setupCLIOptions(parser):
   lwnode_optgroup.add_option(
       '--arch',
       dest='arch',
-      choices=['arm', 'x32', 'x64'],
+      choices=['arm', 'arm64', 'x32', 'x64'],
       default='x64',
       help='Target architecture (%default)',
   )
