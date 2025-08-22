@@ -212,7 +212,6 @@ ESPostListener::ESPostListener(Escargot::ContextRef* context,
                                Escargot::ObjectRef* listener)
     : context_(context), listener_(listener) {
   DEVICEAPI_LOG_INFO("Enter");
-  GC_add_roots(&listener_, &listener_ + sizeof(Escargot::ObjectRef*));
 }
 
 ESPostListener::~ESPostListener() {
@@ -222,7 +221,6 @@ ESPostListener::~ESPostListener() {
 
 void ESPostListener::finalize() {
   DEVICEAPI_LOG_INFO("Enter");
-  GC_remove_roots(&listener_, &listener_ + sizeof(Escargot::ObjectRef*));
   listener_ = nullptr;
   context_ = nullptr;
 }
