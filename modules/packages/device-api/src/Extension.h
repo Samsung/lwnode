@@ -5,9 +5,10 @@
 #ifndef WRT_SERVICE_NODE_EXTENSION_H_
 #define WRT_SERVICE_NODE_EXTENSION_H_
 
+#include <GCUtil.h>
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
 #include "XW_Extension.h"
 #include "XW_Extension_SyncMessage.h"
@@ -203,12 +204,12 @@ protected:
 };
 
 class ESPostMessageListener : public wrt::xwalk::PostMessageListener,
-                              public ESPostListener {
+                              public ESPostListener, public gc {
 public:
     static ESPostMessageListener* create(Escargot::ContextRef* context,
                                          Escargot::ObjectRef* listener)
     {
-        return new ESPostMessageListener(context, listener);
+        return new (NoGC)ESPostMessageListener(context, listener);
     }
     void PostMessageToJS(const std::string& msg);
 
@@ -232,12 +233,12 @@ private:
 };
 
 class ESPostDataListener : public wrt::xwalk::PostDataListener,
-                           public ESPostListener {
+                           public ESPostListener, public gc {
 public:
     static ESPostDataListener* create(Escargot::ContextRef* context,
                                       Escargot::ObjectRef* listener)
     {
-        return new ESPostDataListener(context, listener);
+        return new (NoGC)ESPostDataListener(context, listener);
     }
     void PostDataToJS(const std::string& msg, uint8_t* buffer, size_t len);
 
