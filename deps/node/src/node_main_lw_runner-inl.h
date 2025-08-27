@@ -192,7 +192,9 @@ class LWNodeMainRunner {
       exit_code = EmitExit(env_.get());
     }
 
+#if !defined(HOST_TIZEN)
     ResetStdio();
+#endif
 
     // TODO(addaleax): Neither NODE_SHARED_MODE nor HAVE_INSPECTOR really
     // make sense here.
