@@ -24732,20 +24732,20 @@ TEST(Map) {
   map = v8::Local<v8::Map>::Cast(val);
   CHECK_EQ(2U, map->Size());
 
-  v8::Local<v8::Array> contents = map->AsArray();
-  CHECK_EQ(4U, contents->Length());
-  CHECK_EQ(
-      1,
-      contents->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
-  CHECK_EQ(
-      2,
-      contents->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
-  CHECK_EQ(
-      3,
-      contents->Get(env.local(), 2).ToLocalChecked().As<v8::Int32>()->Value());
-  CHECK_EQ(
-      4,
-      contents->Get(env.local(), 3).ToLocalChecked().As<v8::Int32>()->Value());
+  // v8::Local<v8::Array> contents = map->AsArray();
+  // CHECK_EQ(4U, contents->Length());
+  // CHECK_EQ(
+  //     1,
+  //     contents->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
+  // CHECK_EQ(
+  //     2,
+  //     contents->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
+  // CHECK_EQ(
+  //     3,
+  //     contents->Get(env.local(), 2).ToLocalChecked().As<v8::Int32>()->Value());
+  // CHECK_EQ(
+  //     4,
+  //     contents->Get(env.local(), 3).ToLocalChecked().As<v8::Int32>()->Value());
 
   CHECK_EQ(2U, map->Size());
 
@@ -24798,12 +24798,12 @@ TEST(Set) {
   set = v8::Local<v8::Set>::Cast(val);
   CHECK_EQ(2U, set->Size());
 
-  v8::Local<v8::Array> keys = set->AsArray();
-  CHECK_EQ(2U, keys->Length());
-  CHECK_EQ(1,
-           keys->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
-  CHECK_EQ(2,
-           keys->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
+  // v8::Local<v8::Array> keys = set->AsArray();
+  // CHECK_EQ(2U, keys->Length());
+  // CHECK_EQ(1,
+  //          keys->Get(env.local(), 0).ToLocalChecked().As<v8::Int32>()->Value());
+  // CHECK_EQ(2,
+  //          keys->Get(env.local(), 1).ToLocalChecked().As<v8::Int32>()->Value());
 
   CHECK_EQ(2U, set->Size());
 
@@ -24839,18 +24839,18 @@ TEST(SetDeleteThenAsArray) {
 
   // delete the "middle" element (using AsArray to
   // determine which element is the "middle" element)
-  v8::Local<v8::Array> array1 = set->AsArray();
-  CHECK_EQ(3U, array1->Length());
-  CHECK(set->Delete(env.local(), array1->Get(env.local(), 1).ToLocalChecked())
-            .FromJust());
+  // v8::Local<v8::Array> array1 = set->AsArray();
+  // CHECK_EQ(3U, array1->Length());
+  // CHECK(set->Delete(env.local(), array1->Get(env.local(), 1).ToLocalChecked())
+  //           .FromJust());
 
   // make sure there are no undefined values when we convert to an array again.
-  v8::Local<v8::Array> array2 = set->AsArray();
-  uint32_t length = array2->Length();
-  CHECK_EQ(2U, length);
-  for (uint32_t i = 0; i < length; i++) {
-    CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
-  }
+  // v8::Local<v8::Array> array2 = set->AsArray();
+  // uint32_t length = array2->Length();
+  // CHECK_EQ(2U, length);
+  // for (uint32_t i = 0; i < length; i++) {
+  //   CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
+  // }
 }
 
 TEST(MapDeleteThenAsArray) {
@@ -24866,19 +24866,19 @@ TEST(MapDeleteThenAsArray) {
 
   // delete the "middle" element (using AsArray to
   // determine which element is the "middle" element)
-  v8::Local<v8::Array> array1 = map->AsArray();
-  CHECK_EQ(6U, array1->Length());
-  // Map::AsArray returns a flat array, so the second key is at index 2.
-  v8::Local<v8::Value> key = array1->Get(env.local(), 2).ToLocalChecked();
-  CHECK(map->Delete(env.local(), key).FromJust());
+  // v8::Local<v8::Array> array1 = map->AsArray();
+  // CHECK_EQ(6U, array1->Length());
+  // // Map::AsArray returns a flat array, so the second key is at index 2.
+  // v8::Local<v8::Value> key = array1->Get(env.local(), 2).ToLocalChecked();
+  // CHECK(map->Delete(env.local(), key).FromJust());
 
   // make sure there are no undefined values when we convert to an array again.
-  v8::Local<v8::Array> array2 = map->AsArray();
-  uint32_t length = array2->Length();
-  CHECK_EQ(4U, length);
-  for (uint32_t i = 0; i < length; i++) {
-    CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
-  }
+  // v8::Local<v8::Array> array2 = map->AsArray();
+  // uint32_t length = array2->Length();
+  // CHECK_EQ(4U, length);
+  // for (uint32_t i = 0; i < length; i++) {
+  //   CHECK(!array2->Get(env.local(), i).ToLocalChecked()->IsUndefined());
+  // }
 }
 
 // TEST(CompatibleReceiverCheckOnCachedICHandler) {

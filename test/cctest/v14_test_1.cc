@@ -217,7 +217,9 @@ TEST(ArrayBuffer_Release) {
     Local<v8::ArrayBuffer> ab = v8::ArrayBuffer::New(isolate, 1024);
     s_array_buffer_release_pass = 0;
     MemoryUtil::gcRegisterFinalizer(
-        VAL(*ab)->value(), [](void* self) { s_array_buffer_release_pass++; });
+        VAL(*ab)->value(),
+        [](void* self, void* data) { s_array_buffer_release_pass++; },
+        nullptr);
   }();
 
   CcTest::PreciseCollectAllGarbage();

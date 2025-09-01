@@ -232,7 +232,7 @@ def setupCLIOptions(parser):
   lwnode_optgroup.add_option(
       '--escargot-lib-type',
       choices=['shared_lib', 'static_lib'],
-      default='static_lib',
+      default='shared_lib',
       help='shared_lib | static_lib (%default)',
   )
 

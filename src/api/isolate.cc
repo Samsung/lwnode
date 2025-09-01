@@ -283,12 +283,14 @@ IsolateWrap::IsolateWrap() {
 
   threadManager_ = new ThreadManager();
 
-  // The following ensures this instance is retained using PersistentHolder.
-  lock_gc_release();
-
-  Memory::gcRegisterFinalizer(this, [](void* self) {
-    reinterpret_cast<IsolateWrap*>(self)->~IsolateWrap();
-  });
+  // NOTE: check lock_gc_release(); is needed (and where)
+  // lock_gc_release();
+  Memory::gcRegisterFinalizer(
+      this,
+      [](void* self, void* data) {
+        reinterpret_cast<IsolateWrap*>(self)->~IsolateWrap();
+      },
+      nullptr);
 
   MemoryUtil::gcSetWarningListener([](WarnEventType type) {
     switch (type) {
@@ -402,6 +404,11 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     LWNODE_DEV_LOG("[OnVMInstanceDelete]");
     LWNODE_CALL_TRACE_GC_END();
   });
+
+  size_t config = static_cast<size_t>(
+      VMInstanceRef::ConfigFlag::UnloadReloadableStringsEnterIdle);
+  vmInstance_->setConfig(config);
+  vmInstance_->setMaxCompiledByteCodeSize(1024 * 1024 * 2);
 
   vmInstance_->registerErrorCreationCallback(
       [](ExecutionStateRef* state, ErrorObjectRef* error) {
@@ -585,7 +592,7 @@ SymbolRef* IsolateWrap::createApiSymbol(StringRef* name) {
   auto newSymbol = SymbolRef::create(name);
   bool found = false;
   for (size_t i = 0; i < apiSymbols_.size(); i++) {
-    if (apiSymbols_[i]->description()->equals(name)) {
+    if (apiSymbols_[i]->descriptionString()->equals(name)) {
       apiSymbols_[i] = newSymbol;
       found = true;
       break;
@@ -605,7 +612,7 @@ SymbolRef* IsolateWrap::getApiSymbol(StringRef* name) {
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
   for (auto apiSymbols : apiSymbols_) {
-    if (apiSymbols->description()->equals(name)) {
+    if (apiSymbols->descriptionString()->equals(name)) {
       return apiSymbols;
     }
   }
@@ -618,7 +625,7 @@ SymbolRef* IsolateWrap::createApiPrivateSymbol(StringRef* name) {
   auto newSymbol = SymbolRef::create(name);
   bool found = false;
   for (size_t i = 0; i < apiPrivateSymbols_.size(); i++) {
-    if (apiPrivateSymbols_[i]->description()->equals(name)) {
+    if (apiPrivateSymbols_[i]->descriptionString()->equals(name)) {
       apiPrivateSymbols_[i] = newSymbol;
       found = true;
       break;
@@ -639,7 +646,7 @@ SymbolRef* IsolateWrap::getApiPrivateSymbol(StringRef* name) {
   LWNODE_CALL_TRACE_ID(ISOWRAP);
 
   for (auto apiPrivateSymbol : apiPrivateSymbols_) {
-    if (apiPrivateSymbol->description()->equals(name)) {
+    if (apiPrivateSymbol->descriptionString()->equals(name)) {
       return apiPrivateSymbol;
     }
   }

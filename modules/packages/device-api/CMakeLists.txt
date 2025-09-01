@@ -15,6 +15,7 @@ include_directories(
   ${PROJECT_ROOT_PATH}/deps/escargot/src/api
   ${PROJECT_ROOT_PATH}/deps/escargot/third_party/GCutil
   ${PROJECT_ROOT_PATH}/deps/escargot/third_party/GCutil/bdwgc/include
+  ${PROJECT_ROOT_PATH}/deps/escargot/third_party/GCutil/bdwgc/include/gc
   ${PROJECT_ROOT_PATH}/deps/node/deps/uv/include
   ${PROJECT_ROOT_PATH}/src
   include

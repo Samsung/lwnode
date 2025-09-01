@@ -18,6 +18,7 @@
 #include "api.h"
 #include "api/engine.h"
 #include "api/utils/cast.h"
+#include "api/utils/debug.h"
 #include "base.h"
 #include "init/v8.h"
 
@@ -691,19 +692,73 @@ double v8::Date::ValueOf() const {
   return scope.self()->asDateObject()->primitiveValue();
 }
 
+static RegExpObjectRef::RegExpObjectOption ToEsRegExpObjectOption(
+    v8::RegExp::Flags flags) {
+  int option = RegExpObjectRef::RegExpObjectOption::None;
+
+  if (flags & v8::RegExp::Flags::kGlobal) {
+    option |= RegExpObjectRef::RegExpObjectOption::Global;
+  }
+  if (flags & v8::RegExp::Flags::kIgnoreCase) {
+    option |= RegExpObjectRef::RegExpObjectOption::IgnoreCase;
+  }
+  if (flags & v8::RegExp::Flags::kMultiline) {
+    option |= RegExpObjectRef::RegExpObjectOption::MultiLine;
+  }
+  if (flags & v8::RegExp::Flags::kSticky) {
+    option |= RegExpObjectRef::RegExpObjectOption::Sticky;
+  }
+  if (flags & v8::RegExp::Flags::kUnicode) {
+    option |= RegExpObjectRef::RegExpObjectOption::Unicode;
+  }
+  if (flags & v8::RegExp::Flags::kDotAll) {
+    option |= RegExpObjectRef::RegExpObjectOption::DotAll;
+  }
+
+  return static_cast<RegExpObjectRef::RegExpObjectOption>(option);
+}
+
+static v8::RegExp::Flags ToV8RegExpFlags(
+    RegExpObjectRef::RegExpObjectOption option) {
+  int flags = v8::RegExp::Flags::kNone;
+
+  if (option & RegExpObjectRef::RegExpObjectOption::Global) {
+    flags |= v8::RegExp::Flags::kGlobal;
+  }
+  if (option & RegExpObjectRef::RegExpObjectOption::IgnoreCase) {
+    flags |= v8::RegExp::Flags::kIgnoreCase;
+  }
+  if (option & RegExpObjectRef::RegExpObjectOption::MultiLine) {
+    flags |= v8::RegExp::Flags::kMultiline;
+  }
+  if (option & RegExpObjectRef::RegExpObjectOption::Sticky) {
+    flags |= v8::RegExp::Flags::kSticky;
+  }
+  if (option & RegExpObjectRef::RegExpObjectOption::Unicode) {
+    flags |= v8::RegExp::Flags::kUnicode;
+  }
+  if (option & RegExpObjectRef::RegExpObjectOption::DotAll) {
+    flags |= v8::RegExp::Flags::kDotAll;
+  }
+
+  return static_cast<v8::RegExp::Flags>(flags);
+}
+
 MaybeLocal<v8::RegExp> v8::RegExp::New(Local<Context> context,
                                        Local<String> pattern,
                                        Flags flags) {
   API_ENTER_WITH_CONTEXT(context, MaybeLocal<RegExp>());
   auto lwContext = lwIsolate->GetCurrentContext();
   auto lwPattern = CVAL(*pattern)->value();
-  int flagsValue = (int)flags;
+  RegExpObjectRef::RegExpObjectOption flagsValue =
+      ToEsRegExpObjectOption(flags);
 
   auto r = Evaluator::execute(
       lwContext->get(),
-      [](ExecutionStateRef* esState, ValueRef* source, int flags) -> ValueRef* {
-        return RegExpObjectRef::create(
-            esState, source, (RegExpObjectRef::RegExpObjectOption)flags);
+      [](ExecutionStateRef* esState,
+         ValueRef* source,
+         RegExpObjectRef::RegExpObjectOption flags) -> ValueRef* {
+        return RegExpObjectRef::create(esState, source, flags);
       },
       lwPattern,
       flagsValue);
@@ -747,7 +802,7 @@ v8::RegExp::Flags v8::RegExp::GetFlags() const {
       [](ExecutionStateRef* esState,
          RegExpObjectRef* self,
          int* flags) -> ValueRef* {
-        *flags = self->option();
+        *flags = ToV8RegExpFlags(self->option());
         return ValueRef::createNull();
       },
       self->asRegExpObject(),
@@ -936,34 +991,38 @@ Maybe<bool> Map::Delete(Local<Context> context, Local<Value> key) {
 Local<Array> Map::AsArray() const {
   API_ENTER_NO_TERMINATION_CHECK(EsScope, nullptr);
 
-  EvalResult r = Evaluator::execute(
-      scope.context(),
-      [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
-        auto done = StringRef::createFromASCII("done");
-        auto value = StringRef::createFromASCII("value");
-        auto zero = ValueRef::create(0);
-        auto one = ValueRef::create(1);
-        auto vector = ValueVectorRef::create();
+  LWNODE_UNIMPLEMENT;
+  return Utils::NewLocal<Array>(
+      scope.v8Isolate(), ArrayObjectRefHelper::create(scope.context(), 1));
 
-        auto itr = esSelf->entries(esState);
-        for (auto entry = itr->next(esState);
-             entry->asObject()->get(esState, done)->isFalse();
-             entry = itr->next(esState)) {
-          auto keyValueArray =
-              entry->asObject()->get(esState, value)->asObject();
-          auto key = keyValueArray->getIndexedProperty(esState, zero);
-          auto value = keyValueArray->getIndexedProperty(esState, one);
+  // EvalResult r = Evaluator::execute(
+  //     scope.context(),
+  //     [](ExecutionStateRef* esState, MapObjectRef* esSelf) -> ValueRef* {
+  //       auto done = StringRef::createFromASCII("done");
+  //       auto value = StringRef::createFromASCII("value");
+  //       auto zero = ValueRef::create(0);
+  //       auto one = ValueRef::create(1);
+  //       auto vector = ValueVectorRef::create();
 
-          vector->pushBack(key);
-          vector->pushBack(value);
-        }
+  //       auto itr = esSelf->entries(esState);
+  //       for (auto entry = itr->next(esState);
+  //            entry->asObject()->get(esState, done)->isFalse();
+  //            entry = itr->next(esState)) {
+  //         auto keyValueArray =
+  //             entry->asObject()->get(esState, value)->asObject();
+  //         auto key = keyValueArray->getIndexedProperty(esState, zero);
+  //         auto value = keyValueArray->getIndexedProperty(esState, one);
 
-        return ArrayObjectRef::create(esState, vector);
-      },
-      scope.self()->asMapObject());
-  LWNODE_CHECK(r.isSuccessful());
+  //         vector->pushBack(key);
+  //         vector->pushBack(value);
+  //       }
 
-  return Utils::NewLocal<Array>(scope.v8Isolate(), r.result);
+  //       return ArrayObjectRef::create(esState, vector);
+  //     },
+  //     scope.self()->asMapObject());
+  // LWNODE_CHECK(r.isSuccessful());
+
+  // return Utils::NewLocal<Array>(scope.v8Isolate(), r.result);
 }
 
 Local<v8::Set> v8::Set::New(Isolate* isolate) {
@@ -2566,21 +2625,12 @@ String::Utf8Value::Utf8Value(v8::Isolate* isolate, v8::Local<v8::Value> obj)
 
   auto esString = r.result->asString();
   auto bufferData = esString->stringBufferAccessData();
-  std::string str;
-  if (bufferData.has8BitContent) {
-    length_ = bufferData.length;
-  } else {
-    str = esString->toStdUTF8String();
-    length_ = str.size();
-  }
+  std::string str = esString->toStdUTF8String();
+  length_ = str.size();
 
   str_ = new char[length_ + 1];
 
-  if (bufferData.has8BitContent) {
-    strncpy(str_, reinterpret_cast<const char*>(bufferData.buffer), length_);
-  } else {
-    strncpy(str_, str.data(), length_);
-  }
+  strncpy(str_, str.data(), length_);
 
   str_[length_] = '\0';
 }

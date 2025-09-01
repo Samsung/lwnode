@@ -205,19 +205,21 @@ class ESCARGOT_EXPORT MemoryUtil {
   static void gcInvokeFinalizers();
   static void gc();
 
-  typedef void (*GCAllocatedMemoryFinalizer)(void* self);
-  typedef void (*GCAllocatedMemoryFinalizerWithData)(void* self, void* data);
+  typedef void (*GCAllocatedMemoryFinalizer)(void* self, void* data);
   // @note this should not use on escargot values since they may be already
   // bound with another finalizer with its internal data.
   static void gcRegisterFinalizer(void* gcPtr,
-                                  GCAllocatedMemoryFinalizerWithData callback,
-                                  void* data);
+                                  GCAllocatedMemoryFinalizer callback,
+                                  void* data = nullptr);
   static void gcRegisterFinalizer(Escargot::ValueRef* gcPtr,
-                                  GCAllocatedMemoryFinalizer callback);
+                                  GCAllocatedMemoryFinalizer callback,
+                                  void* data = nullptr);
   static void gcRegisterFinalizer(EscargotShim::ValueWrap* gcPtr,
-                                  GCAllocatedMemoryFinalizer callback);
+                                  GCAllocatedMemoryFinalizer callback,
+                                  void* data = nullptr);
   static void gcUnregisterFinalizer(Escargot::ValueRef* gcPtr,
-                                    GCAllocatedMemoryFinalizer callback);
+                                    GCAllocatedMemoryFinalizer callback,
+                                    void* data = nullptr);
   // print
   static void printRegisteredGCObjects();
   static void printEveryReachableGCObjects();

@@ -164,7 +164,7 @@ void MemoryUtil::gcSetWarningListener(OnGCWarnEventListener callback) {
   if (g_gcWarnEventListener == nullptr) {
     g_gcWarnEventListener = callback;
 
-    GC_set_warn_proc([](char* format, GC_word arg) {
+    GC_set_warn_proc([](const char* format, GC_uintptr_t arg) {
       /*
         GC Warning: ...May lead to memory leak and poor performance
         GC Warning: ...Failed to expand heap
@@ -316,21 +316,25 @@ void MemoryUtil::prettyBytes(char* buf,
 }
 
 void MemoryUtil::gcRegisterFinalizer(Escargot::ValueRef* ptr,
-                                     GCAllocatedMemoryFinalizer callback) {
-  Escargot::Memory::gcRegisterFinalizer(ptr->asObject(), callback);
+                                     GCAllocatedMemoryFinalizer callback,
+                                     void* data) {
+  Escargot::Memory::gcRegisterFinalizer(ptr->asObject(), callback, data);
 }
 
 void MemoryUtil::gcRegisterFinalizer(EscargotShim::ValueWrap* ptr,
-                                     GCAllocatedMemoryFinalizer callback) {
-  Escargot::Memory::gcRegisterFinalizer(ptr, callback);
+                                     GCAllocatedMemoryFinalizer callback,
+                                     void* data) {
+  Escargot::Memory::gcRegisterFinalizer(ptr, callback, data);
 }
 
 void MemoryUtil::gcUnregisterFinalizer(Escargot::ValueRef* ptr,
-                                       GCAllocatedMemoryFinalizer callback) {
-  Escargot::Memory::gcUnregisterFinalizer(ptr->asObject(), callback);
+                                       GCAllocatedMemoryFinalizer callback,
+                                       void* data) {
+  Escargot::Memory::gcUnregisterFinalizer(ptr->asObject(), callback, data);
 }
 
-void MemoryUtil::gcRegisterFinalizer(
-    void* gcPtr, GCAllocatedMemoryFinalizerWithData callback, void* data) {
-  REGISTER_FINALIZER(gcPtr, callback, data);
+void MemoryUtil::gcRegisterFinalizer(void* gcPtr,
+                                     GCAllocatedMemoryFinalizer callback,
+                                     void* data) {
+  Escargot::Memory::gcRegisterFinalizer(gcPtr, callback, data);
 }
