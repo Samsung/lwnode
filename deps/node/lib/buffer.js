@@ -425,8 +425,13 @@ function allocate(size) {
 function fromStringFast(string, ops) {
   const length = ops.byteLength(string);
 
-  if (length >= (Buffer.poolSize >>> 1))
-    return createFromString(string, ops.encodingVal);
+  if (length >= (Buffer.poolSize >>> 1)) {
+    // @lwnode
+    // return createFromString(string, ops.encodingVal);
+    let b = new FastBuffer(length);
+    ops.write(b, string, 0, length);
+    return b;
+  }
 
   if (length > (poolSize - poolOffset))
     createPool();
