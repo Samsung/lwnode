@@ -26,6 +26,17 @@
 #include "trace.h"
 #include "v8.h"
 
+#include <atomic>
+#include <sstream>
+#include <thread>
+
+static bool g_allow_mulitple_instance = false;
+
+LWNODE_EXPORT void ForceAllowMultipleInstance() {
+  g_allow_mulitple_instance = true;
+  LWNODE_DEV_LOG("[LWNODE] TEST MODE");
+}
+
 namespace node {
 namespace native_module {
 extern bool initializeLWNodeBuiltinFile(const std::string path = "");
@@ -46,6 +57,8 @@ class Runtime::Internal {
   friend Runtime;
 
  public:
+  static std::atomic<int> instance_count_;
+
   enum class State {
     kNotInitialized,
     kInitialized,
@@ -148,12 +161,22 @@ class Runtime::Internal {
   std::mutex stop_mutex_;
 };
 
+std::atomic<int> Runtime::Internal::instance_count_{0};
+
 /**************************************************************************
  * Runtime class
  **************************************************************************/
 
 Runtime::Runtime() : internal_(new Internal()) {
-  LWNODE_DEV_LOG("[Runtime::Runtime]");
+  Internal::instance_count_++;
+
+  std::stringstream ss;
+  ss << "pid " << std::to_string(uv_os_getpid()) << " " << "tid "
+     << std::this_thread::get_id();
+
+  LWNODE_DEV_LOG("[Runtime::Runtime] %d %s",
+                 Internal::instance_count_.load(),
+                 ss.str().c_str());
 }
 
 Runtime::Runtime(Configuration&& config) : Runtime() {
@@ -173,6 +196,13 @@ int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
 #else
   LWNODE_DEV_LOG("[Runtime] debug mode");
 #endif
+
+  if (!g_allow_mulitple_instance && Runtime::Internal::instance_count_ > 1) {
+    LWNODE_DEV_LOG("[Runtime] Runtime can only be started once per process.");
+    promise.set_exception(std::make_exception_ptr(
+        std::runtime_error("Runtime can only be started once per process.")));
+    return Runtime::Internal::ExitCode::kFailure;
+  }
 
   internal_->runner_.SetInitPromise(std::move(promise));
   std::pair<bool, int> init_result = internal_->Init(argc, argv);
@@ -226,7 +256,7 @@ bool Runtime::Configuration::Set(const std::string& key, const char* value) {
 
   if (key == "lwnode_data_path") {
     LWNODE_DEV_LOG("[Runtime::Configuration::Set] data path set to %s",
-                    value_string.c_str());
+                   value_string.c_str());
     internal_->lwnode_data_path = value_string;
     return true;
   }
@@ -236,7 +266,7 @@ bool Runtime::Configuration::Set(const std::string& key, const char* value) {
 bool Runtime::Configuration::Set(const std::string& key, int value) {
   if (key == "gc_interval") {
     LWNODE_DEV_LOG("[Runtime::Configuration::Set] GC interval set to %dms",
-                    value);
+                   value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_interval(value);
     return true;
   } else if (key == "gc_free_space_divisor") {

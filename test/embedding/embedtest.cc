@@ -1,4 +1,3 @@
-#define MYTEST_CONFIG_USE_MAIN
 #include "mytest.h"
 
 #include <chrono>
@@ -341,4 +340,11 @@ TEST0(Embedtest, StartWithNoResource) {
 
     EXPECT(result == 0);
   }
+}
+
+extern void ForceAllowMultipleInstance();
+
+int main(int argc, char* argv[]) {
+  ForceAllowMultipleInstance();
+  return RUN_ALL_TESTS(argc, argv);
 }
