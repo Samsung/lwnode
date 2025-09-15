@@ -47,8 +47,7 @@ class StackTrace {
     void setStackValue(ValueRef* stackValue) { stackValue_ = stackValue; }
     bool hasStackValue() { return stackValue_ != nullptr; }
 
-    void* operator new(size_t size) { return GC_MALLOC(size); }
-    void operator delete(void* ptr) { GC_FREE(ptr); }
+    void* operator new(size_t size) { return Memory::gcMalloc(size); }
 
    private:
     ArrayObjectRef* stackTrace_ = nullptr;
