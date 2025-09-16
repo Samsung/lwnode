@@ -399,7 +399,7 @@ void IsolateWrap::Initialize(const v8::Isolate::CreateParams& params) {
     // Do Nothing
     LWNODE_CALL_TRACE_GC_START();
     // NOTE: Calls when vmInstance() is terminated. This happens before GC runs
-    LWNODE_DEV_LOG("[OnVMInstanceDelete]");
+    LWNODE_DEV_FATAL_LOG("[OnVMInstanceDelete]");
     LWNODE_CALL_TRACE_GC_END();
   });
 

@@ -29,10 +29,13 @@
 
 #if defined(HOST_TIZEN)
 #define LWNODE_DEV_LOG(...) dlog_print(DLOG_INFO, "LWNODE", __VA_ARGS__);
+#define LWNODE_DEV_FATAL_LOG(...) dlog_print(DLOG_FATAL, "LWNODE", __VA_ARGS__);
 #elif defined(DEV)
 #define LWNODE_DEV_LOG(fmt, ...) printf(fmt "\n", ##__VA_ARGS__);
+#define LWNODE_DEV_FATAL_LOG(fmt, ...) printf(fmt "\n", ##__VA_ARGS__);
 #else
 #define LWNODE_DEV_LOG(fmt, ...)
+#define LWNODE_DEV_FATAL_LOG(fmt, ...)
 #endif
 
 #define LWNODE_DEV_LOGF(fmt, ...)                                              \

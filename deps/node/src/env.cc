@@ -259,7 +259,7 @@ void TrackingTraceStateObserver::UpdateTraceCategoryState() {
 }
 
 void Environment::CreateProperties() {
-  LWNODE_DEV_LOG("[Environment::CreateProperties] start");
+  LWNODE_DEV_FATAL_LOG("[Environment::CreateProperties] start");
   HandleScope handle_scope(isolate_);
   Local<Context> ctx = context();
 
@@ -285,7 +285,7 @@ void Environment::CreateProperties() {
       node::CreateProcessObject(this).FromMaybe(Local<Object>());
   set_process_object(process_object);
 
-  LWNODE_DEV_LOG("[Environment::CreateProperties] end");
+  LWNODE_DEV_FATAL_LOG("[Environment::CreateProperties] end");
 }
 
 std::string GetExecPath(const std::vector<std::string>& argv) {

@@ -36,7 +36,7 @@ MainMessagePort::MainMessagePort(std::shared_ptr<Port> port,
 }
 
 MainMessagePort::~MainMessagePort() {
-  LWNODE_DEV_LOG("[MainMessagePort::~MainMessagePort]");
+  LWNODE_DEV_FATAL_LOG("[MainMessagePort::~MainMessagePort]");
   Channel::DeletePendingMessages();
 }
 
@@ -49,7 +49,7 @@ Escargot::FunctionObjectRef* MainMessagePort::MessageEventClass() {
 }
 
 void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
-  LWNODE_DEV_LOG("[MainMessagePort::Init] start");
+  LWNODE_DEV_FATAL_LOG("[MainMessagePort::Init] start");
 
   context_ = context;
   uv_loop_ = loop;
@@ -57,9 +57,9 @@ void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
   try {
     internal_->uv_promise_.set_value(uv_loop_);
   } catch (const std::exception& e) {
-    LWNODE_DEV_LOG("[MainMessagePort::Init] promise error: %s", e.what());
+    LWNODE_DEV_FATAL_LOG("[MainMessagePort::Init] promise error: %s", e.what());
   }
 
   Channel::DrainPendingMessages(uv_loop_);
-  LWNODE_DEV_LOG("[MainMessagePort::Init] end");
+  LWNODE_DEV_FATAL_LOG("[MainMessagePort::Init] end");
 }

@@ -104,11 +104,11 @@ class LoopStrategy : public MainLoopStrategy {
 class LWNodeMainRunner {
  public:
   ~LWNodeMainRunner() {
-    LWNODE_DEV_LOG("[LWNodeMainRunner::~LWNodeMainRunner]");
+    LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::~LWNodeMainRunner]");
   }
 
   int Run(node::NodeMainInstance& nodeMainInstance) {
-    LWNODE_DEV_LOG("[LWNodeMainRunner::Run]");
+    LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run]");
 
     // To release array buffer allocator after node is finished,
     // this runner should has it.
@@ -121,12 +121,12 @@ class LWNodeMainRunner {
     Isolate::Scope isolate_scope(isolate_);
     HandleScope handle_scope(isolate_);
 
-    LWNODE_DEV_LOG("[LWNodeMainRunner::Run] create main environment");
+    LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] create main environment");
     int exit_code = 0;
     DeleteFnPtr<Environment, FreeEnvironment> env_ =
         nodeMainInstance.CreateMainEnvironment(&exit_code);
-    LWNODE_DEV_LOG("[LWNodeMainRunner::Run] /create main environment");
-    
+    LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] /create main environment");
+
     Context::Scope context_scope(env_->context());
 
     CHECK_NOT_NULL(env_);
@@ -135,7 +135,7 @@ class LWNodeMainRunner {
 
     SetProcessExitHandler(
         environment_, [&](node::Environment* env_, int exit_code) {
-          LWNODE_DEV_LOG("[LWNodeMainRunner::Run] process exit handler");
+          LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] process exit handler");
           if (env_->is_stopping()) {
             return;
           }
@@ -149,9 +149,9 @@ class LWNodeMainRunner {
     }
 
     if (exit_code == 0) {
-      LWNODE_DEV_LOG("[LWNodeMainRunner::Run] load environment");
+      LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] load environment");
       LoadEnvironment(env_.get());
-      LWNODE_DEV_LOG("[LWNodeMainRunner::Run] /load environment");
+      LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] /load environment");
 
       IdleGC(isolate_);
 
@@ -159,10 +159,10 @@ class LWNodeMainRunner {
 
       try {
         LWNODE_PERF_LOG("[LWNodeMainRunner::Run] loaded script");
-        LWNODE_DEV_LOG("[LWNodeMainRunner::Run] set runtime ready");
+        LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] set runtime ready");
         promise_.set_value();
       } catch (const std::exception& e) {
-        LWNODE_DEV_LOG("[LWNodeMainRunner::Run] promise error: %s", e.what());
+        LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] promise error: %s", e.what());
         v8::V8::ShutdownPlatform();
         return 1;
       }
@@ -175,10 +175,10 @@ class LWNodeMainRunner {
         // Run main loop
         std::unique_ptr<MainLoopStrategy> mainLoop;
         if (GmainLoopNodeBindings::isEnabled()) {
-          LWNODE_DEV_LOG("[LWNodeMainRunner::Run] use gmain loop");
+          LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] use gmain loop");
           mainLoop = std::make_unique<GmainLoopStrategy>();
         } else {
-          LWNODE_DEV_LOG("[LWNodeMainRunner::Run] use standard loop");
+          LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Run] use standard loop");
           mainLoop = std::make_unique<LoopStrategy>();
         }
 
@@ -223,9 +223,9 @@ class LWNodeMainRunner {
   }
 
   void Stop() {
-    LWNODE_DEV_LOG("[LWNodeMainRunner::Stop]");
+    LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Stop]");
     if (!environment_) {
-      LWNODE_DEV_LOG("[LWNodeMainRunner::Stop] no environment");
+      LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Stop] no environment");
       return;
     }
     if (environment_->is_stopping()) {
@@ -235,7 +235,7 @@ class LWNodeMainRunner {
     environment_->set_stopping(true);
 
     uv_async_init(uv_default_loop(), &stop_task_, [](uv_async_t* handle) {
-      LWNODE_DEV_LOG("[LWNodeMainRunner::Stop] async task");
+      LWNODE_DEV_FATAL_LOG("[LWNodeMainRunner::Stop] async task");
       uv_stop(uv_default_loop());
     });
 
