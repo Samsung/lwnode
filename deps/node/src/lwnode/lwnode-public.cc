@@ -73,22 +73,22 @@ class Runtime::Internal {
     kNoBuiltinFile = 100,
   };
 
-  Internal() { LWNODE_DEV_LOG("[Runtime::Internal::Internal] new"); }
+  Internal() { LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Internal] new"); }
 
   std::pair<bool, int> Init(int argc, char** argv) {
     if (state_ != State::kNotInitialized) {
-      LWNODE_DEV_LOG("[Runtime::Internal::Init] already initialized");
+      LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Init] already initialized");
       return std::make_pair(true, ExitCode::kFailure);
     }
 
     if (!native_module::initializeLWNodeBuiltinFile(
             config_.internal_->lwnode_data_path)) {
-      LWNODE_DEV_LOG(
+      LWNODE_DEV_FATAL_LOG(
           "[Runtime::Internal::Init] failed to initialize builtin file");
       return std::make_pair(true, ExitCode::kNoBuiltinFile);
     }
 
-    LWNODE_DEV_LOG("[Runtime::Internal::Init]");
+    LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Init]");
     state_ = State::kInitialized;
 
     // Set sendMessageSync callback to isolate context embedder data.
@@ -108,12 +108,12 @@ class Runtime::Internal {
 
   int Run() {
     if (state_ != State::kInitialized) {
-      LWNODE_DEV_LOG("[Runtime::Internal::Run] not initialized");
+      LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Run] not initialized");
       return -1;
     }
 
     CHECK_NOT_NULL(instance_);
-    LWNODE_DEV_LOG("[Runtime::Internal::Run]");
+    LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Run]");
     state_ = State::kRunning;
 
     int result = runner_.Run(*instance_);
@@ -127,12 +127,12 @@ class Runtime::Internal {
     std::unique_lock<std::mutex> lock(stop_mutex_);
 
     if (state_ != State::kRunning) {
-      LWNODE_DEV_LOG("[Runtime::Internal::Stop] already stopped");
+      LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Stop] already stopped");
       return;
     }
 
     CHECK_NOT_NULL(instance_);
-    LWNODE_DEV_LOG("[Runtime::Internal::Stop]");
+    LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Stop]");
     state_ = State::kStopped;
 
     runner_.Stop();
@@ -140,13 +140,13 @@ class Runtime::Internal {
 
   void Free() {
     if (state_ != State::kStopped && state_ != State::kInitialized) {
-      LWNODE_DEV_LOG("[Runtime::Internal::Free] not stopped");
+      LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Free] not stopped");
       return;
     }
 
     state_ = State::kReleased;
     if (instance_) {
-      LWNODE_DEV_LOG("[Runtime::Internal::Free]");
+      LWNODE_DEV_FATAL_LOG("[Runtime::Internal::Free]");
       DisposeNode(instance_);
     }
 
@@ -174,9 +174,9 @@ Runtime::Runtime() : internal_(new Internal()) {
   ss << "pid " << std::to_string(uv_os_getpid()) << " " << "tid "
      << std::this_thread::get_id();
 
-  LWNODE_DEV_LOG("[Runtime::Runtime] %d %s",
-                 Internal::instance_count_.load(),
-                 ss.str().c_str());
+  LWNODE_DEV_FATAL_LOG("[Runtime::Runtime] %d %s",
+                       Internal::instance_count_.load(),
+                       ss.str().c_str());
 }
 
 Runtime::Runtime(Configuration&& config) : Runtime() {
@@ -185,20 +185,21 @@ Runtime::Runtime(Configuration&& config) : Runtime() {
 
 Runtime::~Runtime() {
   delete internal_;
-  LWNODE_DEV_LOG("[Runtime::~Runtime]");
+  LWNODE_DEV_FATAL_LOG("[Runtime::~Runtime]");
 }
 
 int Runtime::Start(int argc, char** argv, std::promise<void>&& promise) {
   LWNODE_PERF_LOG("[Runtime::Start]");
-  LWNODE_DEV_LOG("[Runtime] version: %s", LWNODE_VERSION_TAG);
+  LWNODE_DEV_FATAL_LOG("[Runtime] version: %s", LWNODE_VERSION_TAG);
 #if defined(NDEBUG)
-  LWNODE_DEV_LOG("[Runtime] release mode");
+  LWNODE_DEV_FATAL_LOG("[Runtime] release mode");
 #else
-  LWNODE_DEV_LOG("[Runtime] debug mode");
+  LWNODE_DEV_FATAL_LOG("[Runtime] debug mode");
 #endif
 
   if (!g_allow_mulitple_instance && Runtime::Internal::instance_count_ > 1) {
-    LWNODE_DEV_LOG("[Runtime] Runtime can only be started once per process.");
+    LWNODE_DEV_FATAL_LOG(
+        "[Runtime] Runtime can only be started once per process.");
     promise.set_exception(std::make_exception_ptr(
         std::runtime_error("Runtime can only be started once per process.")));
     return Runtime::Internal::ExitCode::kFailure;
@@ -255,8 +256,8 @@ bool Runtime::Configuration::Set(const std::string& key, const char* value) {
   std::string value_string = value ? value : "";
 
   if (key == "lwnode_data_path") {
-    LWNODE_DEV_LOG("[Runtime::Configuration::Set] data path set to %s",
-                   value_string.c_str());
+    LWNODE_DEV_FATAL_LOG("[Runtime::Configuration::Set] data path set to %s",
+                         value_string.c_str());
     internal_->lwnode_data_path = value_string;
     return true;
   }
@@ -265,12 +266,12 @@ bool Runtime::Configuration::Set(const std::string& key, const char* value) {
 
 bool Runtime::Configuration::Set(const std::string& key, int value) {
   if (key == "gc_interval") {
-    LWNODE_DEV_LOG("[Runtime::Configuration::Set] GC interval set to %dms",
-                   value);
+    LWNODE_DEV_FATAL_LOG(
+        "[Runtime::Configuration::Set] GC interval set to %dms", value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_interval(value);
     return true;
   } else if (key == "gc_free_space_divisor") {
-    LWNODE_DEV_LOG(
+    LWNODE_DEV_FATAL_LOG(
         "[Runtime::Configuration::Set] GC free space divisor set to %d", value);
     LWNode::GlobalConfiguration::GetInstance().set_gc_free_space_divisor(value);
     return true;
@@ -310,7 +311,7 @@ bool InitScriptRootPath(const std::string path) {
   result = uv_chdir(path.c_str());
 
   if (result != 0) {
-    LWNODE_DEV_LOG("ERROR: Failed to change directory. (%d)\n", -errno);
+    LWNODE_DEV_FATAL_LOG("ERROR: Failed to change directory. (%d)\n", -errno);
 
     return false;
   }

@@ -330,13 +330,13 @@ void InitializeProcessMethods(Local<Object> target, Local<Context> context) {
 }
 
 void IdleGC(v8::Isolate* isolate) {
-  LWNODE_DEV_LOG("[GC] running idle GC...");
+  LWNODE_DEV_FATAL_LOG("[GC] running idle GC...");
   if (isolate) {
     IsolateWrap::fromV8(isolate)->vmInstance()->enterIdleMode();
   }
   Escargot::Memory::gc();
   malloc_trim(0);
-  LWNODE_DEV_LOG("[GC] heap %zu", Escargot::Memory::heapSize());
+  LWNODE_DEV_FATAL_LOG("[GC] heap %zu", Escargot::Memory::heapSize());
 }
 
 void initDebugger() {
