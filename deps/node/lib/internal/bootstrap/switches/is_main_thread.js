@@ -49,7 +49,7 @@ function createWritableStdioStream(fd) {
       const { Writable } = require('stream');
       stream = new Writable({
         write(chunk, encoding, callback) {
-          process.lwnode._print(chunk.toString());
+          process.lwnode._print(chunk.toString(), this.fd);
           callback();
         }
       });
