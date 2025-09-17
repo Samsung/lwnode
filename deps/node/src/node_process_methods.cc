@@ -29,6 +29,8 @@ typedef int mode_t;
 #include <termios.h>  // tcgetattr, tcsetattr
 #endif
 
+#include "trace.h" // @lwnode
+
 namespace node {
 
 using v8::Array;
@@ -436,10 +438,19 @@ static void ReallyExit(const FunctionCallbackInfo<Value>& args) {
 }
 
 void Logger(const FunctionCallbackInfo<Value>& args) {
-  CHECK(args.Length() == 1 && args[0]->IsString() &&
+  CHECK(args.Length() > 0 && args[0]->IsString() &&
         "must be called with a single string");
   Utf8Value message(args.GetIsolate(), args[0]);
-  FPrintF(stderr, "%s", message);
+
+  Environment* env = Environment::GetCurrent(args);
+
+  if (args.Length() > 1 && args[1]->IsInt32() &&
+      args[1]->Int32Value(env->context()).FromJust() == 2) {
+    // stderr
+    LWNODE_DEV_FATAL_LOG(message.ToString().c_str());
+  } else {
+    FPrintF(stderr, "%s", message);
+  }
 }
 
 static void InitializeProcessMethods(Local<Object> target,
