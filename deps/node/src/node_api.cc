@@ -1171,5 +1171,24 @@ napi_status napi_get_context(napi_env env, napi_context& context) {
   context = *v8Context;
   return napi_ok;
 }
+
+#if defined(HOST_TIZEN)
+#include "dlog.h"
+NAPI_EXTERN void napi_fatal_log(const char* tag, const char* message) {
+  dlog_print(DLOG_FATAL, tag, "%s", message);
+}
+
+NAPI_EXTERN void napi_info_log(const char* tag, const char* message) {
+  dlog_print(DLOG_INFO, tag, "%s", message);
+}
+#else
+NAPI_EXTERN void napi_fatal_log(const char* tag, const char* message) {
+  fprintf(stderr, "%s\n", tag, message);
+}
+
+NAPI_EXTERN void napi_info_log(const char* tag, const char* message) {
+  fprintf(stdout, "%s\n", tag, message);
+}
+#endif
 #endif
 //end of @lwnode

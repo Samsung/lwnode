@@ -263,6 +263,11 @@ NAPI_EXTERN napi_status napi_remove_async_cleanup_hook(
 
 #endif  // NAPI_EXPERIMENTAL
 
+//@lwnode 
+NAPI_EXTERN void napi_fatal_log(const char* tag, const char* message);
+NAPI_EXTERN void napi_info_log(const char* tag, const char* message);
+
+
 EXTERN_C_END
 
 #endif  // SRC_NODE_API_H_

@@ -448,6 +448,7 @@ void Logger(const FunctionCallbackInfo<Value>& args) {
       args[1]->Int32Value(env->context()).FromJust() == 2) {
     // stderr
     LWNODE_DEV_FATAL_LOG(message.ToString().c_str());
+    FPrintF(stderr, "%s", message);
   } else {
     FPrintF(stderr, "%s", message);
   }
