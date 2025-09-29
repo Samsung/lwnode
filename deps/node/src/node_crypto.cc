@@ -1384,6 +1384,9 @@ void SecureContext::Close(const FunctionCallbackInfo<Value>& args) {
   SecureContext* sc;
   ASSIGN_OR_RETURN_UNWRAP(&sc, args.Holder());
   // sc->Reset(); // @lwnode
+
+  Local<Object> object = sc->object();
+  object->SetAlignedPointerInInternalField(BaseObject::kSlot, nullptr);
   delete sc; // @lwnode
 }
 
