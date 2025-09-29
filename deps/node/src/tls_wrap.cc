@@ -1011,6 +1011,9 @@ void TLSWrap::DestroySSL(const FunctionCallbackInfo<Value>& args) {
     wrap->stream_->RemoveStreamListener(wrap);
   Debug(wrap, "DestroySSL() finished");
 
+  // @lwnode
+  Local<Object> object = wrap->object();
+  object->SetAlignedPointerInInternalField(BaseObject::kSlot, nullptr);
   delete wrap;
 }
 
