@@ -45,6 +45,12 @@ static void runInitialScript(napi_env env) {
 }
 
 static napi_value InitMethod(napi_env env, napi_callback_info info) {
+  static bool once = false;
+  if (once) {
+    return nullptr;
+  }
+  once = true;
+
   napi_context context;
 
   NAPI_CALL(napi_get_context(env, context));
