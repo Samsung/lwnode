@@ -353,6 +353,7 @@ bool Engine::Dispose() {
 }
 
 #define DEFAULT_GC_FREE_SPACE_DIVISOR 24
+#define DEFAULT_GC_HEAP_SIZE 1024 * 1024 * 4
 
 void Engine::initialize() {
 #ifndef NDEBUG
@@ -373,6 +374,11 @@ void Engine::initialize() {
   if (gcFreeSpaceDivisor < 0) {
     gcFreeSpaceDivisor = DEFAULT_GC_FREE_SPACE_DIVISOR;
   }
+
+  // Increase the heap size explicitly for performance
+  int result = GC_expand_hp(DEFAULT_GC_HEAP_SIZE);
+  LWNODE_DLOG_INFO(
+      "DEFAULT_GC_HEAP_SIZE: %d result: %d", DEFAULT_GC_HEAP_SIZE, result);
 
   Memory::setGCFrequency(gcFreeSpaceDivisor);
   gcHeap_.reset(GCHeap::create());
