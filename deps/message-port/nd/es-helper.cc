@@ -138,7 +138,7 @@ OptionalRef<StringRef> BuiltinHelperFileRead(
             state.get(), StringRef::createFromASCII("invalid file name")));
       }
     } else {
-      TRACE(ESCARGOT, "File Not Found:", file_name);
+      TRACE(ESCARGOT, "File Not Found: %s", file_name);
     }
     return nullptr;
   }
@@ -161,7 +161,7 @@ ValueRef* BuiltinLoad(ExecutionStateRef* state,
     // path
     CHECK(argv[0]->isString());
     file_name = argv[0]->toString(state)->toStdUTF8String();
-    TRACE(LOADER, KV(file_name));
+    TRACE(LOADER, "file_name: %s", file_name.c_str());
 
     // useEmptyContext
     if (argc > 1) {
@@ -528,9 +528,9 @@ ExecResult CompileAndExecution(ContextRef* context,
         break;
     }
 
-    TRACEF(ESCARGOT,
-           "Compile: %s",
-           compile_result.parseErrorMessage->toStdUTF8String());
+    TRACE(ESCARGOT,
+          "Compile: %s",
+          compile_result.parseErrorMessage->toStdUTF8String().c_str());
 
     Evaluator::EvaluatorResult result;
     result.error =
@@ -538,9 +538,9 @@ ExecResult CompileAndExecution(ContextRef* context,
                                            compile_result.parseErrorCode,
                                            compile_result.parseErrorMessage);
 
-    TRACEF(ESCARGOT,
-           "Compile: %s",
-           result.resultOrErrorToString(context)->toStdUTF8String().c_str());
+    TRACE(ESCARGOT,
+          "Compile: %s",
+          result.resultOrErrorToString(context)->toStdUTF8String().c_str());
     return result;
   }
 
@@ -552,9 +552,9 @@ ExecResult CompileAndExecution(ContextRef* context,
       },
       compile_result.script.get());
   if (execute_result.isSuccessful() == false) {
-    TRACEF(ESCARGOT,
-           "\nExecute:\n%s",
-           ExecResultHelper::GetErrorString(context, execute_result).c_str());
+    TRACE(ESCARGOT,
+          "\nExecute:\n%s",
+          ExecResultHelper::GetErrorString(context, execute_result).c_str());
   }
   return execute_result;
 }
@@ -592,7 +592,6 @@ std::string ExecResultHelper::GetStackTraceString(
     const GCManagedVector<Evaluator::StackTraceData>& traceData,
     const std::string& reasonString,
     size_t max_stack_size) {
-  TRACE(ERROR, KV(traceData.size()));
   const std::string separator = "  ";
   std::ostringstream oss;
 

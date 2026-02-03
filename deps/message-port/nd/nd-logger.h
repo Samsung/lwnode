@@ -58,47 +58,38 @@ enum LOG_PRIORITY {
 #if !defined(ENABLE_TRACE)
 
 #define TRACE(id, ...)
-#define TRACE0(id, ...)
-#define TRACEF(id, ...)
-#define TRACEF0(id, ...)
 #define S0(x)
 #define KV(x)
 
 #else
-
-#define TRACE(id, ...)                                                         \
+#if defined(HOST_TIZEN)
+#include <dlog.h>
+#define TRACE(id, fmt, ...)                                                    \
   do {                                                                         \
     if (IsTraceEnabled(#id)) {                                                 \
-      Print(LOG_PRIO_DEBUG,                                                    \
-            #id,                                                               \
-            CreateCodeLocation(__PRETTY_FUNCTION__, __FILE_NAME__, __LINE__),  \
-            ##__VA_ARGS__);                                                    \
+      dlog_print(DLOG_INFO,                                                    \
+                 "LWNODE",                                                     \
+                 "%s: (%s:%d) > [MessagePort] " fmt,                           \
+                 __FUNCTION__,                                                 \
+                 __FILE_NAME__,                                                \
+                 __LINE__,                                                     \
+                 ##__VA_ARGS__);                                               \
     }                                                                          \
   } while (0)
-
-#define TRACEF(id, ...)                                                        \
+#else
+#define TRACE(id, fmt, ...)                                                    \
   do {                                                                         \
     if (IsTraceEnabled(#id)) {                                                 \
-      PrintF(LOG_PRIO_DEBUG,                                                   \
-             #id,                                                              \
-             CreateCodeLocation(__PRETTY_FUNCTION__, __FILE_NAME__, __LINE__), \
+      printf(DLOG_INFO,                                                        \
+             "LWNODE",                                                         \
+             " %s: (%s:%d) > [MessagePort] " fmt,                              \
+             __FUNCTION__,                                                     \
+             __FILE_NAME__,                                                    \
+             __LINE__,                                                         \
              ##__VA_ARGS__);                                                   \
     }                                                                          \
   } while (0)
-
-#define TRACE0(id, ...)                                                        \
-  do {                                                                         \
-    if (IsTraceEnabled(#id)) {                                                 \
-      Print(LOG_PRIO_DEBUG, #id, "", ##__VA_ARGS__);                           \
-    }                                                                          \
-  } while (0)
-
-#define TRACEF0(id, ...)                                                       \
-  do {                                                                         \
-    if (IsTraceEnabled(#id)) {                                                 \
-      PrintF(LOG_PRIO_DEBUG, #id, "", ##__VA_ARGS__);                          \
-    }                                                                          \
-  } while (0)
+#endif
 
 #define S0(x) #x ":"
 #define KV(x) S0(x), x

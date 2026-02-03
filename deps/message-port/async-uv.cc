@@ -63,7 +63,7 @@ size_t AsyncUV::EnqueueTask(Task task) {
 bool AsyncUV::DrainPendingTasks(uv_loop_t* loop) {
   TRACE(MSGPORT, "DrainPendingTasks");
   std::lock_guard<std::mutex> lock(queue_mutex_);
-  TRACE(MSGPORT, "drain pending tasks", queue_.size());
+  TRACE(MSGPORT, "drain pending tasks %zu", queue_.size());
 
   if (loop == nullptr) {
     TRACE(MSGPORT, "invalid loop");
@@ -81,7 +81,7 @@ bool AsyncUV::DrainPendingTasks(uv_loop_t* loop) {
 void AsyncUV::DeletePendingTasks() {
   TRACE(MSGPORT, "DeletePendingTasks");
   std::lock_guard<std::mutex> lock(queue_mutex_);
-  TRACE(MSGPORT, "delete pending tasks", queue_.size());
+  TRACE(MSGPORT, "delete pending tasks %zu", queue_.size());
   if (!queue_.empty()) {
     std::queue<Task> empty;
     std::swap(queue_, empty);
