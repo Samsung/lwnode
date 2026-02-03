@@ -139,7 +139,7 @@ class MessagePortWrap : public BaseObject {
   MessagePortWrap(ObjectRef* object) : BaseObject(object) {
     onmessage_ = ValueRef::createUndefined();
   }
-  ~MessagePortWrap() { TRACE(MSGPORT_JS, "DELETE", this); }
+  ~MessagePortWrap() { TRACE(MSGPORT_JS, "DELETE %p", this); }
 
   static ValueRef* New(ExecutionStateRef* state,
                        ValueRef* this_value,
@@ -218,7 +218,7 @@ class MessagePortWrap : public BaseObject {
 
     // Start listening messages
     port->OnMessage([this, context](const MessageEvent* event) {
-      TRACEF(MSGPORT_JS, "OnMessage: %s\n", event->data());
+      TRACE(MSGPORT_JS, "OnMessage: %s\n", event->data().c_str());
 
       if (!onmessage_->isFunctionObject()) {
         return;
