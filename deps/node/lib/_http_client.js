@@ -323,6 +323,9 @@ function ClientRequest(input, options, cb) {
   }
 
   this._deferToConnect(null, null, () => this._flush());
+
+  // @lwnode
+  this._hasUserTimeout = false;
 }
 ObjectSetPrototypeOf(ClientRequest.prototype, OutgoingMessage.prototype);
 ObjectSetPrototypeOf(ClientRequest, OutgoingMessage);
@@ -774,6 +777,15 @@ function tickOnSocket(req, socket) {
     (req.agent && req.agent.options && req.agent.options.timeout)
   ) {
     listenSocketTimeout(req);
+  } else {
+    // @lwnode: Set default 15 second timeout
+    if (socket.setTimeout) {
+      socket.setTimeout(15000, () => {
+        if (!req._hasUserTimeout) {
+          req.destroy();
+        }
+      });
+    }
   }
   req.emit('socket', socket);
 }
@@ -853,6 +865,9 @@ ClientRequest.prototype.setTimeout = function setTimeout(msecs, callback) {
   if (this._ended) {
     return this;
   }
+
+  // @lwnode
+  this._hasUserTimeout = true;
 
   listenSocketTimeout(this);
   msecs = getTimerDuration(msecs, 'msecs');

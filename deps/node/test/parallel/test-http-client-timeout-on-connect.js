@@ -17,7 +17,7 @@ server.listen(0, common.localhostIPv4, common.mustCall(() => {
 
   req.setTimeout(1);
   req.on('socket', common.mustCall((socket) => {
-    assert.strictEqual(socket[kTimeout], null);
+    // assert.strictEqual(socket[kTimeout], null); // @lwnode: exist default timeout
     socket.on('connect', common.mustCall(() => {
       assert.strictEqual(socket[kTimeout]._idleTimeout, 1);
     }));
