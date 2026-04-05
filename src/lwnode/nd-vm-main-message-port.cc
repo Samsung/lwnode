@@ -38,6 +38,7 @@ MainMessagePort::MainMessagePort(std::shared_ptr<Port> port,
 MainMessagePort::~MainMessagePort() {
   LWNODE_DEV_FATAL_LOG("[MainMessagePort::~MainMessagePort]");
   Channel::DeletePendingMessages();
+  AsyncUV::CleanupPerThread(uv_loop_);
 }
 
 void MainMessagePort::SetMessageEventClass(FunctionObjectRef* klass) {
@@ -53,6 +54,12 @@ void MainMessagePort::Init(ContextRef* context, uv_loop_t* loop) {
 
   context_ = context;
   uv_loop_ = loop;
+  AsyncUV::InitPerThread(uv_loop_);
+
+  // Drain once before publishing the loop, then drain again after publication
+  // to reduce the window where another thread can enqueue into the pending
+  // queue based on a stale "loop not ready" observation.
+  Channel::DrainPendingMessages(uv_loop_);
 
   try {
     internal_->uv_promise_.set_value(uv_loop_);

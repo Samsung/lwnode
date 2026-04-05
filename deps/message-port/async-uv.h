@@ -17,6 +17,7 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <mutex>
 #include <queue>
 
@@ -26,6 +27,7 @@
 
 using uv_loop_t = struct uv_loop_s;
 using uv_async_t = struct uv_async_s;
+using uv_handle_t = struct uv_handle_s;
 
 class EXPORT_API AsyncUV {
  public:
@@ -39,6 +41,10 @@ class EXPORT_API AsyncUV {
   static void DeletePendingTasks();
   static bool IsPendingTasksEmpty();
 
+  // Register and cleanup one shared async handle per loop.
+  static bool InitPerThread(uv_loop_t* loop);
+  static void CleanupPerThread(uv_loop_t* loop);
+
   AsyncUV(uv_loop_t* loop = nullptr, Task task = nullptr);
   ~AsyncUV();
 
@@ -46,9 +52,15 @@ class EXPORT_API AsyncUV {
   bool Send();
 
  private:
-  uv_async_t* uv_h_;
+  struct LoopData;
+  static LoopData* GetLoopData(uv_loop_t* loop, bool create_if_not_found);
+  static void OnAsyncCalled(uv_async_t* handle);
+
+  uv_loop_t* loop_;
   Task task_;
 
-  static std::queue<Task> queue_;
-  static std::mutex queue_mutex_;
+  static std::map<uv_loop_t*, LoopData*> loop_data_;
+  static std::mutex loop_data_mutex_;
+  static std::queue<Task> pending_queue_;
+  static std::mutex pending_queue_mutex_;
 };
