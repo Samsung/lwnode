@@ -16,6 +16,7 @@
 
 #include "logger.h"
 #include <iomanip>  // for setfill and setw
+#include "lwnode/lwnode-version.h"
 
 // Dlog
 #ifdef HOST_TIZEN
@@ -27,7 +28,11 @@ void DlogOut::flush(std::stringstream& ss,
   auto c =
       config ? std::static_pointer_cast<DLogConfig>(config) : LogKind::lwnode();
 #ifdef HOST_TIZEN
-  dlog_print(DLOG_INFO, c->tag.c_str(), "%s", ss.str().c_str());
+  dlog_print(DLOG_INFO,
+             c->tag.c_str(),
+             "(%s)%s",
+             LWNODE_VERSION_TAG,
+             ss.str().c_str());
 #else
   // For testing. StdOut will be used to flush buffers through stdout.
   std::cout << std::left << std::setfill(' ') << std::setw(6) << c->tag << " "
