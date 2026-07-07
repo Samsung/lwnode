@@ -1,0 +1,35 @@
+# GNU linker version script for liblwnode.so
+#
+{
+  global:
+    # embedding API (lwnode-public.h)
+    _ZN6lwnode*;
+
+    # utilities (lwnode.h)
+    _ZN6LWNode*;
+    _Z26ForceAllowMultipleInstancev;
+    _Z23getExternalBuiltinsPath*;
+
+    # V8 abstract base
+    _ZN2v8*;
+
+    # Node.js internals referenced by the lwnode (per_process)
+    _ZN4node*;
+
+    # message-port API
+    _ZN4Port*;
+    _ZNK4Port*;
+    _ZN12MessageEvent*;
+    _ZNK12MessageEvent*;
+    _ZN16MessageEventSync*;
+    _ZNK16MessageEventSync*;
+
+    # Escargot types reachable through LWNode::Utils
+    _ZN8Escargot*;
+
+    # N-API
+    napi_*;
+
+  local:
+    *;
+};
