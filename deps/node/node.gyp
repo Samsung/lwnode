@@ -839,6 +839,12 @@
                 },
               ],
             }],
+            # @lwnode hide node internal dependencies' symbols
+            ['node_shared=="true"', {
+              'ldflags': [
+                '-Wl,--version-script=<(lwnode_jsengine_path)/liblwnode.map',
+              ],
+            }],
           ],
         }],
         [ 'openssl_default_cipher_list!=""', {

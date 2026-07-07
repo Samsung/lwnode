@@ -36,6 +36,9 @@ jobs:
             --unsupported-tests=$(sed '/#\|^$/d' test/skip_features.txt | paste -sd,) \
             test/parallel test/regression
           popd
+      - name: Check symbol visibility
+        if: contains(matrix.config, '--shared')
+        run: tools/check-symbol-visibility.sh out/linux/Release/lib/liblwnode.so liblwnode.map
       - if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
         timeout-minutes: 60
