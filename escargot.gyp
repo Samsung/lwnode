@@ -77,8 +77,7 @@
       'cflags': [ '-pthread' ],
       'ldflags': [ '-pthread' ],
       'include_dirs': [
-        '<(escargot_dir)/third_party/GCutil',
-        '<(escargot_dir)/third_party/GCutil/bdwgc/include',
+        '<(escargot_dir)/third_party/GCutil/include',
       ],
       'configurations': {
         'Debug': {
