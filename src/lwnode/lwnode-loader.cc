@@ -20,6 +20,7 @@
 #include <codecvt>
 #include <fstream>
 #include <locale>
+#include <stdexcept>
 #include <string>
 #include "api.h"
 #include "api/context.h"
@@ -56,10 +57,14 @@ bool convertUTF8ToUTF16le(char** buffer,
                               std::codecvt_mode::little_endian>,
       char16_t>
       convertor;
-  std::u16string utf16 = convertor.from_bytes(utf8Buffer);
+  std::u16string utf16;
+  try {
+    utf16 = convertor.from_bytes(utf8Buffer, utf8Buffer + utf8BufferSize);
+  } catch (const std::range_error&) {
+    return false;
+  }
 
-  if (convertor.converted() < utf8BufferSize) {
-    LWNODE_LOG_ERROR("Invalid conversion");
+  if (convertor.converted() != utf8BufferSize) {
     return false;
   }
 

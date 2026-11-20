@@ -30,6 +30,7 @@
 #include "api/error-message.h"
 #include "api/es-helper.h"
 #include "api/utils/gc-container.h"
+#include "api/utils/string-util.h"
 #include "lwnode-loader.h"
 #include "lwnode.h"
 
@@ -652,9 +653,15 @@ static void mixinProtoMethod(FunctionTemplateRef* ft) {
     // v8::ObjectTemplate::PrototypeTemplate()->SetAccessor
     bool isActsLikeJSGetterSetter = true;
 
+    struct AccessorPropertyData : ObjectRef::NativeDataAccessorPropertyData {
+      using NativeDataAccessorPropertyData::NativeDataAccessorPropertyData;
+      void* operator new(size_t size) { return Memory::gcMallocAtomic(size); }
+      void operator delete(void* ptr) { Memory::gcFree(ptr); }
+    };
+
     esPrototypeTemplate->setNativeDataAccessorProperty(
         StringRef::createFromUTF8("onread"),
-        new ObjectRef::NativeDataAccessorPropertyData(
+        new AccessorPropertyData(
             true,
             true,
             true,
@@ -904,6 +911,37 @@ TEST(DISABLED_Escargot_ObjectCreate_Regression) {
   auto r = EvalResultHelper::compileRun(esContext, source);
 
   CHECK_EQ(true, r.isSuccessful());
+}
+
+TEST(UTF8ToLatin1RejectsMalformedInput) {
+  const std::vector<std::vector<uint8_t>> inputs = {
+      {0x80}, {0xbf}, {0xc0, 0x80}, {0xc1, 0xbf}, {0xff},
+      {0xc2}, {0xc3, 0x41}, {0xe0, 0x80, 0x80},
+      {0xe2}, {0xe2, 0x82}, {0xf0}, {0xf0, 0x90},
+      {0xf0, 0x90, 0x80}, {0xf4, 0x90, 0x80, 0x80}};
+  for (const auto& input : inputs) {
+    UTF8Sequence::u8string output;
+    CHECK(!UTF8Sequence::convertUTF8ToLatin1(
+        output, input.data(), input.data() + input.size()));
+
+    std::unique_ptr<void, decltype(&freeStringBuffer)> source(
+        allocateStringBuffer(input.size()), freeStringBuffer);
+    ASSERT_NE(nullptr, source.get());
+    memcpy(source.get(), input.data(), input.size());
+    const auto loaded = Loader::createFileDataForReloadableString(
+        "source.js", std::move(source), input.size(), Encoding::kUnknown);
+    std::unique_ptr<void, decltype(&freeStringBuffer)> buffer(
+        loaded.buffer, freeStringBuffer);
+    EXPECT_EQ(nullptr, buffer.get());
+  }
+
+  const uint8_t input[] = {0x00, 0x41, 0x7f, 0xc2, 0x80, 0xc3, 0xbf};
+  const uint8_t expected[] = {0x00, 0x41, 0x7f, 0x80, 0xff};
+  UTF8Sequence::u8string output;
+  CHECK(UTF8Sequence::convertUTF8ToLatin1(
+      output, input, input + sizeof(input)));
+  CHECK_EQ(sizeof(expected), output.size());
+  CHECK_EQ(0, memcmp(expected, output.data(), sizeof(expected)));
 }
 
 static int g_reload_count;

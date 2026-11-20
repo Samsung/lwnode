@@ -13,10 +13,15 @@ $ git submodule update --init --recursive
 ## 3. How to Compile: Ubuntu
 ### 3.1. Install required packages
 ```sh
-$ sudo apt-get install -y build-essential cmake clang libicu-dev libglib2.0-dev
+$ sudo apt-get install -y build-essential cmake clang ninja-build \
+    libicu-dev libglib2.0-dev zlib1g-dev zip
 ```
 
 ### 3.2. How to build and run
+
+Use Python 3.10 as `python` on `PATH` to match CI. The vendored Node.js GYP uses
+the `rU` file mode, which Python 3.11 removed.
+
 ```sh
 $ ./configure.py
 $ ninja -C out/linux/Release lwnode

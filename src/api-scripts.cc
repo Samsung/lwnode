@@ -23,6 +23,9 @@ using namespace EscargotShim;
 namespace v8 {
 
 static void handleShebang(StringRef* source) {
+  if (source->length() < 2) {
+    return;
+  }
   if (source->charAt(0) == '#' && source->charAt(1) == '!') {
     auto stringBuffer = source->stringBufferAccessData();
     if (stringBuffer.has8BitContent) {
@@ -400,6 +403,10 @@ MaybeLocal<Function> ScriptCompiler::CompileFunctionInContext(
   }
 
   handleShebang(esSource);
+  // Escargot requires a nonempty function body, even for an empty V8 source.
+  if (esSource->length() == 0) {
+    esSource = StringRef::createFromASCII(" ");
+  }
 
   GCVector<ValueRef*> arguments_list;
 

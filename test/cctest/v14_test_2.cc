@@ -231,6 +231,71 @@ THREADED_TEST(Shebang) {
   CHECK(!try_catch.HasCaught());
 }
 
+THREADED_TEST(WriteOneByteTwoByteBounds) {
+  v8::Isolate* isolate = CcTest::isolate();
+  v8::HandleScope scope(isolate);
+  const uint16_t characters[] = {'A', 0x00e9, 0x0100, 'D'};
+  auto string = String::NewFromTwoByte(
+      isolate, characters, NewStringType::kNormal, 4).ToLocalChecked();
+
+  for (int options : {String::NO_OPTIONS, String::NO_NULL_TERMINATION}) {
+    uint8_t buffer[] = {0x5a, 0x5a, 0x5a, 0x5a, 0x5a};
+    CHECK_EQ(3, string->WriteOneByte(isolate, buffer, 0, 3, options));
+    CHECK_EQ('A', buffer[0]);
+    CHECK_EQ(0xe9, buffer[1]);
+    CHECK_EQ(0, buffer[2]);
+    CHECK_EQ(0x5a, buffer[3]);
+    CHECK_EQ(0x5a, buffer[4]);
+
+    memset(buffer, 0x5a, sizeof(buffer));
+    CHECK_EQ(2, string->WriteOneByte(isolate, buffer, 2, 4, options));
+    CHECK_EQ(0, buffer[0]);
+    CHECK_EQ('D', buffer[1]);
+    CHECK_EQ(options == String::NO_OPTIONS ? 0 : 0x5a, buffer[2]);
+    CHECK_EQ(0x5a, buffer[3]);
+
+    memset(buffer, 0x5a, sizeof(buffer));
+    CHECK_EQ(0, string->WriteOneByte(isolate, buffer, 0, 0, options));
+    CHECK_EQ(0x5a, buffer[0]);
+    CHECK_EQ(0, string->WriteOneByte(isolate, buffer, 5, 3, options));
+    CHECK_EQ(0x5a, buffer[0]);
+    CHECK_EQ(1, string->WriteOneByte(isolate, buffer, 3, -1, options));
+    CHECK_EQ('D', buffer[0]);
+    CHECK_EQ(options == String::NO_OPTIONS ? 0 : 0x5a, buffer[1]);
+  }
+}
+
+class ShortShebangResource : public String::ExternalStringResource {
+ public:
+  const uint16_t* data() const override { return characters_; }
+  size_t length() const override { return 1; }
+
+ private:
+  uint16_t characters_[2] = {'#', '!'};
+};
+
+THREADED_TEST(ShebangShortSource) {
+  LocalContext env;
+  v8::Isolate* isolate = env->GetIsolate();
+  v8::HandleScope scope(isolate);
+  {
+    ScriptCompiler::Source source(String::Empty(isolate));
+    auto function = ScriptCompiler::CompileFunctionInContext(
+        env.local(), &source, 0, nullptr, 0, nullptr).ToLocalChecked();
+    CHECK(function->Call(env.local(), env->Global(), 0, nullptr)
+              .ToLocalChecked()->IsUndefined());
+  }
+  auto resource = new ShortShebangResource();
+  auto text = String::NewExternalTwoByte(isolate, resource).ToLocalChecked();
+  ScriptCompiler::Source source(text);
+  TryCatch try_catch(isolate);
+  CHECK(ScriptCompiler::CompileFunctionInContext(
+      env.local(), &source, 0, nullptr, 0, nullptr).IsEmpty());
+  CHECK(try_catch.HasCaught());
+  CHECK_EQ('#', resource->data()[0]);
+  CHECK_EQ('!', resource->data()[1]);
+}
+
 static void TryCatchOnManyCalldepsCallback(
     const v8::FunctionCallbackInfo<Value>& info) {
   CHECK(info[0]->IsFunction());
