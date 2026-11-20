@@ -39,11 +39,19 @@ bool UTF8Sequence::convertUTF8ToLatin1(
     const unsigned char* sequence,
     const unsigned char* endSequence) {
   while (sequence < endSequence) {
-    char32_t character =
-        UTF8Sequence::read(sequence, UTF8Sequence::getLength(*sequence));
+    const size_t length = UTF8Sequence::getLength(*sequence);
+    if (length == 0 || length > static_cast<size_t>(endSequence - sequence)) {
+      return false;
+    }
+    for (size_t i = 1; i < length; i++) {
+      if ((sequence[i] & 0xc0) != 0x80) {
+        return false;
+      }
+    }
+    char32_t character = UTF8Sequence::read(sequence, length);
 
-    // if character is out of acsii and latin1
-    if (character > 255) {
+    // Latin-1 needs at most two UTF-8 bytes. Reject overlong encodings too.
+    if (character > 255 || length > 2 || (length == 2 && character < 0x80)) {
       return false;
     } else {
       oneByteString += (unsigned char)character;

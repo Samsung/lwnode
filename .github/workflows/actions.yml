@@ -2,7 +2,7 @@ name: lwnode actions
 on: [ push, pull_request ]
 jobs:
   build_lwnode:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -10,7 +10,7 @@ jobs:
         config: [ '', '--nopt --shared' ]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Checkout Escargot
@@ -21,31 +21,32 @@ jobs:
       - name: Install Packages
         run: |
           sudo apt update
-          sudo apt install -y ninja-build gcc-multilib g++-multilib sed
+          sudo apt install -y cmake ninja-build gcc-multilib g++-multilib \
+            libicu-dev libglib2.0-dev zlib1g-dev zip
+      # The vendored Node.js GYP uses file modes removed in Python 3.11.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
       - name: Build lwnode
         run: |
           ./configure.py ${{ matrix.config }}
           ninja -C out/linux/Release lwnode
       - name: Run node.js TCs (test.py)
+        working-directory: deps/node
         run: |
-          pushd $(pwd)/deps/node
           ./tools/test.py \
             -J -p dots --report --time --timeout 300 --repeat 1 \
             --shell=../../out/linux/Release/lwnode \
-            --skip-tests=$(sed 's/\s#.*//g' test/skip_tests.txt | paste -sd,) \
-            --unsupported-tests=$(sed '/#\|^$/d' test/skip_features.txt | paste -sd,) \
+            --skip-tests="$(sed 's/\s#.*//g' test/skip_tests.txt | paste -sd,)" \
+            --unsupported-tests="$(sed '/#\|^$/d' test/skip_features.txt | paste -sd,)" \
             test/parallel test/regression
-          popd
-      - if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 60
 
   cctest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Checkout Escargot
@@ -56,7 +57,10 @@ jobs:
       - name: Install Packages
         run: |
           sudo apt update
-          sudo apt install -y ninja-build gcc-multilib g++-multilib
+          sudo apt install -y cmake ninja-build gcc-multilib g++-multilib libicu-dev
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
       - name: Build cctest
         run: |
           export ROOT=$PWD
@@ -64,20 +68,17 @@ jobs:
           export ARCH="x64"
           export ASAN=1
           export GYP=deps/node/tools/gyp/gyp
-          $GYP ./test/cctest.gyp --depth=. -f ninja \
-            --generator-output=$OUT_PATH -Dasan=$ASAN -Descargot_build_mode=debug \
+          "$GYP" ./test/cctest.gyp --depth=. -f ninja \
+            --generator-output="$OUT_PATH" -Dasan=$ASAN -Descargot_build_mode=debug \
             -Descargot_lib_type=static_lib -Dtarget_arch=$ARCH -Dtarget_os=linux \
             -Denable_experimental=true -Descargot_threading=1 \
             -Descargot_debugger=0
-          ninja -C $OUT_PATH/out/Debug cctest
+          ninja -C "$OUT_PATH/out/Debug" cctest
       - name: Run cctest
         run: |
           out/cctest/out/Debug/cctest
   build_tizen_std:
-    runs-on: ubuntu-20.04
-    #container:
-    #  image: art.sec.samsung.net/circleci-docker/docker-gbs-base:actions
-    #  options: --user root --privileged
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -85,7 +86,7 @@ jobs:
         profile: [t70std]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Checkout Escargot
@@ -95,7 +96,7 @@ jobs:
           popd
       - name: Install Packages
         run: |
-          echo "deb [trusted=yes] http://download.tizen.org/tools/latest-release/Ubuntu_$(lsb_release -rs)/ /" | \
+          echo "deb [trusted=yes] https://download.tizen.org/tools/latest-release/Ubuntu_$(lsb_release -rs)/ /" | \
           sudo tee /etc/apt/sources.list.d/tizen.list > /dev/null
           pwd
           sudo apt update
@@ -107,26 +108,26 @@ jobs:
         run: |
           gbs -c .github/gbs.conf build -A armv7l -P profile.${{ matrix.profile }} --include-all --incremental --define 'lib_type shared'
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: tizen_std_${{ matrix.profile }}
           path: /home/runner/GBS-ROOT/${{ matrix.profile }}/local/repos/${{ matrix.profile }}/armv7l/RPMS/
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.10'
       - name: Install Packages
         run: |
-          sudo add-apt-repository "deb http://mirrors.kernel.org/ubuntu/ focal main universe"
+          sudo add-apt-repository "deb https://archive.ubuntu.com/ubuntu/ focal main universe"
           sudo apt-get update
           sudo apt-get install -y clang-format-8
       - name: Lint CC
         run: |
-          tools/check_tidy.py --filter=$(paste -sd, tools/lint-filters.txt)
+          tools/check_tidy.py --filter="$(paste -sd, tools/lint-filters.txt)"
