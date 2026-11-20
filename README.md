@@ -7,6 +7,9 @@ Lightweight Node.js (`lwnode`) is a memory efficient Node.js implementation,
 which runs on top of [Escargot](https://github.com/Samsung/escargot),
 a memory optimized JavaScript Engine developed by Samsung Research.
 
+> This project is no longer actively maintained. See [SECURITY.md](SECURITY.md)
+> for details.
+
 The following provides useful information about lwnode:
 * [Build Guide](docs/Build.md)
 * Lightweight node.js
@@ -22,5 +25,6 @@ The following provides useful information about lwnode:
   - [DB Service and Client App Guide](docs/App-db-service.md)
 * Others
   - [Internal.md](docs/Internal.md)
+  - [Security Policy](SECURITY.md)
   - [MAINTAINERS.md](MAINTAINERS.md)
   - [GOVERNANCE.md](GOVERNANCE.md)
